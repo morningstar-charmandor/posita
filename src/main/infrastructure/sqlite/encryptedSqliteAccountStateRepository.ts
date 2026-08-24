@@ -33,6 +33,14 @@ const contextFor = (recordType: AccountRecordType, accountId: string): CacheReco
 const storageFailure = (message: string, cause: unknown): AccountStateError =>
   new AccountStateError('ACCOUNT_STATE_STORAGE_FAILED', message, { cause })
 
+export const deleteAllEncryptedAccountState = (database: DatabaseSync): boolean => {
+  try {
+    return Number(database.prepare('DELETE FROM encrypted_account_records').run().changes) > 0
+  } catch (error) {
+    throw storageFailure('Failed to delete all encrypted account state.', error)
+  }
+}
+
 export class EncryptedSqliteAccountStateRepository implements AccountStateRepository {
   constructor(
     private readonly database: DatabaseSync,
@@ -85,13 +93,7 @@ export class EncryptedSqliteAccountStateRepository implements AccountStateReposi
   }
 
   deleteAllAccountState(): boolean {
-    try {
-      const result = this.database.prepare('DELETE FROM encrypted_account_records').run()
-      return Number(result.changes) > 0
-    } catch (error) {
-      if (error instanceof AccountStateError) throw error
-      throw storageFailure('Failed to delete all encrypted account state.', error)
-    }
+    return deleteAllEncryptedAccountState(this.database)
   }
 
   private save(recordType: AccountRecordType, accountId: string, value: unknown): void {

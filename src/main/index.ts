@@ -49,13 +49,18 @@ const createWindow = (): BrowserWindow => {
 }
 
 app.enableSandbox()
+const lifecycleRecoveryAbort = new AbortController()
+app.once('before-quit', () => lifecycleRecoveryAbort.abort())
 
 app.whenReady().then(async () => {
   let repository: MailRepository | undefined
   let service = createUnavailableLocalDataService()
 
   try {
-    const runtime = await bootstrapLocalData(join(app.getPath('userData'), 'posita.sqlite3'))
+    const runtime = await bootstrapLocalData(
+      join(app.getPath('userData'), 'posita.sqlite3'),
+      lifecycleRecoveryAbort.signal
+    )
     repository = runtime.repository
     service = runtime.service
   } catch {

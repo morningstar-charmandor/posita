@@ -155,10 +155,11 @@ WAL, then deletes `cache.installation.data-key-v1` from the OS-protected vault a
 destroys the live protector key. Repeating any action after a journal-write crash
 is safe, and key deletion is deliberately last.
 
-The orchestrator is not composed into the product. Startup recovery must first be
-able to finish `data-key-delete-pending` without creating a replacement key, and
-the fixture bootstrap must not reseed after a user deletion. No real account may
-connect until those activation boundaries and explicit consent/status are tested.
+The recovery-only orchestrator is composed before key bootstrap. It can finish any
+full-deletion phase when the key is already absent, and a completed journal marker
+prevents later key generation and fixture reseeding. It exposes no user command or
+IPC. No real account may connect until explicit user-facing consent/status and the
+remaining lifecycle activation boundaries are tested.
 
 Starting a new full deletion now requires a short-lived operation-bound
 confirmation receipt. Resuming a journaled deletion is a separate capability and

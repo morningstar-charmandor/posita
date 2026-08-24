@@ -205,4 +205,25 @@
 - Consequence: renderer navigation or a stale confirmation cannot create a new
   destructive operation, and restart recovery never silently creates one. The
   confirmation receipt is auditable non-private operational data. No command or
-  status IPC is activated until the startup recovery owner is implemented.
+  status IPC is activated; ADR-017 defines the required startup recovery owner.
+
+## ADR-017: Recover full deletion before key bootstrap
+
+- Status: accepted for Gate 2D
+- Context: Normal startup previously called `loadOrCreate` before inspecting the
+  lifecycle journal. After key erasure, that could generate a replacement key and
+  reseed fixtures, undoing the user's local-deletion outcome.
+- Decision: apply migrations, open the non-sensitive lifecycle journal and vault,
+  and run one cancellable recovery pass before any cache-key operation. Resume
+  full deletion through a deletion-only adapter that can remove credentials,
+  encrypted rows, SQLite remnants, and the protected key without decrypting or
+  creating anything. Treat a completed full-deletion journal entry as a durable
+  local-data-deleted marker on every later startup. While disconnect is pending,
+  require the existing key and suppress fixture seeding even if the cache is empty.
+- Consequence: full deletion can finish when the key is already missing, and
+  neither recovery nor a later restart recreates the key or fixtures. Conflicting
+  pending lifecycle entries fail closed. Pending disconnect is reported but not
+  resumed until a real idempotent revocation adapter exists, and startup cannot
+  undo its local deletion phase. Current bounded fixture recovery runs during
+  startup; production-scale compaction must move off the Electron main event loop
+  before real mailbox volume.

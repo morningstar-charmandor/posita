@@ -227,16 +227,7 @@ export class EncryptedSqliteMailRepository implements MutableMailRepository {
   }
 
   sanitizeStorage(): void {
-    try {
-      sanitizeSqliteStorage(this.database)
-      this.database.prepare(`
-        UPDATE encrypted_cache_state
-        SET status = 'ready', updated_at = datetime('now') WHERE id = 1
-      `).run()
-    } catch (error) {
-      if (error instanceof RepositoryError) throw error
-      throw cacheFailure('Failed to sanitize encrypted local mail storage.', error)
-    }
+    completeEncryptedCacheSanitization(this.database)
   }
 
   deleteAll(): void {
@@ -245,25 +236,7 @@ export class EncryptedSqliteMailRepository implements MutableMailRepository {
   }
 
   deleteAllRecords(): void {
-    try {
-      this.database.exec('BEGIN IMMEDIATE')
-      try {
-        this.database.exec('DELETE FROM encrypted_records')
-        this.database.prepare(`
-          INSERT INTO encrypted_cache_state (id, status, updated_at)
-          VALUES (1, 'sanitization-pending', datetime('now'))
-          ON CONFLICT(id) DO UPDATE SET
-            status = 'sanitization-pending', updated_at = datetime('now')
-        `).run()
-        this.database.exec('COMMIT')
-      } catch (error) {
-        if (this.database.isTransaction) this.database.exec('ROLLBACK')
-        throw error
-      }
-    } catch (error) {
-      if (error instanceof RepositoryError) throw error
-      throw cacheFailure('Failed to delete the encrypted local mail cache.', error)
-    }
+    deleteAllEncryptedMailRecords(this.database)
   }
 
   destroyEncryptionContext(): void {
@@ -280,4 +253,39 @@ export const sanitizeSqliteStorage = (database: DatabaseSync): void => {
   database.exec('PRAGMA wal_checkpoint(TRUNCATE)')
   database.exec('VACUUM')
   database.exec('PRAGMA wal_checkpoint(TRUNCATE)')
+}
+
+export const completeEncryptedCacheSanitization = (database: DatabaseSync): void => {
+  try {
+    sanitizeSqliteStorage(database)
+    database.prepare(`
+      UPDATE encrypted_cache_state
+      SET status = 'ready', updated_at = datetime('now') WHERE id = 1
+    `).run()
+  } catch (error) {
+    if (error instanceof RepositoryError) throw error
+    throw cacheFailure('Failed to sanitize encrypted local mail storage.', error)
+  }
+}
+
+export const deleteAllEncryptedMailRecords = (database: DatabaseSync): void => {
+  try {
+    database.exec('BEGIN IMMEDIATE')
+    try {
+      database.exec('DELETE FROM encrypted_records')
+      database.prepare(`
+        INSERT INTO encrypted_cache_state (id, status, updated_at)
+        VALUES (1, 'sanitization-pending', datetime('now'))
+        ON CONFLICT(id) DO UPDATE SET
+          status = 'sanitization-pending', updated_at = datetime('now')
+      `).run()
+      database.exec('COMMIT')
+    } catch (error) {
+      if (database.isTransaction) database.exec('ROLLBACK')
+      throw error
+    }
+  } catch (error) {
+    if (error instanceof RepositoryError) throw error
+    throw cacheFailure('Failed to delete the encrypted local mail cache.', error)
+  }
 }

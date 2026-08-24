@@ -127,6 +127,13 @@ compaction. Only after SQLite reaches `ready` does it delete the OS-protected da
 key and destroy the shared in-memory encryption context. The non-sensitive journal
 remains available to record completion.
 
+Startup applies schema migrations and inspects the lifecycle journal before any
+cache-key load/create call. A pending installation deletion uses raw deletion-only
+SQLite helpers and vault erasure, so it does not need a protector or readable key.
+After completion, the retained journal marker selects `local-data-deleted` mode;
+normal encrypted repository construction and fixture seeding are skipped on that
+startup and every later restart. Conflicting pending lifecycle rows fail closed.
+
 ## Migrations
 
 Migrations are numbered, immutable, and applied in a transaction. Applied
@@ -199,3 +206,6 @@ The local-data and credential foundation requires tests for:
 - exact-text confirmation, expiry, operation binding, idempotent confirmation
   persistence, authorization failure, confirmation-free recovery of existing work,
   recovery refusal to create work, and bounded safe lifecycle-status projection.
+- pre-key-bootstrap recovery with a missing key, repeated deleted-mode restart,
+  no fixture reseed or replacement key, terminal-phase completion, cancellation,
+  conflicting-journal refusal, and keyless deletion-adapter behavior.

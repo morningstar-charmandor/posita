@@ -503,6 +503,55 @@ bootstrap can still recreate a key and reseed fixtures after erasure. Confirmati
 and status are application contracts only; there is no user-facing surface, receipt
 retention/cleanup policy, OAuth credential, real account, or live deletion.
 
+## Gate 2D foundation — Restart-safe full-deletion recovery
+
+Date: 2026-08-24
+Checkpoint: use the Git commit whose subject is `feat: add restart-safe lifecycle recovery`
+
+Goal: make an already-authorized full deletion survive process restarts without
+requiring its erased key and without allowing normal fixture bootstrap to undo it.
+
+Delivered:
+
+- one named startup lifecycle-recovery owner before cache-key bootstrap,
+- a deletion-only SQLite/vault adapter that never loads, creates, decrypts, or
+  replaces the installation key,
+- recovery from every full-deletion phase when the key is already absent,
+- a durable `local-data-deleted` runtime selected by the completed journal marker,
+- repeated-restart prevention of replacement-key creation and fixture reseeding,
+- fail-closed handling for conflicting pending lifecycle operations,
+- existing-key enforcement and fixture-reseed suppression for pending disconnect,
+- cancellation between phases through one Electron shutdown-owned abort signal,
+- shared raw deletion/sanitization primitives instead of parallel recovery SQL,
+- a latest-installation-deletion repository query that includes completion,
+- deterministic dependency-injected bootstrap tests with no OS credential access,
+- ADR-017 documenting pre-key-bootstrap recovery and its scaling boundary.
+
+Important decisions:
+
+- inspect migrations, lifecycle state, and the vault before calling key
+  `loadOrCreate`,
+- let the completed deletion marker act as a tombstone until a future explicit
+  start-fresh command defines how it is cleared,
+- do not automatically resume disconnect without a real idempotent revocation
+  adapter,
+- fail closed rather than choose between conflicting destructive journal entries,
+- keep current bounded fixture compaction at startup but require a worker or
+  Electron utility process before real mailbox volume,
+- expose no new IPC, renderer mutation, live provider, or credential.
+
+Evidence: 25 test files and 147 tests passed before final checkpoint verification.
+Coverage includes key-missing recovery, terminal key-phase recovery, repeated
+restart emptiness, no fixture reseed, no replacement key, conflicting journal
+refusal, shutdown cancellation, keyless action behavior, latest completed-marker
+loading, pending-disconnect reporting, pending-disconnect empty-cache protection,
+and the pre-existing phase crash matrix.
+
+Limitations: the renderer currently receives the generic unavailable-data state
+rather than a dedicated deleted/pending/retry view. Full deletion still has no
+production initiation path. Disconnect recovery, production-scale off-main-thread
+compaction, confirmation-receipt cleanup policy, OAuth, and real mail remain deferred.
+
 ## How future entries should be written
 
 For each material milestone, record:

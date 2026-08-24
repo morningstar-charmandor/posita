@@ -12,6 +12,7 @@ class FakeLifecycleRepository implements AccountLifecycleRepository {
   constructor(readonly operations: LifecycleOperationV1[] = [], readonly fail = false) {}
   save(): void {}
   load(): LifecycleOperationV1 | undefined { return undefined }
+  loadLatestDeleteLocalData(): undefined { return undefined }
   listPending(): LifecycleOperationV1[] {
     if (this.fail) throw new Error('storage failed')
     return structuredClone(this.operations)

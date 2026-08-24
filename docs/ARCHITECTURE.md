@@ -224,12 +224,20 @@ opaque IDs, optional opaque account scope, bounded progress, safe stage names, a
 allow-listed retry codes. A marker is described as `pending`, not “running,”
 because persistent state cannot prove a worker is currently active.
 
-These services are verified against application interfaces, SQLite, and
-deterministic fakes but are not part of startup composition and have no preload,
-IPC, or renderer surface. Activation requires a recovery owner that resumes
-pending work without calling `loadOrCreate` for a replacement installation key
-after key erasure. The current fixture bootstrap would otherwise reseed sample
-content, so it is intentionally not used as a production deletion path.
+ADR-017 composes a recovery-only path before normal key bootstrap. One named
+startup owner inspects the lifecycle journal, rejects conflicting pending work,
+and resumes full deletion through a keyless SQLite/vault adapter. It never calls
+`loadOrCreate`, and a completed deletion marker returns a `local-data-deleted`
+runtime on every later restart without reseeding fixtures. The Electron shutdown
+owner aborts between phases; completed phase actions remain journaled.
+
+No preload, IPC, renderer command, or user-facing deleted-state view exists yet.
+Pending disconnects are counted but not resumed because production has no Google
+revocation adapter. Their presence requires the existing key and suppresses
+fixture seeding, so startup cannot undo a completed local-mail phase. Recovery
+uses synchronous SQLite only for the current bounded
+fixture prototype; production-sized compaction must move to a worker or utility
+process before real mailbox ingestion.
 
 ## Gmail synchronization
 

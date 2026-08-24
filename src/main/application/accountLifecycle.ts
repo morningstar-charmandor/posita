@@ -46,6 +46,7 @@ export type LifecycleOperationV1 = DisconnectAccountOperationV1 | DeleteLocalDat
 export interface AccountLifecycleRepository {
   save(operation: LifecycleOperationV1): void
   load(operationId: string): LifecycleOperationV1 | undefined
+  loadLatestDeleteLocalData(): DeleteLocalDataOperationV1 | undefined
   listPending(): LifecycleOperationV1[]
   deleteCompleted(operationId: string): boolean
 }

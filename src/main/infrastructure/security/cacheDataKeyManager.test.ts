@@ -63,6 +63,25 @@ describe('CacheDataKeyManager', () => {
     )
   })
 
+  it('requires an existing key during lifecycle recovery and never creates one', async () => {
+    const vault = new MemorySecretVault()
+    let generations = 0
+    const manager = new CacheDataKeyManager(vault, () => {
+      generations += 1
+      return deterministicKey
+    })
+
+    await expect(manager.loadExisting()).rejects.toEqual(
+      expect.objectContaining<Partial<EncryptedCacheError>>({ code: 'CACHE_KEY_MISSING' })
+    )
+    expect(generations).toBe(0)
+    expect(vault.values.size).toBe(0)
+
+    await vault.set(CACHE_DATA_KEY_NAME, Buffer.from(deterministicKey).toString('base64'))
+    await expect(manager.loadExisting()).resolves.toEqual(Buffer.from(deterministicKey))
+    expect(generations).toBe(0)
+  })
+
   it('rejects a corrupt protected key', async () => {
     const vault = new MemorySecretVault()
     vault.values.set(CACHE_DATA_KEY_NAME, 'not-a-valid-key')

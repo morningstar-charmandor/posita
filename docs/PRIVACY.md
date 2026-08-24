@@ -92,9 +92,10 @@ The installation-wide deletion orchestrator now removes all stored Google refres
 credentials, encrypted provider state, encrypted mail and derived records, SQLite
 remnants, and finally the OS-protected installation key and its in-memory copy.
 Every phase is retryable and journaled after success; durable pending work prevents
-overlap with account disconnect. This is verified application behavior, not an
-active product capability: startup recovery, user-facing confirmation/status, and
-a post-deletion state that cannot silently recreate a key or fixtures remain deferred.
+overlap with account disconnect. Startup now resumes this workflow before key
+bootstrap using deletion-only operations. A completed marker prevents later key
+recreation and fixture reseeding. This remains non-user-triggerable: user-facing
+confirmation/status and a dedicated deleted-state view are deferred.
 
 ADR-016 now implements the pre-command confirmation boundary. A challenge expires
 after five minutes, requires the exact text `DELETE LOCAL DATA`, is bound to one
@@ -104,6 +105,12 @@ contain the entered text, account identity, mail, credentials, or arbitrary copy
 An existing journal operation can be resumed after confirmation expiry, but the
 recovery entry point cannot create new destructive work. Safe status projection is
 implemented without an IPC or user interface.
+
+Recovery never decrypts content and succeeds even when the protected data key is
+already absent. Cancellation leaves the current journal phase available for the
+next restart. Conflicting lifecycle state fails closed rather than choosing which
+destructive operation to trust. Pending disconnect is not automatically resumed
+until a real idempotent authorization revoker exists.
 
 Retention configuration is deferred to Gate 3. A future setting may shorten the
 window but must not silently lengthen an existing user's window.

@@ -62,6 +62,12 @@ Implemented:
 - separate authorized-start and existing-operation recovery entry points,
 - a safe lifecycle-status projection with truthful pending/retry states, bounded
   progress, and allow-listed error detail,
+- a named cancellable startup recovery owner that inspects lifecycle state before
+  key bootstrap and keylessly resumes every full-deletion phase,
+- durable `local-data-deleted` startup mode that prevents replacement-key creation
+  and fixture reseeding on every later restart,
+- fail-closed conflict handling and deterministic cancellation/restart coverage,
+- existing-key enforcement and fixture-seed suppression while disconnect is pending,
 - accessible names for icon-only workspace controls and reduced-motion styling,
 - deterministic credential-free verification through `npm run verify`.
 
@@ -72,8 +78,8 @@ Simulated or deliberately inactive:
 - no OAuth credential has been created or stored,
 - encrypted provider-account and sync-state tables contain no real account,
 - authorization revocation uses deterministic test implementations only,
-- full local deletion is verified only through application interfaces and fakes;
-  it is not composed at startup or exposed to the renderer,
+- full local deletion has a recovery-only startup composition but no production
+  initiation path or renderer command,
 - confirmation and lifecycle-status services have no preload, IPC, or UI surface,
 - sending and every other remote mailbox mutation are disabled.
 
@@ -81,8 +87,8 @@ Not implemented:
 
 - Gmail OAuth, message ingestion, incremental history sync, or user-triggered/live disconnect,
 - runtime sync coordination, provider reconciliation, or deduplication logic,
-- user-facing local-deletion confirmation/status, safe post-key-erasure bootstrap,
-  or background lifecycle resume,
+- user-facing local-deletion confirmation/status or a dedicated deleted-state view,
+- automatic pending-disconnect resume with a live idempotent revocation adapter,
 - automatic retention scheduling and user-visible maintenance status,
 - a model provider, embeddings, classification, retrieval, or generation,
 - automatic 90-day maintenance or active account lifecycle scheduling,
@@ -106,15 +112,15 @@ Proceed with **Gate 2D: encrypted account lifecycle** before implementing OAuth.
 
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,
-and safe status are complete at the application layer. Continue in this order:
+safe status, and full-deletion startup recovery are complete at the application
+and local-storage layers. Continue in this order:
 
-1. Design the startup/background lifecycle owner, including a recovery path that
-   finishes `data-key-delete-pending` without generating a replacement key or
-   reseeding fixtures.
-2. Compose the deletion services only after that recovery path is tested across
-   restart boundaries and has one cancellation/shutdown owner.
-3. Add the user-facing confirmation/status surface only after the recovery owner
-   makes every exposed retry path truthful and safe.
+1. Add a read-only renderer state for `local-data-deleted`, pending, and
+   retry-required lifecycle outcomes without exposing a mutation command.
+2. Design the narrow confirmed-deletion IPC only after the read-only status path
+   is reviewed end to end.
+3. Keep pending disconnect visible but inactive until a real idempotent Google
+   revocation adapter can be composed and tested.
 4. Decide the controlled compatibility behavior for older fixture caches that do
    not contain absolute retention timestamps before scheduling maintenance.
 5. Keep real Gmail ingestion disabled until the lifecycle activation gate passes.
@@ -140,7 +146,7 @@ plaintext mailbox. Record the selected search tradeoff in `docs/DECISIONS.md`.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 22 test files, 134 tests, strict typecheck, structure
+- Current verified baseline: 25 test files, 147 tests, strict typecheck, structure
   checks, and production Electron build passing.
 
 Native verification migrated the development database to schema v3 with 21

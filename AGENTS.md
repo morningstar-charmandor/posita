@@ -17,6 +17,8 @@ exists deeper in the tree.
   but is not composed at startup and has no user trigger or recovery owner.
 - New full deletion requires a bounded typed confirmation; safe lifecycle status
   and recovery contracts exist but have no preload, IPC, or UI surface.
+- Startup keylessly resumes a pending full deletion and honors its completed
+  marker without recreating a data key or reseeding fixtures.
 - An OS-protected credential vault is implemented but contains no real token.
 - Gmail, lifecycle scheduling, retention scheduling, and model providers are not connected.
 - Sending mail is intentionally disabled.

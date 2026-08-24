@@ -102,6 +102,30 @@ describe('SqliteAccountLifecycleRepository', () => {
     ])
   })
 
+  it('loads the latest installation deletion including its completed marker', () => {
+    const { repository } = createRepository()
+    expect(repository.loadLatestDeleteLocalData()).toBeUndefined()
+    repository.save({
+      version: 1,
+      operationId: 'delete-local-1',
+      operationType: 'delete-local-data',
+      phase: 'credentials-delete-pending'
+    })
+    repository.save({
+      version: 1,
+      operationId: 'delete-local-2',
+      operationType: 'delete-local-data',
+      phase: 'completed'
+    })
+
+    expect(repository.loadLatestDeleteLocalData()).toEqual({
+      version: 1,
+      operationId: 'delete-local-2',
+      operationType: 'delete-local-data',
+      phase: 'completed'
+    })
+  })
+
   it('refuses to change the identity or account scope of an operation', () => {
     const { repository } = createRepository()
     repository.save(disconnectOperation())

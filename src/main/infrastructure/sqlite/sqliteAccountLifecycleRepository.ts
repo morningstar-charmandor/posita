@@ -4,6 +4,7 @@ import {
   isLifecycleOperationV1,
   isOperationId,
   type AccountLifecycleRepository,
+  type DeleteLocalDataOperationV1,
   type LifecycleOperationV1
 } from '../../application/accountLifecycle'
 
@@ -98,6 +99,30 @@ export class SqliteAccountLifecycleRepository implements AccountLifecycleReposit
     } catch (error) {
       if (error instanceof AccountLifecycleError) throw error
       throw storageFailure('Failed to load account lifecycle state.', error)
+    }
+  }
+
+  loadLatestDeleteLocalData(): DeleteLocalDataOperationV1 | undefined {
+    try {
+      const row = this.database.prepare(`
+        SELECT version, operation_id, operation_type, account_scope, phase, last_error_code
+        FROM account_lifecycle_operations
+        WHERE operation_type = 'delete-local-data'
+        ORDER BY created_at DESC, rowid DESC
+        LIMIT 1
+      `).get() as unknown as LifecycleRow | undefined
+      if (row === undefined) return undefined
+      const operation = parseRow(row)
+      if (operation.operationType !== 'delete-local-data') {
+        throw new AccountLifecycleError(
+          'INVALID_LIFECYCLE_STATE',
+          'Stored installation deletion state is invalid.'
+        )
+      }
+      return operation
+    } catch (error) {
+      if (error instanceof AccountLifecycleError) throw error
+      throw storageFailure('Failed to load installation deletion state.', error)
     }
   }
 

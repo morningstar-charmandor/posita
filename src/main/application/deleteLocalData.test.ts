@@ -13,6 +13,7 @@ import type {
   ProviderSyncStateV1
 } from './accountState'
 import {
+  ComposedDeleteLocalDataActions,
   DeleteLocalDataService,
   type CacheDataKeyEraser
 } from './deleteLocalData'
@@ -34,6 +35,13 @@ class MemoryLifecycleRepository implements AccountLifecycleRepository {
   }
   load(operationId: string): LifecycleOperationV1 | undefined {
     const value = this.operations.get(operationId)
+    return value && structuredClone(value)
+  }
+  loadLatestDeleteLocalData(): DeleteLocalDataOperationV1 | undefined {
+    const operations = [...this.operations.values()]
+      .filter((value): value is DeleteLocalDataOperationV1 =>
+        value.operationType === 'delete-local-data')
+    const value = operations.at(-1)
     return value && structuredClone(value)
   }
   listPending(): LifecycleOperationV1[] {
@@ -160,15 +168,15 @@ const createHarness = (failure?: FailureStep) => {
   const lifecycle = new MemoryLifecycleRepository()
   const mail = new FakeMailRepository(actions, failure)
   const confirmation = new FakeConfirmation()
+  const vault = new FakeVault(actions, failure)
+  const accountState = new FakeAccountState(actions, failure)
+  const keyEraser = new FakeKeyEraser(actions, failure)
   const service = new DeleteLocalDataService(
     lifecycle,
-    new FakeVault(actions, failure),
-    new FakeAccountState(actions, failure),
-    mail,
-    new FakeKeyEraser(actions, failure),
+    new ComposedDeleteLocalDataActions(vault, accountState, mail, keyEraser),
     confirmation
   )
-  return { actions, confirmation, lifecycle, mail, service }
+  return { actions, accountState, confirmation, keyEraser, lifecycle, mail, service, vault }
 }
 
 const request = {
@@ -289,10 +297,12 @@ describe('DeleteLocalDataService', () => {
     const harness = createHarness()
     const waiting = new DeleteLocalDataService(
       harness.lifecycle,
-      new FakeVault(harness.actions),
-      new FakeAccountState(harness.actions),
-      harness.mail,
-      { delete: () => pending },
+      new ComposedDeleteLocalDataActions(
+        new FakeVault(harness.actions),
+        new FakeAccountState(harness.actions),
+        harness.mail,
+        { delete: () => pending }
+      ),
       harness.confirmation
     )
     harness.lifecycle.save(operation('data-key-delete-pending'))
@@ -364,6 +374,20 @@ describe('DeleteLocalDataService', () => {
       code: 'DELETE_LOCAL_DATA_RESUME_NOT_FOUND', retryable: false
     })
     expect(harness.lifecycle.operations.size).toBe(0)
+  })
+
+  it('stops recovery between phases when its lifecycle owner is cancelled', async () => {
+    const harness = createHarness()
+    harness.lifecycle.save(operation('mail-data-delete-pending'))
+    const controller = new AbortController()
+    controller.abort()
+
+    await expect(harness.service.resume(
+      { version: 1, operationId: request.operationId },
+      controller.signal
+    )).rejects.toMatchObject({ name: 'AbortError' })
+    expect(harness.lifecycle.load(request.operationId)).toEqual(operation('mail-data-delete-pending'))
+    expect(harness.actions).toEqual([])
   })
 
   it('maps confirmation storage failure to a safe retryable error', async () => {

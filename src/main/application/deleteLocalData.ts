@@ -15,6 +15,44 @@ export interface CacheDataKeyEraser {
   delete(): Promise<boolean>
 }
 
+export interface DeleteLocalDataActions {
+  deleteRefreshCredentials(): Promise<void>
+  deleteAccountState(): void
+  deleteMailRecords(): void
+  sanitizeStorage(): void
+  eraseDataKey(): Promise<void>
+}
+
+export class ComposedDeleteLocalDataActions implements DeleteLocalDataActions {
+  constructor(
+    private readonly vault: SecretVault,
+    private readonly accountState: AccountStateRepository,
+    private readonly mailRepository: MutableMailRepository,
+    private readonly keyEraser: CacheDataKeyEraser
+  ) {}
+
+  async deleteRefreshCredentials(): Promise<void> {
+    await this.vault.deleteGoogleRefreshTokens()
+  }
+
+  deleteAccountState(): void {
+    this.accountState.deleteAllAccountState()
+  }
+
+  deleteMailRecords(): void {
+    this.mailRepository.deleteAllRecords()
+  }
+
+  sanitizeStorage(): void {
+    this.mailRepository.sanitizeStorage()
+  }
+
+  async eraseDataKey(): Promise<void> {
+    await this.keyEraser.delete()
+    this.mailRepository.destroyEncryptionContext()
+  }
+}
+
 export interface DeleteLocalDataRequestV1 {
   version: 1
   operationId: string
@@ -80,10 +118,7 @@ export class DeleteLocalDataService {
 
   constructor(
     private readonly lifecycle: AccountLifecycleRepository,
-    private readonly vault: SecretVault,
-    private readonly accountState: AccountStateRepository,
-    private readonly mailRepository: MutableMailRepository,
-    private readonly keyEraser: CacheDataKeyEraser,
+    private readonly actions: DeleteLocalDataActions,
     private readonly confirmation: LocalActionConfirmationVerifier
   ) {}
 
@@ -97,13 +132,16 @@ export class DeleteLocalDataService {
     return this.start(request.operationId, () => this.execute(request))
   }
 
-  resume(request: ResumeDeleteLocalDataRequestV1): Promise<DeleteLocalDataResultV1> {
+  resume(
+    request: ResumeDeleteLocalDataRequestV1,
+    signal?: AbortSignal
+  ): Promise<DeleteLocalDataResultV1> {
     if (request.version !== 1 || !isOperationId(request.operationId)) {
       return Promise.reject(new DeleteLocalDataError(
         'INVALID_DELETE_LOCAL_DATA_REQUEST', 'The local-data deletion request is invalid.', false
       ))
     }
-    return this.start(request.operationId, () => this.executeExisting(request.operationId))
+    return this.start(request.operationId, () => this.executeExisting(request.operationId, signal))
   }
 
   private start(
@@ -128,7 +166,10 @@ export class DeleteLocalDataService {
     return this.run(operation)
   }
 
-  private async executeExisting(operationId: string): Promise<DeleteLocalDataResultV1> {
+  private async executeExisting(
+    operationId: string,
+    signal?: AbortSignal
+  ): Promise<DeleteLocalDataResultV1> {
     let operation
     try {
       operation = this.lifecycle.load(operationId)
@@ -142,13 +183,15 @@ export class DeleteLocalDataService {
         false
       )
     }
-    return this.run(operation)
+    return this.run(operation, signal)
   }
 
   private async run(
-    operation: DeleteLocalDataOperationV1
+    operation: DeleteLocalDataOperationV1,
+    signal?: AbortSignal
   ): Promise<DeleteLocalDataResultV1> {
     while (operation.phase !== 'completed') {
+      signal?.throwIfAborted()
       const phase = operation.phase
       try {
         await this.perform(phase)
@@ -252,16 +295,13 @@ export class DeleteLocalDataService {
   private async perform(phase: Exclude<DeleteLocalDataPhase, 'completed'>): Promise<void> {
     switch (phase) {
       case 'credentials-delete-pending': {
-        await this.vault.deleteGoogleRefreshTokens()
+        await this.actions.deleteRefreshCredentials()
         return
       }
-      case 'account-state-delete-pending': this.accountState.deleteAllAccountState(); return
-      case 'mail-data-delete-pending': this.mailRepository.deleteAllRecords(); return
-      case 'compaction-pending': this.mailRepository.sanitizeStorage(); return
-      case 'data-key-delete-pending':
-        await this.keyEraser.delete()
-        this.mailRepository.destroyEncryptionContext()
-        return
+      case 'account-state-delete-pending': this.actions.deleteAccountState(); return
+      case 'mail-data-delete-pending': this.actions.deleteMailRecords(); return
+      case 'compaction-pending': this.actions.sanitizeStorage(); return
+      case 'data-key-delete-pending': await this.actions.eraseDataKey(); return
     }
   }
 

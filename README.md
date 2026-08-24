@@ -29,13 +29,19 @@ revocation, credential deletion, provider-state deletion, local-data removal, an
 compaction through interfaces and deterministic tests. A separate installation-wide
 orchestrator now journals deletion of all refresh credentials, encrypted account
 state, mail records, SQLite remnants, the OS-protected data key, and its in-memory
-copy. Both workflows are deliberately inactive: there is no live Google revoker,
-user trigger, startup recovery owner, or safe post-deletion bootstrap yet. New
-full deletion is now guarded by a five-minute typed confirmation bound to one
-operation, and pending journal state has a bounded safe-status projection. These
+copy. Both workflows remain non-user-triggerable: there is no live Google revoker
+or lifecycle mutation IPC. New full deletion is guarded by a five-minute typed
+confirmation bound to one operation, and pending journal state has a bounded
+safe-status projection. These
 contracts are not exposed over IPC or rendered in the UI. Gmail and AI providers
 are not connected, no real OAuth credential exists, and sending is deliberately
 disabled.
+
+Startup now has one cancellable lifecycle-recovery owner. If a full deletion is
+journaled, it resumes through deletion-only SQLite and vault operations without
+loading or creating the encryption key. A completed marker keeps later restarts
+in `local-data-deleted` mode and prevents fixture reseeding. Pending account
+disconnect remains inactive because no live authorization revoker exists.
 
 Read the build boundaries before extending the prototype:
 

@@ -18,9 +18,9 @@ and actions.
 **Current stage:** Gate 2D account-lifecycle foundation in progress, with a real
 SQLite path, OS-protected key hierarchy, authenticated mail and provider-account
 state, plus tested crash-resumable disconnect and full local-deletion orchestrators.
-Gmail and AI are not connected, and neither lifecycle workflow has a live provider,
-startup recovery owner, or user trigger. Full deletion now has an operation-bound
-typed-confirmation gate and a safe status projection, neither exposed in the UI.
+Gmail and AI are not connected, and neither workflow has a user trigger. Disconnect
+has no live revoker; full deletion has keyless startup recovery, an operation-bound
+typed-confirmation gate, and safe status, none exposed in the UI.
 
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
 
@@ -133,15 +133,21 @@ Full local deletion adds a distinct ordering problem: the shared data key must
 remain available long enough to remove encrypted records and sanitize SQLite, but
 must be erased before completion is reported. Posita now journals credentials,
 account state, mail records, compaction, OS-vault key deletion, and in-memory key
-destruction as retryable phases. Activation is intentionally deferred until
-startup can resume after key erasure without silently creating a replacement key.
+destruction as retryable phases.
 
 The command boundary separates authorization from recovery. A new destructive
 operation needs exact typed confirmation within five minutes, while recovery can
 only resume an already-journaled operation and cannot silently create one. The
 confirmation receipt stores opaque identifiers and timestamps rather than user
-text or mailbox content. Status says work is pending—not running—unless a future
-lifecycle owner can prove active execution.
+text or mailbox content. Status says work is pending—not running—because a
+persistent marker alone cannot prove active execution.
+
+The restart boundary required another architectural change. Posita now inspects
+the non-sensitive journal before normal key bootstrap. A deletion-only adapter can
+remove ciphertext and SQLite remnants without decrypting them, erase a key if it
+still exists, and complete when it is already absent. The completed marker acts as
+a durable deleted-mode tombstone, preventing later restarts from generating a new
+key and reseeding sample data. Conflicting lifecycle rows fail closed.
 
 ### Choosing bounded context
 
@@ -174,10 +180,12 @@ At the current Gate 2D foundation checkpoint, Posita has:
   key erasure, and in-memory key destruction, with durable overlap prevention,
 - short-lived operation-bound confirmation, auditable non-private receipts, a
   recovery-only resume entry point, and bounded safe lifecycle status,
+- keyless pre-bootstrap recovery, shutdown cancellation between phases, and a
+  durable deleted mode that remains empty across repeated restarts,
 - future sync ownership and account-isolation contracts without premature
   provider implementation,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 22 automated test files containing 134 passing tests,
+- 25 automated test files containing 147 passing tests,
 - passing strict TypeScript, structural security checks, and production builds.
 
 These are engineering outcomes, not evidence of customer adoption or AI quality.
@@ -185,10 +193,10 @@ No real mailbox, OAuth credential, or model provider has been used.
 
 ## What comes next
 
-The next Gate 2D slice will add restart-aware background recovery that never
-replaces an erased key or reseeds deleted data. Only after that activation path
-passes verification should Posita expose confirmation/status in the UI or add
-Gmail OAuth and a deterministic sync adapter.
+The next Gate 2D slice will expose read-only deleted/pending/retry state to the UI
+without adding a destructive command. A narrow confirmed-deletion IPC can be
+reviewed only after that status path is truthful end to end. Gmail OAuth and its
+deterministic sync adapter remain blocked behind the lifecycle activation gate.
 
 Later evidence should include measured sync reliability, duplicate prevention,
 citation correctness, draft usefulness, correction rate, and time to attention.

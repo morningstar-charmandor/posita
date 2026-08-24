@@ -48,6 +48,17 @@ export class CacheDataKeyManager {
     return key
   }
 
+  async loadExisting(): Promise<Uint8Array> {
+    const encoded = await this.vault.get(CACHE_DATA_KEY_NAME)
+    if (encoded === undefined) {
+      throw new EncryptedCacheError(
+        'CACHE_KEY_MISSING',
+        'A pending lifecycle operation requires the existing protected cache key.'
+      )
+    }
+    return decodeKey(encoded)
+  }
+
   async delete(): Promise<boolean> {
     return this.vault.delete(CACHE_DATA_KEY_NAME)
   }

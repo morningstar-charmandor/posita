@@ -36,6 +36,7 @@ class MemoryLifecycleRepository implements AccountLifecycleRepository {
     const value = this.operations.get(operationId)
     return value && structuredClone(value)
   }
+  loadLatestDeleteLocalData(): undefined { return undefined }
   listPending(): LifecycleOperationV1[] {
     return [...this.operations.values()].filter((operation) => operation.phase !== 'completed')
   }
