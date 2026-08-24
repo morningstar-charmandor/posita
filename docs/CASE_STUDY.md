@@ -19,8 +19,9 @@ and actions.
 SQLite path, OS-protected key hierarchy, authenticated mail and provider-account
 state, plus tested crash-resumable disconnect and full local-deletion orchestrators.
 Gmail and AI are not connected, and neither workflow has a user trigger. Disconnect
-has no live revoker; full deletion has keyless startup recovery, an operation-bound
-typed-confirmation gate, and safe status, none exposed in the UI.
+has no live revoker; full deletion has keyless startup recovery and an operation-bound
+typed-confirmation gate. A single read-only application-state boundary now renders
+safe lifecycle and deleted states without exposing a destructive command.
 
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
 
@@ -182,10 +183,12 @@ At the current Gate 2D foundation checkpoint, Posita has:
   recovery-only resume entry point, and bounded safe lifecycle status,
 - keyless pre-bootstrap recovery, shutdown cancellation between phases, and a
   durable deleted mode that remains empty across repeated restarts,
+- one validated read-only application-state query and accessible pending,
+  retry-required, recovery-required, and local-data-deleted UI states,
 - future sync ownership and account-isolation contracts without premature
   provider implementation,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 25 automated test files containing 147 passing tests,
+- 26 automated test files containing 157 passing tests,
 - passing strict TypeScript, structural security checks, and production builds.
 
 These are engineering outcomes, not evidence of customer adoption or AI quality.
@@ -193,9 +196,9 @@ No real mailbox, OAuth credential, or model provider has been used.
 
 ## What comes next
 
-The next Gate 2D slice will expose read-only deleted/pending/retry state to the UI
-without adding a destructive command. A narrow confirmed-deletion IPC can be
-reviewed only after that status path is truthful end to end. Gmail OAuth and its
+The next Gate 2D slice can review a narrow confirmed-deletion IPC as a separate
+authorized capability now that the read-only status path is truthful end to end.
+Gmail OAuth and its
 deterministic sync adapter remain blocked behind the lifecycle activation gate.
 
 Later evidence should include measured sync reliability, duplicate prevention,

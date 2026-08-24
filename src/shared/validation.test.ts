@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { fixtures } from './fixtures'
 import {
   isAppSnapshot,
-  isLoadSnapshotRequest,
+  isLoadApplicationStateRequest,
+  isLoadApplicationStateResponse,
   isLoadSnapshotResponse,
   isMailDataset
 } from './validation'
@@ -19,9 +20,57 @@ describe('shared contract validation', () => {
   })
 
   it('requires an exact versioned request shape', () => {
-    expect(isLoadSnapshotRequest({ version: 1 })).toBe(true)
-    expect(isLoadSnapshotRequest({ version: 2 })).toBe(false)
-    expect(isLoadSnapshotRequest({ version: 1, channel: 'arbitrary' })).toBe(false)
+    expect(isLoadApplicationStateRequest({ version: 1 })).toBe(true)
+    expect(isLoadApplicationStateRequest({ version: 2 })).toBe(false)
+    expect(isLoadApplicationStateRequest({ version: 1, channel: 'arbitrary' })).toBe(false)
+  })
+
+  it('accepts only coherent application and lifecycle states', () => {
+    expect(isLoadApplicationStateResponse({
+      ok: true,
+      value: { version: 1, mode: 'local-data-deleted' }
+    })).toBe(true)
+    expect(isLoadApplicationStateResponse({
+      ok: true,
+      value: {
+        version: 1,
+        mode: 'ready',
+        snapshot: {
+          version: 1,
+          dataMode: 'fixture-seeded',
+          loadedAt: '2026-08-24T05:30:00.000Z',
+          dataset: fixtures
+        },
+        lifecycle: {
+          version: 1,
+          state: 'pending',
+          operations: [{
+            version: 1,
+            operationId: 'disconnect-work-1',
+            operationType: 'disconnect-account',
+            accountId: 'work',
+            status: 'pending',
+            stage: 'removing-mail-data',
+            completedSteps: 3,
+            totalSteps: 5,
+            message: 'Account disconnection is pending.'
+          }]
+        }
+      }
+    })).toBe(true)
+    expect(isLoadApplicationStateResponse({
+      ok: true,
+      value: {
+        version: 1,
+        mode: 'ready',
+        snapshot: { version: 1 },
+        lifecycle: { version: 1, state: 'idle', operations: [{ status: 'pending' }] }
+      }
+    })).toBe(false)
+    expect(isLoadApplicationStateResponse({
+      ok: true,
+      value: { version: 1, mode: 'local-data-deleted', retryOperationId: 'hidden-command' }
+    })).toBe(false)
   })
 
   it('rejects malformed success and error responses', () => {
@@ -42,6 +91,17 @@ describe('shared contract validation', () => {
     invalid.topics[0]!.events[0]!.citationMessageId = 'missing-message'
 
     expect(isMailDataset(invalid)).toBe(false)
+  })
+
+  it('rejects undeclared fields anywhere in the renderer payload', () => {
+    const invalid = structuredClone(fixtures) as typeof fixtures & { providerPayload?: unknown }
+    invalid.providerPayload = { raw: 'must not cross the bridge' }
+
+    expect(isMailDataset(invalid)).toBe(false)
+    expect(isLoadApplicationStateResponse({
+      ok: true,
+      value: { version: 1, mode: 'recovery-required', databasePath: '/private/path' }
+    })).toBe(false)
   })
 
   it('rejects a display label in the absolute source timestamp field', () => {

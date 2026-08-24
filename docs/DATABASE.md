@@ -158,15 +158,19 @@ will use later.
 
 ## IPC contract
 
-Gate 2A exposes exactly one read-only method:
+The renderer boundary exposes exactly one read-only application-state method:
 
 ```text
-loadSnapshot({ version: 1 }) -> Result<AppSnapshotV1, AppErrorV1>
+loadApplicationState({ version: 1 })
+  -> Result<ApplicationStateV1, AppErrorV1>
 ```
 
 The main process validates the calling `webContents`, main frame, request shape,
-and response. The sandboxed preload is fully bundled as one CommonJS file and
-exposes only `loadSnapshot()`; it does not expose channel names or `ipcRenderer`.
+and response. In ready mode the response composes the fixture-backed mail snapshot
+with the safe lifecycle-status projection. Deleted and recovery-required modes do
+not carry mail data. The sandboxed preload is fully bundled as one CommonJS file
+and exposes only `loadApplicationState()`; it does not expose channel names or
+`ipcRenderer`.
 
 Errors use stable codes and safe messages. Database paths, SQL, stack traces, and
 raw provider content never cross the bridge.

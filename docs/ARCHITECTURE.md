@@ -121,8 +121,9 @@ trusted main process and has no preload or renderer surface.
 Gate 2D schema v5 adds the operational lifecycle journal from ADR-012. It stays
 outside the deletable key boundary and stores no private content, allowing a
 future disconnect or delete-local-data workflow to resume after interruption or
-cryptographic erasure. The journal records progress only; no lifecycle step is
-executed by the current build.
+cryptographic erasure. The journal records progress only. Startup can execute an
+already-authorized full-deletion recovery; it cannot create new lifecycle work,
+and pending disconnect remains inactive.
 
 Ownership remains singular:
 
@@ -231,8 +232,11 @@ and resumes full deletion through a keyless SQLite/vault adapter. It never calls
 runtime on every later restart without reseeding fixtures. The Electron shutdown
 owner aborts between phases; completed phase actions remain journaled.
 
-No preload, IPC, renderer command, or user-facing deleted-state view exists yet.
-Pending disconnects are counted but not resumed because production has no Google
+One read-only application-state query now composes the mail snapshot and safe
+lifecycle projection in main, validates the union in preload, and renders explicit
+pending, retry-required, recovery-required, and local-data-deleted states. It has
+no mutation capability. Pending disconnects are counted but not resumed because
+production has no Google
 revocation adapter. Their presence requires the existing key and suppresses
 fixture seeding, so startup cannot undo a completed local-mail phase. Recovery
 uses synchronous SQLite only for the current bounded

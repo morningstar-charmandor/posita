@@ -4,7 +4,7 @@ import React from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fixtures } from '@shared/fixtures'
 import { App } from './App'
-import type { MailDataSource } from './application/mailDataSource'
+import type { ApplicationStateDataSource } from './application/mailDataSource'
 
 afterEach(cleanup)
 
@@ -12,14 +12,23 @@ const successResponse = {
   ok: true as const,
   value: {
     version: 1 as const,
-    dataMode: 'fixture-seeded' as const,
-    loadedAt: '2026-08-24T05:30:00.000Z',
-    dataset: fixtures
+    mode: 'ready' as const,
+    snapshot: {
+      version: 1 as const,
+      dataMode: 'fixture-seeded' as const,
+      loadedAt: '2026-08-24T05:30:00.000Z',
+      dataset: fixtures
+    },
+    lifecycle: {
+      version: 1 as const,
+      state: 'idle' as const,
+      operations: []
+    }
   }
 }
 
-const dataSource: MailDataSource = {
-  loadSnapshot: async () => successResponse
+const dataSource: ApplicationStateDataSource = {
+  loadApplicationState: async () => successResponse
 }
 
 const openPulse = async (): Promise<void> => {
@@ -29,8 +38,8 @@ const openPulse = async (): Promise<void> => {
 
 describe('Posita vertical slice', () => {
   it('shows an explicit local-data loading state', () => {
-    const pendingSource: MailDataSource = {
-      loadSnapshot: () => new Promise(() => undefined)
+    const pendingSource: ApplicationStateDataSource = {
+      loadApplicationState: () => new Promise(() => undefined)
     }
     render(<App dataSource={pendingSource} />)
 
@@ -73,7 +82,7 @@ describe('Posita vertical slice', () => {
   })
 
   it('shows a retryable database error and reloads through the data source', async () => {
-    const loadSnapshot = vi.fn()
+    const loadApplicationState = vi.fn()
       .mockResolvedValueOnce({
         ok: false,
         error: {
@@ -85,11 +94,99 @@ describe('Posita vertical slice', () => {
       })
       .mockResolvedValueOnce(successResponse)
 
-    render(<App dataSource={{ loadSnapshot }} />)
+    render(<App dataSource={{ loadApplicationState }} />)
     expect(await screen.findByRole('alert')).toHaveTextContent('Local mail data is unavailable')
 
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
     expect(await screen.findByText('Confirm Pulse scope with Rahul')).toBeInTheDocument()
-    await waitFor(() => expect(loadSnapshot).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(loadApplicationState).toHaveBeenCalledTimes(2))
+  })
+
+  it('shows completed local deletion without implying remote mailbox deletion', async () => {
+    render(<App dataSource={{
+      loadApplicationState: async () => ({
+        ok: true,
+        value: { version: 1, mode: 'local-data-deleted' }
+      })
+    }} />)
+
+    expect(await screen.findByRole('heading', { name: 'Local data has been deleted' }))
+      .toBeInTheDocument()
+    expect(screen.getByText('Your provider mailbox was not deleted or changed.'))
+      .toBeInTheDocument()
+  })
+
+  it('shows a read-only startup recovery state', async () => {
+    render(<App dataSource={{
+      loadApplicationState: async () => ({
+        ok: true,
+        value: { version: 1, mode: 'recovery-required' }
+      })
+    }} />)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Local data recovery needs attention')
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
+  })
+
+  it('shows safe pending lifecycle progress with account provenance', async () => {
+    render(<App dataSource={{
+      loadApplicationState: async () => ({
+        ok: true,
+        value: {
+          ...successResponse.value,
+          lifecycle: {
+            version: 1,
+            state: 'pending',
+            operations: [{
+              version: 1,
+              operationId: 'disconnect-work-1',
+              operationType: 'disconnect-account',
+              accountId: 'work',
+              status: 'pending',
+              stage: 'removing-mail-data',
+              completedSteps: 3,
+              totalSteps: 5,
+              message: 'Account disconnection is pending.'
+            }]
+          }
+        }
+      })
+    }} />)
+
+    const status = await screen.findByRole('status', { name: 'Local data activity' })
+    expect(status).toHaveTextContent('Work · shafi@studio.co')
+    expect(screen.getByRole('progressbar', { name: 'Removing cached mail progress' }))
+      .toHaveAttribute('value', '3')
+  })
+
+  it('announces retry-required lifecycle work without exposing a mutation control', async () => {
+    render(<App dataSource={{
+      loadApplicationState: async () => ({
+        ok: true,
+        value: {
+          ...successResponse.value,
+          lifecycle: {
+            version: 1,
+            state: 'attention-required',
+            operations: [{
+              version: 1,
+              operationId: 'disconnect-work-1',
+              operationType: 'disconnect-account',
+              accountId: 'work',
+              status: 'retry-required',
+              stage: 'removing-credentials',
+              completedSteps: 1,
+              totalSteps: 5,
+              message: 'Posita could not finish disconnecting this account. Retry is required.',
+              lastErrorCode: 'CREDENTIAL_DELETE_FAILED'
+            }]
+          }
+        }
+      })
+    }} />)
+
+    const alert = await screen.findByRole('alert', { name: 'Local data activity' })
+    expect(alert).toHaveTextContent('Local data needs attention')
+    expect(alert).not.toContainElement(screen.queryByRole('button', { name: /retry/i }))
   })
 })

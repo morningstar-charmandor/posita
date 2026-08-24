@@ -227,3 +227,19 @@
   undo its local deletion phase. Current bounded fixture recovery runs during
   startup; production-scale compaction must move off the Electron main event loop
   before real mailbox volume.
+
+## ADR-018: Expose one read-only application-state query
+
+- Status: accepted for Gate 2D
+- Context: The renderer needs truthful deleted, pending, and retry-required states,
+  but independently loading mail and lifecycle status could race and would widen
+  the preload surface before any lifecycle command is approved.
+- Decision: replace the renderer-facing snapshot method with one versioned,
+  validated `loadApplicationState` query. Main composes fixture-backed mail and the
+  bounded lifecycle projection for ready mode. Deleted and recovery-required modes
+  contain no mail snapshot. The UI may display status and progress but exposes no
+  lifecycle mutation.
+- Consequence: each render observes one coherent read-only state, startup failures
+  can fail closed with an explicit recovery-required screen, and completed local
+  deletion no longer appears as a generic database error. A future confirmed
+  deletion command remains a separate capability with separate authorization.

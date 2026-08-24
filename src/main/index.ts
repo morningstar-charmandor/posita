@@ -1,6 +1,8 @@
 import { join } from 'node:path'
 import { app, BrowserWindow, shell } from 'electron'
-import { bootstrapLocalData, createUnavailableLocalDataService } from './bootstrapLocalData'
+import { bootstrapLocalData } from './bootstrapLocalData'
+import { AccountLifecycleStatusService } from './application/accountLifecycleStatus'
+import { ApplicationStateService } from './application/applicationStateService'
 import type { MailRepository } from './application/mailRepository'
 import { registerApplicationIpc, type ApplicationIpcRegistration } from './ipc/applicationIpc'
 
@@ -54,7 +56,7 @@ app.once('before-quit', () => lifecycleRecoveryAbort.abort())
 
 app.whenReady().then(async () => {
   let repository: MailRepository | undefined
-  let service = createUnavailableLocalDataService()
+  let service = new ApplicationStateService('recovery-required')
 
   try {
     const runtime = await bootstrapLocalData(
@@ -62,7 +64,13 @@ app.whenReady().then(async () => {
       lifecycleRecoveryAbort.signal
     )
     repository = runtime.repository
-    service = runtime.service
+    service = runtime.mode === 'ready'
+      ? new ApplicationStateService(
+          'ready',
+          runtime.service,
+          new AccountLifecycleStatusService(runtime.accountLifecycleRepository)
+        )
+      : new ApplicationStateService('local-data-deleted')
   } catch {
     console.error('Posita local data initialization failed.')
   }

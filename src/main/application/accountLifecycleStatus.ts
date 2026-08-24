@@ -2,36 +2,13 @@ import type {
   AccountLifecycleRepository,
   DeleteLocalDataPhase,
   DisconnectPhase,
-  LifecycleFailureCode,
   LifecycleOperationV1
 } from './accountLifecycle'
-
-export type LifecyclePublicStage =
-  | 'revoking-access'
-  | 'removing-credentials'
-  | 'removing-account-state'
-  | 'removing-mail-data'
-  | 'sanitizing-storage'
-  | 'erasing-encryption-key'
-
-export interface LifecycleOperationStatusV1 {
-  version: 1
-  operationId: string
-  operationType: 'disconnect-account' | 'delete-local-data'
-  accountId?: string
-  status: 'pending' | 'retry-required'
-  stage: LifecyclePublicStage
-  completedSteps: number
-  totalSteps: number
-  message: string
-  lastErrorCode?: LifecycleFailureCode
-}
-
-export interface LifecycleStatusSnapshotV1 {
-  version: 1
-  state: 'idle' | 'pending' | 'attention-required'
-  operations: LifecycleOperationStatusV1[]
-}
+import type {
+  LifecycleOperationStatusV1,
+  LifecyclePublicStageV1,
+  LifecycleStatusSnapshotV1
+} from '../../shared/contracts'
 
 export class LifecycleStatusError extends Error {
   readonly code = 'LIFECYCLE_STATUS_UNAVAILABLE' as const
@@ -43,7 +20,7 @@ export class LifecycleStatusError extends Error {
   }
 }
 
-const disconnectStages: Record<Exclude<DisconnectPhase, 'completed'>, LifecyclePublicStage> = {
+const disconnectStages: Record<Exclude<DisconnectPhase, 'completed'>, LifecyclePublicStageV1> = {
   'revocation-pending': 'revoking-access',
   'credential-delete-pending': 'removing-credentials',
   'account-state-delete-pending': 'removing-account-state',
@@ -51,7 +28,7 @@ const disconnectStages: Record<Exclude<DisconnectPhase, 'completed'>, LifecycleP
   'compaction-pending': 'sanitizing-storage'
 }
 
-const deleteStages: Record<Exclude<DeleteLocalDataPhase, 'completed'>, LifecyclePublicStage> = {
+const deleteStages: Record<Exclude<DeleteLocalDataPhase, 'completed'>, LifecyclePublicStageV1> = {
   'credentials-delete-pending': 'removing-credentials',
   'account-state-delete-pending': 'removing-account-state',
   'mail-data-delete-pending': 'removing-mail-data',

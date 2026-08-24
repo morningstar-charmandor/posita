@@ -1,13 +1,13 @@
 import {
   POSITA_PROTOCOL_VERSION,
-  type LoadSnapshotResponseV1
+  type LoadApplicationStateResponseV1
 } from '@shared/contracts'
 
-export interface MailDataSource {
-  loadSnapshot(): Promise<LoadSnapshotResponseV1>
+export interface ApplicationStateDataSource {
+  loadApplicationState(): Promise<LoadApplicationStateResponseV1>
 }
 
-const unavailableResponse = (): LoadSnapshotResponseV1 => ({
+const unavailableResponse = (): LoadApplicationStateResponseV1 => ({
   ok: false,
   error: {
     version: POSITA_PROTOCOL_VERSION,
@@ -17,6 +17,7 @@ const unavailableResponse = (): LoadSnapshotResponseV1 => ({
   }
 })
 
-export const desktopMailDataSource: MailDataSource = {
-  loadSnapshot: () => window.posita?.loadSnapshot?.() ?? Promise.resolve(unavailableResponse())
+export const desktopApplicationStateDataSource: ApplicationStateDataSource = {
+  loadApplicationState: () =>
+    window.posita?.loadApplicationState?.() ?? Promise.resolve(unavailableResponse())
 }

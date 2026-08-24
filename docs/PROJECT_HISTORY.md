@@ -552,6 +552,49 @@ rather than a dedicated deleted/pending/retry view. Full deletion still has no
 production initiation path. Disconnect recovery, production-scale off-main-thread
 compaction, confirmation-receipt cleanup policy, OAuth, and real mail remain deferred.
 
+## Gate 2D foundation — Read-only lifecycle application state
+
+Date: 2026-08-24
+Checkpoint: use the Git commit whose subject is `feat: expose read-only lifecycle state`
+
+Goal: make lifecycle outcomes truthful and operable in the renderer without
+activating deletion, disconnect, or any other mutation capability.
+
+Delivered:
+
+- one versioned `loadApplicationState` IPC query replacing the renderer-facing
+  snapshot-only method,
+- main-process composition of fixture mail and safe lifecycle status into one
+  coherent ready-state response,
+- runtime validation in main and preload for ready, deleted, recovery-required,
+  pending, and retry-required states,
+- a dedicated completed-local-deletion screen that distinguishes Posita data from
+  the provider mailbox,
+- a fail-closed startup recovery-required screen with no action control,
+- accessible pending and attention notices with bounded progress and visible
+  account provenance,
+- ADR-018 and updated repository, architecture, database, continuity, and case-
+  study documentation.
+
+Important decisions:
+
+- keep mail and lifecycle reads in one query so the renderer cannot combine
+  snapshots from different moments,
+- represent bootstrap failure as a read-only recovery-required state,
+- keep the preload surface at one read method,
+- expose no confirmation, retry, disconnect, or deletion command in this slice.
+
+Evidence: 26 test files and 157 tests passed before final checkpoint verification.
+Coverage includes strict request and response validation, trusted-frame IPC,
+preload protocol rejection, application-state composition, deleted and recovery
+screens, pending progress, retry-required announcements, and absence of a retry
+mutation control.
+
+Limitations: all displayed mail remains fixture-backed. Pending disconnect is not
+resumed, the recovery-required screen relies on app restart rather than an IPC
+retry command, and full local deletion has no production initiation path. OAuth,
+Gmail, AI, sending, and every remote mailbox mutation remain disconnected.
+
 ## How future entries should be written
 
 For each material milestone, record:

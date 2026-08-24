@@ -1,14 +1,14 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { IPC_CHANNELS, type PositaDesktopApi } from '../shared/contracts'
-import { createLoadSnapshotClient } from './loadSnapshotClient'
+import { createLoadApplicationStateClient } from './loadApplicationStateClient'
 
-const loadSnapshot = createLoadSnapshotClient((request) =>
-  ipcRenderer.invoke(IPC_CHANNELS.loadSnapshot, request))
+const loadApplicationState = createLoadApplicationStateClient((request) =>
+  ipcRenderer.invoke(IPC_CHANNELS.loadApplicationState, request))
 
 const api: PositaDesktopApi = Object.freeze({
   platform: process.platform,
   prototypeMode: true,
-  loadSnapshot
+  loadApplicationState
 })
 
 contextBridge.exposeInMainWorld('posita', api)

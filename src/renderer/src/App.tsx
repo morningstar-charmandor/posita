@@ -1,19 +1,25 @@
 import { useCallback, useEffect, useState } from 'react'
-import { AlertTriangle, Database, RefreshCw } from 'lucide-react'
-import type { AppSnapshotV1 } from '@shared/contracts'
-import { desktopMailDataSource, type MailDataSource } from './application/mailDataSource'
+import { AlertTriangle, Database, RefreshCw, ShieldCheck } from 'lucide-react'
+import type { ApplicationStateV1 } from '@shared/contracts'
+import {
+  desktopApplicationStateDataSource,
+  type ApplicationStateDataSource
+} from './application/mailDataSource'
+import { LifecycleNotice } from './features/lifecycle/LifecycleNotice'
 import { Workspace } from './features/workspace/Workspace'
 
 type LoadState =
   | { status: 'loading' }
-  | { status: 'ready'; snapshot: AppSnapshotV1 }
+  | { status: 'loaded'; application: ApplicationStateV1 }
   | { status: 'error'; message: string; retryable: boolean }
 
 export interface AppProps {
-  dataSource?: MailDataSource
+  dataSource?: ApplicationStateDataSource
 }
 
-export function App({ dataSource = desktopMailDataSource }: AppProps): React.JSX.Element {
+export function App({
+  dataSource = desktopApplicationStateDataSource
+}: AppProps): React.JSX.Element {
   const [attempt, setAttempt] = useState(0)
   const [state, setState] = useState<LoadState>({ status: 'loading' })
 
@@ -23,10 +29,10 @@ export function App({ dataSource = desktopMailDataSource }: AppProps): React.JSX
     let active = true
     setState({ status: 'loading' })
 
-    void dataSource.loadSnapshot().then((response) => {
+    void dataSource.loadApplicationState().then((response) => {
       if (!active) return
       setState(response.ok
-        ? { status: 'ready', snapshot: response.value }
+        ? { status: 'loaded', application: response.value }
         : {
             status: 'error',
             message: response.error.message,
@@ -70,5 +76,36 @@ export function App({ dataSource = desktopMailDataSource }: AppProps): React.JSX
     )
   }
 
-  return <Workspace dataset={state.snapshot.dataset} />
+  if (state.application.mode === 'local-data-deleted') {
+    return (
+      <main className="startup-state" aria-labelledby="deleted-state-title">
+        <span className="startup-icon"><ShieldCheck size={21} /></span>
+        <h1 id="deleted-state-title">Local data has been deleted</h1>
+        <p>Posita removed its local mailbox cache, stored credentials, and encryption key.</p>
+        <p>Your provider mailbox was not deleted or changed.</p>
+        <small>Account connection is not available in this build yet.</small>
+      </main>
+    )
+  }
+
+  if (state.application.mode === 'recovery-required') {
+    return (
+      <main className="startup-state" role="alert">
+        <span className="startup-icon startup-error"><AlertTriangle size={21} /></span>
+        <h1>Local data recovery needs attention</h1>
+        <p>Posita stopped before opening private mail data because startup could not finish safely.</p>
+        <p>Quit and reopen Posita to retry. No remote mailbox action is performed.</p>
+      </main>
+    )
+  }
+
+  return (
+    <div className="application-ready-state">
+      <Workspace dataset={state.application.snapshot.dataset} />
+      <LifecycleNotice
+        lifecycle={state.application.lifecycle}
+        accounts={state.application.snapshot.dataset.accounts}
+      />
+    </div>
+  )
 }

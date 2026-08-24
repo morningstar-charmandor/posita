@@ -32,8 +32,9 @@ state, mail records, SQLite remnants, the OS-protected data key, and its in-memo
 copy. Both workflows remain non-user-triggerable: there is no live Google revoker
 or lifecycle mutation IPC. New full deletion is guarded by a five-minute typed
 confirmation bound to one operation, and pending journal state has a bounded
-safe-status projection. These
-contracts are not exposed over IPC or rendered in the UI. Gmail and AI providers
+safe-status projection. One validated read-only application-state query now
+renders pending, retry-required, recovery-required, and completed local-deletion
+outcomes without exposing a lifecycle command. Gmail and AI providers
 are not connected, no real OAuth credential exists, and sending is deliberately
 disabled.
 
@@ -104,9 +105,10 @@ never depends on access to an earlier conversation.
 
 The React renderer has no Node.js access. Electron context isolation and process
 sandboxing are enabled, navigation is denied by default, and the preload bridge
-exposes one versioned read-only data method plus non-sensitive desktop metadata.
-SQLite lives behind main-process repository and credential-vault interfaces; the
-renderer receives only a validated snapshot. Source and derived fixture records
+exposes one versioned read-only application-state method plus non-sensitive
+desktop metadata. SQLite lives behind main-process repository and credential-vault
+interfaces; the renderer receives only a validated application state. Source and
+derived fixture records
 use authenticated encryption with an OS-protected installation key. Neither the
 key nor vault has an IPC surface. Personal-mail ingestion remains blocked until
 account-scoped retention, disconnect, and deletion orchestration are complete.

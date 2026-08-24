@@ -140,7 +140,3 @@ export const bootstrapLocalData = (
   confirmationIdSource: randomUUID,
   signal
 })
-
-export const createUnavailableLocalDataService = (): MailApplicationService => {
-  return new MailApplicationService(unavailableRepository(), systemClock)
-}
