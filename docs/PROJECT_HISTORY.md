@@ -233,6 +233,42 @@ Evidence: 13 test files and 53 tests, strict typechecking, structural checks, an
 the production build passed. This checkpoint changes engineering contracts and
 small accessibility behavior; Gmail, AI, and runtime sync remain unimplemented.
 
+## Gate 2D foundation — Encrypted account and sync state
+
+Date: 2026-08-24
+Checkpoint: use the Git commit whose subject is `feat: add encrypted account state`
+
+Goal: establish the account-scoped persistent contracts needed by retention and
+disconnect work without authorizing Google or storing a real provider identity.
+
+Delivered:
+
+- versioned runtime-validated provider-account and sync-state contracts,
+- schema version 4 with a strict `encrypted_account_records` table,
+- authenticated encryption of provider subject IDs, consent metadata, cursors,
+  success timestamps, status, and typed safe failure codes,
+- one account-state repository composed in the trusted main process using the
+  existing OS-protected cache key and envelope format,
+- idempotent state replacement and account-scoped deletion,
+- structural verification that production composition uses the encrypted adapter.
+
+Important decisions:
+
+- reuse the existing key hierarchy instead of introducing another key or package,
+- leave only opaque Posita account scope and allow-listed record kind queryable,
+- keep provider state completely outside IPC and the renderer,
+- implement storage before lifecycle orchestration so a future disconnect state
+  machine has one validated source of truth.
+
+Evidence: 14 test files and 59 tests passed with strict typechecking, structural
+checks, and a production build. Tests cover encrypted round trips, plaintext
+absence, replacement, cross-account isolation, metadata substitution, scoped
+deletion, invalid-state refusal, and schema-v3 upgrade preservation.
+
+Limitations: no provider account, OAuth token, sync cursor, Gmail request, polling,
+retention maintenance, or disconnect workflow is active. Gate 2D remains in
+progress; real-mail ingestion stays blocked.
+
 ## How future entries should be written
 
 For each material milestone, record:

@@ -1,12 +1,13 @@
 # Privacy and Retention Policy
 
-## Gate 2C boundary
+## Gate 2D boundary
 
 Posita currently contains deterministic sample mail only. Gate 2C stores that
 dataset as independently authenticated encrypted records and migrates existing
 fixture databases away from plaintext. Real mailbox ingestion remains disabled
 until account-scoped retention, disconnect, and deletion orchestration are
-implemented and tested.
+implemented and tested. Gate 2D has started by encrypting and validating the
+future provider-account identity and sync-state records; no real account exists.
 
 Gate 2B implements one production security primitive: OAuth refresh credentials
 can be stored in a main-process-only vault protected by Electron's asynchronous

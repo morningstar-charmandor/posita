@@ -180,6 +180,26 @@ export const migrations: readonly Migration[] = [
         updated_at TEXT NOT NULL
       ) STRICT;
     `
+  },
+  {
+    version: 4,
+    name: 'encrypted_provider_account_state',
+    sql: `
+      CREATE TABLE encrypted_account_records (
+        record_type TEXT NOT NULL CHECK (
+          record_type IN ('provider-account', 'sync-state')
+        ),
+        account_scope TEXT NOT NULL,
+        envelope_scheme TEXT NOT NULL,
+        payload BLOB NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (record_type, account_scope)
+      ) STRICT;
+
+      CREATE INDEX encrypted_account_records_scope_idx
+        ON encrypted_account_records(account_scope);
+    `
   }
 ]
 

@@ -82,6 +82,19 @@ receive real mail.
 complete. Startup resumes sanitization before reading the cache after an
 interruption.
 
+## Schema version 4
+
+`encrypted_account_records` extends the same envelope and key hierarchy to two
+future-provider records: `provider-account` and `sync-state`. Their payloads are
+versioned and runtime validated before use. Provider subject IDs, consent data,
+sync cursors, success timestamps, and typed failure state are ciphertext. The
+allow-listed record kind and opaque Posita account scope are queryable and bound
+as associated data.
+
+The account-state repository is main-process-only and is composed at startup with
+the existing cache protector. It stores no real account yet and does not authorize,
+sync, poll, disconnect, or expose anything over IPC.
+
 ## Legacy fixture migration
 
 For an existing Gate 2B database:
@@ -116,6 +129,6 @@ The repository provides a local-cache purge that deletes encrypted records,
 compacts SQLite, and truncates WAL. Full cryptographic erasure additionally
 deletes `cache.installation.data-key-v1` from the OS-protected vault.
 
-Account-scoped retention and disconnect orchestration remain blocked until the
-normalized Gmail record model exists. No real account may connect before those
-paths are implemented and tested.
+Account-scoped retention and crash-safe disconnect orchestration remain
+unimplemented. No real account may connect before those paths are implemented and
+tested.

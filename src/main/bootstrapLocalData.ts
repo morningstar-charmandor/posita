@@ -1,4 +1,5 @@
 import { fixtures } from '../shared/fixtures'
+import type { AccountStateRepository } from './application/accountState'
 import { MailApplicationService, systemClock } from './application/mailApplicationService'
 import type { MailRepository } from './application/mailRepository'
 import type { SecretVault } from './application/secretVault'
@@ -6,6 +7,7 @@ import { AesGcmCacheProtector } from './infrastructure/security/aesGcmCacheProte
 import { CacheDataKeyManager } from './infrastructure/security/cacheDataKeyManager'
 import { ElectronSafeStorageProtector } from './infrastructure/security/electronSafeStorageProtector'
 import { openPositaDatabase } from './infrastructure/sqlite/database'
+import { EncryptedSqliteAccountStateRepository } from './infrastructure/sqlite/encryptedSqliteAccountStateRepository'
 import { migrateLegacyPlaintextCache } from './infrastructure/sqlite/encryptedCacheMigration'
 import {
   countEncryptedRecords,
@@ -18,6 +20,7 @@ export interface LocalDataRuntime {
   repository: MailRepository
   service: MailApplicationService
   secretVault: SecretVault
+  accountStateRepository: AccountStateRepository
 }
 
 export const bootstrapLocalData = async (databasePath: string): Promise<LocalDataRuntime> => {
@@ -36,7 +39,8 @@ export const bootstrapLocalData = async (databasePath: string): Promise<LocalDat
     return {
       repository,
       service: new MailApplicationService(repository, systemClock),
-      secretVault
+      secretVault,
+      accountStateRepository: new EncryptedSqliteAccountStateRepository(database, protector)
     }
   } catch (error) {
     if (repository) repository.close()

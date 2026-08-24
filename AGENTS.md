@@ -6,8 +6,9 @@ exists deeper in the tree.
 
 ## Product state
 
-- Current milestone: Gate 2C, encrypted private-data cache foundation.
+- Current milestone: Gate 2D, encrypted account lifecycle in progress.
 - Current data: deterministic fixtures stored as authenticated encrypted records.
+- Encrypted provider-account and sync-state storage is implemented but empty.
 - An OS-protected credential vault is implemented but contains no real token.
 - Gmail, account lifecycle/retention, and model providers are not connected.
 - Sending mail is intentionally disabled.

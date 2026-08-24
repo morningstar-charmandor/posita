@@ -49,6 +49,11 @@ provider-independent application interface. It must:
 No Gmail SDK, OAuth response, credential, or provider-specific payload may cross
 the preload bridge.
 
+Gate 2D schema v4 now provides the encrypted application-side records needed for
+future provider identity and cursor state. These records are versioned, runtime
+validated, account-scoped, and main-process-only. They contain no live Google
+identity or cursor and do not implement authorization or synchronization.
+
 ## Normalized record and account isolation
 
 Before live sync, the shared mail contract must represent one canonical Posita

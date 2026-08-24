@@ -129,6 +129,9 @@ if (!localDataBootstrap.includes('new AesGcmCacheProtector(key)')) {
 if (!localDataBootstrap.includes('new EncryptedSqliteMailRepository(database, protector)')) {
   fail('production composition must use the encrypted mail repository')
 }
+if (!localDataBootstrap.includes('new EncryptedSqliteAccountStateRepository(database, protector)')) {
+  fail('production composition must use the encrypted account-state repository')
+}
 if (localDataBootstrap.includes('new SqliteMailRepository(')) {
   fail('production composition must not write mail through the legacy plaintext repository')
 }

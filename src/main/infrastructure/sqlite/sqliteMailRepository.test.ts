@@ -34,7 +34,8 @@ describe('SQLite migrations', () => {
       { name: 'messages' },
       { name: 'derived_artifacts' },
       { name: 'audit_events' },
-      { name: 'protected_secrets' }
+      { name: 'protected_secrets' },
+      { name: 'encrypted_account_records' }
     ]))
   })
 
@@ -51,6 +52,32 @@ describe('SQLite migrations', () => {
     expect(() => applyMigrations(database)).toThrowError(
       expect.objectContaining<Partial<RepositoryError>>({ code: 'MIGRATION_UNSUPPORTED' })
     )
+  })
+
+  it('upgrades a schema v3 cache without changing existing encrypted mail records', () => {
+    const database = openPositaDatabase(':memory:')
+    const repository = new SqliteMailRepository(database)
+    openRepositories.push(repository)
+    applyMigrations(database)
+    database.prepare(`
+      INSERT INTO encrypted_records (
+        record_type, record_id, account_scope, position, envelope_scheme, payload,
+        created_at, updated_at
+      ) VALUES ('account', 'fixture-account', 'fixture-account', 0,
+        'aes-256-gcm-v1', ?, datetime('now'), datetime('now'))
+    `).run(Buffer.from([1, 2, 3]))
+    database.exec('DROP TABLE encrypted_account_records')
+    database.prepare('DELETE FROM schema_migrations WHERE version = 4').run()
+
+    applyMigrations(database)
+
+    expect(getSchemaVersion(database)).toBe(4)
+    expect(database.prepare('SELECT COUNT(*) AS count FROM encrypted_records').get())
+      .toEqual({ count: 1 })
+    expect(database.prepare(`
+      SELECT name FROM sqlite_master
+      WHERE type = 'table' AND name = 'encrypted_account_records'
+    `).get()).toEqual({ name: 'encrypted_account_records' })
   })
 })
 

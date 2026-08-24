@@ -1,6 +1,6 @@
 # Local Data Foundation
 
-## Gate 2A–2C local storage foundation
+## Gate 2A–2D local storage foundation
 
 Gate 2A replaces the renderer's direct fixture import with a real local data
 path while keeping all content simulated:
@@ -76,6 +76,14 @@ queryable. All queryable metadata is authenticated with the ciphertext.
 `sanitization-pending` forces WAL truncation, `VACUUM`, another WAL truncation,
 and transition to `ready` before the cache can be treated as migrated.
 
+Schema version 4 adds `encrypted_account_records` for the future provider-account
+identity and incremental sync state. The versioned payload contains the provider
+subject ID, consent version, connection timestamp, cursor, last success, and typed
+safe failure code as applicable. Payloads use the existing authenticated cache
+envelope and installation key. Only an allow-listed record kind and opaque Posita
+account scope remain queryable; no address, provider subject, or cursor is stored
+in plaintext.
+
 ## Migrations
 
 Migrations are numbered, immutable, and applied in a transaction. Applied
@@ -131,3 +139,5 @@ The local-data and credential foundation requires tests for:
   wrong/missing/corrupt key failures, and bounded input,
 - transactional legacy migration, interruption recovery, unexpected-data refusal,
   database/WAL/sidecar plaintext scans, and compacted ciphertext deletion.
+- encrypted provider-account and sync-state round trips, replacement, account
+  isolation, metadata authentication, scoped deletion, and invalid-state refusal.

@@ -8,9 +8,9 @@ next move. Technical details remain in their linked source documents.
 
 ## Current state
 
-Posita is at **Gate 2C: encrypted private-data cache foundation**. The product
-is a runnable Electron desktop prototype using React, strict TypeScript, and
-SQLite. All visible mail is deterministic sample data.
+Posita is at **Gate 2D: encrypted account lifecycle in progress**. The product is
+a runnable Electron desktop prototype using React, strict TypeScript, and SQLite.
+All visible mail is deterministic sample data.
 
 The canonical public source repository is
 `https://github.com/morningstar-charmandor/posita`. The local `main` branch is
@@ -24,7 +24,7 @@ Implemented:
   and editable local draft interactions,
 - accessible loading, error, retry, empty, and source-grounding behavior,
 - sandboxed Electron renderer with a narrow validated preload/IPC contract,
-- SQLite schema versions 1–3 with transactional migrations and encrypted seeding,
+- SQLite schema versions 1–4 with transactional migrations and encrypted seeding,
 - main-process `SecretVault` with asynchronous OS-backed protection,
 - fail-closed credential behavior and a test-only deterministic fake,
 - per-installation OS-protected data key and AES-256-GCM record envelopes,
@@ -35,6 +35,9 @@ Implemented:
 - documented future provider boundary with one account-scoped normalized mail
   model, one sync coordinator, explicit cache reconciliation, and central
   idempotent source identity,
+- versioned provider-account and sync-state contracts with runtime validation,
+- encrypted provider subject, consent, cursor, success, and typed failure state
+  behind a main-process-only, account-scoped repository,
 - accessible names for icon-only workspace controls and reduced-motion styling,
 - deterministic credential-free verification through `npm run verify`.
 
@@ -43,6 +46,7 @@ Simulated or deliberately inactive:
 - all accounts, people, topics, messages, summaries, and drafts are fixtures,
 - generated-looking summaries and drafts are not produced by an AI provider,
 - no OAuth credential has been created or stored,
+- encrypted provider-account and sync-state tables contain no real account,
 - sending and every other remote mailbox mutation are disabled.
 
 Not implemented:
@@ -69,19 +73,19 @@ Not implemented:
 
 Proceed with **Gate 2D: encrypted account lifecycle** before implementing OAuth.
 
-The intended sequence is:
+The first foundation—encrypted provider-account and sync-state storage—is
+complete. Continue in this order:
 
-1. Define encrypted provider-record and sync-state types with opaque account scope.
-2. Define ownership for provider state, local corrections, derived artifacts,
+1. Define ownership for provider state, local corrections, derived artifacts,
    pending commands, and deletion state without implementing Gmail I/O.
-3. Implement rolling 90-day maintenance over decrypted message metadata in a
+2. Implement rolling 90-day maintenance over decrypted message metadata in a
    worker-safe application service.
-4. Define how shared people and topics are recomputed when one account is removed.
-5. Implement a deletion-pending state machine that survives interruption between
+3. Define how shared people and topics are recomputed when one account is removed.
+4. Implement a deletion-pending state machine that survives interruption between
    credential revocation, data-key erasure, record purge, and compaction.
-6. Test disconnect and full-local-delete crashes at every transition.
-7. Add explicit consent and safe status contracts without exposing private data.
-8. Keep real Gmail ingestion disabled until the lifecycle gate passes.
+5. Test disconnect and full-local-delete crashes at every transition.
+6. Add explicit consent and safe status contracts without exposing private data.
+7. Keep real Gmail ingestion disabled until the lifecycle gate passes.
 
 Do not solve encrypted search casually. Any index must avoid becoming a second
 plaintext mailbox. Record the selected search tradeoff in `docs/DECISIONS.md`.
@@ -104,7 +108,7 @@ plaintext mailbox. Record the selected search tradeoff in `docs/DECISIONS.md`.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 13 test files, 53 tests, strict typecheck, structure
+- Current verified baseline: 14 test files, 59 tests, strict typecheck, structure
   checks, and production Electron build passing.
 
 Native verification migrated the development database to schema v3 with 21

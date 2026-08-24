@@ -9,14 +9,17 @@ Public repository: [github.com/morningstar-charmandor/posita](https://github.com
 
 ## Current status
 
-Gate 2C is an encrypted local-data prototype. It includes a Daily Brief,
+Gate 2D is in progress on top of the encrypted local-data prototype. Posita
+includes a Daily Brief,
 topic timeline with source citations, original-message inspection, a unified
 classic mail view, and an editable draft flow. Realistic fixture data is seeded
 idempotently as independently authenticated AES-256-GCM records in a versioned
 local SQLite database and loaded through validated, read-only Electron IPC. A
-per-installation data key is protected by the operating-system vault. Gmail,
-account lifecycle/retention, and AI providers are not connected. No real OAuth
-credential exists, and sending is deliberately disabled.
+per-installation data key is protected by the operating-system vault. Schema v4
+adds versioned encrypted provider-account and sync-state records with strict
+account isolation; those tables contain no real account. Gmail, lifecycle
+orchestration, retention maintenance, and AI providers are not connected. No real
+OAuth credential exists, and sending is deliberately disabled.
 
 Read the build boundaries before extending the prototype:
 

@@ -112,6 +112,12 @@ uses the existing synchronous repository contract for the bounded snapshot. Key
 loss, unknown envelopes, and authentication failures make local data unavailable;
 they never trigger silent cache reset.
 
+Gate 2D schema v4 reuses the same protected installation key and envelope format
+for versioned provider-account identity and sync state. Provider subject IDs and
+cursors remain encrypted. Only the record kind and opaque Posita account scope
+are queryable, and both are authenticated. The repository is composed in the
+trusted main process and has no preload or renderer surface.
+
 ## Gmail synchronization
 
 The Gmail adapter will use an initial 90-day import followed by incremental
