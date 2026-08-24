@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "project": {
+    "name": "Posita",
+    "package": "posita",
+    "description": "Desktop-first personal mail hub organized around people, topics, context, and actions.",
+    "currentMilestone": "gate-1-offline-prototype",
+    "dataMode": "deterministic-fixtures",
+    "mailSendingEnabled": false
+  },
+  "toolchain": {
+    "node": "24.18.0",
+    "packageManager": "npm@11.16.0",
+    "language": "TypeScript",
+    "desktopHost": "Electron",
+    "renderer": "React"
+  },
+  "entrypoints": {
+    "main": "src/main/index.ts",
+    "preload": "src/preload/index.ts",
+    "renderer": "src/renderer/src/main.tsx",
+    "application": "src/renderer/src/App.tsx",
+    "domainTypes": "src/shared/domain.ts",
+    "fixtures": "src/renderer/src/data/fixtures.ts"
+  },
+  "scopedInstructions": {
+    "renderer": "src/renderer/AGENTS.md",
+    "main": "src/main/AGENTS.md",
+    "preload": "src/preload/AGENTS.md",
+    "shared": "src/shared/AGENTS.md"
+  },
+  "commands": {
+    "install": "npm install",
+    "develop": "npm run dev",
+    "test": "npm test",
+    "typecheck": "npm run typecheck",
+    "structureCheck": "npm run check:structure",
+    "verify": "npm run verify"
+  },
+  "sourcesOfTruth": [
+    "AGENTS.md",
+    "README.md",
+    "docs/MVP.md",
+    "docs/ARCHITECTURE.md",
+    "docs/DECISIONS.md",
+    "docs/ENGINEERING.md",
+    "product-spec.md"
+  ],
+  "invariants": [
+    "renderer-has-no-node-or-electron-imports",
+    "renderer-never-receives-secrets",
+    "mail-account-provenance-remains-visible",
+    "generated-claims-retain-source-message-ids",
+    "mailbox-mutations-require-explicit-user-approval",
+    "external-services-have-deterministic-fake-adapters",
+    "fixture-behavior-is-never-presented-as-live"
+  ],
+  "generatedPaths": [
+    "node_modules/",
+    "out/",
+    "coverage/",
+    "*.tsbuildinfo"
+  ],
+  "verification": {
+    "networkRequired": false,
+    "credentialsRequired": false,
+    "canonicalCommand": "npm run verify"
+  }
+}

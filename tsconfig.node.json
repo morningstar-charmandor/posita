@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "target": "ES2022",
+    "tsBuildInfoFile": "./node_modules/.cache/posita/tsconfig.node.tsbuildinfo",
+    "strict": true,
+    "skipLibCheck": true,
+    "types": ["node", "electron-vite/node"],
+    "noUncheckedIndexedAccess": true
+  },
+  "include": ["electron.vite.config.*", "src/main/**/*", "src/preload/**/*", "src/shared/**/*"]
+}

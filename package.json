@@ -1,0 +1,47 @@
+{
+  "name": "posita",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Your inboxes, understood as one.",
+  "main": "./out/main/index.js",
+  "type": "module",
+  "packageManager": "npm@11.16.0",
+  "engines": {
+    "node": ">=24.18.0 <25",
+    "npm": ">=11.16.0 <12"
+  },
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "npm run typecheck && electron-vite build",
+    "preview": "electron-vite preview",
+    "check:structure": "node scripts/check-project.mjs",
+    "check": "npm run check:structure && npm run typecheck && npm test",
+    "verify": "npm run check && electron-vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "5.3.0",
+    "lucide-react": "1.31.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/react": "16.3.2",
+    "@types/node": "26.2.0",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "@vitejs/plugin-react": "5.2.0",
+    "electron": "43.4.0",
+    "electron-vite": "5.0.0",
+    "jsdom": "30.0.1",
+    "typescript": "7.0.2",
+    "vite": "7.3.6",
+    "vitest": "4.1.10"
+  },
+  "allowScripts": {
+    "electron@43.4.0": true
+  }
+}
