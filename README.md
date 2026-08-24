@@ -56,6 +56,15 @@ It checks repository structure and security boundaries, type safety, automated
 behavior, and the production bundle without requiring credentials or network
 access.
 
+## Branch workflow
+
+- `main` contains stable verified checkpoints.
+- `staging` is the persistent integration branch for ongoing development.
+- Feature work is integrated into `staging` and promoted to `main` only after the
+  canonical verification and documentation gates pass.
+
+Future development sessions should normally begin from an up-to-date `staging`.
+
 ## Working with AI agents
 
 Every agent should begin with [AGENTS.md](AGENTS.md) and

@@ -14,7 +14,9 @@ SQLite. All visible mail is deterministic sample data.
 
 The canonical public source repository is
 `https://github.com/morningstar-charmandor/posita`. The local `main` branch is
-expected to track `origin/main`.
+expected to track `origin/main`. The persistent `staging` branch tracks
+`origin/staging` and is the normal integration target for future work. `main`
+remains the stable verified branch.
 
 Implemented:
 
@@ -81,7 +83,8 @@ plaintext mailbox. Record the selected search tradeoff in `docs/DECISIONS.md`.
 
 1. Read `AGENTS.md`, `project.agent.json`, this file, and `README.md`.
 2. Read the source document for the area being changed.
-3. Run `git status --short` and preserve unrelated work.
+3. Run `git status --short`, update `staging` from `origin/staging`, and preserve
+   unrelated work.
 4. Run `npm run verify` to establish the baseline.
 5. Make the smallest coherent change with deterministic tests.
 6. Update this handoff, `PROJECT_HISTORY.md`, and `CASE_STUDY.md` as required by

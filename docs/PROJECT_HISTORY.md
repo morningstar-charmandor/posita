@@ -189,6 +189,16 @@ Limitations: account-scoped retention, crash-safe disconnect orchestration,
 attachments, and encrypted production search remain incomplete. Gmail and AI
 remain disconnected.
 
+## Persistent staging branch established
+
+Date: 2026-08-24
+
+The repository added a permanent public `staging` branch based on the latest
+verified `main`. Future work integrates through `staging`; `main` remains the
+stable portfolio and release-checkpoint branch. Promotion requires the canonical
+verification gate, continuity documentation, and a clean diff. Published history
+on both shared branches must not be force-rewritten.
+
 ## How future entries should be written
 
 For each material milestone, record:

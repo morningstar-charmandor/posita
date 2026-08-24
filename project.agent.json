@@ -18,6 +18,13 @@
     "desktopHost": "Electron",
     "renderer": "React"
   },
+  "branches": {
+    "stable": "main",
+    "integration": "staging",
+    "featurePrefix": "codex/",
+    "promotionGate": "npm run verify",
+    "sharedHistoryRewriteAllowed": false
+  },
   "entrypoints": {
     "main": "src/main/index.ts",
     "preload": "src/preload/index.ts",

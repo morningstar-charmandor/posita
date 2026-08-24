@@ -61,6 +61,17 @@ decision before intentionally changing an accepted architectural boundary.
 Preserve unrelated user changes. Never replace a working implementation merely
 to match a preferred style.
 
+## Branch policy
+
+- `main` contains stable, fully verified project checkpoints.
+- `staging` is the persistent integration branch for future development.
+- Begin normal project work from the latest `staging`. Use a short-lived
+  `codex/<purpose>` branch when work is risky, parallel, or needs isolated review.
+- Merge completed feature work into `staging` first. Promote `staging` to `main`
+  only after `npm run verify`, documentation continuity updates, and a clean diff.
+- Keep `main` and `staging` on the public origin. Never force-push either shared
+  branch or rewrite their published history.
+
 ## Engineering rules
 
 - TypeScript is strict. Avoid `any`; validate unknown data at boundaries.
