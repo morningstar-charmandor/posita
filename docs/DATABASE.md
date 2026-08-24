@@ -99,6 +99,13 @@ encrypted message JSON also carries this optional compatibility field. Retention
 requires it and fails closed when an older cache does not contain it; presentation
 labels are never parsed as dates.
 
+Schema version 7 adds `local_action_confirmations`. It stores only contract
+version, opaque confirmation and operation IDs, the allow-listed
+`delete-local-data` action type, and confirmation/expiry timestamps. The entered
+confirmation text is never persisted. Unique operation binding prevents one
+confirmation from being reassigned to another destructive command. These records
+are operational audit evidence, not encrypted mailbox content.
+
 Retention replacements validate and encrypt the complete next dataset before
 opening a write transaction. Source messages, derived topics, brief items, and
 unreferenced people are replaced atomically. The transaction records
@@ -189,3 +196,6 @@ The local-data and credential foundation requires tests for:
 - ordered installation deletion, action and journal-write failures at every phase,
   durable lifecycle exclusion, complete account-state removal, logical deletion
   status, compaction, OS-vault key erasure, and in-memory key destruction.
+- exact-text confirmation, expiry, operation binding, idempotent confirmation
+  persistence, authorization failure, confirmation-free recovery of existing work,
+  recovery refusal to create work, and bounded safe lifecycle-status projection.

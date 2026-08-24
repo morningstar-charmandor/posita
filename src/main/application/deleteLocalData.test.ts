@@ -16,6 +16,7 @@ import {
   DeleteLocalDataService,
   type CacheDataKeyEraser
 } from './deleteLocalData'
+import type { LocalActionConfirmationVerifier } from './localActionConfirmation'
 import type { MutableMailRepository } from './mailRepository'
 import type { SecretName, SecretVault } from './secretVault'
 
@@ -133,6 +134,20 @@ class FakeKeyEraser implements CacheDataKeyEraser {
   }
 }
 
+class FakeConfirmation implements LocalActionConfirmationVerifier {
+  valid = true
+  matched = true
+  fail = false
+  isValid(): boolean {
+    if (this.fail) throw new Error('confirmation unavailable')
+    return this.valid
+  }
+  matches(): boolean {
+    if (this.fail) throw new Error('confirmation unavailable')
+    return this.matched
+  }
+}
+
 const operation = (phase: DeleteLocalDataPhase): DeleteLocalDataOperationV1 => ({
   version: 1,
   operationId: 'delete-local-1',
@@ -144,17 +159,23 @@ const createHarness = (failure?: FailureStep) => {
   const actions: string[] = []
   const lifecycle = new MemoryLifecycleRepository()
   const mail = new FakeMailRepository(actions, failure)
+  const confirmation = new FakeConfirmation()
   const service = new DeleteLocalDataService(
     lifecycle,
     new FakeVault(actions, failure),
     new FakeAccountState(actions, failure),
     mail,
-    new FakeKeyEraser(actions, failure)
+    new FakeKeyEraser(actions, failure),
+    confirmation
   )
-  return { actions, lifecycle, mail, service }
+  return { actions, confirmation, lifecycle, mail, service }
 }
 
-const request = { version: 1 as const, operationId: 'delete-local-1' }
+const request = {
+  version: 1 as const,
+  operationId: 'delete-local-1',
+  confirmationId: 'confirm-delete-1'
+}
 
 describe('DeleteLocalDataService', () => {
   it('deletes credentials, private records, storage remnants, and key material in order', async () => {
@@ -254,7 +275,11 @@ describe('DeleteLocalDataService', () => {
     const harness = createHarness()
     harness.lifecycle.save(operation('mail-data-delete-pending'))
 
-    await expect(harness.service.delete({ version: 1, operationId: 'delete-local-2' }))
+    await expect(harness.service.delete({
+      version: 1,
+      operationId: 'delete-local-2',
+      confirmationId: 'confirm-delete-2'
+    }))
       .rejects.toMatchObject({ code: 'DELETE_LOCAL_DATA_IN_PROGRESS', retryable: true })
   })
 
@@ -267,13 +292,18 @@ describe('DeleteLocalDataService', () => {
       new FakeVault(harness.actions),
       new FakeAccountState(harness.actions),
       harness.mail,
-      { delete: () => pending }
+      { delete: () => pending },
+      harness.confirmation
     )
     harness.lifecycle.save(operation('data-key-delete-pending'))
 
     const first = waiting.delete(request)
     expect(waiting.delete(request)).toBe(first)
-    await expect(waiting.delete({ version: 1, operationId: 'delete-local-2' }))
+    await expect(waiting.delete({
+      version: 1,
+      operationId: 'delete-local-2',
+      confirmationId: 'confirm-delete-2'
+    }))
       .rejects.toMatchObject({ code: 'DELETE_LOCAL_DATA_IN_PROGRESS' })
     release()
     await expect(first).resolves.toMatchObject({ status: 'completed' })
@@ -281,8 +311,68 @@ describe('DeleteLocalDataService', () => {
 
   it('rejects invalid input before creating a lifecycle operation', async () => {
     const harness = createHarness()
-    await expect(harness.service.delete({ version: 1, operationId: '../delete' }))
+    await expect(harness.service.delete({
+      version: 1,
+      operationId: '../delete',
+      confirmationId: 'confirm-delete-1'
+    }))
       .rejects.toMatchObject({ code: 'INVALID_DELETE_LOCAL_DATA_REQUEST' })
+    expect(harness.lifecycle.operations.size).toBe(0)
+  })
+
+  it('requires a current confirmation before creating destructive work', async () => {
+    const harness = createHarness()
+    harness.confirmation.valid = false
+
+    await expect(harness.service.delete(request)).rejects.toMatchObject({
+      code: 'DELETE_LOCAL_DATA_NOT_CONFIRMED', retryable: false
+    })
+    expect(harness.lifecycle.operations.size).toBe(0)
+    expect(harness.actions).toEqual([])
+  })
+
+  it('requires the same confirmation when a confirmed command is retried', async () => {
+    const harness = createHarness()
+    harness.lifecycle.save(operation('mail-data-delete-pending'))
+    harness.confirmation.matched = false
+
+    await expect(harness.service.delete(request)).rejects.toMatchObject({
+      code: 'DELETE_LOCAL_DATA_NOT_CONFIRMED', retryable: false
+    })
+    expect(harness.lifecycle.load(request.operationId)).toEqual(operation('mail-data-delete-pending'))
+  })
+
+  it('resumes already-journaled deletion without requiring a fresh confirmation', async () => {
+    const harness = createHarness()
+    harness.lifecycle.save(operation('compaction-pending'))
+    harness.confirmation.fail = true
+
+    await expect(harness.service.resume({
+      version: 1,
+      operationId: request.operationId
+    })).resolves.toMatchObject({ status: 'completed' })
+    expect(harness.actions).toEqual(['sanitize', 'delete-key', 'destroy-key'])
+  })
+
+  it('does not create destructive work through the recovery entry point', async () => {
+    const harness = createHarness()
+
+    await expect(harness.service.resume({
+      version: 1,
+      operationId: request.operationId
+    })).rejects.toMatchObject({
+      code: 'DELETE_LOCAL_DATA_RESUME_NOT_FOUND', retryable: false
+    })
+    expect(harness.lifecycle.operations.size).toBe(0)
+  })
+
+  it('maps confirmation storage failure to a safe retryable error', async () => {
+    const harness = createHarness()
+    harness.confirmation.fail = true
+
+    await expect(harness.service.delete(request)).rejects.toMatchObject({
+      code: 'CONFIRMATION_UNAVAILABLE', retryable: true
+    })
     expect(harness.lifecycle.operations.size).toBe(0)
   })
 })

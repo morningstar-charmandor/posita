@@ -210,12 +210,26 @@ the shared protector is destroyed before completion is journaled. Durable pendin
 work rejects an overlapping installation deletion or same-account disconnect,
 including after a process restart.
 
-This service is verified against application interfaces and deterministic fakes
-but is not part of startup composition and has no renderer command. Activation
-requires an explicit confirmed command plus a recovery owner that resumes pending
-work without calling `loadOrCreate` for a replacement installation key after key
-erasure. The current fixture bootstrap would otherwise reseed sample content, so
-it is intentionally not used as a production deletion path.
+ADR-016 adds a command gate before a new installation operation can exist. A
+main-process confirmation service creates two opaque generated IDs, returns exact
+consequence copy plus the required `DELETE LOCAL DATA` text, and keeps the
+five-minute challenge in bounded memory. Correct confirmation persists only an
+operation-bound, non-sensitive receipt. The deletion service verifies that receipt
+before creating its journal. Its separate `resume` entry point refuses to create
+work and can only continue an existing journal operation, even after confirmation
+expiry.
+
+The lifecycle status service reads the journal and projects only operation type,
+opaque IDs, optional opaque account scope, bounded progress, safe stage names, and
+allow-listed retry codes. A marker is described as `pending`, not “running,”
+because persistent state cannot prove a worker is currently active.
+
+These services are verified against application interfaces, SQLite, and
+deterministic fakes but are not part of startup composition and have no preload,
+IPC, or renderer surface. Activation requires a recovery owner that resumes
+pending work without calling `loadOrCreate` for a replacement installation key
+after key erasure. The current fixture bootstrap would otherwise reseed sample
+content, so it is intentionally not used as a production deletion path.
 
 ## Gmail synchronization
 

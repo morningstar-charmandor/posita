@@ -7,6 +7,7 @@ import {
   type LifecycleFailureCode
 } from './accountLifecycle'
 import type { AccountStateRepository } from './accountState'
+import type { LocalActionConfirmationVerifier } from './localActionConfirmation'
 import type { MutableMailRepository } from './mailRepository'
 import type { SecretVault } from './secretVault'
 
@@ -15,6 +16,12 @@ export interface CacheDataKeyEraser {
 }
 
 export interface DeleteLocalDataRequestV1 {
+  version: 1
+  operationId: string
+  confirmationId: string
+}
+
+export interface ResumeDeleteLocalDataRequestV1 {
   version: 1
   operationId: string
 }
@@ -29,6 +36,9 @@ type DeleteLocalDataErrorCode =
   | 'INVALID_DELETE_LOCAL_DATA_REQUEST'
   | 'DELETE_LOCAL_DATA_OPERATION_CONFLICT'
   | 'DELETE_LOCAL_DATA_IN_PROGRESS'
+  | 'DELETE_LOCAL_DATA_NOT_CONFIRMED'
+  | 'DELETE_LOCAL_DATA_RESUME_NOT_FOUND'
+  | 'CONFIRMATION_UNAVAILABLE'
   | 'LIFECYCLE_STORAGE_FAILED'
   | LifecycleFailureCode
 
@@ -73,30 +83,71 @@ export class DeleteLocalDataService {
     private readonly vault: SecretVault,
     private readonly accountState: AccountStateRepository,
     private readonly mailRepository: MutableMailRepository,
-    private readonly keyEraser: CacheDataKeyEraser
+    private readonly keyEraser: CacheDataKeyEraser,
+    private readonly confirmation: LocalActionConfirmationVerifier
   ) {}
 
   delete(request: DeleteLocalDataRequestV1): Promise<DeleteLocalDataResultV1> {
+    if (request.version !== 1 || !isOperationId(request.operationId) ||
+        !isOperationId(request.confirmationId)) {
+      return Promise.reject(new DeleteLocalDataError(
+        'INVALID_DELETE_LOCAL_DATA_REQUEST', 'The local-data deletion request is invalid.', false
+      ))
+    }
+    return this.start(request.operationId, () => this.execute(request))
+  }
+
+  resume(request: ResumeDeleteLocalDataRequestV1): Promise<DeleteLocalDataResultV1> {
     if (request.version !== 1 || !isOperationId(request.operationId)) {
       return Promise.reject(new DeleteLocalDataError(
         'INVALID_DELETE_LOCAL_DATA_REQUEST', 'The local-data deletion request is invalid.', false
       ))
     }
+    return this.start(request.operationId, () => this.executeExisting(request.operationId))
+  }
+
+  private start(
+    operationId: string,
+    work: () => Promise<DeleteLocalDataResultV1>
+  ): Promise<DeleteLocalDataResultV1> {
     if (this.active) {
-      if (this.active.operationId === request.operationId) return this.active.promise
+      if (this.active.operationId === operationId) return this.active.promise
       return Promise.reject(new DeleteLocalDataError(
         'DELETE_LOCAL_DATA_IN_PROGRESS', 'Local-data deletion is already in progress.', true
       ))
     }
-    const promise = this.execute(request).finally(() => {
-      if (this.active?.operationId === request.operationId) this.active = undefined
+    const promise = work().finally(() => {
+      if (this.active?.operationId === operationId) this.active = undefined
     })
-    this.active = { operationId: request.operationId, promise }
+    this.active = { operationId, promise }
     return promise
   }
 
   private async execute(request: DeleteLocalDataRequestV1): Promise<DeleteLocalDataResultV1> {
     let operation = this.loadOrCreate(request)
+    return this.run(operation)
+  }
+
+  private async executeExisting(operationId: string): Promise<DeleteLocalDataResultV1> {
+    let operation
+    try {
+      operation = this.lifecycle.load(operationId)
+    } catch (error) {
+      throw this.storageError(error)
+    }
+    if (operation === undefined || operation.operationType !== 'delete-local-data') {
+      throw new DeleteLocalDataError(
+        'DELETE_LOCAL_DATA_RESUME_NOT_FOUND',
+        'No local-data deletion is available to resume.',
+        false
+      )
+    }
+    return this.run(operation)
+  }
+
+  private async run(
+    operation: DeleteLocalDataOperationV1
+  ): Promise<DeleteLocalDataResultV1> {
     while (operation.phase !== 'completed') {
       const phase = operation.phase
       try {
@@ -115,7 +166,7 @@ export class DeleteLocalDataService {
       delete operation.lastErrorCode
       this.saveOperation(operation)
     }
-    return { version: 1, operationId: request.operationId, status: 'completed' }
+    return { version: 1, operationId: operation.operationId, status: 'completed' }
   }
 
   private loadOrCreate(request: DeleteLocalDataRequestV1): DeleteLocalDataOperationV1 {
@@ -133,7 +184,13 @@ export class DeleteLocalDataService {
           false
         )
       }
+      if (!this.matchesConfirmation(request.confirmationId, request.operationId)) {
+        throw this.notConfirmed()
+      }
       return existing
+    }
+    if (!this.hasValidConfirmation(request.confirmationId, request.operationId)) {
+      throw this.notConfirmed()
     }
     let pending
     try {
@@ -156,6 +213,40 @@ export class DeleteLocalDataService {
     }
     this.saveOperation(operation)
     return operation
+  }
+
+  private hasValidConfirmation(confirmationId: string, operationId: string): boolean {
+    try {
+      return this.confirmation.isValid(confirmationId, operationId)
+    } catch (error) {
+      throw new DeleteLocalDataError(
+        'CONFIRMATION_UNAVAILABLE',
+        'Posita could not verify local-data deletion approval. Please try again.',
+        true,
+        { cause: error }
+      )
+    }
+  }
+
+  private matchesConfirmation(confirmationId: string, operationId: string): boolean {
+    try {
+      return this.confirmation.matches(confirmationId, operationId)
+    } catch (error) {
+      throw new DeleteLocalDataError(
+        'CONFIRMATION_UNAVAILABLE',
+        'Posita could not verify local-data deletion approval. Please try again.',
+        true,
+        { cause: error }
+      )
+    }
+  }
+
+  private notConfirmed(): DeleteLocalDataError {
+    return new DeleteLocalDataError(
+      'DELETE_LOCAL_DATA_NOT_CONFIRMED',
+      'Local-data deletion requires a current explicit confirmation.',
+      false
+    )
   }
 
   private async perform(phase: Exclude<DeleteLocalDataPhase, 'completed'>): Promise<void> {

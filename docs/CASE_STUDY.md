@@ -19,7 +19,8 @@ and actions.
 SQLite path, OS-protected key hierarchy, authenticated mail and provider-account
 state, plus tested crash-resumable disconnect and full local-deletion orchestrators.
 Gmail and AI are not connected, and neither lifecycle workflow has a live provider,
-startup recovery owner, or user trigger.
+startup recovery owner, or user trigger. Full deletion now has an operation-bound
+typed-confirmation gate and a safe status projection, neither exposed in the UI.
 
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
 
@@ -135,6 +136,13 @@ account state, mail records, compaction, OS-vault key deletion, and in-memory ke
 destruction as retryable phases. Activation is intentionally deferred until
 startup can resume after key erasure without silently creating a replacement key.
 
+The command boundary separates authorization from recovery. A new destructive
+operation needs exact typed confirmation within five minutes, while recovery can
+only resume an already-journaled operation and cannot silently create one. The
+confirmation receipt stores opaque identifiers and timestamps rather than user
+text or mailbox content. Status says work is pending—not running—unless a future
+lifecycle owner can prove active execution.
+
 ### Choosing bounded context
 
 The private alpha will import and retain a rolling 90-day window. This trades
@@ -164,10 +172,12 @@ At the current Gate 2D foundation checkpoint, Posita has:
   retry at every action and journal-write boundary,
 - ordered installation-wide deletion through SQLite sanitization, OS-protected
   key erasure, and in-memory key destruction, with durable overlap prevention,
+- short-lived operation-bound confirmation, auditable non-private receipts, a
+  recovery-only resume entry point, and bounded safe lifecycle status,
 - future sync ownership and account-isolation contracts without premature
   provider implementation,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 19 automated test files containing 114 passing tests,
+- 22 automated test files containing 134 passing tests,
 - passing strict TypeScript, structural security checks, and production builds.
 
 These are engineering outcomes, not evidence of customer adoption or AI quality.
@@ -175,10 +185,10 @@ No real mailbox, OAuth credential, or model provider has been used.
 
 ## What comes next
 
-The next Gate 2D slice will define safe lifecycle status and explicit confirmation,
-then add restart-aware background recovery that never replaces an erased key or
-reseeds deleted data. Only after that activation path passes verification should
-the project add Gmail OAuth and a deterministic sync adapter.
+The next Gate 2D slice will add restart-aware background recovery that never
+replaces an erased key or reseeds deleted data. Only after that activation path
+passes verification should Posita expose confirmation/status in the UI or add
+Gmail OAuth and a deterministic sync adapter.
 
 Later evidence should include measured sync reliability, duplicate prevention,
 citation correctness, draft usefulness, correction rate, and time to attention.

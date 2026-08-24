@@ -244,6 +244,21 @@ export const migrations: readonly Migration[] = [
     sql: `
       ALTER TABLE messages ADD COLUMN received_at_iso TEXT;
     `
+  },
+  {
+    version: 7,
+    name: 'local_action_confirmations',
+    sql: `
+      CREATE TABLE local_action_confirmations (
+        version INTEGER NOT NULL CHECK (version = 1),
+        confirmation_id TEXT PRIMARY KEY,
+        operation_id TEXT NOT NULL UNIQUE,
+        action_type TEXT NOT NULL CHECK (action_type = 'delete-local-data'),
+        confirmed_at TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        CHECK (expires_at >= confirmed_at)
+      ) STRICT;
+    `
   }
 ]
 

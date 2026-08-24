@@ -21,6 +21,8 @@ account isolation; those tables contain no real account. Schema v5 adds an opaqu
 non-sensitive lifecycle journal that can survive deletion of that encryption key.
 Schema v6 and a deterministic application service add fail-closed 90-day
 retention with atomic derived-data eviction; it is not scheduled automatically.
+Schema v7 stores only opaque, operation-bound confirmation receipts for destructive
+local deletion; the typed confirmation text is never persisted.
 Account removal now deterministically preserves unaffected sources while evicting
 touched derived context. A crash-resumable disconnect orchestrator now coordinates
 revocation, credential deletion, provider-state deletion, local-data removal, and
@@ -28,9 +30,12 @@ compaction through interfaces and deterministic tests. A separate installation-w
 orchestrator now journals deletion of all refresh credentials, encrypted account
 state, mail records, SQLite remnants, the OS-protected data key, and its in-memory
 copy. Both workflows are deliberately inactive: there is no live Google revoker,
-user trigger, startup recovery owner, or safe post-deletion bootstrap yet. Gmail
-and AI providers are not connected, no real OAuth credential exists, and sending
-is deliberately disabled.
+user trigger, startup recovery owner, or safe post-deletion bootstrap yet. New
+full deletion is now guarded by a five-minute typed confirmation bound to one
+operation, and pending journal state has a bounded safe-status projection. These
+contracts are not exposed over IPC or rendered in the UI. Gmail and AI providers
+are not connected, no real OAuth credential exists, and sending is deliberately
+disabled.
 
 Read the build boundaries before extending the prototype:
 

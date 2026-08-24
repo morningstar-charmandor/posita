@@ -188,3 +188,21 @@
   be retried after action/journal crash windows. Production activation remains
   blocked until startup can resume a pending deletion without generating a
   replacement key, and until an explicitly confirmed user command owns status.
+
+## ADR-016: Separate destructive authorization from crash recovery
+
+- Status: accepted for Gate 2D
+- Context: Starting full local deletion must require current explicit user intent,
+  while resuming an already-started deletion after a crash must not depend on a
+  UI, an unexpired prompt, or an encryption key that may already be gone.
+- Decision: require a five-minute, exact-text confirmation challenge bound to one
+  generated operation ID before a new deletion journal can be created. Persist
+  only the opaque confirmation/operation IDs, action type, and timestamps. Never
+  persist the entered phrase. Provide a separate recovery entry point that can
+  only resume an existing delete-local-data journal operation. Project lifecycle
+  status into bounded stages, progress counts, safe error codes, and truthful
+  `pending`/`retry-required` states.
+- Consequence: renderer navigation or a stale confirmation cannot create a new
+  destructive operation, and restart recovery never silently creates one. The
+  confirmation receipt is auditable non-private operational data. No command or
+  status IPC is activated until the startup recovery owner is implemented.

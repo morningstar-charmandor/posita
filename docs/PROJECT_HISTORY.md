@@ -460,6 +460,49 @@ but is not startup-composed, scheduled, or user-triggered. There is no safe
 post-deletion bootstrap, background resume owner, confirmation/status UI, OAuth
 credential, real account, or claim of hardware-forensic erasure.
 
+## Gate 2D foundation — Lifecycle authorization and safe status
+
+Date: 2026-08-24
+Checkpoint: use the Git commit whose subject is `feat: add lifecycle authorization contracts`
+
+Goal: ensure a new full local-data deletion requires explicit current user intent
+without making crash recovery depend on a still-open UI or surviving encryption key.
+
+Delivered:
+
+- a versioned five-minute `DELETE LOCAL DATA` confirmation challenge,
+- generated opaque confirmation and operation IDs with exact operation binding,
+- bounded in-memory pending challenges and exact-key request validation,
+- schema version 7 and an immutable SQLite confirmation receipt containing only
+  opaque IDs, action type, and confirmation/expiry timestamps,
+- idempotent confirmation response recovery and safe persistence errors,
+- confirmation enforcement before any new delete-local-data journal operation,
+- a separate resume request that only accepts an existing journal operation,
+- a safe lifecycle-status projection with bounded stages, progress, retry state,
+  allow-listed failure codes, and no claim that pending work is currently running,
+- ADR-016 documenting the authorization/recovery separation.
+
+Important decisions:
+
+- never persist the typed confirmation phrase,
+- treat confirmation as authorization to create one operation, not authorization
+  that must remain valid for every crash retry,
+- let recovery bypass expired confirmation only after a durable operation exists,
+- refuse to create an operation through the recovery entry point,
+- expose no preload, IPC, renderer command, or UI before startup recovery is safe,
+- add no dependency, credential, private payload, or provider connection.
+
+Evidence: 22 test files and 134 tests passed before final checkpoint verification.
+Coverage includes exact text, expiry, bounded challenges, idempotence, immutable
+SQLite binding, corrupt receipt refusal, unauthorized operation refusal,
+confirmation-storage failure, confirmation-free resume, resume-not-found safety,
+safe progress mapping, and lifecycle-status storage failure.
+
+Limitations: no background owner invokes recovery at startup, and the current
+bootstrap can still recreate a key and reseed fixtures after erasure. Confirmation
+and status are application contracts only; there is no user-facing surface, receipt
+retention/cleanup policy, OAuth credential, real account, or live deletion.
+
 ## How future entries should be written
 
 For each material milestone, record:

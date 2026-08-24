@@ -24,7 +24,7 @@ Implemented:
   and editable local draft interactions,
 - accessible loading, error, retry, empty, and source-grounding behavior,
 - sandboxed Electron renderer with a narrow validated preload/IPC contract,
-- SQLite schema versions 1–6 with transactional migrations and encrypted seeding,
+- SQLite schema versions 1–7 with transactional migrations and encrypted seeding,
 - main-process `SecretVault` with asynchronous OS-backed protection,
 - fail-closed credential behavior and a test-only deterministic fake,
 - per-installation OS-protected data key and AES-256-GCM record envelopes,
@@ -57,6 +57,11 @@ Implemented:
   OS-vault data-key erasure, and in-memory key destruction,
 - durable lifecycle exclusion that prevents a second full deletion or an
   overlapping same-account disconnect after process restart,
+- a bounded five-minute exact-text confirmation challenge bound to one generated
+  full-deletion operation and an auditable non-private SQLite receipt,
+- separate authorized-start and existing-operation recovery entry points,
+- a safe lifecycle-status projection with truthful pending/retry states, bounded
+  progress, and allow-listed error detail,
 - accessible names for icon-only workspace controls and reduced-motion styling,
 - deterministic credential-free verification through `npm run verify`.
 
@@ -69,13 +74,14 @@ Simulated or deliberately inactive:
 - authorization revocation uses deterministic test implementations only,
 - full local deletion is verified only through application interfaces and fakes;
   it is not composed at startup or exposed to the renderer,
+- confirmation and lifecycle-status services have no preload, IPC, or UI surface,
 - sending and every other remote mailbox mutation are disabled.
 
 Not implemented:
 
 - Gmail OAuth, message ingestion, incremental history sync, or user-triggered/live disconnect,
 - runtime sync coordination, provider reconciliation, or deduplication logic,
-- explicit local-deletion confirmation/status, safe post-key-erasure bootstrap,
+- user-facing local-deletion confirmation/status, safe post-key-erasure bootstrap,
   or background lifecycle resume,
 - automatic retention scheduling and user-visible maintenance status,
 - a model provider, embeddings, classification, retrieval, or generation,
@@ -99,16 +105,16 @@ Not implemented:
 Proceed with **Gate 2D: encrypted account lifecycle** before implementing OAuth.
 
 Encrypted account state, ownership, the crash-resume journal, deterministic
-retention, account removal, disconnect, and full local-deletion orchestration are
-complete at the application layer. Continue in this order:
+retention, account removal, disconnect, full local deletion, explicit confirmation,
+and safe status are complete at the application layer. Continue in this order:
 
-1. Define explicit confirmation and safe lifecycle-status contracts without
-   exposing private data or adding a destructive renderer command prematurely.
-2. Design the startup/background lifecycle owner, including a recovery path that
+1. Design the startup/background lifecycle owner, including a recovery path that
    finishes `data-key-delete-pending` without generating a replacement key or
    reseeding fixtures.
-3. Compose the deletion services only after that recovery path is tested across
+2. Compose the deletion services only after that recovery path is tested across
    restart boundaries and has one cancellation/shutdown owner.
+3. Add the user-facing confirmation/status surface only after the recovery owner
+   makes every exposed retry path truthful and safe.
 4. Decide the controlled compatibility behavior for older fixture caches that do
    not contain absolute retention timestamps before scheduling maintenance.
 5. Keep real Gmail ingestion disabled until the lifecycle activation gate passes.
@@ -134,7 +140,7 @@ plaintext mailbox. Record the selected search tradeoff in `docs/DECISIONS.md`.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 19 test files, 114 tests, strict typecheck, structure
+- Current verified baseline: 22 test files, 134 tests, strict typecheck, structure
   checks, and production Electron build passing.
 
 Native verification migrated the development database to schema v3 with 21

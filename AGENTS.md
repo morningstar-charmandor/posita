@@ -15,6 +15,8 @@ exists deeper in the tree.
 - Disconnect orchestration is implemented against interfaces/fakes but has no live revoker or UI trigger.
 - Full local-data deletion orchestration is implemented against interfaces/fakes
   but is not composed at startup and has no user trigger or recovery owner.
+- New full deletion requires a bounded typed confirmation; safe lifecycle status
+  and recovery contracts exist but have no preload, IPC, or UI surface.
 - An OS-protected credential vault is implemented but contains no real token.
 - Gmail, lifecycle scheduling, retention scheduling, and model providers are not connected.
 - Sending mail is intentionally disabled.

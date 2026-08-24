@@ -159,3 +159,9 @@ The orchestrator is not composed into the product. Startup recovery must first b
 able to finish `data-key-delete-pending` without creating a replacement key, and
 the fixture bootstrap must not reseed after a user deletion. No real account may
 connect until those activation boundaries and explicit consent/status are tested.
+
+Starting a new full deletion now requires a short-lived operation-bound
+confirmation receipt. Resuming a journaled deletion is a separate capability and
+cannot create an operation. The receipt and safe lifecycle status contain no
+mailbox content and remain outside the deletable key boundary; neither has an IPC
+surface yet.
