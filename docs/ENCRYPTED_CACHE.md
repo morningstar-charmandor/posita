@@ -112,6 +112,11 @@ truncates WAL, and marks the cache ready. A failed validation or encryption befo
 the transaction leaves the previous cache unchanged. Maintenance is not scheduled
 or exposed over IPC yet.
 
+Account-data removal uses this same validated rewrite rather than issuing
+independent record deletes. This keeps removal of account sources, touched derived
+objects, and unreferenced people atomic. The lifecycle orchestrator is not yet
+connected to invoke it.
+
 ## Legacy fixture migration
 
 For an existing Gate 2B database:

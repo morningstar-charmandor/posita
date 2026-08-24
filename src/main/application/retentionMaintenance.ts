@@ -1,6 +1,7 @@
 import type { MailDataset } from '../../shared/domain'
 import { isAbsoluteTimestamp } from '../../shared/validation'
 import type { MutableMailRepository } from './mailRepository'
+import { retainReferencedPeople } from './mailDatasetProjection'
 
 export const PRIVATE_ALPHA_RETENTION_DAYS = 90
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -69,11 +70,7 @@ export const applyRetentionPolicy = (
     item.citationMessageIds.length > 0 &&
     item.citationMessageIds.every((id) => retainedMessageIds.has(id)))
 
-  const retainedPersonIds = new Set(retainedMessages.map((message) => message.senderId))
-  for (const topic of retainedTopics) {
-    for (const personId of topic.participantIds) retainedPersonIds.add(personId)
-  }
-  const retainedPeople = dataset.people.filter((person) => retainedPersonIds.has(person.id))
+  const retainedPeople = retainReferencedPeople(dataset.people, retainedMessages, retainedTopics)
 
   const nextDataset: MailDataset = {
     accounts: dataset.accounts,

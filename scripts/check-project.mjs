@@ -138,6 +138,9 @@ if (!localDataBootstrap.includes('new SqliteAccountLifecycleRepository(database)
 if (!localDataBootstrap.includes('new RetentionMaintenanceService(repository)')) {
   fail('production composition must expose retention through the application service')
 }
+if (!localDataBootstrap.includes('new AccountDataRemovalService(repository)')) {
+  fail('production composition must expose account-data removal through the application service')
+}
 if (localDataBootstrap.includes('new SqliteMailRepository(')) {
   fail('production composition must not write mail through the legacy plaintext repository')
 }

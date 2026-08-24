@@ -73,6 +73,13 @@ one encrypted-cache transaction, followed by SQLite sanitization. This never
 modifies Gmail. Automatic/background execution and user-visible status remain
 deferred.
 
+Gate 2D also implements the local source/derived projection for removing one
+account. Other accounts' source messages are never deleted merely because they
+shared a topic. Any topic touched by the removed account is deleted rather than
+retaining a possibly stale or uncited interpretation; untouched topics and still
+referenced people remain. The projection is idempotent but is not yet connected to
+credential revocation or the lifecycle journal.
+
 Retention configuration is deferred to Gate 3. A future setting may shorten the
 window but must not silently lengthen an existing user's window.
 

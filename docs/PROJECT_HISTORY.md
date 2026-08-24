@@ -343,6 +343,43 @@ Limitations: automatic scheduling, progress UI, older fixture-cache timestamp
 compatibility, and account-disconnect execution remain deferred. Gmail and AI
 remain disconnected.
 
+## Gate 2D foundation — Account-removal projection
+
+Date: 2026-08-24
+Checkpoint: use the Git commit whose subject is `feat: add account removal projection`
+
+Goal: define deterministic source, topic, brief, and person behavior when one
+mailbox is removed, without deleting another account's source or preserving stale
+derived claims.
+
+Delivered:
+
+- an account-scoped, idempotent local-data removal service,
+- removal of the target account and all of its encrypted source messages,
+- conservative eviction of every topic and brief touched by removed provenance,
+- preservation of other-account sources even when their shared topic is evicted,
+- preservation of untouched topics and people still referenced by retained data,
+- reuse of the atomic encrypted-cache replacement and sanitization path,
+- ADR-013 documenting the safety-versus-temporary-context tradeoff.
+
+Important decisions:
+
+- do not partially retain a topic summary, priority, status, or next action after
+  one of its sources is removed,
+- do not remove another account's source merely because a shared topic is evicted,
+- treat an already absent account as a successful no-op for crash-safe retries,
+- keep this as the local mail-data phase rather than an independent disconnect
+  workflow or renderer command.
+
+Evidence: 17 test files and 78 tests passed with strict typechecking, structural
+checks, and a production build. Tests cover shared-topic eviction, unaffected
+topic preservation, retained cross-account sources, reference-based people
+cleanup, invalid account IDs, and idempotent retry behavior.
+
+Limitations: credential revocation/deletion, encrypted provider-state deletion,
+journal advancement, and user-visible progress are not orchestrated yet. Gmail
+and AI remain disconnected.
+
 ## How future entries should be written
 
 For each material milestone, record:

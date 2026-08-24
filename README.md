@@ -21,8 +21,10 @@ account isolation; those tables contain no real account. Schema v5 adds an opaqu
 non-sensitive lifecycle journal that can survive deletion of that encryption key.
 Schema v6 and a deterministic application service add fail-closed 90-day
 retention with atomic derived-data eviction; it is not scheduled automatically.
-Gmail, lifecycle execution, and AI providers are not connected. No real OAuth
-credential exists, and sending is deliberately disabled.
+Account removal now deterministically preserves unaffected sources while evicting
+touched derived context, but it is not connected to lifecycle execution. Gmail
+and AI providers are not connected. No real OAuth credential exists, and sending
+is deliberately disabled.
 
 Read the build boundaries before extending the prototype:
 

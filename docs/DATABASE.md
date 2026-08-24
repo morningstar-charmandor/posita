@@ -105,6 +105,11 @@ unreferenced people are replaced atomically. The transaction records
 `sanitization-pending`; compaction and WAL truncation complete before state returns
 to `ready`, allowing existing startup recovery to handle interruption.
 
+Account-data removal reuses the same replacement boundary. The application layer
+computes retained accounts, source messages, untouched derived topics/briefs, and
+referenced people before the repository encrypts anything. No account-removal SQL
+path exists outside this repository transaction.
+
 ## Migrations
 
 Migrations are numbered, immutable, and applied in a transaction. Applied
@@ -167,3 +172,5 @@ The local-data and credential foundation requires tests for:
 - exact retention cutoff behavior, missing/invalid timestamp refusal, derived
   citation eviction, unreferenced-person cleanup, idempotence, atomic encrypted
   replacement, rollback on invalid data, and sanitization completion.
+- account-scoped source deletion, touched-derived eviction, unaffected source and
+  topic preservation, people recomputation, invalid IDs, and idempotent retries.

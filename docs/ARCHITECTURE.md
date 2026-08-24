@@ -152,6 +152,21 @@ derived records together, records sanitization pending, then compacts and marks 
 cache ready. The service is composed in main but has no timer, IPC, or UI trigger;
 future scheduling must run it away from renderer and main event loops.
 
+### Account-removal projection
+
+The Gate 2D account-data removal service operates on one opaque account ID and is
+idempotent. It removes that account and its source messages in one encrypted-cache
+replacement. A topic whose message list or event citations touch a removed source
+is deleted with its dependent brief items; filtering only the citation would risk
+retaining a stale summary, status, priority, or action. Sources from other accounts
+remain and may be regrouped later. Unaffected topics remain, and a person remains
+while any retained message or topic references them.
+
+This service performs only the local mail-data phase. It does not revoke Google,
+delete credentials or provider state, advance the lifecycle journal, compact a
+full installation, or expose a renderer command. Those steps belong to the future
+lifecycle orchestrator.
+
 ## Gmail synchronization
 
 The Gmail adapter will use an initial 90-day import followed by incremental

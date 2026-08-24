@@ -142,3 +142,17 @@
   private-data encryption. The journal itself reveals that an operation and phase
   exist, so its fields remain minimal, bounded, allow-listed, and removable only
   after completion.
+
+## ADR-013: Evict derived topics touched by account removal
+
+- Status: accepted for Gate 2D
+- Context: A topic may join messages from several accounts, while its summary,
+  status, priority, and next action can depend on every source. After one account
+  is removed, filtering citations alone could leave plausible but stale claims.
+- Decision: delete every derived topic touched by a removed source and its
+  dependent brief items. Preserve source messages from other accounts so a future
+  classifier or user action can rebuild context. Preserve untouched topics and
+  people still referenced by retained sources or topics.
+- Consequence: disconnect may temporarily remove useful cross-account grouping,
+  but it cannot retain an uncited interpretation or erase another account's source
+  record. The projection is deterministic and idempotent for crash retries.

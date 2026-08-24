@@ -46,6 +46,8 @@ Implemented:
 - conservative eviction of expired source mail, cited topics/briefs, and people
   left without retained references,
 - atomic encrypted dataset replacement with resumable sanitization,
+- idempotent account removal that preserves other-account sources, evicts every
+  touched topic/brief, and retains only still-referenced people,
 - accessible names for icon-only workspace controls and reduced-motion styling,
 - deterministic credential-free verification through `npm run verify`.
 
@@ -61,10 +63,10 @@ Not implemented:
 
 - Gmail OAuth, message ingestion, incremental history sync, or account disconnect,
 - runtime sync coordination, provider reconciliation, or deduplication logic,
-- lifecycle action execution or account-data recomputation,
+- lifecycle action execution,
 - automatic retention scheduling and user-visible maintenance status,
 - a model provider, embeddings, classification, retrieval, or generation,
-- 90-day maintenance and account-scoped disconnect/deletion orchestration,
+- automatic 90-day maintenance and account-scoped disconnect/deletion orchestration,
 - production-scale encrypted search or attachment storage,
 - packaging, signing, telemetry, or external-user onboarding.
 
@@ -83,17 +85,16 @@ Not implemented:
 
 Proceed with **Gate 2D: encrypted account lifecycle** before implementing OAuth.
 
-Encrypted account state, ownership, the crash-resume journal, and deterministic
-retention are complete. Continue in this order:
+Encrypted account state, ownership, the crash-resume journal, deterministic
+retention, and account-removal projection are complete. Continue in this order:
 
-1. Define how shared people and topics are recomputed when one account is removed.
-2. Implement a deletion-pending state machine that survives interruption between
+1. Implement a deletion-pending state machine that survives interruption between
    credential revocation, data-key erasure, record purge, and compaction.
-3. Test disconnect and full-local-delete crashes at every transition.
-4. Add explicit consent and safe status contracts without exposing private data.
-5. Decide the controlled compatibility behavior for older fixture caches that do
+2. Test disconnect and full-local-delete crashes at every transition.
+3. Add explicit consent and safe status contracts without exposing private data.
+4. Decide the controlled compatibility behavior for older fixture caches that do
    not contain absolute retention timestamps before scheduling maintenance.
-6. Keep real Gmail ingestion disabled until the lifecycle gate passes.
+5. Keep real Gmail ingestion disabled until the lifecycle gate passes.
 
 Do not solve encrypted search casually. Any index must avoid becoming a second
 plaintext mailbox. Record the selected search tradeoff in `docs/DECISIONS.md`.
@@ -116,7 +117,7 @@ plaintext mailbox. Record the selected search tradeoff in `docs/DECISIONS.md`.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 16 test files, 73 tests, strict typecheck, structure
+- Current verified baseline: 17 test files, 78 tests, strict typecheck, structure
   checks, and production Electron build passing.
 
 Native verification migrated the development database to schema v3 with 21
