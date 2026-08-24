@@ -48,3 +48,54 @@ provider-independent application interface. It must:
 
 No Gmail SDK, OAuth response, credential, or provider-specific payload may cross
 the preload bridge.
+
+## Normalized record and account isolation
+
+Before live sync, the shared mail contract must represent one canonical Posita
+message rather than a Gmail-shaped message. At minimum it needs:
+
+- stable internal ID and opaque Posita account ID,
+- provider message and thread IDs namespaced by that account,
+- sender and recipient identities,
+- sent/received timestamps,
+- subject plus normalized plain and reviewed HTML body representations,
+- labels/read state and attachment metadata,
+- immutable provider provenance needed to open the original source.
+
+Raw Gmail response objects and unbounded provider metadata remain inside the
+adapter. A credential, cursor, remote ID, or command for one account must never be
+accepted under another account's authorization context. A future mutation derives
+its target account from the validated source/draft command, not an arbitrary
+renderer-selected credential.
+
+## Sync ownership and source of truth
+
+Exactly one trusted sync coordinator owns Gmail I/O. UI screens and AI features
+may request a typed sync command or render sync status; they never call Gmail,
+refresh tokens, or start per-screen fetch loops.
+
+Gmail is authoritative for remote messages, threads, labels, and remote deletion.
+The encrypted Posita cache is a resumable local projection. User corrections,
+derived topics/briefs, local drafts, and confirmed pending commands have separate
+ownership and must not be overwritten as if they were provider fields.
+
+Each account sync is single-flight and transactionally commits a bounded batch
+with its next cursor. Work is cancellable on shutdown, account disconnect, or
+supersession. Cross-account concurrency is bounded and quota-aware.
+
+## Deduplication, threading, and recovery
+
+The canonical source identity is `(accountId, providerMessageId)`. Provider thread
+IDs are also account-scoped. Replaying a page or history event is idempotent.
+
+Messages that look alike across accounts—including forwarded or copied mail—stay
+as separate source records with separate provenance. The topic layer may relate
+them but never collapses their authorization or source identity. Content-hash
+heuristics cannot be a destructive deduplication key.
+
+Retry transient idempotent reads with bounded exponential backoff, jitter, and
+Google retry guidance. Do not retry indefinitely. Authentication expiration,
+permission revocation, quota exhaustion, offline state, malformed payloads, and
+invalid history cursors are distinct typed failures. Cursor recovery uses a
+documented bounded resync window and never silently wipes local corrections or
+derived provenance.

@@ -46,6 +46,13 @@ describe('Posita vertical slice', () => {
     expect(screen.getByText('Each update is linked to its source.')).toBeInTheDocument()
   })
 
+  it('names icon-only desktop controls for assistive technology', async () => {
+    render(<App dataSource={dataSource} />)
+
+    expect(await screen.findByRole('button', { name: 'Notifications, unread' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Show messages with attachments' })).toBeInTheDocument()
+  })
+
   it('opens the source email behind a timeline claim', async () => {
     await openPulse()
     fireEvent.click(screen.getByText('Rahul asked for final confirmation before tomorrow morning.'))

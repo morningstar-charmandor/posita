@@ -114,6 +114,11 @@ if (/ipcRenderer\.(?:send|invoke|on)\s*[,}]/.test(preload)) {
   fail('preload must not expose an unscoped ipcRenderer method')
 }
 
+const rendererStyles = await readText('src/renderer/src/styles.css')
+if (!rendererStyles.includes('@media (prefers-reduced-motion: reduce)')) {
+  fail('renderer styles must respect the reduced-motion preference')
+}
+
 const localDataBootstrap = await readText('src/main/bootstrapLocalData.ts')
 if (!localDataBootstrap.includes('new ElectronSafeStorageProtector()')) {
   fail('production composition must use the Electron OS-backed credential protector')

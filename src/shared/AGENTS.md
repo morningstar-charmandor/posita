@@ -12,3 +12,6 @@ applies.
 - Version externally persisted or transported contracts and test backward
   compatibility when a migration period exists.
 - Preserve provider provenance and source message IDs on all derived mail facts.
+- Keep exactly one provider-independent normalized mail contract. Provider IDs are
+  namespaced by Posita account, and provider-specific payloads never leak into
+  presentation or AI contracts.

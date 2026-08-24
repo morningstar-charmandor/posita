@@ -92,6 +92,13 @@ scoped agent instructions, a machine-readable project map, strict typed
 boundaries, deterministic fakes, and one credential-free verification command.
 This makes project context inspectable rather than trapped inside a chat.
 
+The collaboration follows an “account for every line” discipline: search for the
+existing source of truth before adding code, treat file size as a signal to review
+responsibilities rather than a score, and document retained compatibility paths.
+Future mailbox work has one account-scoped normalized model and one sync owner so
+UI and AI features cannot quietly become alternate provider clients. This is a
+documented boundary, not a claim that live sync has been implemented.
+
 ## Key challenges and tradeoffs
 
 ### Proving value without pretending to be live
@@ -135,7 +142,10 @@ At Gate 2C, Posita has:
 - an OS-protected data-key hierarchy and AES-256-GCM private records,
 - tamper-evident metadata, interruption-aware migration, and scrubbed sidecars,
 - privacy, retention, deletion, and least-privilege authorization boundaries,
-- 13 automated test files containing 52 passing tests,
+- future sync ownership and account-isolation contracts without premature
+  provider implementation,
+- keyboard-readable icon controls and a reduced-motion fallback,
+- 13 automated test files containing 53 passing tests,
 - passing strict TypeScript, structural security checks, and production builds.
 
 These are engineering outcomes, not evidence of customer adoption or AI quality.

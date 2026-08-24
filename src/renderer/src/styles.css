@@ -131,3 +131,14 @@ h1 { font-family: Georgia, 'Times New Roman', serif; font-weight: 500; letter-sp
   .ask-wrap { padding-left: 30px; padding-right: 30px; }
   .next-step-card { grid-template-columns: 34px 1fr auto; }.next-step-card .secondary-button { display: none; }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+
+  .brief-card:hover { transform: none; }
+}

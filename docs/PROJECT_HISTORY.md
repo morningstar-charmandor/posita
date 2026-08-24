@@ -199,6 +199,40 @@ stable portfolio and release-checkpoint branch. Promotion requires the canonical
 verification gate, continuity documentation, and a clean diff. Published history
 on both shared branches must not be force-rewritten.
 
+## Engineering guidance audit
+
+Date: 2026-08-24
+
+Goal: translate external macOS and AI-assisted engineering advice into Posita's
+existing architecture without adding speculative layers or contradicting accepted
+decisions.
+
+Delivered:
+
+- repository rules to search and reuse before adding parallel services, stores,
+  repositories, schemas, compatibility paths, or dependencies,
+- complexity review triggers that use line count as a diagnostic rather than a
+  target or hard limit,
+- ADR-011 and provider contracts for one canonical account-scoped mail model, one
+  trusted sync coordinator, explicit provider/cache ownership, and central
+  idempotent source identity,
+- bounded, cancellable background-work and typed retry/recovery expectations,
+- Electron-specific desktop quality guidance covering native conventions,
+  lifecycle ownership, responsive work, and distribution controls,
+- accessible names for current icon-only controls plus a mechanically checked
+  reduced-motion fallback.
+
+The audit found no current unjustified dependency or duplicate production service
+path. The plaintext SQLite repository remains only as the documented Gate 2C
+migration reader. SwiftUI, AppKit, SwiftData, and `UserDefaults` recommendations
+were deliberately excluded because ADR-002 selects Electron. Multi-window
+architecture, provider code, polling, and hard file-size enforcement were not
+introduced before a demonstrated need.
+
+Evidence: 13 test files and 53 tests, strict typechecking, structural checks, and
+the production build passed. This checkpoint changes engineering contracts and
+small accessibility behavior; Gmail, AI, and runtime sync remain unimplemented.
+
 ## How future entries should be written
 
 For each material milestone, record:

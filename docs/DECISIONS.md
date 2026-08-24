@@ -111,3 +111,19 @@
   application use. Querying encrypted content is intentionally limited until a
   separate search design evaluates leakage and scale. Missing keys and tampered
   records make the cache unavailable rather than causing silent reset.
+
+## ADR-011: Centralize account-scoped sync and source identity
+
+- Status: accepted for the future provider boundary; runtime sync is not built
+- Context: Multiple accounts, retries, local caching, and AI-derived organization
+  create duplicate-fetch, cross-account authorization, and source-identity risks
+  if each feature manages its own provider state.
+- Decision: use one trusted sync coordinator and one provider-independent mail
+  model. Scope provider messages, threads, cursors, credentials, and commands to
+  a Posita account. Treat provider mail as authoritative remote state and the
+  encrypted cache as an explicitly reconciled projection. Keep deduplication and
+  provider threading centralized and idempotent; AI remains downstream.
+- Consequence: screens and AI features consume application state rather than
+  calling providers. Cross-account lookalikes remain distinct source records,
+  sync needs typed status and recovery contracts, and local corrections and
+  derived artifacts require ownership separate from provider fields.

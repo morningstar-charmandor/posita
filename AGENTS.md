@@ -79,6 +79,13 @@ to match a preferred style.
   storage rather than reading global state inside domain code.
 - Prefer small named modules with explicit inputs and outputs over implicit
   singletons or cross-layer imports.
+- Search for equivalent behavior before adding code. Extend one coherent source
+  of truth instead of creating a parallel service, helper, manager, repository,
+  state store, or compatibility path without a documented migration need.
+- Treat line count as a complexity signal, never a quality target. Review a
+  normal source file above roughly 600 lines, or a 300–500-line change for a
+  small feature, for mixed responsibilities or duplication. These are review
+  triggers, not limits for migrations, schemas, tests, or necessary adapters.
 - Keep one source of truth for each concept. Do not duplicate domain types in UI,
   IPC, database, and provider code.
 - External payloads and model output require versioned schemas and runtime
@@ -88,6 +95,12 @@ to match a preferred style.
 - Queries and generated claims must retain provenance to source message IDs.
 - Use migrations for persistent schema changes; never mutate user data silently.
 - Feature flags must default to the safer behavior.
+- Expensive database, sync, parsing, indexing, and AI work must not block the
+  renderer or Electron main event loop. Give background work one lifecycle owner,
+  bounded concurrency, cancellation, and cleanup on supersession or shutdown.
+- Add no dependency until existing code and platform APIs have been evaluated.
+  Record its purpose, security/permission impact, maintenance risk, and removal
+  cost; keep production versions exact.
 - Logs use opaque identifiers and never include message bodies, subjects,
   addresses, drafts, access tokens, refresh tokens, or model prompts.
 
@@ -95,6 +108,10 @@ to match a preferred style.
 
 - Components render structured application results; they do not call Gmail,
   model providers, databases, or privileged Electron APIs.
+- Preserve the accepted Electron stack while making Posita behave like a
+  first-class macOS desktop app: keyboard operation, native window conventions,
+  contextual menus/dialogs where useful, responsive resizing, and reduced-motion
+  support. OS integration remains in trusted main-process adapters.
 - Use semantic HTML and accessible names so both people and automation can
   operate the interface. Prefer roles and labels over test-only selectors.
 - Every asynchronous surface needs loading, empty, error, offline, and retry
@@ -108,6 +125,17 @@ to match a preferred style.
 ## Backend and agent-tool rules
 
 - Provider adapters normalize external data before application use cases see it.
+- One canonical provider-independent mail model owns messages, threads,
+  recipients, timestamps, labels, attachments, and provenance. Every provider
+  record, cursor, credential lookup, and future mutation is scoped to exactly one
+  Posita account; cross-account topics never erase source-account identity.
+- One trusted sync coordinator owns all provider I/O. Screens and AI features
+  consume application state and may request a sync command, but never fetch a
+  mailbox independently or start their own polling loop.
+- Providers remain authoritative for remote mail; the encrypted local cache is a
+  resumable projection with explicit reconciliation rules. Deduplication and
+  provider threading are centralized and idempotent, never reimplemented by UI
+  or AI features.
 - OAuth tokens stay in the OS keychain/main process; never return them over IPC.
 - Tool names are verb-first and stable, with one capability per tool.
 - Tool inputs and outputs are bounded JSON-compatible objects with documented
@@ -131,3 +159,5 @@ A change is done only when:
   and deferred work without relying on conversation history,
 - no secret, personal mailbox data, generated output, or cache is committed, and
 - the handoff clearly distinguishes implemented, simulated, and deferred work.
+- the handoff reports new dependencies and abstractions, removed or retained
+  compatibility paths, and any intentional duplication.

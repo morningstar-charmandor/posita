@@ -45,6 +45,84 @@ This keeps business behavior testable without Electron, Gmail, SQLite, or a mode
 provider. It also prevents UI components and AI tools from becoming alternate,
 unreviewed backends.
 
+## Change scope and complexity
+
+AI-assisted development makes additive duplication a larger risk than raw line
+count. Before adding a module, abstraction, or dependency:
+
+1. search for equivalent behavior and identify the current source of truth,
+2. extend the existing coherent path when its responsibility still fits,
+3. introduce a new boundary only for a real lifecycle, security, provider, or
+   testability need,
+4. remove superseded code in the same change, or document why a compatibility
+   path must remain and when it can be removed,
+5. verify that one feature has not acquired a second repository, state store,
+   fetch path, validation schema, or error model.
+
+Do not optimize for minimum lines. Review line count as a prompt for judgment:
+
+- roughly 300–500 added lines for a small feature should trigger a scope and reuse
+  review,
+- a normal source file above roughly 600 lines should trigger a responsibility
+  review,
+- generated schemas, migrations, fixtures, tests, and necessary platform adapters
+  may reasonably exceed those ranges.
+
+Completion notes identify files created and modified, significant additions or
+removals, new abstractions and dependencies, and any old implementation retained.
+Never create layers merely to look production-grade.
+
+## Desktop behavior and responsiveness
+
+Posita remains an Electron application under ADR-002. Generic SwiftUI, SwiftData,
+AppKit, and `UserDefaults` guidance does not apply unless the host decision is
+formally revisited. The underlying goal does apply: Posita should feel like a
+first-class macOS app rather than an unconstrained website in a window.
+
+- Use Electron/operating-system capabilities for windows, menus, shortcuts,
+  dialogs, notifications, Dock behavior, and external links when they materially
+  improve the workflow.
+- Keep privileged OS integration in main-process adapters behind narrow contracts.
+- Scope state to the smallest owner: transient interaction state in components,
+  feature state in the feature boundary, and account/auth/lifecycle state in
+  application services. Do not create a global catch-all state object.
+- Keep launch and interaction responsive. Production-sized database work, sync,
+  parsing, indexing, retrieval, and model calls move to a worker or Electron
+  utility process rather than blocking renderer or main event loops.
+- Long-running work accepts cancellation, stops when superseded or disconnected,
+  and releases timers, listeners, network clients, and heavyweight resources.
+- Respect keyboard conventions, resizing, focus, contrast, accessible names, and
+  reduced-motion preferences. Motion communicates state and never delays input.
+
+Multi-window support is not implied. If introduced later, window-specific state
+must not accidentally become global, and restoration/crash behavior needs tests.
+
+## Networking and background work
+
+All provider and future model networking uses typed, validated requests and
+responses; explicit timeouts; cancellation; bounded exponential backoff with
+jitter; server retry guidance; and structured safe errors. Retry only transient,
+idempotent operations. Authentication expiration, permission loss, quota limits,
+invalid cursors, offline state, and malformed payloads remain distinct failures.
+
+Background work has one named lifecycle owner. Prefer provider events and
+incremental cursors over permanent polling. Bound CPU, memory, disk, battery,
+network, and concurrent-account use; stop unnecessary work when the app shuts
+down or an account disconnects.
+
+## Dependencies and distribution
+
+Prefer current platform and project capabilities before adding a package. A new
+dependency needs a concrete purpose, exact version, maintenance assessment,
+security and permission review, coupling/removal analysis, and deterministic test
+strategy. Avoid dependencies for trivial helpers.
+
+Gate 3 distribution requires signed builds, Hardened Runtime, notarization,
+stapling, entitlement review, and automated release verification. Chromium
+sandboxing and macOS App Sandbox are different controls; do not describe one as
+the other. Request permissions contextually and only when the user invokes the
+capability that needs them.
+
 ## Agent-operable UI
 
 Frontend behavior must remain understandable through the accessibility tree:

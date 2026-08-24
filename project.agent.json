@@ -94,6 +94,13 @@
     "private-cache-records-use-authenticated-encryption",
     "missing-or-invalid-cache-keys-never-trigger-silent-reset",
     "plaintext-search-indexes-are-forbidden-without-threat-model-review",
+    "one-provider-independent-mail-model-is-canonical",
+    "provider-state-and-credentials-are-account-scoped",
+    "one-sync-coordinator-owns-all-provider-io",
+    "provider-mail-is-authoritative-and-cache-reconciliation-is-explicit",
+    "deduplication-and-threading-are-central-and-idempotent",
+    "background-work-is-bounded-cancellable-and-off-ui-event-loops",
+    "code-growth-requires-reuse-and-duplication-review",
     "material-work-maintains-continuity-and-portfolio-evidence"
   ],
   "generatedPaths": [

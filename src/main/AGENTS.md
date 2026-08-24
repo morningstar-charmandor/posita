@@ -13,6 +13,15 @@ This directory is the trusted desktop backend. The root `AGENTS.md` also applies
 - Mail sync and persistent writes are idempotent and transactional at documented
   boundaries. Persistent schema changes require numbered migrations and rollback
   or recovery guidance.
+- A single application-owned sync coordinator schedules provider work. It enforces
+  one active sync per account, bounded cross-account concurrency, cancellation on
+  disconnect/shutdown, quota-aware backoff, and explicit cursor recovery.
+- Provider message and thread IDs are meaningful only with their Posita account
+  scope. Deduplication happens before persistence; cross-account lookalikes remain
+  separate source records even when a topic relates them.
+- Treat provider mail as remote authority and SQLite as an encrypted projection.
+  Reconciliation must distinguish provider changes, local corrections, derived
+  artifacts, pending commands, and stale cached state.
 - Provider and AI clients implement interfaces and have deterministic fakes.
   Application and contract tests must not require network access or credentials.
 - A model proposal cannot directly invoke a mailbox mutation. Policy validation,

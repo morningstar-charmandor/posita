@@ -118,6 +118,17 @@ The Gmail adapter will use an initial 90-day import followed by incremental
 history synchronization. Sync operations must be idempotent, transactional at a
 batch boundary, resumable, quota-aware, and isolated per account.
 
+One application-owned sync coordinator is the only component permitted to call
+provider adapters. Provider mail is the remote source of truth; the encrypted
+cache is a projection, while user corrections, derived artifacts, drafts, and
+confirmed commands retain separate ownership. Deduplication uses account-scoped
+provider identity, and cross-account topic relationships never merge source
+records or authorization contexts.
+
+Sync work uses bounded per-account batches and cross-account concurrency,
+cancellation, explicit timeouts, and bounded backoff. Production sync, parsing,
+indexing, and AI work run outside renderer and Electron main event loops.
+
 Desktop authorization uses Authorization Code + PKCE through the system browser
 and a loopback redirect. The first sync requests `gmail.readonly` only. See
 `GMAIL.md` for scope progression and credential-lifetime rules.

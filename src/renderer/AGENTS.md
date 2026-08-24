@@ -12,6 +12,12 @@ This directory is an untrusted browser-like presentation process. The root
   feature embedded there, extract that feature unless the change is trivial.
 - Use native semantic controls and stable accessible names. Tests query by role
   and label before considering a test-only selector.
+- Preserve keyboard-first desktop behavior, predictable focus, responsive window
+  resizing, sufficient contrast, and `prefers-reduced-motion`. Icon-only controls
+  require an explicit accessible name; important state is never color-only.
+- Renderer async work must ignore or cancel stale results after unmount,
+  supersession, or navigation. UI screens never own provider polling or sync
+  loops; they render application-owned sync state.
 - Do not render email HTML with `dangerouslySetInnerHTML`. Future HTML mail must
   use a reviewed sanitizer and isolated rendering policy.
 - Every mail-derived summary preserves source links and visible account origin.
