@@ -21,6 +21,16 @@ class MemorySecretVault implements SecretVault {
   async delete(name: SecretName): Promise<boolean> {
     return this.values.delete(name)
   }
+
+  async deleteGoogleRefreshTokens(): Promise<number> {
+    let deleted = 0
+    for (const name of [...this.values.keys()]) {
+      if (name.startsWith('oauth.google.') && name.endsWith('.refresh-token')) {
+        if (this.values.delete(name)) deleted += 1
+      }
+    }
+    return deleted
+  }
 }
 
 const deterministicKey = Uint8Array.from({ length: 32 }, (_, index) => 255 - index)

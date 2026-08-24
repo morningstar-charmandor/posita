@@ -24,9 +24,13 @@ retention with atomic derived-data eviction; it is not scheduled automatically.
 Account removal now deterministically preserves unaffected sources while evicting
 touched derived context. A crash-resumable disconnect orchestrator now coordinates
 revocation, credential deletion, provider-state deletion, local-data removal, and
-compaction through interfaces and deterministic tests. No live Google revoker or
-UI trigger exists. Gmail and AI providers are not connected, no real OAuth
-credential exists, and sending is deliberately disabled.
+compaction through interfaces and deterministic tests. A separate installation-wide
+orchestrator now journals deletion of all refresh credentials, encrypted account
+state, mail records, SQLite remnants, the OS-protected data key, and its in-memory
+copy. Both workflows are deliberately inactive: there is no live Google revoker,
+user trigger, startup recovery owner, or safe post-deletion bootstrap yet. Gmail
+and AI providers are not connected, no real OAuth credential exists, and sending
+is deliberately disabled.
 
 Read the build boundaries before extending the prototype:
 

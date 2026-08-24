@@ -112,6 +112,19 @@ describe('EncryptedSqliteAccountStateRepository', () => {
     expect(repository.loadSyncState('personal')).toEqual(syncState('personal'))
   })
 
+  it('deletes all account state idempotently', () => {
+    const { repository } = createRepository()
+    repository.saveProviderAccount(providerAccount('work'))
+    repository.saveSyncState(syncState('work'))
+    repository.saveProviderAccount(providerAccount('personal'))
+
+    expect(repository.deleteAllAccountState()).toBe(true)
+    expect(repository.deleteAllAccountState()).toBe(false)
+    expect(repository.loadProviderAccount('work')).toBeUndefined()
+    expect(repository.loadSyncState('work')).toBeUndefined()
+    expect(repository.loadProviderAccount('personal')).toBeUndefined()
+  })
+
   it('fails safely when account scope metadata is substituted', () => {
     const { database, repository } = createRepository()
     repository.saveProviderAccount(providerAccount('work'))

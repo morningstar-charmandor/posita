@@ -419,6 +419,47 @@ Limitations: no Google revocation adapter, background pending-operation resumer,
 user-facing status/consent, or full-installation delete-local-data orchestrator
 exists. No OAuth credential or real account was used.
 
+## Gate 2D foundation — Crash-resumable full local-data deletion
+
+Date: 2026-08-24
+Checkpoint: use the Git commit whose subject is `feat: orchestrate local data deletion`
+
+Goal: delete all locally held mailbox data and its shared encryption key in a
+durable order without claiming success after only logical record removal.
+
+Delivered:
+
+- a versioned installation-wide deletion request/result contract,
+- ordered refresh-credential, encrypted account-state, encrypted mail/derived
+  record, SQLite sanitization, OS-vault data-key, and in-memory key deletion,
+- separate idempotent all-record deletion and sanitization repository primitives,
+- journal advancement only after successful phase completion,
+- safe retry after action failure and every action/journal-write crash window,
+- in-memory and durable exclusion of competing installation deletion,
+- durable exclusion between full deletion and same-account disconnect,
+- bulk refresh-token deletion that does not depend on decrypting mail or account
+  state and also removes orphaned allow-listed credentials.
+
+Important decisions:
+
+- erase the shared installation key only after record removal and compaction,
+- destroy the live protector key before journal completion,
+- retain the non-sensitive lifecycle journal after cryptographic erasure,
+- do not compose or expose deletion until startup can resume key-erasure state
+  without creating a replacement key or reseeding fixtures,
+- add no dependency, schema, renderer IPC, live credential, or compatibility path.
+
+Evidence: 19 test files and 114 tests passed before final checkpoint verification.
+Coverage includes ordered completion, failure/retry at all five phases,
+journal-write crashes after each successful phase, operation conflicts, restart-
+durable exclusion, account-state enumeration/deletion, logical deletion status,
+compaction, OS-vault key erasure, and in-memory key destruction.
+
+Limitations: the service is verified through interfaces and deterministic fakes
+but is not startup-composed, scheduled, or user-triggered. There is no safe
+post-deletion bootstrap, background resume owner, confirmation/status UI, OAuth
+credential, real account, or claim of hardware-forensic erasure.
+
 ## How future entries should be written
 
 For each material milestone, record:

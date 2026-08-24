@@ -17,8 +17,9 @@ and actions.
 
 **Current stage:** Gate 2D account-lifecycle foundation in progress, with a real
 SQLite path, OS-protected key hierarchy, authenticated mail and provider-account
-state, plus a tested crash-resumable disconnect orchestrator. Gmail and AI are not
-connected, and disconnect has no live revoker or user trigger.
+state, plus tested crash-resumable disconnect and full local-deletion orchestrators.
+Gmail and AI are not connected, and neither lifecycle workflow has a live provider,
+startup recovery owner, or user trigger.
 
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
 
@@ -127,6 +128,13 @@ installation key. Gate 2D now adds versioned encrypted provider-account identity
 and sync state without connecting a provider. Real mail remains blocked until
 account-scoped retention and disconnect orchestration are equally well proven.
 
+Full local deletion adds a distinct ordering problem: the shared data key must
+remain available long enough to remove encrypted records and sanitize SQLite, but
+must be erased before completion is reported. Posita now journals credentials,
+account state, mail records, compaction, OS-vault key deletion, and in-memory key
+destruction as retryable phases. Activation is intentionally deferred until
+startup can resume after key erasure without silently creating a replacement key.
+
 ### Choosing bounded context
 
 The private alpha will import and retain a rolling 90-day window. This trades
@@ -154,10 +162,12 @@ At the current Gate 2D foundation checkpoint, Posita has:
   every derived topic touched by removed provenance,
 - ordered single-flight disconnect orchestration with durable progress and safe
   retry at every action and journal-write boundary,
+- ordered installation-wide deletion through SQLite sanitization, OS-protected
+  key erasure, and in-memory key destruction, with durable overlap prevention,
 - future sync ownership and account-isolation contracts without premature
   provider implementation,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 18 automated test files containing 92 passing tests,
+- 19 automated test files containing 114 passing tests,
 - passing strict TypeScript, structural security checks, and production builds.
 
 These are engineering outcomes, not evidence of customer adoption or AI quality.
@@ -165,10 +175,10 @@ No real mailbox, OAuth credential, or model provider has been used.
 
 ## What comes next
 
-The next Gate 2D slice will implement full local-data deletion through installation
-key erasure, followed by safe lifecycle status/consent and background resumption.
-Only after that lifecycle passes verification should the project add Gmail OAuth
-and a deterministic sync adapter.
+The next Gate 2D slice will define safe lifecycle status and explicit confirmation,
+then add restart-aware background recovery that never replaces an erased key or
+reseeds deleted data. Only after that activation path passes verification should
+the project add Gmail OAuth and a deterministic sync adapter.
 
 Later evidence should include measured sync reliability, duplicate prevention,
 citation correctness, draft usefulness, correction rate, and time to attention.

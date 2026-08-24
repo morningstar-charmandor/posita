@@ -170,3 +170,21 @@
 - Consequence: revocation and every local deletion/compaction step must treat an
   already absent target as success. Disconnect can resume without guessing, but
   completion is not reported until every phase and its journal advance succeeds.
+
+## ADR-015: Erase the shared data key last during full local deletion
+
+- Status: accepted for Gate 2D
+- Context: Installation-wide deletion crosses refresh credentials, encrypted
+  account state, encrypted mail records, SQLite remnants, OS-protected key
+  material, and a live in-memory encryption context. Deleting the shared key too
+  early would prevent orderly record cleanup; deleting it too late would leave
+  recoverable private ciphertext after false completion.
+- Decision: journal one installation-global operation and execute idempotent
+  phases in this order: refresh credentials, encrypted account state, encrypted
+  mail records, SQLite compaction/WAL truncation, OS-vault data-key deletion, and
+  in-memory key destruction. Advance the journal only after each action succeeds.
+  The durable journal prevents overlapping full deletion and account disconnect.
+- Consequence: cryptographic erasure is the final private-data boundary and can
+  be retried after action/journal crash windows. Production activation remains
+  blocked until startup can resume a pending deletion without generating a
+  replacement key, and until an explicitly confirmed user command owns status.

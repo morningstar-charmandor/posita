@@ -240,25 +240,34 @@ export class EncryptedSqliteMailRepository implements MutableMailRepository {
   }
 
   deleteAll(): void {
+    this.deleteAllRecords()
+    this.sanitizeStorage()
+  }
+
+  deleteAllRecords(): void {
     try {
       this.database.exec('BEGIN IMMEDIATE')
       try {
         this.database.exec('DELETE FROM encrypted_records')
         this.database.prepare(`
           INSERT INTO encrypted_cache_state (id, status, updated_at)
-          VALUES (1, 'ready', datetime('now'))
-          ON CONFLICT(id) DO UPDATE SET status = 'ready', updated_at = datetime('now')
+          VALUES (1, 'sanitization-pending', datetime('now'))
+          ON CONFLICT(id) DO UPDATE SET
+            status = 'sanitization-pending', updated_at = datetime('now')
         `).run()
         this.database.exec('COMMIT')
       } catch (error) {
         if (this.database.isTransaction) this.database.exec('ROLLBACK')
         throw error
       }
-      sanitizeSqliteStorage(this.database)
     } catch (error) {
       if (error instanceof RepositoryError) throw error
       throw cacheFailure('Failed to delete the encrypted local mail cache.', error)
     }
+  }
+
+  destroyEncryptionContext(): void {
+    this.protector.destroy()
   }
 
   close(): void {

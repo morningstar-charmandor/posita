@@ -111,6 +111,20 @@ describe('EncryptedSqliteMailRepository', () => {
     })
   })
 
+  it('tracks logical record deletion as pending until storage is sanitized', () => {
+    const { database, repository } = createInMemoryRepository()
+    repository.seedIfEmpty(fixtures)
+
+    repository.deleteAllRecords()
+
+    expect(countEncryptedRecords(database)).toBe(0)
+    expect(database.prepare('SELECT status FROM encrypted_cache_state WHERE id = 1').get())
+      .toEqual({ status: 'sanitization-pending' })
+    repository.sanitizeStorage()
+    expect(database.prepare('SELECT status FROM encrypted_cache_state WHERE id = 1').get())
+      .toEqual({ status: 'ready' })
+  })
+
   it('atomically replaces the encrypted dataset and tracks sanitization separately', () => {
     const { database, repository } = createInMemoryRepository()
     repository.seedIfEmpty(fixtures)

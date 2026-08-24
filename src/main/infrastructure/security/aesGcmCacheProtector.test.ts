@@ -83,4 +83,21 @@ describe('AesGcmCacheProtector', () => {
         code: 'CACHE_RECORD_INVALID'
       }))
   })
+
+  it('cannot encrypt or decrypt after its in-memory key is destroyed', () => {
+    const protector = new AesGcmCacheProtector(key, incrementingNonce())
+    const envelope = protector.protect(context, 'private value')
+
+    protector.destroy()
+    protector.destroy()
+
+    for (const attempt of [
+      () => protector.protect(context, 'replacement value'),
+      () => protector.unprotect(context, envelope)
+    ]) {
+      expect(attempt).toThrowError(
+        expect.objectContaining<Partial<EncryptedCacheError>>({ code: 'CACHE_KEY_MISSING' })
+      )
+    }
+  })
 })

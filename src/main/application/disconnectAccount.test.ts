@@ -70,6 +70,8 @@ class FakeMailRepository implements MutableMailRepository {
     this.actions.push('sanitize')
     this.maybeFail('compaction')
   }
+  deleteAllRecords(): void {}
+  destroyEncryptionContext(): void {}
   close(): void {}
 
   private maybeFail(step: FailureStep): void {
@@ -95,6 +97,7 @@ class FakeVault implements SecretVault {
     }
     return true
   }
+  async deleteGoogleRefreshTokens(): Promise<number> { return 0 }
 }
 
 class FakeAccountState implements AccountStateRepository {
@@ -114,6 +117,7 @@ class FakeAccountState implements AccountStateRepository {
     }
     return true
   }
+  deleteAllAccountState(): boolean { return false }
 }
 
 const operation = (phase: DisconnectPhase): DisconnectAccountOperationV1 => ({
@@ -256,6 +260,31 @@ describe('DisconnectAccountService', () => {
     await expect(competing).rejects.toMatchObject({ code: 'DISCONNECT_IN_PROGRESS' })
     release()
     await expect(first).resolves.toMatchObject({ status: 'completed' })
+  })
+
+  it('rejects a new disconnect while full local-data deletion is pending', async () => {
+    const harness = createHarness()
+    harness.lifecycle.save({
+      version: 1,
+      operationId: 'delete-local-1',
+      operationType: 'delete-local-data',
+      phase: 'mail-data-delete-pending'
+    })
+
+    await expect(harness.service.disconnect(request)).rejects.toMatchObject({
+      code: 'DISCONNECT_IN_PROGRESS', retryable: true
+    })
+    expect(harness.lifecycle.load(request.operationId)).toBeUndefined()
+  })
+
+  it('rejects a competing durable disconnect for the same account after restart', async () => {
+    const harness = createHarness()
+    harness.lifecycle.save(operation('credential-delete-pending'))
+
+    await expect(harness.service.disconnect({
+      ...request,
+      operationId: 'disconnect-work-2'
+    })).rejects.toMatchObject({ code: 'DISCONNECT_IN_PROGRESS', retryable: true })
   })
 
   it('rejects invalid identifiers before creating a journal entry', async () => {

@@ -113,6 +113,13 @@ computes retained accounts, source messages, untouched derived topics/briefs, an
 referenced people before the repository encrypts anything. No account-removal SQL
 path exists outside this repository transaction.
 
+Installation-wide deletion uses narrower idempotent repository primitives. It
+deletes every encrypted account-state row, deletes all encrypted mail records while
+marking sanitization pending, and advances the lifecycle journal before running
+compaction. Only after SQLite reaches `ready` does it delete the OS-protected data
+key and destroy the shared in-memory encryption context. The non-sensitive journal
+remains available to record completion.
+
 ## Migrations
 
 Migrations are numbered, immutable, and applied in a transaction. Applied
@@ -179,3 +186,6 @@ The local-data and credential foundation requires tests for:
   topic preservation, people recomputation, invalid IDs, and idempotent retries.
 - ordered disconnect completion, action failures at every phase, journal-write
   crashes after every successful action, operation conflicts, and single flight.
+- ordered installation deletion, action and journal-write failures at every phase,
+  durable lifecycle exclusion, complete account-state removal, logical deletion
+  status, compaction, OS-vault key erasure, and in-memory key destruction.

@@ -52,6 +52,11 @@ Implemented:
   encrypted provider-state deletion, account-data removal, and compaction,
 - phase-safe retry behavior for action failures and crashes after an action but
   before journal advancement,
+- an installation-wide delete-local-data orchestrator over all stored refresh
+  credentials, encrypted account state, mail/derived records, SQLite sanitization,
+  OS-vault data-key erasure, and in-memory key destruction,
+- durable lifecycle exclusion that prevents a second full deletion or an
+  overlapping same-account disconnect after process restart,
 - accessible names for icon-only workspace controls and reduced-motion styling,
 - deterministic credential-free verification through `npm run verify`.
 
@@ -62,16 +67,19 @@ Simulated or deliberately inactive:
 - no OAuth credential has been created or stored,
 - encrypted provider-account and sync-state tables contain no real account,
 - authorization revocation uses deterministic test implementations only,
+- full local deletion is verified only through application interfaces and fakes;
+  it is not composed at startup or exposed to the renderer,
 - sending and every other remote mailbox mutation are disabled.
 
 Not implemented:
 
 - Gmail OAuth, message ingestion, incremental history sync, or user-triggered/live disconnect,
 - runtime sync coordination, provider reconciliation, or deduplication logic,
-- full-installation delete-local-data orchestration and background lifecycle resume,
+- explicit local-deletion confirmation/status, safe post-key-erasure bootstrap,
+  or background lifecycle resume,
 - automatic retention scheduling and user-visible maintenance status,
 - a model provider, embeddings, classification, retrieval, or generation,
-- automatic 90-day maintenance and account-scoped disconnect/deletion orchestration,
+- automatic 90-day maintenance or active account lifecycle scheduling,
 - production-scale encrypted search or attachment storage,
 - packaging, signing, telemetry, or external-user onboarding.
 
@@ -91,18 +99,19 @@ Not implemented:
 Proceed with **Gate 2D: encrypted account lifecycle** before implementing OAuth.
 
 Encrypted account state, ownership, the crash-resume journal, deterministic
-retention, account-removal projection, and account-disconnect orchestration are
-complete. Continue in this order:
+retention, account removal, disconnect, and full local-deletion orchestration are
+complete at the application layer. Continue in this order:
 
-1. Implement the full delete-local-data state machine across all credentials,
-   encrypted account state, mail records, compaction, and installation-key erasure.
-2. Test full-local-delete crashes at every transition.
-3. Add explicit consent and safe status contracts without exposing private data.
-4. Add a background resume owner for pending lifecycle work without blocking the
-   Electron main event loop.
-5. Decide the controlled compatibility behavior for older fixture caches that do
+1. Define explicit confirmation and safe lifecycle-status contracts without
+   exposing private data or adding a destructive renderer command prematurely.
+2. Design the startup/background lifecycle owner, including a recovery path that
+   finishes `data-key-delete-pending` without generating a replacement key or
+   reseeding fixtures.
+3. Compose the deletion services only after that recovery path is tested across
+   restart boundaries and has one cancellation/shutdown owner.
+4. Decide the controlled compatibility behavior for older fixture caches that do
    not contain absolute retention timestamps before scheduling maintenance.
-6. Keep real Gmail ingestion disabled until the lifecycle gate passes.
+5. Keep real Gmail ingestion disabled until the lifecycle activation gate passes.
 
 Do not solve encrypted search casually. Any index must avoid becoming a second
 plaintext mailbox. Record the selected search tradeoff in `docs/DECISIONS.md`.
@@ -125,7 +134,7 @@ plaintext mailbox. Record the selected search tradeoff in `docs/DECISIONS.md`.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 18 test files, 92 tests, strict typecheck, structure
+- Current verified baseline: 19 test files, 114 tests, strict typecheck, structure
   checks, and production Electron build passing.
 
 Native verification migrated the development database to schema v3 with 21

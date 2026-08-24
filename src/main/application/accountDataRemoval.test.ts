@@ -21,6 +21,8 @@ class FakeMutableMailRepository implements MutableMailRepository {
     this.replacements += 1
   }
   sanitizeStorage(): void {}
+  deleteAllRecords(): void {}
+  destroyEncryptionContext(): void {}
   close(): void {}
 }
 

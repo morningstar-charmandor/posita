@@ -34,6 +34,7 @@ export interface AccountStateRepository {
   saveSyncState(state: ProviderSyncStateV1): void
   loadSyncState(accountId: string): ProviderSyncStateV1 | undefined
   deleteAccountState(accountId: string): boolean
+  deleteAllAccountState(): boolean
 }
 
 export class AccountStateError extends Error {

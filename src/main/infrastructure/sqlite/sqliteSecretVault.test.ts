@@ -1,6 +1,7 @@
 import type { DatabaseSync } from 'node:sqlite'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
+  CACHE_DATA_KEY_NAME,
   googleRefreshTokenName,
   MAX_SECRET_LENGTH,
   SecretVaultError
@@ -53,6 +54,21 @@ describe('SqliteSecretVault', () => {
 
     expect(row.protection_scheme).toBe('deterministic-fake-v1')
     expect(Buffer.from(row.ciphertext).includes(Buffer.from(secret))).toBe(false)
+  })
+
+  it('deletes every Google refresh credential without deleting the cache key', async () => {
+    const { vault } = createVault()
+    const personal = googleRefreshTokenName('personal')
+    const work = googleRefreshTokenName('work')
+    await vault.set(personal, 'personal-token')
+    await vault.set(work, 'work-token')
+    await vault.set(CACHE_DATA_KEY_NAME, 'installation-key')
+
+    expect(await vault.deleteGoogleRefreshTokens()).toBe(2)
+    expect(await vault.deleteGoogleRefreshTokens()).toBe(0)
+    expect(await vault.get(personal)).toBeUndefined()
+    expect(await vault.get(work)).toBeUndefined()
+    expect(await vault.get(CACHE_DATA_KEY_NAME)).toBe('installation-key')
   })
 
   it('does not write when the protector fails closed', async () => {

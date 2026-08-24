@@ -190,6 +190,33 @@ no Google revocation adapter, OAuth token, background resume scheduler, preload
 method, or UI trigger. The installation data key is not deleted for one account
 because other accounts share it.
 
+### Full local-data deletion orchestration
+
+ADR-015 defines a separate installation-wide state machine:
+
+```text
+all refresh credentials pending
+  -> all encrypted account state pending
+  -> all encrypted mail/derived records pending
+  -> SQLite compaction pending
+  -> OS-protected data-key deletion pending
+  -> in-memory key destruction
+  -> completed
+```
+
+Logical record deletion and physical sanitization are separate idempotent phases.
+The key is erased only after private records and SQLite remnants are removed, and
+the shared protector is destroyed before completion is journaled. Durable pending
+work rejects an overlapping installation deletion or same-account disconnect,
+including after a process restart.
+
+This service is verified against application interfaces and deterministic fakes
+but is not part of startup composition and has no renderer command. Activation
+requires an explicit confirmed command plus a recovery owner that resumes pending
+work without calling `loadOrCreate` for a replacement installation key after key
+erasure. The current fixture bootstrap would otherwise reseed sample content, so
+it is intentionally not used as a production deletion path.
+
 ## Gmail synchronization
 
 The Gmail adapter will use an initial 90-day import followed by incremental

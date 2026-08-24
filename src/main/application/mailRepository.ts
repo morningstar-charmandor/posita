@@ -9,7 +9,9 @@ export interface MailRepository {
 
 export interface MutableMailRepository extends MailRepository {
   replaceDataset(dataset: MailDataset): void
+  deleteAllRecords(): void
   sanitizeStorage(): void
+  destroyEncryptionContext(): void
 }
 
 export class RepositoryError extends Error {

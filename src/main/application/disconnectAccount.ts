@@ -151,6 +151,22 @@ export class DisconnectAccountService {
       }
       return existing
     }
+    let pending
+    try {
+      pending = this.lifecycle.listPending()
+    } catch (error) {
+      throw this.storageError(error)
+    }
+    if (pending.some((operation) =>
+      operation.operationType === 'delete-local-data' ||
+      (operation.operationType === 'disconnect-account' && operation.accountId === request.accountId)
+    )) {
+      throw new DisconnectAccountError(
+        'DISCONNECT_IN_PROGRESS',
+        'Another lifecycle operation must finish first.',
+        true
+      )
+    }
     const operation: DisconnectAccountOperationV1 = {
       version: 1,
       operationId: request.operationId,

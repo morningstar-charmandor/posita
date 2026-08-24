@@ -77,6 +77,17 @@ export class SqliteSecretVault implements SecretVault {
     }
   }
 
+  async deleteGoogleRefreshTokens(): Promise<number> {
+    try {
+      return Number(this.database.prepare(`
+        DELETE FROM protected_secrets
+        WHERE name LIKE 'oauth.google.%.refresh-token'
+      `).run().changes)
+    } catch (error) {
+      throw this.storageFailure('The Google refresh credentials could not be removed.', error)
+    }
+  }
+
   private assertName(name: string): asserts name is SecretName {
     if (!isSecretName(name)) {
       throw new SecretVaultError('INVALID_SECRET_NAME', 'The credential name is invalid.')

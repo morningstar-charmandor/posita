@@ -84,6 +84,16 @@ export class EncryptedSqliteAccountStateRepository implements AccountStateReposi
     }
   }
 
+  deleteAllAccountState(): boolean {
+    try {
+      const result = this.database.prepare('DELETE FROM encrypted_account_records').run()
+      return Number(result.changes) > 0
+    } catch (error) {
+      if (error instanceof AccountStateError) throw error
+      throw storageFailure('Failed to delete all encrypted account state.', error)
+    }
+  }
+
   private save(recordType: AccountRecordType, accountId: string, value: unknown): void {
     const context = contextFor(recordType, accountId)
     try {

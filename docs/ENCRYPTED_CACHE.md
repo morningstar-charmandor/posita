@@ -148,10 +148,14 @@ update before implementation.
 
 ## Deletion boundary
 
-The repository provides a local-cache purge that deletes encrypted records,
-compacts SQLite, and truncates WAL. Full cryptographic erasure additionally
-deletes `cache.installation.data-key-v1` from the OS-protected vault.
+The repository separates logical encrypted-record deletion from SQLite
+sanitization. Full deletion journals removal of refresh credentials and encrypted
+account state, deletes all mail/derived ciphertext, compacts SQLite and truncates
+WAL, then deletes `cache.installation.data-key-v1` from the OS-protected vault and
+destroys the live protector key. Repeating any action after a journal-write crash
+is safe, and key deletion is deliberately last.
 
-Account-scoped retention and crash-safe disconnect orchestration remain
-unimplemented. No real account may connect before those paths are implemented and
-tested.
+The orchestrator is not composed into the product. Startup recovery must first be
+able to finish `data-key-delete-pending` without creating a replacement key, and
+the fixture bootstrap must not reseed after a user deletion. No real account may
+connect until those activation boundaries and explicit consent/status are tested.

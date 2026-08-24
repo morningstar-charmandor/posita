@@ -51,6 +51,7 @@ const hasExpectedHeader = (envelope: Buffer): boolean =>
 export class AesGcmCacheProtector implements CacheRecordProtector {
   readonly scheme = CACHE_ENVELOPE_SCHEME
   private readonly key: Buffer
+  private destroyed = false
 
   constructor(key: Uint8Array, private readonly nonceSource: NonceSource = randomBytes) {
     if (key.byteLength !== 32) {
@@ -60,6 +61,7 @@ export class AesGcmCacheProtector implements CacheRecordProtector {
   }
 
   protect(context: CacheRecordContext, plaintext: string): Uint8Array {
+    this.assertAvailable()
     assertContext(context)
     const input = Buffer.from(plaintext, 'utf8')
     if (input.byteLength > MAX_CACHE_PLAINTEXT_BYTES) {
@@ -88,6 +90,7 @@ export class AesGcmCacheProtector implements CacheRecordProtector {
   }
 
   unprotect(context: CacheRecordContext, value: Uint8Array): string {
+    this.assertAvailable()
     assertContext(context)
     const envelope = Buffer.from(value)
     if (!hasExpectedHeader(envelope) ||
@@ -118,5 +121,12 @@ export class AesGcmCacheProtector implements CacheRecordProtector {
 
   destroy(): void {
     this.key.fill(0)
+    this.destroyed = true
+  }
+
+  private assertAvailable(): void {
+    if (this.destroyed) {
+      throw new EncryptedCacheError('CACHE_KEY_MISSING', 'The cache key is no longer available.')
+    }
   }
 }

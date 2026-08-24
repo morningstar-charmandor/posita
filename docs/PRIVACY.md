@@ -63,7 +63,7 @@ Schema v5 implements the persistence boundary for that marker. The journal store
 only opaque IDs, allow-listed phases, and safe error codes. It deliberately stays
 outside the installation data-key boundary so deletion can resume after key loss;
 it never stores provider identity, addresses, cursors, credentials, mail, derived
-content, or arbitrary error text. No deletion action executes yet.
+content, or arbitrary error text.
 
 Gate 2D now implements deterministic 90-day maintenance as an unscheduled
 application service. It requires an absolute source timestamp, retains the exact
@@ -88,6 +88,14 @@ and retains a safe error on failure. There is no live revocation adapter, accoun
 background resumer, or user trigger, so this is verified orchestration rather than
 an active disconnect feature.
 
+The installation-wide deletion orchestrator now removes all stored Google refresh
+credentials, encrypted provider state, encrypted mail and derived records, SQLite
+remnants, and finally the OS-protected installation key and its in-memory copy.
+Every phase is retryable and journaled after success; durable pending work prevents
+overlap with account disconnect. This is verified application behavior, not an
+active product capability: startup recovery, explicit confirmation/status, and a
+post-deletion state that cannot silently recreate a key or fixtures remain deferred.
+
 Retention configuration is deferred to Gate 3. A future setting may shorten the
 window but must not silently lengthen an existing user's window.
 
@@ -104,9 +112,9 @@ Gate 2C implements the authenticated envelope requirements:
    of known plaintext across application-visible database files.
 
 Search or indexing must not introduce a second plaintext copy. Real ingestion is
-still blocked until 90-day maintenance and account-disconnect deletion operate on
-the encrypted record model. Hardware-level forensic erasure is outside Posita's
-control; key deletion provides cryptographic erasure.
+still blocked until lifecycle recovery and consent safely activate the verified
+retention and deletion services. Hardware-level forensic erasure is outside
+Posita's control; key deletion provides cryptographic erasure.
 
 ## User-visible consent
 

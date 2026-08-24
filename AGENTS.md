@@ -13,8 +13,10 @@ exists deeper in the tree.
 - Deterministic 90-day retention is implemented but not scheduled automatically.
 - Account-data removal projection is implemented and used by the inactive disconnect orchestrator.
 - Disconnect orchestration is implemented against interfaces/fakes but has no live revoker or UI trigger.
+- Full local-data deletion orchestration is implemented against interfaces/fakes
+  but is not composed at startup and has no user trigger or recovery owner.
 - An OS-protected credential vault is implemented but contains no real token.
-- Gmail, account lifecycle/retention, and model providers are not connected.
+- Gmail, lifecycle scheduling, retention scheduling, and model providers are not connected.
 - Sending mail is intentionally disabled.
 - Product promise: **Your inboxes, understood as one.**
 

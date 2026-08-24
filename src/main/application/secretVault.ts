@@ -6,6 +6,7 @@ export interface SecretVault {
   set(name: SecretName, value: string): Promise<void>
   get(name: SecretName): Promise<string | undefined>
   delete(name: SecretName): Promise<boolean>
+  deleteGoogleRefreshTokens(): Promise<number>
 }
 
 export const MAX_SECRET_LENGTH = 16_384
