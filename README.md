@@ -9,14 +9,14 @@ Public repository: [github.com/morningstar-charmandor/posita](https://github.com
 
 ## Current status
 
-Gate 2B is a privacy-founded local-data prototype. It includes a Daily Brief,
+Gate 2C is an encrypted local-data prototype. It includes a Daily Brief,
 topic timeline with source citations, original-message inspection, a unified
 classic mail view, and an editable draft flow. Realistic fixture data is seeded
-idempotently into a versioned local SQLite database and loaded through validated,
-read-only Electron IPC. A fail-closed OS-protected vault is ready for future
-OAuth refresh tokens, but contains no real credential. Gmail, encrypted
-personal-mail caching, and AI providers are not connected. Sending is
-deliberately disabled.
+idempotently as independently authenticated AES-256-GCM records in a versioned
+local SQLite database and loaded through validated, read-only Electron IPC. A
+per-installation data key is protected by the operating-system vault. Gmail,
+account lifecycle/retention, and AI providers are not connected. No real OAuth
+credential exists, and sending is deliberately disabled.
 
 Read the build boundaries before extending the prototype:
 
@@ -30,6 +30,7 @@ Read the build boundaries before extending the prototype:
 - [Decision log](docs/DECISIONS.md)
 - [Local data foundation](docs/DATABASE.md)
 - [Privacy and retention](docs/PRIVACY.md)
+- [Encrypted cache](docs/ENCRYPTED_CACHE.md)
 - [Gmail authorization boundary](docs/GMAIL.md)
 - [AI-agent-friendly engineering](docs/ENGINEERING.md)
 - [Original product vision](product-spec.md)
@@ -71,6 +72,7 @@ The React renderer has no Node.js access. Electron context isolation and process
 sandboxing are enabled, navigation is denied by default, and the preload bridge
 exposes one versioned read-only data method plus non-sensitive desktop metadata.
 SQLite lives behind main-process repository and credential-vault interfaces; the
-renderer receives only a validated snapshot. The credential vault uses OS-backed
-protection and has no IPC surface. Personal-mail ingestion remains blocked until
-the encrypted-cache prerequisite in `docs/PRIVACY.md` is complete.
+renderer receives only a validated snapshot. Source and derived fixture records
+use authenticated encryption with an OS-protected installation key. Neither the
+key nor vault has an IPC surface. Personal-mail ingestion remains blocked until
+account-scoped retention, disconnect, and deletion orchestration are complete.

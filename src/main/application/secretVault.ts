@@ -1,4 +1,6 @@
-export type SecretName = `oauth.google.${string}.refresh-token`
+export type SecretName =
+  | `oauth.google.${string}.refresh-token`
+  | 'cache.installation.data-key-v1'
 
 export interface SecretVault {
   set(name: SecretName, value: string): Promise<void>
@@ -15,7 +17,10 @@ export const googleRefreshTokenName = (accountId: string): SecretName => {
   return `oauth.google.${accountId}.refresh-token`
 }
 
+export const CACHE_DATA_KEY_NAME: SecretName = 'cache.installation.data-key-v1'
+
 export const isSecretName = (value: string): value is SecretName =>
+  value === CACHE_DATA_KEY_NAME ||
   /^oauth\.google\.[A-Za-z0-9_-]{1,128}\.refresh-token$/.test(value)
 
 export class SecretVaultError extends Error {

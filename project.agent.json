@@ -7,8 +7,8 @@
     "repository": "https://github.com/morningstar-charmandor/posita",
     "repositoryVisibility": "public",
     "canonicalBranch": "main",
-    "currentMilestone": "gate-2b-privacy-credential-foundation",
-    "dataMode": "fixture-seeded-sqlite",
+    "currentMilestone": "gate-2c-encrypted-private-data-cache",
+    "dataMode": "fixture-seeded-encrypted-sqlite",
     "mailSendingEnabled": false
   },
   "toolchain": {
@@ -30,6 +30,10 @@
     "secretVaultContract": "src/main/application/secretVault.ts",
     "secretVault": "src/main/infrastructure/sqlite/sqliteSecretVault.ts",
     "credentialProtector": "src/main/infrastructure/security/electronSafeStorageProtector.ts",
+    "cacheProtector": "src/main/infrastructure/security/aesGcmCacheProtector.ts",
+    "cacheKeyManager": "src/main/infrastructure/security/cacheDataKeyManager.ts",
+    "encryptedMailRepository": "src/main/infrastructure/sqlite/encryptedSqliteMailRepository.ts",
+    "encryptedCacheMigration": "src/main/infrastructure/sqlite/encryptedCacheMigration.ts",
     "ipcContract": "src/shared/contracts.ts",
     "domainTypes": "src/shared/domain.ts",
     "fixtures": "src/shared/fixtures.ts"
@@ -65,6 +69,7 @@
     "docs/PRIVACY.md",
     "docs/GMAIL.md",
     "docs/ENGINEERING.md",
+    "docs/ENCRYPTED_CACHE.md",
     "docs/PROJECT_HISTORY.md",
     "docs/CASE_STUDY.md",
     "product-spec.md"
@@ -79,6 +84,9 @@
     "fixture-behavior-is-never-presented-as-live",
     "real-mail-ingestion-requires-encrypted-cache",
     "credential-storage-fails-closed-without-os-protection",
+    "private-cache-records-use-authenticated-encryption",
+    "missing-or-invalid-cache-keys-never-trigger-silent-reset",
+    "plaintext-search-indexes-are-forbidden-without-threat-model-review",
     "material-work-maintains-continuity-and-portfolio-evidence"
   ],
   "generatedPaths": [

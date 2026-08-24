@@ -15,8 +15,9 @@ and actions.
 
 **Product promise:** Your inboxes, understood as one.
 
-**Current stage:** privacy-founded interactive prototype with a real local data
-path and OS-protected credential foundation. Gmail and AI are not connected.
+**Current stage:** encrypted local-data prototype with a real SQLite path,
+OS-protected key hierarchy, and authenticated record cache. Gmail and AI are not
+connected.
 
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
 
@@ -112,7 +113,10 @@ The credential foundation uses asynchronous OS-backed encryption and refuses an
 insecure fallback. However, protecting OAuth credentials alone is insufficient:
 the sample mail schema is still plaintext. Posita therefore blocks real Gmail
 ingestion until an authenticated encrypted-cache design covers source content,
-derived content, SQLite sidecars, migration, and deletion.
+derived content, SQLite sidecars, migration, and deletion. Gate 2C now provides
+that storage foundation using independently authenticated records and an
+OS-protected installation key. Real mail remains blocked until account-scoped
+retention and disconnect orchestration are equally well proven.
 
 ### Choosing bounded context
 
@@ -122,14 +126,16 @@ reserved for a later gate and must never silently lengthen an existing setting.
 
 ## Current outcome and evidence
 
-At Gate 2B, Posita has:
+At Gate 2C, Posita has:
 
 - a runnable desktop interaction model,
 - a normalized SQLite foundation with transactional migrations,
 - a narrow versioned renderer-to-main contract,
 - an OS-protected refresh-token vault with no renderer surface,
+- an OS-protected data-key hierarchy and AES-256-GCM private records,
+- tamper-evident metadata, interruption-aware migration, and scrubbed sidecars,
 - privacy, retention, deletion, and least-privilege authorization boundaries,
-- 10 automated test files containing 36 passing tests,
+- 13 automated test files containing 52 passing tests,
 - passing strict TypeScript, structural security checks, and production builds.
 
 These are engineering outcomes, not evidence of customer adoption or AI quality.
@@ -137,10 +143,10 @@ No real mailbox, OAuth credential, or model provider has been used.
 
 ## What comes next
 
-The next case-study chapter is Gate 2C: authenticated encryption for cached source
-and derived private data. Only after tamper detection, key protection, migrations,
-SQLite sidecar leakage, retention, and deletion pass verification should the
-project add Gmail OAuth and a deterministic sync adapter.
+The next case-study chapter is Gate 2D: encrypted account lifecycle. It will prove
+90-day retention, shared-topic recomputation, disconnect, deletion-pending crash
+recovery, and cryptographic erasure ordering. Only after that lifecycle passes
+verification should the project add Gmail OAuth and a deterministic sync adapter.
 
 Later evidence should include measured sync reliability, duplicate prevention,
 citation correctness, draft usefulness, correction rate, and time to attention.
@@ -174,7 +180,7 @@ credentials or direct database access.
 
 Rather than connecting Gmail immediately, the project advances through verified
 gates. It first proved the core Daily Brief-to-source-to-draft experience, then
-moved that experience onto a versioned SQLite and IPC foundation, and finally
-added fail-closed OS-protected credential storage and a 90-day privacy policy.
-Real mail remains blocked until the local cache itself is encrypted and its
-deletion behavior is proven.
+moved that experience onto a versioned SQLite and IPC foundation, added fail-closed
+OS-protected credential storage, and encrypted private cache records with a
+protected installation key. Real mail remains blocked until account-scoped
+retention and deletion behavior are proven.

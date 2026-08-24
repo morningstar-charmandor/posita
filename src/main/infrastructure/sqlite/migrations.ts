@@ -151,6 +151,35 @@ export const migrations: readonly Migration[] = [
         updated_at TEXT NOT NULL
       ) STRICT;
     `
+  },
+  {
+    version: 3,
+    name: 'encrypted_private_data_cache',
+    sql: `
+      CREATE TABLE encrypted_records (
+        record_type TEXT NOT NULL CHECK (
+          record_type IN ('account', 'person', 'message', 'topic', 'brief-item')
+        ),
+        record_id TEXT NOT NULL,
+        account_scope TEXT,
+        position INTEGER NOT NULL CHECK (position >= 0),
+        envelope_scheme TEXT NOT NULL,
+        payload BLOB NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (record_type, record_id),
+        UNIQUE (record_type, position)
+      ) STRICT;
+
+      CREATE INDEX encrypted_records_account_scope_idx
+        ON encrypted_records(account_scope, record_type);
+
+      CREATE TABLE encrypted_cache_state (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        status TEXT NOT NULL CHECK (status IN ('sanitization-pending', 'ready')),
+        updated_at TEXT NOT NULL
+      ) STRICT;
+    `
   }
 ]
 

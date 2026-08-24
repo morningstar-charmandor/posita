@@ -20,6 +20,7 @@ const requiredFiles = [
   'docs/PRIVACY.md',
   'docs/GMAIL.md',
   'docs/ENGINEERING.md',
+  'docs/ENCRYPTED_CACHE.md',
   'docs/HANDOFF.md',
   'docs/PROJECT_HISTORY.md',
   'docs/CASE_STUDY.md',
@@ -116,6 +117,15 @@ if (/ipcRenderer\.(?:send|invoke|on)\s*[,}]/.test(preload)) {
 const localDataBootstrap = await readText('src/main/bootstrapLocalData.ts')
 if (!localDataBootstrap.includes('new ElectronSafeStorageProtector()')) {
   fail('production composition must use the Electron OS-backed credential protector')
+}
+if (!localDataBootstrap.includes('new AesGcmCacheProtector(key)')) {
+  fail('production composition must encrypt private cache records with AES-GCM')
+}
+if (!localDataBootstrap.includes('new EncryptedSqliteMailRepository(database, protector)')) {
+  fail('production composition must use the encrypted mail repository')
+}
+if (localDataBootstrap.includes('new SqliteMailRepository(')) {
+  fail('production composition must not write mail through the legacy plaintext repository')
 }
 if (localDataBootstrap.includes('DeterministicFakeStringProtector')) {
   fail('production composition must not use the deterministic fake credential protector')

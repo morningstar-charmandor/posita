@@ -145,6 +145,50 @@ Publishing does not change the product stage: Gmail and AI remain disconnected,
 all visible communication remains fixture data, and real-mail ingestion remains
 blocked by the encrypted-cache prerequisite.
 
+## Gate 2C — Encrypted private-data cache foundation
+
+Date: 2026-08-24
+Checkpoint: use the Git commit whose subject is `feat: encrypt private data cache`
+
+Goal: remove private source and derived values from plaintext SQLite storage and
+establish a tamper-evident cache boundary before any Gmail integration.
+
+Delivered:
+
+- documented offline-file threat model and explicit non-goals,
+- random per-installation 256-bit data key protected through OS `safeStorage`,
+- versioned AES-256-GCM envelopes with unique 96-bit nonces,
+- authenticated binding of record type, ID, account scope, ordering, table, field,
+  and envelope version,
+- encrypted account, person, message, topic, and brief-item records,
+- SQLite schema version 3 and interruption-aware plaintext fixture migration,
+- secure deletion mode, memory-only SQLite temporary storage, WAL truncation,
+  compaction, encrypted-record purge, and key-deletion primitive,
+- production composition guards preventing the legacy plaintext repository from
+  being used for current mail storage.
+
+Important decisions:
+
+- use record-level authenticated encryption instead of introducing SQLCipher ABI
+  and packaging risk,
+- keep no plaintext search index,
+- fail closed on missing keys, invalid keys, unknown envelopes, and tampering,
+- preserve empty legacy tables only as a controlled migration surface,
+- describe cleanup as application-level and cryptographic erasure, not forensic
+  SSD erasure.
+
+Evidence: 13 test files and 52 tests passed. Tests cover unique envelopes,
+tampering, wrong associated data, wrong/missing/corrupt keys, transactional
+migration, unexpected-data refusal, interruption recovery, plaintext scans across
+real database sidecars, and compacted ciphertext deletion. A native Electron startup
+migrated the development database to schema v3, loaded the complete UI, stored 21
+encrypted fixture records, left zero legacy account rows, and produced no known
+fixture plaintext matches in the database, WAL, or shared-memory sidecar.
+
+Limitations: account-scoped retention, crash-safe disconnect orchestration,
+attachments, and encrypted production search remain incomplete. Gmail and AI
+remain disconnected.
+
 ## How future entries should be written
 
 For each material milestone, record:

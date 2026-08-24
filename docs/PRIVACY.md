@@ -1,11 +1,12 @@
 # Privacy and Retention Policy
 
-## Gate 2B boundary
+## Gate 2C boundary
 
-Posita currently contains deterministic sample mail only. The SQLite sample
-dataset is not encrypted and must never be replaced with personal mail. Real
-mailbox ingestion remains disabled until the encrypted-cache and deletion
-requirements in this document are implemented and tested.
+Posita currently contains deterministic sample mail only. Gate 2C stores that
+dataset as independently authenticated encrypted records and migrates existing
+fixture databases away from plaintext. Real mailbox ingestion remains disabled
+until account-scoped retention, disconnect, and deletion orchestration are
+implemented and tested.
 
 Gate 2B implements one production security primitive: OAuth refresh credentials
 can be stored in a main-process-only vault protected by Electron's asynchronous
@@ -17,6 +18,10 @@ when asynchronous encryption is unavailable and rejects Linux `basic_text` and
 The deterministic fake protector is test-only. It demonstrates adapter behavior
 and makes plaintext-persistence assertions possible; it provides no security and
 must never be used by production composition code.
+
+Gate 2C generates a separate random 256-bit installation data key, protects it
+through the OS-backed vault, and uses AES-256-GCM for source and derived record
+payloads. See `ENCRYPTED_CACHE.md` for the threat model and explicit limits.
 
 ## Data classes
 
@@ -56,21 +61,22 @@ successful disconnect or reconnect in the background.
 Retention configuration is deferred to Gate 3. A future setting may shorten the
 window but must not silently lengthen an existing user's window.
 
-## Encrypted-cache prerequisite
+## Encrypted-cache implementation
 
-Before enabling real Gmail sync, sensitive SQLite values must use authenticated
-envelope encryption:
+Gate 2C implements the authenticated envelope requirements:
 
 1. Generate a random per-installation data-encryption key.
 2. Protect that key with the OS-backed credential protector.
 3. Encrypt every sensitive value with AES-256-GCM, a unique nonce, and bound
    associated data identifying its table, field, and record.
 4. Store only versioned ciphertext envelopes in SQLite.
-5. Test tamper detection, key loss, migration, deletion, backup sidecars, and the
-   absence of plaintext across the database, WAL, and temporary files.
+5. Test tamper detection, key loss, migration, deletion, sidecars, and the absence
+   of known plaintext across application-visible database files.
 
 Search or indexing must not introduce a second plaintext copy. Real ingestion is
-blocked until this prerequisite passes the canonical verification gate.
+still blocked until 90-day maintenance and account-disconnect deletion operate on
+the encrypted record model. Hardware-level forensic erasure is outside Posita's
+control; key deletion provides cryptographic erasure.
 
 ## User-visible consent
 

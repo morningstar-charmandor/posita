@@ -6,10 +6,10 @@ exists deeper in the tree.
 
 ## Product state
 
-- Current milestone: Gate 2B, privacy and credential-storage foundation.
-- Current data: deterministic fixtures seeded idempotently into local SQLite.
+- Current milestone: Gate 2C, encrypted private-data cache foundation.
+- Current data: deterministic fixtures stored as authenticated encrypted records.
 - An OS-protected credential vault is implemented but contains no real token.
-- Gmail, encrypted personal-mail cache, and model providers are not connected.
+- Gmail, account lifecycle/retention, and model providers are not connected.
 - Sending mail is intentionally disabled.
 - Product promise: **Your inboxes, understood as one.**
 
@@ -27,7 +27,8 @@ Read these sources in order before a material change:
 6. `docs/DECISIONS.md` — accepted decisions and their consequences.
 7. `docs/PRIVACY.md` — retention, encryption, consent, and deletion boundaries.
 8. `docs/GMAIL.md` — authorization and least-privilege scope contract.
-9. `product-spec.md` — long-term vision, not the current implementation scope.
+9. `docs/ENCRYPTED_CACHE.md` — cache threat model, envelopes, migration, and limits.
+10. `product-spec.md` — long-term vision, not the current implementation scope.
 
 When these disagree, the narrower current-milestone document wins. Record a new
 decision before intentionally changing an accepted architectural boundary.

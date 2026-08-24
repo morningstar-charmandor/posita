@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { googleRefreshTokenName, isSecretName, SecretVaultError } from './secretVault'
+import {
+  CACHE_DATA_KEY_NAME,
+  googleRefreshTokenName,
+  isSecretName,
+  SecretVaultError
+} from './secretVault'
 
 describe('credential names', () => {
   it('constructs the only credential namespace Posita currently supports', () => {
@@ -7,6 +12,7 @@ describe('credential names', () => {
 
     expect(name).toBe('oauth.google.account_personal-1.refresh-token')
     expect(isSecretName(name)).toBe(true)
+    expect(isSecretName(CACHE_DATA_KEY_NAME)).toBe(true)
     expect(isSecretName('oauth.google.account_personal-1.access-token')).toBe(false)
   })
 

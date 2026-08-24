@@ -50,12 +50,12 @@ const createWindow = (): BrowserWindow => {
 
 app.enableSandbox()
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   let repository: MailRepository | undefined
   let service = createUnavailableLocalDataService()
 
   try {
-    const runtime = bootstrapLocalData(join(app.getPath('userData'), 'posita.sqlite3'))
+    const runtime = await bootstrapLocalData(join(app.getPath('userData'), 'posita.sqlite3'))
     repository = runtime.repository
     service = runtime.service
   } catch {

@@ -98,10 +98,19 @@ through validated, read-only IPC. The schema separates:
 Gate 2B implements a main-process `SecretVault`: OAuth refresh tokens are
 encrypted with asynchronous Electron `safeStorage` and stored as opaque SQLite
 ciphertext. Insecure or unavailable OS protection fails closed. Access tokens
-remain in main-process memory and are never persisted. The plaintext sample mail
-schema is not approved for personal mail; authenticated field encryption and
-90-day eviction are prerequisites for real ingestion. Logs use opaque IDs and
-must not contain message bodies, subjects, addresses, tokens, or draft text.
+remain in main-process memory and are never persisted.
+
+Gate 2C protects one random installation data key through that vault and stores
+accounts, people, messages, topics, and brief items as independently authenticated
+AES-256-GCM records. Queryable metadata is bound as associated data. Legacy
+plaintext fixtures are migrated transactionally, followed by secure deletion,
+WAL truncation, and compaction. No plaintext search index exists. Logs use opaque
+IDs and must not contain message bodies, subjects, addresses, tokens, or drafts.
+
+The main process performs one asynchronous key-unwrapping step at startup, then
+uses the existing synchronous repository contract for the bounded snapshot. Key
+loss, unknown envelopes, and authentication failures make local data unavailable;
+they never trigger silent cache reset.
 
 ## Gmail synchronization
 

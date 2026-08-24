@@ -1,6 +1,6 @@
 # Local Data Foundation
 
-## Gate 2A foundation and Gate 2B credential schema
+## Gate 2A–2C local storage foundation
 
 Gate 2A replaces the renderer's direct fixture import with a real local data
 path while keeping all content simulated:
@@ -17,6 +17,9 @@ React renderer
 No Gmail, OAuth, keychain, model provider, background sync, or remote mailbox
 mutation is connected. Gate 2B adds a production credential-storage boundary but
 does not store a real credential or authorize Gmail access.
+
+Gate 2C moves fixture source and derived data into authenticated encrypted records
+and scrubs the legacy plaintext rows. Gmail remains disconnected.
 
 ## Database engine
 
@@ -61,9 +64,17 @@ credential name, protection-scheme identifier, OS-protected ciphertext, and
 timestamps. The vault is main-process-only and is deliberately absent from IPC.
 Credential plaintext is never written to SQLite.
 
-The existing sample mail tables contain plaintext fixtures. They are not approved
-for personal mail. See `PRIVACY.md` for the encrypted-cache prerequisite that
-must be complete before Gmail ingestion is enabled.
+The legacy sample-mail tables previously contained plaintext fixtures. They are
+not approved for personal mail and remain empty after Gate 2C migration.
+
+Schema version 3 adds `encrypted_records` and `encrypted_cache_state`. Private
+record payloads use versioned AES-256-GCM envelopes. Only opaque IDs, allow-listed
+record types, account scope, ordering, envelope scheme, and timestamps remain
+queryable. All queryable metadata is authenticated with the ciphertext.
+
+`encrypted_cache_state` makes the post-migration sanitization step resumable.
+`sanitization-pending` forces WAL truncation, `VACUUM`, another WAL truncation,
+and transition to `ready` before the cache can be treated as migrated.
 
 ## Migrations
 
@@ -71,15 +82,17 @@ Migrations are numbered, immutable, and applied in a transaction. Applied
 versions are recorded in `schema_migrations`. Startup fails safely when a
 database reports a newer schema version than the application understands.
 
-A failed migration is rolled back. Gate 2A has no destructive migration and no
-automatic downgrade. Future destructive transformations require a backup and
-documented recovery path.
+A failed schema migration is rolled back. The Gate 2C application migration
+encrypts every validated record before one transaction inserts ciphertext,
+deletes legacy rows, and marks sanitization pending. Unexpected sync, derived,
+correction, or audit rows block automatic migration rather than being discarded.
+There is no automatic downgrade.
 
 ## Seeding and data ownership
 
-The Gate 1 fixture dataset moves to `src/shared/fixtures.ts` so the trusted main
-process can seed an empty database. Seeding is idempotent and occurs only when no
-account exists. The UI labels the resulting snapshot as fixture data.
+The Gate 1 fixture dataset lives in `src/shared/fixtures.ts`. New installations
+seed it directly as encrypted records; existing databases migrate it once.
+Seeding is idempotent. The UI labels the snapshot as fixture data.
 
 After seeding, the renderer never imports fixture data. It receives a versioned
 snapshot from the application service, proving the same path that real local data
@@ -113,4 +126,8 @@ The local-data and credential foundation requires tests for:
 - renderer loading, success, and retryable error states,
 - the existing Daily Brief → source → draft flow through a fake data source,
 - credential namespace validation, protected round trips, replacement, deletion,
-  unsupported schemes, unavailable OS protection, and absence of plaintext.
+  unsupported schemes, unavailable OS protection, and absence of plaintext,
+- envelope versioning, unique nonces, associated-data binding, tamper detection,
+  wrong/missing/corrupt key failures, and bounded input,
+- transactional legacy migration, interruption recovery, unexpected-data refusal,
+  database/WAL/sidecar plaintext scans, and compacted ciphertext deletion.

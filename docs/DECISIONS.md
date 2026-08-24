@@ -95,3 +95,19 @@
 - Consequence: older context is unavailable in the alpha. Real ingestion remains
   disabled until encrypted cache, eviction, and deletion paths are implemented
   and verified across SQLite database and sidecar files.
+
+## ADR-010: Encrypt private data as independently authenticated records
+
+- Status: accepted for Gate 2C
+- Context: built-in `node:sqlite` has no transparent database encryption, adding
+  a native SQLCipher dependency creates Electron ABI and packaging risk, and a
+  single encrypted snapshot would make incremental sync and scoped deletion
+  unnecessarily expensive.
+- Decision: store each account, person, message, topic, and brief item as a
+  versioned AES-256-GCM record. Bind all queryable metadata as associated data.
+  Protect one random per-installation data key through the existing OS-backed
+  vault. Keep no plaintext search index.
+- Consequence: the trusted main process decrypts and validates records before
+  application use. Querying encrypted content is intentionally limited until a
+  separate search design evaluates leakage and scale. Missing keys and tampered
+  records make the cache unavailable rather than causing silent reset.

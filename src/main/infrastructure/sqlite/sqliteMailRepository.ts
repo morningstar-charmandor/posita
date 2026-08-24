@@ -40,6 +40,7 @@ const optionalText = (row: SqlRow, key: string): string | undefined => {
   return value
 }
 
+/** Gate 2A compatibility reader/writer used only by the controlled Gate 2C migration and tests. */
 export class SqliteMailRepository implements MailRepository {
   constructor(private readonly database: DatabaseSync) {}
 

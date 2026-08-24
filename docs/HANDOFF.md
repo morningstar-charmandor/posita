@@ -8,7 +8,7 @@ next move. Technical details remain in their linked source documents.
 
 ## Current state
 
-Posita is at **Gate 2B: privacy and credential-storage foundation**. The product
+Posita is at **Gate 2C: encrypted private-data cache foundation**. The product
 is a runnable Electron desktop prototype using React, strict TypeScript, and
 SQLite. All visible mail is deterministic sample data.
 
@@ -22,9 +22,13 @@ Implemented:
   and editable local draft interactions,
 - accessible loading, error, retry, empty, and source-grounding behavior,
 - sandboxed Electron renderer with a narrow validated preload/IPC contract,
-- SQLite schema versions 1–2 with transactional migrations and fixture seeding,
+- SQLite schema versions 1–3 with transactional migrations and encrypted seeding,
 - main-process `SecretVault` with asynchronous OS-backed protection,
 - fail-closed credential behavior and a test-only deterministic fake,
+- per-installation OS-protected data key and AES-256-GCM record envelopes,
+- associated-data binding for record identity, scope, type, and ordering,
+- resumable legacy plaintext migration with WAL truncation and compaction,
+- encrypted-record purge and cryptographic key-erasure primitives,
 - 90-day private-alpha retention and least-privilege Gmail authorization policy,
 - deterministic credential-free verification through `npm run verify`.
 
@@ -37,15 +41,15 @@ Simulated or deliberately inactive:
 
 Not implemented:
 
-- encrypted storage for personal mail and derived content,
 - Gmail OAuth, message ingestion, incremental history sync, or account disconnect,
 - a model provider, embeddings, classification, retrieval, or generation,
-- retention maintenance and verified data-deletion workflows,
+- 90-day maintenance and account-scoped disconnect/deletion orchestration,
+- production-scale encrypted search or attachment storage,
 - packaging, signing, telemetry, or external-user onboarding.
 
 ## Non-negotiable boundaries
 
-- Do not ingest real mail into the current plaintext sample-mail schema.
+- Do not ingest real mail until encrypted account lifecycle and retention pass.
 - Do not add a Gmail client ID or personal credential to the repository.
 - Never expose credentials, database handles, filesystem paths, or provider
   payloads through renderer IPC.
@@ -56,20 +60,19 @@ Not implemented:
 
 ## Next recommended milestone
 
-Proceed with **Gate 2C: encrypted private-data cache** before implementing OAuth.
+Proceed with **Gate 2D: encrypted account lifecycle** before implementing OAuth.
 
 The intended sequence is:
 
-1. Define a versioned authenticated-ciphertext envelope and pure crypto port.
-2. Generate a random per-installation AES-256-GCM data key.
-3. Protect that data key using the existing OS-backed protector.
-4. Encrypt all sensitive source and derived fields with unique nonces and bound
-   associated data identifying record, table, field, and envelope version.
-5. Design a recoverable migration from fixture-only plaintext without treating
-   sample data as personal data.
-6. Test round trips, tampering, wrong associated data, key loss, rotation,
-   migration interruption, SQLite WAL/temp leakage, and deletion.
-7. Keep real Gmail ingestion disabled until the complete gate passes.
+1. Define encrypted provider-record and sync-state types with opaque account scope.
+2. Implement rolling 90-day maintenance over decrypted message metadata in a
+   worker-safe application service.
+3. Define how shared people and topics are recomputed when one account is removed.
+4. Implement a deletion-pending state machine that survives interruption between
+   credential revocation, data-key erasure, record purge, and compaction.
+5. Test disconnect and full-local-delete crashes at every transition.
+6. Add explicit consent and safe status contracts without exposing private data.
+7. Keep real Gmail ingestion disabled until the lifecycle gate passes.
 
 Do not solve encrypted search casually. Any index must avoid becoming a second
 plaintext mailbox. Record the selected search tradeoff in `docs/DECISIONS.md`.
@@ -90,8 +93,14 @@ plaintext mailbox. Record the selected search tradeoff in `docs/DECISIONS.md`.
 - `24d7269` — Gate 1 interactive product prototype.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
-- Current verified baseline: 10 test files, 36 tests, strict typecheck, structure
+- Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
+- Current verified baseline: 13 test files, 52 tests, strict typecheck, structure
   checks, and production Electron build passing.
+
+Native verification migrated the development database to schema v3 with 21
+encrypted records, zero legacy account rows, a `ready` cache state, an
+OS-protected installation key, and no known fixture plaintext found in the
+database, WAL, or shared-memory sidecar scan.
 
 Use `git log --oneline` for newer checkpoints; Git remains the authoritative
 record of exact file-level changes.
