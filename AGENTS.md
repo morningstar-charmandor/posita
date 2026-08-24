@@ -20,13 +20,14 @@ Do not imply that fixture-backed behavior is connected to real mail or AI.
 Read these sources in order before a material change:
 
 1. `project.agent.json` — machine-readable repository map and invariants.
-2. `README.md` — current status and commands.
-3. `docs/MVP.md` — release gates and scope.
-4. `docs/ARCHITECTURE.md` — process and layer boundaries.
-5. `docs/DECISIONS.md` — accepted decisions and their consequences.
-6. `docs/PRIVACY.md` — retention, encryption, consent, and deletion boundaries.
-7. `docs/GMAIL.md` — authorization and least-privilege scope contract.
-8. `product-spec.md` — long-term vision, not the current implementation scope.
+2. `docs/HANDOFF.md` — current state, blockers, and next recommended milestone.
+3. `README.md` — current status and commands.
+4. `docs/MVP.md` — release gates and scope.
+5. `docs/ARCHITECTURE.md` — process and layer boundaries.
+6. `docs/DECISIONS.md` — accepted decisions and their consequences.
+7. `docs/PRIVACY.md` — retention, encryption, consent, and deletion boundaries.
+8. `docs/GMAIL.md` — authorization and least-privilege scope contract.
+9. `product-spec.md` — long-term vision, not the current implementation scope.
 
 When these disagree, the narrower current-milestone document wins. Record a new
 decision before intentionally changing an accepted architectural boundary.
@@ -50,7 +51,11 @@ decision before intentionally changing an accepted architectural boundary.
 4. Add or update tests for behavior, contracts, migrations, and failure paths.
 5. Update docs and `project.agent.json` when commands, entry points, milestones,
    data ownership, or invariants change.
-6. Run `npm run verify` before handing off. Report any check that could not run.
+6. Maintain project continuity in the same change:
+   - update `docs/HANDOFF.md` after any material change to current state or next step,
+   - append `docs/PROJECT_HISTORY.md` for milestones and meaningful decisions,
+   - update `docs/CASE_STUDY.md` when portfolio narrative, evidence, or assets change.
+7. Run `npm run verify` before handing off. Report any check that could not run.
 
 Preserve unrelated user changes. Never replace a working implementation merely
 to match a preferred style.
@@ -110,5 +115,7 @@ A change is done only when:
 - `npm run verify` passes,
 - the renderer security boundary still passes `npm run check:structure`,
 - documentation describes any new command, boundary, schema, or decision,
+- continuity and case-study records distinguish implemented, simulated, measured,
+  and deferred work without relying on conversation history,
 - no secret, personal mailbox data, generated output, or cache is committed, and
 - the handoff clearly distinguishes implemented, simulated, and deferred work.

@@ -13,12 +13,15 @@ authority. The product and the repository follow least privilege.
 
 ## Repository interface
 
-The repository exposes four stable interfaces to an engineering agent:
+The repository exposes seven stable interfaces to an engineering agent:
 
 1. `AGENTS.md` states how changes must be made.
 2. `project.agent.json` describes entry points, commands, state, and invariants.
 3. `npm run verify` is the single completion gate.
 4. Tests and fixtures provide credential-free evidence of behavior.
+5. `docs/HANDOFF.md` records current state, blockers, and the next safe move.
+6. `docs/PROJECT_HISTORY.md` preserves chronological milestone evidence.
+7. `docs/CASE_STUDY.md` maintains an honest portfolio-ready narrative.
 
 An agent should be able to clone the repository, read those interfaces, install
 the exact locked dependencies, and validate a change without network access
@@ -87,3 +90,18 @@ Update documentation in the same change when:
 
 Documentation should describe the current truth. Historical reasoning belongs in
 the decision log, not in stale comments or duplicated setup guides.
+
+Current truth, chronological evidence, and portfolio narrative serve different
+purposes and must remain separated:
+
+- update `HANDOFF.md` whenever implemented, simulated, deferred, blocked, or next
+  work changes,
+- append `PROJECT_HISTORY.md` when a coherent milestone or consequential product
+  decision is completed,
+- update `CASE_STUDY.md` only with verified outcomes and clearly labeled plans,
+- include dates, Git checkpoints, test/build evidence, and known limitations,
+- never invent research findings, usage metrics, quality scores, or customer
+  outcomes.
+
+Git is authoritative for exact file changes. These documents explain intent,
+state, and evidence so future sessions do not have to reconstruct them from diffs.

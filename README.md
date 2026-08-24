@@ -7,18 +7,22 @@ context, and actions rather than separate inboxes.
 
 ## Current status
 
-Gate 2B is a privacy-founded local-data prototype. It includes a Daily Brief, topic timeline with
-source citations, original-message inspection, a unified classic mail view, and
-an editable draft flow. Realistic fixture data is seeded idempotently into a
-versioned local SQLite database and loaded through validated, read-only Electron
-IPC. A fail-closed OS-protected vault is ready for future OAuth refresh tokens,
-but contains no real credential. Gmail, encrypted personal-mail caching, and AI
-providers are not connected. Sending is deliberately disabled.
+Gate 2B is a privacy-founded local-data prototype. It includes a Daily Brief,
+topic timeline with source citations, original-message inspection, a unified
+classic mail view, and an editable draft flow. Realistic fixture data is seeded
+idempotently into a versioned local SQLite database and loaded through validated,
+read-only Electron IPC. A fail-closed OS-protected vault is ready for future
+OAuth refresh tokens, but contains no real credential. Gmail, encrypted
+personal-mail caching, and AI providers are not connected. Sending is
+deliberately disabled.
 
 Read the build boundaries before extending the prototype:
 
 - [Agent contract](AGENTS.md)
 - [Machine-readable project map](project.agent.json)
+- [Continuity handoff](docs/HANDOFF.md)
+- [Project history](docs/PROJECT_HISTORY.md)
+- [Portfolio case study](docs/CASE_STUDY.md)
 - [MVP scope](docs/MVP.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Decision log](docs/DECISIONS.md)
@@ -52,10 +56,12 @@ access.
 ## Working with AI agents
 
 Every agent should begin with [AGENTS.md](AGENTS.md) and
-[project.agent.json](project.agent.json). Together they describe the current
-milestone, source-of-truth order, repository entry points, safety invariants, and
-definition of done. Changes to architecture, commands, entry points, or project
-state must update those interfaces in the same change.
+[project.agent.json](project.agent.json), then read
+[the continuity handoff](docs/HANDOFF.md). Together they describe the current
+milestone, source-of-truth order, repository entry points, safety invariants,
+known blockers, next step, and definition of done. Project state, milestone
+evidence, and portfolio narrative are maintained in-repository so continuation
+never depends on access to an earlier conversation.
 
 ## Trust boundary
 

@@ -45,8 +45,15 @@
     "structureCheck": "npm run check:structure",
     "verify": "npm run verify"
   },
+  "continuity": {
+    "currentState": "docs/HANDOFF.md",
+    "projectHistory": "docs/PROJECT_HISTORY.md",
+    "portfolioCaseStudy": "docs/CASE_STUDY.md",
+    "updatePolicy": "Material changes update current state; milestones append history; verified portfolio evidence updates the case study."
+  },
   "sourcesOfTruth": [
     "AGENTS.md",
+    "docs/HANDOFF.md",
     "README.md",
     "docs/MVP.md",
     "docs/ARCHITECTURE.md",
@@ -55,6 +62,8 @@
     "docs/PRIVACY.md",
     "docs/GMAIL.md",
     "docs/ENGINEERING.md",
+    "docs/PROJECT_HISTORY.md",
+    "docs/CASE_STUDY.md",
     "product-spec.md"
   ],
   "invariants": [
@@ -66,7 +75,8 @@
     "external-services-have-deterministic-fake-adapters",
     "fixture-behavior-is-never-presented-as-live",
     "real-mail-ingestion-requires-encrypted-cache",
-    "credential-storage-fails-closed-without-os-protection"
+    "credential-storage-fails-closed-without-os-protection",
+    "material-work-maintains-continuity-and-portfolio-evidence"
   ],
   "generatedPaths": [
     "node_modules/",
