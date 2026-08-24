@@ -4,8 +4,8 @@
     "name": "Posita",
     "package": "posita",
     "description": "Desktop-first personal mail hub organized around people, topics, context, and actions.",
-    "currentMilestone": "gate-1-offline-prototype",
-    "dataMode": "deterministic-fixtures",
+    "currentMilestone": "gate-2a-local-data-foundation",
+    "dataMode": "fixture-seeded-sqlite",
     "mailSendingEnabled": false
   },
   "toolchain": {
@@ -20,8 +20,13 @@
     "preload": "src/preload/index.ts",
     "renderer": "src/renderer/src/main.tsx",
     "application": "src/renderer/src/App.tsx",
+    "workspace": "src/renderer/src/features/workspace/Workspace.tsx",
+    "mailDataSource": "src/renderer/src/application/mailDataSource.ts",
+    "mailRepository": "src/main/application/mailRepository.ts",
+    "databaseMigrations": "src/main/infrastructure/sqlite/migrations.ts",
+    "ipcContract": "src/shared/contracts.ts",
     "domainTypes": "src/shared/domain.ts",
-    "fixtures": "src/renderer/src/data/fixtures.ts"
+    "fixtures": "src/shared/fixtures.ts"
   },
   "scopedInstructions": {
     "renderer": "src/renderer/AGENTS.md",
@@ -43,6 +48,7 @@
     "docs/MVP.md",
     "docs/ARCHITECTURE.md",
     "docs/DECISIONS.md",
+    "docs/DATABASE.md",
     "docs/ENGINEERING.md",
     "product-spec.md"
   ],

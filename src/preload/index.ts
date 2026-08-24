@@ -1,13 +1,14 @@
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
+import { IPC_CHANNELS, type PositaDesktopApi } from '../shared/contracts'
+import { createLoadSnapshotClient } from './loadSnapshotClient'
 
-export interface PositaDesktopApi {
-  platform: NodeJS.Platform
-  prototypeMode: true
-}
+const loadSnapshot = createLoadSnapshotClient((request) =>
+  ipcRenderer.invoke(IPC_CHANNELS.loadSnapshot, request))
 
 const api: PositaDesktopApi = Object.freeze({
   platform: process.platform,
-  prototypeMode: true
+  prototypeMode: true,
+  loadSnapshot
 })
 
 contextBridge.exposeInMainWorld('posita', api)

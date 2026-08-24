@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { fixtures } from '../data/fixtures'
+import { fixtures } from '@shared/fixtures'
 import { buildDailyBrief, createGroundedDraft, getMessage, getTopic, getTopicMessages } from './mailService'
 
 describe('mail service', () => {

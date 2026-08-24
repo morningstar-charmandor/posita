@@ -1,5 +1,8 @@
 import { join } from 'node:path'
 import { app, BrowserWindow, shell } from 'electron'
+import { bootstrapLocalData, createUnavailableLocalDataService } from './bootstrapLocalData'
+import type { MailRepository } from './application/mailRepository'
+import { registerApplicationIpc, type ApplicationIpcRegistration } from './ipc/applicationIpc'
 
 const isTrustedExternalUrl = (candidate: string): boolean => {
   try {
@@ -10,7 +13,7 @@ const isTrustedExternalUrl = (candidate: string): boolean => {
   }
 }
 
-const createWindow = (): void => {
+const createWindow = (): BrowserWindow => {
   const window = new BrowserWindow({
     width: 1460,
     height: 940,
@@ -21,7 +24,7 @@ const createWindow = (): void => {
     backgroundColor: '#f5f5f1',
     trafficLightPosition: { x: 18, y: 18 },
     webPreferences: {
-      preload: join(__dirname, '../preload/index.mjs'),
+      preload: join(__dirname, '../preload/index.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true
@@ -41,14 +44,38 @@ const createWindow = (): void => {
   } else {
     void window.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
+  return window
 }
 
 app.enableSandbox()
 
 app.whenReady().then(() => {
-  createWindow()
+  let repository: MailRepository | undefined
+  let service = createUnavailableLocalDataService()
+
+  try {
+    const runtime = bootstrapLocalData(join(app.getPath('userData'), 'posita.sqlite3'))
+    repository = runtime.repository
+    service = runtime.service
+  } catch {
+    console.error('Posita local data initialization failed.')
+  }
+
+  const applicationIpc: ApplicationIpcRegistration = registerApplicationIpc(service)
+  const openWindow = (): void => {
+    const window = createWindow()
+    applicationIpc.allowWindow(window)
+  }
+
+  openWindow()
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    if (BrowserWindow.getAllWindows().length === 0) openWindow()
+  })
+
+  app.once('before-quit', () => {
+    applicationIpc.dispose()
+    repository?.close()
   })
 })
 

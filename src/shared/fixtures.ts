@@ -1,4 +1,4 @@
-import type { MailDataset } from '@shared/domain'
+import type { MailDataset } from './domain'
 
 export const fixtures: MailDataset = {
   accounts: [

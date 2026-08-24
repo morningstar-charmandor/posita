@@ -85,9 +85,9 @@ recomputed or deleted.
 
 ## Data ownership and storage
 
-Gate 1 uses an in-memory repository backed by versioned fixtures.
-
-Gate 2 adds SQLite in the main process. The schema separates:
+Gate 1 used renderer-imported versioned fixtures. Gate 2A now seeds those fixtures
+idempotently into SQLite in the main process and serves a versioned snapshot
+through validated, read-only IPC. The schema separates:
 
 - normalized provider records,
 - user-authored corrections,
@@ -139,6 +139,8 @@ mail and basic rule-based grouping if the model is unavailable.
 No test is allowed to depend on a personal mailbox or production credential.
 
 ## Delivery sequence
+
+Steps 1–5 are implemented through Gate 2A. Provider adapters remain deferred.
 
 1. Establish domain types, fixtures, and visual tokens.
 2. Render the desktop shell and Daily Brief from application services.

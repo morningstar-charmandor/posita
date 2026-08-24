@@ -16,6 +16,7 @@ const requiredFiles = [
   'docs/MVP.md',
   'docs/ARCHITECTURE.md',
   'docs/DECISIONS.md',
+  'docs/DATABASE.md',
   'docs/ENGINEERING.md',
   'src/main/AGENTS.md',
   'src/main/index.ts',
@@ -96,6 +97,9 @@ for (const path of await walk(rendererRoot)) {
     if (pattern.test(source)) {
       fail(`renderer security boundary violation in ${relative(root, path)}: ${pattern}`)
     }
+  }
+  if (!path.includes('.test.') && /(?:@shared\/fixtures|shared\/fixtures)/.test(source)) {
+    fail(`production renderer must not import fixture data directly: ${relative(root, path)}`)
   }
 }
 

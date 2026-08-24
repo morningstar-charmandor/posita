@@ -7,10 +7,11 @@ context, and actions rather than separate inboxes.
 
 ## Current status
 
-Gate 1 is an offline interactive prototype. It includes a Daily Brief, topic
-timeline with source citations, original-message inspection, a unified classic
-mail view, and an editable draft flow. All content is realistic fixture data.
-Sending is deliberately disabled.
+Gate 2A is a local-data prototype. It includes a Daily Brief, topic timeline with
+source citations, original-message inspection, a unified classic mail view, and
+an editable draft flow. Realistic fixture data is seeded idempotently into a
+versioned local SQLite database and loaded through validated, read-only Electron
+IPC. Gmail and AI providers are not connected. Sending is deliberately disabled.
 
 Read the build boundaries before extending the prototype:
 
@@ -19,12 +20,13 @@ Read the build boundaries before extending the prototype:
 - [MVP scope](docs/MVP.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Decision log](docs/DECISIONS.md)
+- [Local data foundation](docs/DATABASE.md)
 - [AI-agent-friendly engineering](docs/ENGINEERING.md)
 - [Original product vision](product-spec.md)
 
 ## Run locally
 
-Prerequisites: Node.js 20.19 or newer and npm.
+Prerequisites: Node.js 24.18.x and npm 11.16.x.
 
 ```bash
 npm install
@@ -55,6 +57,7 @@ state must update those interfaces in the same change.
 
 The React renderer has no Node.js access. Electron context isolation and process
 sandboxing are enabled, navigation is denied by default, and the preload bridge
-currently exposes only non-sensitive desktop metadata. Future Gmail, database,
-keychain, and AI integrations belong in the main process behind narrow typed
-contracts.
+exposes one versioned read-only data method plus non-sensitive desktop metadata.
+SQLite lives behind a main-process repository interface; the renderer receives
+only a validated snapshot. Future Gmail, keychain, and AI integrations remain in
+the main process behind narrow typed contracts.

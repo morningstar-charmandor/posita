@@ -6,9 +6,9 @@ exists deeper in the tree.
 
 ## Product state
 
-- Current milestone: Gate 1, offline interactive prototype.
-- Current data: deterministic fixtures only.
-- Gmail, SQLite, keychain, and model-provider integrations are not implemented.
+- Current milestone: Gate 2A, local data foundation.
+- Current data: deterministic fixtures seeded idempotently into local SQLite.
+- Gmail, keychain, and model-provider integrations are not implemented.
 - Sending mail is intentionally disabled.
 - Product promise: **Your inboxes, understood as one.**
 

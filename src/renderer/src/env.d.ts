@@ -1,4 +1,4 @@
-import type { PositaDesktopApi } from '../../preload'
+import type { PositaDesktopApi } from '../../shared/contracts'
 
 declare global {
   interface Window {

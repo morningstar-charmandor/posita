@@ -56,3 +56,16 @@
 - Consequence: changes that move entry points, commands, boundaries, or milestone
   state also update these interfaces. `npm run verify` enforces the invariants
   that can be checked mechanically.
+
+## ADR-007: Use built-in SQLite behind a repository boundary
+
+- Status: accepted for Gate 2A; reassess before production-scale indexing
+- Context: Electron 43.4 embeds Node 24.18 with the built-in `node:sqlite` module.
+  Adding a third-party native SQLite package would introduce ABI rebuild and
+  installer risk before Posita needs capabilities beyond the embedded engine.
+- Decision: use `DatabaseSync` only in the main process behind `MailRepository`.
+  Apply numbered transactional migrations and expose data through one versioned,
+  validated, read-only IPC contract.
+- Consequence: the initial snapshot path is dependency-light and deterministic.
+  Because database calls are synchronous, heavy sync, search, and indexing must
+  move to a worker or Electron utility process before production-sized mailboxes.
