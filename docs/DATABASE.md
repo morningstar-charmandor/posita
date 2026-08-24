@@ -1,6 +1,6 @@
 # Local Data Foundation
 
-## Gate 2A objective
+## Gate 2A foundation and Gate 2B credential schema
 
 Gate 2A replaces the renderer's direct fixture import with a real local data
 path while keeping all content simulated:
@@ -15,7 +15,8 @@ React renderer
 ```
 
 No Gmail, OAuth, keychain, model provider, background sync, or remote mailbox
-mutation is part of this gate.
+mutation is connected. Gate 2B adds a production credential-storage boundary but
+does not store a real credential or authorize Gmail access.
 
 ## Database engine
 
@@ -29,7 +30,9 @@ Database construction uses defensive mode, a bounded busy timeout, foreign-key
 enforcement, and extension loading disabled. File-backed databases use WAL;
 tests use isolated in-memory databases.
 
-## Schema version 1
+## Schema versions
+
+Schema version 1 contains the local mail foundation.
 
 Normalized source and projection tables:
 
@@ -52,6 +55,15 @@ Forward-looking ownership tables, initially empty:
 
 All tables are `STRICT`. Foreign keys are enabled. Ordering that affects the UI
 is explicit rather than relying on insertion order.
+
+Schema version 2 adds `protected_secrets`. It stores an allow-listed logical
+credential name, protection-scheme identifier, OS-protected ciphertext, and
+timestamps. The vault is main-process-only and is deliberately absent from IPC.
+Credential plaintext is never written to SQLite.
+
+The existing sample mail tables contain plaintext fixtures. They are not approved
+for personal mail. See `PRIVACY.md` for the encrypted-cache prerequisite that
+must be complete before Gmail ingestion is enabled.
 
 ## Migrations
 
@@ -90,7 +102,7 @@ raw provider content never cross the bridge.
 
 ## Verification
 
-Gate 2A requires tests for:
+The local-data and credential foundation requires tests for:
 
 - migration application and idempotence,
 - unsupported future schema rejection,
@@ -99,4 +111,6 @@ Gate 2A requires tests for:
 - request and response validation,
 - application error mapping,
 - renderer loading, success, and retryable error states,
-- the existing Daily Brief → source → draft flow through a fake data source.
+- the existing Daily Brief → source → draft flow through a fake data source,
+- credential namespace validation, protected round trips, replacement, deletion,
+  unsupported schemes, unavailable OS protection, and absence of plaintext.

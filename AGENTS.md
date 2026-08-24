@@ -6,9 +6,10 @@ exists deeper in the tree.
 
 ## Product state
 
-- Current milestone: Gate 2A, local data foundation.
+- Current milestone: Gate 2B, privacy and credential-storage foundation.
 - Current data: deterministic fixtures seeded idempotently into local SQLite.
-- Gmail, keychain, and model-provider integrations are not implemented.
+- An OS-protected credential vault is implemented but contains no real token.
+- Gmail, encrypted personal-mail cache, and model providers are not connected.
 - Sending mail is intentionally disabled.
 - Product promise: **Your inboxes, understood as one.**
 
@@ -23,7 +24,9 @@ Read these sources in order before a material change:
 3. `docs/MVP.md` — release gates and scope.
 4. `docs/ARCHITECTURE.md` — process and layer boundaries.
 5. `docs/DECISIONS.md` — accepted decisions and their consequences.
-6. `product-spec.md` — long-term vision, not the current implementation scope.
+6. `docs/PRIVACY.md` — retention, encryption, consent, and deletion boundaries.
+7. `docs/GMAIL.md` — authorization and least-privilege scope contract.
+8. `product-spec.md` — long-term vision, not the current implementation scope.
 
 When these disagree, the narrower current-milestone document wins. Record a new
 decision before intentionally changing an accepted architectural boundary.

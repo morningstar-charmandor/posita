@@ -33,7 +33,8 @@ describe('SQLite migrations', () => {
       { name: 'accounts' },
       { name: 'messages' },
       { name: 'derived_artifacts' },
-      { name: 'audit_events' }
+      { name: 'audit_events' },
+      { name: 'protected_secrets' }
     ]))
   })
 

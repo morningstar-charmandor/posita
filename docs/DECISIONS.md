@@ -69,3 +69,29 @@
 - Consequence: the initial snapshot path is dependency-light and deterministic.
   Because database calls are synchronous, heavy sync, search, and indexing must
   move to a worker or Electron utility process before production-sized mailboxes.
+
+## ADR-008: Fail closed around OS-protected credentials
+
+- Status: accepted
+- Context: Desktop OAuth requires a long-lived refresh credential. Renderer
+  storage and plaintext database values are outside Posita's trust boundary, and
+  Electron can report an insecure plaintext fallback on Linux.
+- Decision: persist refresh tokens only through a narrow main-process
+  `SecretVault` using asynchronous Electron `safeStorage`. Reject unavailable,
+  `basic_text`, and unknown protection backends. Persist the protection scheme
+  with each opaque ciphertext so rotation and incompatible data fail explicitly.
+- Consequence: some Linux environments cannot connect an account until a
+  supported secret store is available. Tests use an explicitly non-production
+  deterministic fake. No secret-vault capability is exposed over IPC.
+
+## ADR-009: Bound private-alpha mail retention to 90 days
+
+- Status: accepted for Gate 2; configurable in Gate 3
+- Context: Posita needs enough recent history to build useful context without
+  silently accumulating an indefinite copy of a personal mailbox.
+- Decision: import and retain a rolling 90-day window. Evict derived artifacts
+  with their source mail, purge account-scoped local data on disconnect, and
+  never modify Gmail as part of local retention or deletion.
+- Consequence: older context is unavailable in the alpha. Real ingestion remains
+  disabled until encrypted cache, eviction, and deletion paths are implemented
+  and verified across SQLite database and sidecar files.

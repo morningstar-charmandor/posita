@@ -95,16 +95,23 @@ through validated, read-only IPC. The schema separates:
 - sync state,
 - audit events for user-approved mutations.
 
-OAuth refresh tokens live only in the OS keychain. Access tokens remain in main
-process memory and are never persisted in renderer-accessible storage. Logs use
-opaque IDs and must not contain message bodies, subjects, addresses, tokens, or
-draft text.
+Gate 2B implements a main-process `SecretVault`: OAuth refresh tokens are
+encrypted with asynchronous Electron `safeStorage` and stored as opaque SQLite
+ciphertext. Insecure or unavailable OS protection fails closed. Access tokens
+remain in main-process memory and are never persisted. The plaintext sample mail
+schema is not approved for personal mail; authenticated field encryption and
+90-day eviction are prerequisites for real ingestion. Logs use opaque IDs and
+must not contain message bodies, subjects, addresses, tokens, or draft text.
 
 ## Gmail synchronization
 
-The Gmail adapter will use an initial bounded import followed by incremental
+The Gmail adapter will use an initial 90-day import followed by incremental
 history synchronization. Sync operations must be idempotent, transactional at a
 batch boundary, resumable, quota-aware, and isolated per account.
+
+Desktop authorization uses Authorization Code + PKCE through the system browser
+and a loopback redirect. The first sync requests `gmail.readonly` only. See
+`GMAIL.md` for scope progression and credential-lifetime rules.
 
 Remote mutations are commands with an explicit confirmation record. Gate 2 only
 requires creating a local draft; sending remains outside the alpha's default

@@ -137,10 +137,12 @@ addresses, generated drafts, or embeddings.
 
 ## Open product decisions
 
-These do not block Gate 1 and must be settled before Gate 2:
+These do not block Gate 1 and must be settled before live Gate 2 integrations:
 
 - supported operating systems for the private alpha,
 - AI provider and whether users may supply their own key,
 - on-device versus hosted embedding and classification strategy,
-- retention defaults for cached message bodies,
 - whether a Posita cloud account is necessary before multi-device support exists.
+
+The private-alpha retention default is settled at a rolling 90 days in ADR-009
+and `PRIVACY.md`.

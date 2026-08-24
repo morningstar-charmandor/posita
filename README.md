@@ -7,11 +7,13 @@ context, and actions rather than separate inboxes.
 
 ## Current status
 
-Gate 2A is a local-data prototype. It includes a Daily Brief, topic timeline with
+Gate 2B is a privacy-founded local-data prototype. It includes a Daily Brief, topic timeline with
 source citations, original-message inspection, a unified classic mail view, and
 an editable draft flow. Realistic fixture data is seeded idempotently into a
 versioned local SQLite database and loaded through validated, read-only Electron
-IPC. Gmail and AI providers are not connected. Sending is deliberately disabled.
+IPC. A fail-closed OS-protected vault is ready for future OAuth refresh tokens,
+but contains no real credential. Gmail, encrypted personal-mail caching, and AI
+providers are not connected. Sending is deliberately disabled.
 
 Read the build boundaries before extending the prototype:
 
@@ -21,6 +23,8 @@ Read the build boundaries before extending the prototype:
 - [Architecture](docs/ARCHITECTURE.md)
 - [Decision log](docs/DECISIONS.md)
 - [Local data foundation](docs/DATABASE.md)
+- [Privacy and retention](docs/PRIVACY.md)
+- [Gmail authorization boundary](docs/GMAIL.md)
 - [AI-agent-friendly engineering](docs/ENGINEERING.md)
 - [Original product vision](product-spec.md)
 
@@ -58,6 +62,7 @@ state must update those interfaces in the same change.
 The React renderer has no Node.js access. Electron context isolation and process
 sandboxing are enabled, navigation is denied by default, and the preload bridge
 exposes one versioned read-only data method plus non-sensitive desktop metadata.
-SQLite lives behind a main-process repository interface; the renderer receives
-only a validated snapshot. Future Gmail, keychain, and AI integrations remain in
-the main process behind narrow typed contracts.
+SQLite lives behind main-process repository and credential-vault interfaces; the
+renderer receives only a validated snapshot. The credential vault uses OS-backed
+protection and has no IPC surface. Personal-mail ingestion remains blocked until
+the encrypted-cache prerequisite in `docs/PRIVACY.md` is complete.

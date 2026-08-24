@@ -17,6 +17,8 @@ const requiredFiles = [
   'docs/ARCHITECTURE.md',
   'docs/DECISIONS.md',
   'docs/DATABASE.md',
+  'docs/PRIVACY.md',
+  'docs/GMAIL.md',
   'docs/ENGINEERING.md',
   'src/main/AGENTS.md',
   'src/main/index.ts',
@@ -106,6 +108,14 @@ for (const path of await walk(rendererRoot)) {
 const preload = await readText('src/preload/index.ts')
 if (/ipcRenderer\.(?:send|invoke|on)\s*[,}]/.test(preload)) {
   fail('preload must not expose an unscoped ipcRenderer method')
+}
+
+const localDataBootstrap = await readText('src/main/bootstrapLocalData.ts')
+if (!localDataBootstrap.includes('new ElectronSafeStorageProtector()')) {
+  fail('production composition must use the Electron OS-backed credential protector')
+}
+if (localDataBootstrap.includes('DeterministicFakeStringProtector')) {
+  fail('production composition must not use the deterministic fake credential protector')
 }
 
 const gitignore = await readText('.gitignore')

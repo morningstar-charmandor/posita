@@ -138,6 +138,19 @@ export const migrations: readonly Migration[] = [
         created_at TEXT NOT NULL
       ) STRICT;
     `
+  },
+  {
+    version: 2,
+    name: 'protected_credentials',
+    sql: `
+      CREATE TABLE protected_secrets (
+        name TEXT PRIMARY KEY,
+        protection_scheme TEXT NOT NULL,
+        ciphertext BLOB NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      ) STRICT;
+    `
   }
 ]
 

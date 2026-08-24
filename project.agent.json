@@ -4,7 +4,7 @@
     "name": "Posita",
     "package": "posita",
     "description": "Desktop-first personal mail hub organized around people, topics, context, and actions.",
-    "currentMilestone": "gate-2a-local-data-foundation",
+    "currentMilestone": "gate-2b-privacy-credential-foundation",
     "dataMode": "fixture-seeded-sqlite",
     "mailSendingEnabled": false
   },
@@ -24,6 +24,9 @@
     "mailDataSource": "src/renderer/src/application/mailDataSource.ts",
     "mailRepository": "src/main/application/mailRepository.ts",
     "databaseMigrations": "src/main/infrastructure/sqlite/migrations.ts",
+    "secretVaultContract": "src/main/application/secretVault.ts",
+    "secretVault": "src/main/infrastructure/sqlite/sqliteSecretVault.ts",
+    "credentialProtector": "src/main/infrastructure/security/electronSafeStorageProtector.ts",
     "ipcContract": "src/shared/contracts.ts",
     "domainTypes": "src/shared/domain.ts",
     "fixtures": "src/shared/fixtures.ts"
@@ -49,6 +52,8 @@
     "docs/ARCHITECTURE.md",
     "docs/DECISIONS.md",
     "docs/DATABASE.md",
+    "docs/PRIVACY.md",
+    "docs/GMAIL.md",
     "docs/ENGINEERING.md",
     "product-spec.md"
   ],
@@ -59,7 +64,9 @@
     "generated-claims-retain-source-message-ids",
     "mailbox-mutations-require-explicit-user-approval",
     "external-services-have-deterministic-fake-adapters",
-    "fixture-behavior-is-never-presented-as-live"
+    "fixture-behavior-is-never-presented-as-live",
+    "real-mail-ingestion-requires-encrypted-cache",
+    "credential-storage-fails-closed-without-os-protection"
   ],
   "generatedPaths": [
     "node_modules/",
