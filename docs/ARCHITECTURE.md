@@ -162,10 +162,33 @@ retaining a stale summary, status, priority, or action. Sources from other accou
 remain and may be regrouped later. Unaffected topics remain, and a person remains
 while any retained message or topic references them.
 
-This service performs only the local mail-data phase. It does not revoke Google,
-delete credentials or provider state, advance the lifecycle journal, compact a
-full installation, or expose a renderer command. Those steps belong to the future
-lifecycle orchestrator.
+This service performs only the local mail-data phase. The disconnect orchestrator
+invokes it after revocation, credential deletion, and provider-state deletion. It
+has no independent renderer command.
+
+### Account-disconnect orchestration
+
+Gate 2D implements the application orchestrator described by ADR-014:
+
+```text
+revocation pending
+  -> credential deletion pending
+  -> encrypted account-state deletion pending
+  -> account mail/derived deletion pending
+  -> SQLite compaction pending
+  -> completed
+```
+
+Each action is idempotent and the journal advances only afterward. If an action
+fails, the same phase retains a safe retry code. If the action succeeds but the
+journal write fails, resumption repeats that action safely. One in-memory
+single-flight guard permits the same operation to share its promise and rejects a
+different concurrent operation for that account.
+
+The orchestrator is tested through an authorization-revoker interface; there is
+no Google revocation adapter, OAuth token, background resume scheduler, preload
+method, or UI trigger. The installation data key is not deleted for one account
+because other accounts share it.
 
 ## Gmail synchronization
 

@@ -102,8 +102,11 @@ labels are never parsed as dates.
 Retention replacements validate and encrypt the complete next dataset before
 opening a write transaction. Source messages, derived topics, brief items, and
 unreferenced people are replaced atomically. The transaction records
-`sanitization-pending`; compaction and WAL truncation complete before state returns
-to `ready`, allowing existing startup recovery to handle interruption.
+`sanitization-pending`. Logical replacement and sanitization are separate
+repository methods: retention invokes both in one application operation, while
+disconnect journals `compaction-pending` between them. Compaction and WAL
+truncation complete before state returns to `ready`, and startup recovery handles
+an interruption.
 
 Account-data removal reuses the same replacement boundary. The application layer
 computes retained accounts, source messages, untouched derived topics/briefs, and
@@ -174,3 +177,5 @@ The local-data and credential foundation requires tests for:
   replacement, rollback on invalid data, and sanitization completion.
 - account-scoped source deletion, touched-derived eviction, unaffected source and
   topic preservation, people recomputation, invalid IDs, and idempotent retries.
+- ordered disconnect completion, action failures at every phase, journal-write
+  crashes after every successful action, operation conflicts, and single flight.

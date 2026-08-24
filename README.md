@@ -22,9 +22,11 @@ non-sensitive lifecycle journal that can survive deletion of that encryption key
 Schema v6 and a deterministic application service add fail-closed 90-day
 retention with atomic derived-data eviction; it is not scheduled automatically.
 Account removal now deterministically preserves unaffected sources while evicting
-touched derived context, but it is not connected to lifecycle execution. Gmail
-and AI providers are not connected. No real OAuth credential exists, and sending
-is deliberately disabled.
+touched derived context. A crash-resumable disconnect orchestrator now coordinates
+revocation, credential deletion, provider-state deletion, local-data removal, and
+compaction through interfaces and deterministic tests. No live Google revoker or
+UI trigger exists. Gmail and AI providers are not connected, no real OAuth
+credential exists, and sending is deliberately disabled.
 
 Read the build boundaries before extending the prototype:
 

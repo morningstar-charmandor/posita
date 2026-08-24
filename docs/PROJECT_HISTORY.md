@@ -380,6 +380,45 @@ Limitations: credential revocation/deletion, encrypted provider-state deletion,
 journal advancement, and user-visible progress are not orchestrated yet. Gmail
 and AI remain disconnected.
 
+## Gate 2D foundation — Crash-resumable account disconnect
+
+Date: 2026-08-24
+Checkpoint: use the Git commit whose subject is `feat: orchestrate account disconnect`
+
+Goal: coordinate the existing deletion primitives in a truthful durable order so
+account disconnect can survive action failures and crashes without reporting a
+false success.
+
+Delivered:
+
+- a versioned account-disconnect request/result contract,
+- an idempotent authorization-revoker interface with deterministic test behavior,
+- ordered revocation, refresh-credential deletion, encrypted account-state
+  deletion, source/derived removal, SQLite sanitization, and completion,
+- journal advancement only after successful action completion,
+- safe phase-specific retry errors without raw provider or storage details,
+- retry of the same action after a successful action/journal-write crash window,
+- per-account single flight that shares identical work and rejects competing IDs,
+- separation of logical encrypted replacement from the compaction phase.
+
+Important decisions:
+
+- treat already revoked credentials and already absent local records as success,
+- retain completed journal evidence rather than deleting it inside the operation,
+- keep the installation data key during one-account disconnect because remaining
+  accounts share it,
+- do not compose a fake revoker into production or expose disconnect over IPC.
+
+Evidence: 18 test files and 92 tests passed with strict typechecking, structural
+checks, and a production build. Tests cover ordered success, failure and retry at
+all five actions, journal-write crashes after all five successful actions,
+operation-target conflicts, invalid input, same-operation sharing, and competing
+single-flight rejection.
+
+Limitations: no Google revocation adapter, background pending-operation resumer,
+user-facing status/consent, or full-installation delete-local-data orchestrator
+exists. No OAuth credential or real account was used.
+
 ## How future entries should be written
 
 For each material milestone, record:

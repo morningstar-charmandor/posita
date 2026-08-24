@@ -17,7 +17,8 @@ and actions.
 
 **Current stage:** Gate 2D account-lifecycle foundation in progress, with a real
 SQLite path, OS-protected key hierarchy, authenticated mail and provider-account
-state, plus a crash-resume lifecycle journal. Gmail and AI are not connected.
+state, plus a tested crash-resumable disconnect orchestrator. Gmail and AI are not
+connected, and disconnect has no live revoker or user trigger.
 
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
 
@@ -151,10 +152,12 @@ At the current Gate 2D foundation checkpoint, Posita has:
   source-derived eviction, and atomic encrypted-cache rewriting,
 - idempotent account removal that preserves other-account sources while deleting
   every derived topic touched by removed provenance,
+- ordered single-flight disconnect orchestration with durable progress and safe
+  retry at every action and journal-write boundary,
 - future sync ownership and account-isolation contracts without premature
   provider implementation,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 17 automated test files containing 78 passing tests,
+- 18 automated test files containing 92 passing tests,
 - passing strict TypeScript, structural security checks, and production builds.
 
 These are engineering outcomes, not evidence of customer adoption or AI quality.
@@ -162,10 +165,10 @@ No real mailbox, OAuth credential, or model provider has been used.
 
 ## What comes next
 
-The next Gate 2D slice will implement disconnect execution over the existing
-journal and local projections, followed by transition-by-transition crash recovery
-and cryptographic erasure ordering. Only after that lifecycle passes verification
-should the project add Gmail OAuth and a deterministic sync adapter.
+The next Gate 2D slice will implement full local-data deletion through installation
+key erasure, followed by safe lifecycle status/consent and background resumption.
+Only after that lifecycle passes verification should the project add Gmail OAuth
+and a deterministic sync adapter.
 
 Later evidence should include measured sync reliability, duplicate prevention,
 citation correctness, draft usefulness, correction rate, and time to attention.

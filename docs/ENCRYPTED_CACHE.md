@@ -114,8 +114,9 @@ or exposed over IPC yet.
 
 Account-data removal uses this same validated rewrite rather than issuing
 independent record deletes. This keeps removal of account sources, touched derived
-objects, and unreferenced people atomic. The lifecycle orchestrator is not yet
-connected to invoke it.
+objects, and unreferenced people atomic. The disconnect orchestrator invokes the
+rewrite at `mail-data-delete-pending` and performs storage sanitization only after
+the journal advances to `compaction-pending`.
 
 ## Legacy fixture migration
 

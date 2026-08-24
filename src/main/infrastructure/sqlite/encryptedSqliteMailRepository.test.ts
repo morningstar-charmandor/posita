@@ -111,7 +111,7 @@ describe('EncryptedSqliteMailRepository', () => {
     })
   })
 
-  it('atomically replaces the encrypted dataset and completes sanitization', () => {
+  it('atomically replaces the encrypted dataset and tracks sanitization separately', () => {
     const { database, repository } = createInMemoryRepository()
     repository.seedIfEmpty(fixtures)
     const retained = structuredClone(fixtures)
@@ -123,6 +123,10 @@ describe('EncryptedSqliteMailRepository', () => {
     repository.replaceDataset(retained)
 
     expect(repository.loadDataset()).toEqual(retained)
+    expect(database.prepare('SELECT status FROM encrypted_cache_state WHERE id = 1').get())
+      .toEqual({ status: 'sanitization-pending' })
+
+    repository.sanitizeStorage()
     expect(database.prepare('SELECT status FROM encrypted_cache_state WHERE id = 1').get())
       .toEqual({ status: 'ready' })
   })

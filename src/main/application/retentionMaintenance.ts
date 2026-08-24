@@ -100,7 +100,10 @@ export class RetentionMaintenanceService {
 
   run(now: Date): RetentionResult {
     const planned = applyRetentionPolicy(this.repository.loadDataset(), now)
-    if (planned.result.changed) this.repository.replaceDataset(planned.dataset)
+    if (planned.result.changed) {
+      this.repository.replaceDataset(planned.dataset)
+      this.repository.sanitizeStorage()
+    }
     return planned.result
   }
 }

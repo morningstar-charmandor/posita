@@ -220,6 +220,14 @@ export class EncryptedSqliteMailRepository implements MutableMailRepository {
         if (this.database.isTransaction) this.database.exec('ROLLBACK')
         throw error
       }
+    } catch (error) {
+      if (error instanceof RepositoryError) throw error
+      throw cacheFailure('Failed to replace the encrypted local mail cache.', error)
+    }
+  }
+
+  sanitizeStorage(): void {
+    try {
       sanitizeSqliteStorage(this.database)
       this.database.prepare(`
         UPDATE encrypted_cache_state
@@ -227,7 +235,7 @@ export class EncryptedSqliteMailRepository implements MutableMailRepository {
       `).run()
     } catch (error) {
       if (error instanceof RepositoryError) throw error
-      throw cacheFailure('Failed to replace the encrypted local mail cache.', error)
+      throw cacheFailure('Failed to sanitize encrypted local mail storage.', error)
     }
   }
 

@@ -77,8 +77,16 @@ Gate 2D also implements the local source/derived projection for removing one
 account. Other accounts' source messages are never deleted merely because they
 shared a topic. Any topic touched by the removed account is deleted rather than
 retaining a possibly stale or uncited interpretation; untouched topics and still
-referenced people remain. The projection is idempotent but is not yet connected to
-credential revocation or the lifecycle journal.
+referenced people remain. The projection is idempotent and is the local mail-data
+phase used by the disconnect orchestrator.
+
+The Gate 2D disconnect orchestrator now connects these local phases at the
+application layer: authorization revocation, refresh-credential deletion,
+encrypted provider-state deletion, account source/derived removal, and SQLite
+sanitization. It persists the next phase only after an idempotent action succeeds
+and retains a safe error on failure. There is no live revocation adapter, account,
+background resumer, or user trigger, so this is verified orchestration rather than
+an active disconnect feature.
 
 Retention configuration is deferred to Gate 3. A future setting may shorten the
 window but must not silently lengthen an existing user's window.

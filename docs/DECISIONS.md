@@ -156,3 +156,17 @@
 - Consequence: disconnect may temporarily remove useful cross-account grouping,
   but it cannot retain an uncited interpretation or erase another account's source
   record. The projection is deterministic and idempotent for crash retries.
+
+## ADR-014: Advance disconnect only after idempotent phase completion
+
+- Status: accepted for Gate 2D
+- Context: Revocation, vault deletion, encrypted-state removal, mail projection,
+  and SQLite compaction cross different failure boundaries. A crash can occur
+  after an action succeeds but before its progress marker is saved.
+- Decision: execute disconnect as one single-flight operation per account. Keep
+  the current phase until its idempotent action succeeds, then persist the next
+  phase. On action failure, retain the phase with an allow-listed safe error. A
+  journal-save failure causes the same action to be retried.
+- Consequence: revocation and every local deletion/compaction step must treat an
+  already absent target as success. Disconnect can resume without guessing, but
+  completion is not reported until every phase and its journal advance succeeds.

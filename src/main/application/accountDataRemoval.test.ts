@@ -20,6 +20,7 @@ class FakeMutableMailRepository implements MutableMailRepository {
     this.dataset = structuredClone(dataset)
     this.replacements += 1
   }
+  sanitizeStorage(): void {}
   close(): void {}
 }
 

@@ -54,6 +54,12 @@ future provider identity and cursor state. These records are versioned, runtime
 validated, account-scoped, and main-process-only. They contain no live Google
 identity or cursor and do not implement authorization or synchronization.
 
+Gate 2D also defines the authorization-revoker interface used by account
+disconnect. Revocation must be idempotent: an already revoked or absent grant is
+success so a crash before journal advancement can retry safely. The current build
+uses deterministic test implementations only; no Google revocation request or
+credential is configured, and the orchestrator has no UI/IPC trigger.
+
 ## Normalized record and account isolation
 
 Before live sync, the shared mail contract must represent one canonical Posita
