@@ -35,7 +35,8 @@ describe('SQLite migrations', () => {
       { name: 'derived_artifacts' },
       { name: 'audit_events' },
       { name: 'protected_secrets' },
-      { name: 'encrypted_account_records' }
+      { name: 'encrypted_account_records' },
+      { name: 'account_lifecycle_operations' }
     ]))
   })
 
@@ -66,12 +67,13 @@ describe('SQLite migrations', () => {
       ) VALUES ('account', 'fixture-account', 'fixture-account', 0,
         'aes-256-gcm-v1', ?, datetime('now'), datetime('now'))
     `).run(Buffer.from([1, 2, 3]))
+    database.exec('DROP TABLE account_lifecycle_operations')
     database.exec('DROP TABLE encrypted_account_records')
-    database.prepare('DELETE FROM schema_migrations WHERE version = 4').run()
+    database.prepare('DELETE FROM schema_migrations WHERE version >= 4').run()
 
     applyMigrations(database)
 
-    expect(getSchemaVersion(database)).toBe(4)
+    expect(getSchemaVersion(database)).toBe(CURRENT_SCHEMA_VERSION)
     expect(database.prepare('SELECT COUNT(*) AS count FROM encrypted_records').get())
       .toEqual({ count: 1 })
     expect(database.prepare(`

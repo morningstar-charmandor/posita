@@ -269,6 +269,42 @@ Limitations: no provider account, OAuth token, sync cursor, Gmail request, polli
 retention maintenance, or disconnect workflow is active. Gate 2D remains in
 progress; real-mail ingestion stays blocked.
 
+## Gate 2D foundation — Lifecycle ownership and recovery journal
+
+Date: 2026-08-24
+Checkpoint: use the Git commit whose subject is `feat: add lifecycle recovery journal`
+
+Goal: give future retention and deletion orchestration one crash-resumable source
+of truth that remains readable after cryptographic erasure.
+
+Delivered:
+
+- versioned disconnect-account and delete-local-data operation contracts,
+- separate allow-listed phase sequences and safe failure codes for each operation,
+- schema version 5 with a strict non-sensitive lifecycle journal,
+- immutable operation identity and account scope with idempotent phase updates,
+- pending-operation recovery and completion-only journal cleanup,
+- explicit ownership boundaries for provider, cached, user-corrected, derived,
+  draft, pending-command, and lifecycle data,
+- ADR-012 documenting why deletion progress sits outside the deletable key.
+
+Important decisions:
+
+- store only opaque operation/account IDs, phases, and safe errors in plaintext,
+- never store addresses, provider identity, credentials, cursors, mail, derived
+  content, or arbitrary errors in the recovery journal,
+- keep the journal as progress state only; no current code performs revocation,
+  credential deletion, mail deletion, compaction, or key deletion.
+
+Evidence: 15 test files and 65 tests passed with strict typechecking, structural
+checks, and a production build. Tests cover operation-specific validation,
+idempotent updates, safe retry errors, pending recovery, immutable identity/scope,
+completion-only cleanup, and preservation across schema-v3 upgrade.
+
+Limitations: transition execution and user-facing retry status remain deferred.
+No real account or private content is stored by the journal, and Gmail remains
+disconnected.
+
 ## How future entries should be written
 
 For each material milestone, record:

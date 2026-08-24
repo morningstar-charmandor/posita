@@ -1,5 +1,6 @@
 import { fixtures } from '../shared/fixtures'
 import type { AccountStateRepository } from './application/accountState'
+import type { AccountLifecycleRepository } from './application/accountLifecycle'
 import { MailApplicationService, systemClock } from './application/mailApplicationService'
 import type { MailRepository } from './application/mailRepository'
 import type { SecretVault } from './application/secretVault'
@@ -8,6 +9,7 @@ import { CacheDataKeyManager } from './infrastructure/security/cacheDataKeyManag
 import { ElectronSafeStorageProtector } from './infrastructure/security/electronSafeStorageProtector'
 import { openPositaDatabase } from './infrastructure/sqlite/database'
 import { EncryptedSqliteAccountStateRepository } from './infrastructure/sqlite/encryptedSqliteAccountStateRepository'
+import { SqliteAccountLifecycleRepository } from './infrastructure/sqlite/sqliteAccountLifecycleRepository'
 import { migrateLegacyPlaintextCache } from './infrastructure/sqlite/encryptedCacheMigration'
 import {
   countEncryptedRecords,
@@ -21,6 +23,7 @@ export interface LocalDataRuntime {
   service: MailApplicationService
   secretVault: SecretVault
   accountStateRepository: AccountStateRepository
+  accountLifecycleRepository: AccountLifecycleRepository
 }
 
 export const bootstrapLocalData = async (databasePath: string): Promise<LocalDataRuntime> => {
@@ -40,7 +43,8 @@ export const bootstrapLocalData = async (databasePath: string): Promise<LocalDat
       repository,
       service: new MailApplicationService(repository, systemClock),
       secretVault,
-      accountStateRepository: new EncryptedSqliteAccountStateRepository(database, protector)
+      accountStateRepository: new EncryptedSqliteAccountStateRepository(database, protector),
+      accountLifecycleRepository: new SqliteAccountLifecycleRepository(database)
     }
   } catch (error) {
     if (repository) repository.close()

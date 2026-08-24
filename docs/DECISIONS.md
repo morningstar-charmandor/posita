@@ -127,3 +127,18 @@
   calling providers. Cross-account lookalikes remain distinct source records,
   sync needs typed status and recovery contracts, and local corrections and
   derived artifacts require ownership separate from provider fields.
+
+## ADR-012: Keep deletion progress outside the deletable key boundary
+
+- Status: accepted for Gate 2D
+- Context: A crash-resumable deletion workflow must know what remains after an
+  interruption. Encrypting its only progress marker with the installation data
+  key would make the marker unreadable after the workflow deletes that key.
+- Decision: persist a strict lifecycle journal containing only a version, opaque
+  operation ID, allow-listed operation and phase, optional opaque account scope,
+  and safe error code. Store no address, provider ID, credential, cursor, mail,
+  derived content, or arbitrary error text in it.
+- Consequence: deletion can resume after cryptographic erasure without weakening
+  private-data encryption. The journal itself reveals that an operation and phase
+  exist, so its fields remain minimal, bounded, allow-listed, and removable only
+  after completion.

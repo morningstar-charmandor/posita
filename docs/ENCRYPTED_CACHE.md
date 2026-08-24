@@ -95,6 +95,14 @@ The account-state repository is main-process-only and is composed at startup wit
 the existing cache protector. It stores no real account yet and does not authorize,
 sync, poll, disconnect, or expose anything over IPC.
 
+## Schema version 5 operational exception
+
+The lifecycle journal is intentionally not an encrypted private-data record. It
+contains only opaque IDs, allow-listed phases, and safe error codes and must remain
+readable if a delete-local-data workflow has already erased the installation key.
+ADR-012 defines this narrow exception. Private account state, provider identity,
+cursors, source mail, and derived content remain encrypted.
+
 ## Legacy fixture migration
 
 For an existing Gate 2B database:

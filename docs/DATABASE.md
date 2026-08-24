@@ -84,6 +84,14 @@ envelope and installation key. Only an allow-listed record kind and opaque Posit
 account scope remain queryable; no address, provider subject, or cursor is stored
 in plaintext.
 
+Schema version 5 adds `account_lifecycle_operations`, a deliberately non-sensitive
+crash-resume journal. It contains only a contract version, opaque operation ID,
+allow-listed operation and phase, optional opaque account scope, safe error code,
+and timestamps. Operation-specific database checks prevent disconnect and
+installation-wide deletion phases from being mixed. Incomplete entries cannot be
+removed through the repository. The journal is not encrypted with the installation
+data key because it must remain readable after that key is deleted.
+
 ## Migrations
 
 Migrations are numbered, immutable, and applied in a transaction. Applied
@@ -141,3 +149,5 @@ The local-data and credential foundation requires tests for:
   database/WAL/sidecar plaintext scans, and compacted ciphertext deletion.
 - encrypted provider-account and sync-state round trips, replacement, account
   isolation, metadata authentication, scoped deletion, and invalid-state refusal.
+- lifecycle phase persistence, safe retry errors, pending-operation recovery,
+  immutable operation identity/scope, completion-only cleanup, and v3 upgrades.

@@ -59,6 +59,12 @@ If deletion cannot complete, Posita must disable that account, show a retryable
 safe error, and retain a local deletion-pending marker. It must not report a
 successful disconnect or reconnect in the background.
 
+Schema v5 implements the persistence boundary for that marker. The journal stores
+only opaque IDs, allow-listed phases, and safe error codes. It deliberately stays
+outside the installation data-key boundary so deletion can resume after key loss;
+it never stores provider identity, addresses, cursors, credentials, mail, derived
+content, or arbitrary error text. No deletion action executes yet.
+
 Retention configuration is deferred to Gate 3. A future setting may shorten the
 window but must not silently lengthen an existing user's window.
 

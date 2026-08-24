@@ -200,6 +200,43 @@ export const migrations: readonly Migration[] = [
       CREATE INDEX encrypted_account_records_scope_idx
         ON encrypted_account_records(account_scope);
     `
+  },
+  {
+    version: 5,
+    name: 'account_lifecycle_journal',
+    sql: `
+      CREATE TABLE account_lifecycle_operations (
+        version INTEGER NOT NULL CHECK (version = 1),
+        operation_id TEXT PRIMARY KEY,
+        operation_type TEXT NOT NULL CHECK (
+          operation_type IN ('disconnect-account', 'delete-local-data')
+        ),
+        account_scope TEXT,
+        phase TEXT NOT NULL,
+        last_error_code TEXT CHECK (last_error_code IS NULL OR last_error_code IN (
+          'REVOCATION_FAILED', 'CREDENTIAL_DELETE_FAILED', 'ACCOUNT_STATE_DELETE_FAILED',
+          'MAIL_DATA_DELETE_FAILED', 'COMPACTION_FAILED', 'DATA_KEY_DELETE_FAILED'
+        )),
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        CHECK (
+          (operation_type = 'disconnect-account' AND account_scope IS NOT NULL AND phase IN (
+            'revocation-pending', 'credential-delete-pending',
+            'account-state-delete-pending', 'mail-data-delete-pending',
+            'compaction-pending', 'completed'
+          )) OR
+          (operation_type = 'delete-local-data' AND account_scope IS NULL AND phase IN (
+            'credentials-delete-pending', 'account-state-delete-pending',
+            'mail-data-delete-pending', 'compaction-pending',
+            'data-key-delete-pending', 'completed'
+          ))
+        ),
+        CHECK (phase != 'completed' OR last_error_code IS NULL)
+      ) STRICT;
+
+      CREATE INDEX account_lifecycle_pending_idx
+        ON account_lifecycle_operations(phase, updated_at);
+    `
   }
 ]
 

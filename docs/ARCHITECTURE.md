@@ -118,6 +118,24 @@ cursors remain encrypted. Only the record kind and opaque Posita account scope
 are queryable, and both are authenticated. The repository is composed in the
 trusted main process and has no preload or renderer surface.
 
+Gate 2D schema v5 adds the operational lifecycle journal from ADR-012. It stays
+outside the deletable key boundary and stores no private content, allowing a
+future disconnect or delete-local-data workflow to resume after interruption or
+cryptographic erasure. The journal records progress only; no lifecycle step is
+executed by the current build.
+
+Ownership remains singular:
+
+| Data | Authority and lifecycle owner |
+| --- | --- |
+| Remote messages, threads, labels, deletion | Provider through the future sync coordinator |
+| Cached normalized source records and cursor projection | Encrypted repositories; reconciled from provider state |
+| Provider identity and consent | Encrypted account-state repository |
+| User corrections | Local user-owned record; never overwritten by provider or AI |
+| Topics, briefs, classifications, embeddings | Derived store with source IDs; recomputed or evicted with sources |
+| Drafts and pending commands | Local user/application state until explicitly confirmed or discarded |
+| Disconnect and local-deletion progress | Non-sensitive lifecycle journal until completion |
+
 ## Gmail synchronization
 
 The Gmail adapter will use an initial 90-day import followed by incremental

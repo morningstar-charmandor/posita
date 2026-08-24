@@ -16,8 +16,8 @@ and actions.
 **Product promise:** Your inboxes, understood as one.
 
 **Current stage:** Gate 2D account-lifecycle foundation in progress, with a real
-SQLite path, OS-protected key hierarchy, authenticated mail records, and encrypted
-future provider-account state. Gmail and AI are not connected.
+SQLite path, OS-protected key hierarchy, authenticated mail and provider-account
+state, plus a crash-resume lifecycle journal. Gmail and AI are not connected.
 
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
 
@@ -145,10 +145,12 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - privacy, retention, deletion, and least-privilege authorization boundaries,
 - encrypted, runtime-validated provider-account and sync-state storage with no
   live account data,
+- an intentionally minimal lifecycle journal that can survive deletion of the
+  private-data key without containing private content,
 - future sync ownership and account-isolation contracts without premature
   provider implementation,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 14 automated test files containing 59 passing tests,
+- 15 automated test files containing 65 passing tests,
 - passing strict TypeScript, structural security checks, and production builds.
 
 These are engineering outcomes, not evidence of customer adoption or AI quality.
@@ -156,10 +158,10 @@ No real mailbox, OAuth credential, or model provider has been used.
 
 ## What comes next
 
-The next Gate 2D slice will define deletion-state ownership, then prove 90-day
-retention, shared-topic recomputation, disconnect, deletion-pending crash recovery,
-and cryptographic erasure ordering. Only after that lifecycle passes verification
-should the project add Gmail OAuth and a deterministic sync adapter.
+The next Gate 2D slice will implement deterministic 90-day retention, followed by
+shared-topic recomputation, disconnect execution, transition-by-transition crash
+recovery, and cryptographic erasure ordering. Only after that lifecycle passes
+verification should the project add Gmail OAuth and a deterministic sync adapter.
 
 Later evidence should include measured sync reliability, duplicate prevention,
 citation correctness, draft usefulness, correction rate, and time to attention.
