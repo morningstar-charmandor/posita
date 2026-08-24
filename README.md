@@ -5,6 +5,8 @@
 Posita is a desktop-first personal mail hub organized around people, topics,
 context, and actions rather than separate inboxes.
 
+Public repository: [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
+
 ## Current status
 
 Gate 2B is a privacy-founded local-data prototype. It includes a Daily Brief,

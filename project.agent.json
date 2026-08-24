@@ -4,6 +4,9 @@
     "name": "Posita",
     "package": "posita",
     "description": "Desktop-first personal mail hub organized around people, topics, context, and actions.",
+    "repository": "https://github.com/morningstar-charmandor/posita",
+    "repositoryVisibility": "public",
+    "canonicalBranch": "main",
     "currentMilestone": "gate-2b-privacy-credential-foundation",
     "dataMode": "fixture-seeded-sqlite",
     "mailSendingEnabled": false

@@ -12,6 +12,10 @@ Posita is at **Gate 2B: privacy and credential-storage foundation**. The product
 is a runnable Electron desktop prototype using React, strict TypeScript, and
 SQLite. All visible mail is deterministic sample data.
 
+The canonical public source repository is
+`https://github.com/morningstar-charmandor/posita`. The local `main` branch is
+expected to track `origin/main`.
+
 Implemented:
 
 - Daily Brief, topic timeline, source-message inspection, classic unified mail,

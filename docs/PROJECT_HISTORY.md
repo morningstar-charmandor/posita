@@ -22,7 +22,7 @@ scan chronological inboxes.
 
 ## Gate 1 — Interactive product prototype
 
-Date: 2026-08-24  
+Date: 2026-08-24
 Checkpoint: `24d7269`
 
 Goal: prove the core interaction model without credentials, network access, or
@@ -130,6 +130,20 @@ Delivered:
 
 This entry intentionally leaves exact verification and checkpoint metadata to
 the Git commit that introduces the documentation system.
+
+## Public repository established
+
+Date: 2026-08-24
+Repository: `https://github.com/morningstar-charmandor/posita`
+
+The complete local project history was connected to its existing empty public
+GitHub repository. `main` is the canonical branch and the repository is intended
+to remain suitable for portfolio review without containing credentials, personal
+mail, private generated content, or local caches.
+
+Publishing does not change the product stage: Gmail and AI remain disconnected,
+all visible communication remains fixture data, and real-mail ingestion remains
+blocked by the encrypted-cache prerequisite.
 
 ## How future entries should be written
 

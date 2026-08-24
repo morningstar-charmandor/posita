@@ -18,6 +18,8 @@ and actions.
 **Current stage:** privacy-founded interactive prototype with a real local data
 path and OS-protected credential foundation. Gmail and AI are not connected.
 
+**Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
+
 **Collaboration:** the product direction and decisions are developed with the
 owner; implementation, research support, documentation, and verification are
 performed collaboratively with Codex. This case study should describe that
