@@ -19,42 +19,42 @@ export const fixtures: MailDataset = {
       subject: 'Re: Pulse launch scope',
       preview: 'Can we lock the reduced scope today? Engineering needs the final call before tomorrow morning.',
       body: 'Hi Shafi,\n\nThe revised flow looks good from our side. Can we lock the reduced scope today? Engineering needs the final call before tomorrow morning. If you confirm the onboarding and dashboard pieces, I’ll update the launch plan.\n\nThanks,\nRahul',
-      receivedAt: 'Today · 10:42 AM', isRead: false
+      receivedAt: 'Today · 10:42 AM', receivedAtIso: '2026-08-24T10:42:00+05:30', isRead: false
     },
     {
       id: 'pulse-figma', threadId: 'thread-figma', accountId: 'work', senderId: 'figma',
       subject: 'Maya resolved 8 comments in Pulse',
       preview: 'All blocking comments on the onboarding flow have been resolved.',
       body: 'Maya resolved 8 comments in Pulse / Onboarding. All blocking comments on the onboarding flow have been resolved. Two copy notes remain and are marked non-blocking.',
-      receivedAt: 'Yesterday · 4:18 PM', isRead: true
+      receivedAt: 'Yesterday · 4:18 PM', receivedAtIso: '2026-08-23T16:18:00+05:30', isRead: true
     },
     {
       id: 'pulse-feedback', threadId: 'thread-pulse-feedback', accountId: 'freelance', senderId: 'maya',
       subject: 'Pulse feedback — final pass',
       preview: 'The client approved the dashboard direction. We only need your scope confirmation.',
       body: 'The client approved the dashboard direction in today’s review. We only need your scope confirmation before Rahul can update the launch plan. I’ve closed the remaining blocking design comments.',
-      receivedAt: 'Yesterday · 2:06 PM', isRead: true
+      receivedAt: 'Yesterday · 2:06 PM', receivedAtIso: '2026-08-23T14:06:00+05:30', isRead: true
     },
     {
       id: 'apartment-docs', threadId: 'thread-apartment', accountId: 'personal', senderId: 'ajay',
       subject: 'Documents for Indiranagar apartment',
       preview: 'I have sent the ownership documents. Please review them before our visit on Saturday.',
       body: 'Hi Shafi, I have sent the ownership documents and maintenance history for the Indiranagar apartment. Please review them before our visit on Saturday. Let me know if your lawyer needs anything else.',
-      receivedAt: 'Today · 9:15 AM', isRead: false
+      receivedAt: 'Today · 9:15 AM', receivedAtIso: '2026-08-24T09:15:00+05:30', isRead: false
     },
     {
       id: 'acme-payment', threadId: 'thread-acme', accountId: 'freelance', senderId: 'neeraj',
       subject: 'Invoice 1048 processed',
       preview: 'Finance processed the invoice this morning. It should arrive within two business days.',
       body: 'Quick update: finance processed invoice 1048 this morning. The transfer should arrive in your account within two business days. No action is needed from you.',
-      receivedAt: 'Today · 8:34 AM', isRead: true
+      receivedAt: 'Today · 8:34 AM', receivedAtIso: '2026-08-24T08:34:00+05:30', isRead: true
     },
     {
       id: 'pulse-followup', threadId: 'thread-pulse', accountId: 'work', senderId: 'rahul',
       subject: 'Re: Pulse launch scope',
       preview: 'Sharing the smaller launch plan we discussed. Let me know if Friday still works.',
       body: 'Sharing the smaller launch plan we discussed: onboarding, the new dashboard, and migration notes. We can move analytics to the following release. Let me know if Friday still works for final sign-off.',
-      receivedAt: 'Monday · 3:22 PM', isRead: true
+      receivedAt: 'Monday · 3:22 PM', receivedAtIso: '2026-08-24T15:22:00+05:30', isRead: true
     }
   ],
   topics: [

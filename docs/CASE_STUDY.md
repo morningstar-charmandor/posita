@@ -147,10 +147,12 @@ At the current Gate 2D foundation checkpoint, Posita has:
   live account data,
 - an intentionally minimal lifecycle journal that can survive deletion of the
   private-data key without containing private content,
+- deterministic 90-day retention with absolute timestamps, conservative
+  source-derived eviction, and atomic encrypted-cache rewriting,
 - future sync ownership and account-isolation contracts without premature
   provider implementation,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 15 automated test files containing 65 passing tests,
+- 16 automated test files containing 73 passing tests,
 - passing strict TypeScript, structural security checks, and production builds.
 
 These are engineering outcomes, not evidence of customer adoption or AI quality.
@@ -158,10 +160,10 @@ No real mailbox, OAuth credential, or model provider has been used.
 
 ## What comes next
 
-The next Gate 2D slice will implement deterministic 90-day retention, followed by
-shared-topic recomputation, disconnect execution, transition-by-transition crash
-recovery, and cryptographic erasure ordering. Only after that lifecycle passes
-verification should the project add Gmail OAuth and a deterministic sync adapter.
+The next Gate 2D slice will define account-removal recomputation, followed by
+disconnect execution, transition-by-transition crash recovery, and cryptographic
+erasure ordering. Only after that lifecycle passes verification should the project
+add Gmail OAuth and a deterministic sync adapter.
 
 Later evidence should include measured sync reliability, duplicate prevention,
 citation correctness, draft usefulness, correction rate, and time to attention.

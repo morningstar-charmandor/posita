@@ -65,6 +65,14 @@ outside the installation data-key boundary so deletion can resume after key loss
 it never stores provider identity, addresses, cursors, credentials, mail, derived
 content, or arbitrary error text. No deletion action executes yet.
 
+Gate 2D now implements deterministic 90-day maintenance as an unscheduled
+application service. It requires an absolute source timestamp, retains the exact
+cutoff boundary, and fails before mutation if metadata is missing or invalid.
+Expired source records and every topic/brief that depends on them are replaced in
+one encrypted-cache transaction, followed by SQLite sanitization. This never
+modifies Gmail. Automatic/background execution and user-visible status remain
+deferred.
+
 Retention configuration is deferred to Gate 3. A future setting may shorten the
 window but must not silently lengthen an existing user's window.
 

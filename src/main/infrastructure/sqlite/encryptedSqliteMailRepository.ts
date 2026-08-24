@@ -13,7 +13,7 @@ import {
   type CacheRecordContext,
   type CacheRecordProtector
 } from '../../application/encryptedCache'
-import { RepositoryError, type MailRepository } from '../../application/mailRepository'
+import { RepositoryError, type MutableMailRepository } from '../../application/mailRepository'
 import { applyMigrations } from './migrations'
 
 export type EncryptedRecordType = 'account' | 'person' | 'message' | 'topic' | 'brief-item'
@@ -127,7 +127,7 @@ const parsePayload = (
   }
 }
 
-export class EncryptedSqliteMailRepository implements MailRepository {
+export class EncryptedSqliteMailRepository implements MutableMailRepository {
   constructor(
     private readonly database: DatabaseSync,
     private readonly protector: CacheRecordProtector
@@ -196,6 +196,38 @@ export class EncryptedSqliteMailRepository implements MailRepository {
     } catch (error) {
       if (error instanceof RepositoryError) throw error
       throw cacheFailure('Failed to load the encrypted local mail cache.', error)
+    }
+  }
+
+  replaceDataset(dataset: MailDataset): void {
+    try {
+      if (!isMailDataset(dataset)) {
+        throw new EncryptedCacheError('CACHE_RECORD_INVALID', 'Replacement cache data is invalid.')
+      }
+      const records = prepareEncryptedDataset(dataset, this.protector)
+      this.database.exec('BEGIN IMMEDIATE')
+      try {
+        this.database.exec('DELETE FROM encrypted_records')
+        insertEncryptedRecords(this.database, records)
+        this.database.prepare(`
+          INSERT INTO encrypted_cache_state (id, status, updated_at)
+          VALUES (1, 'sanitization-pending', datetime('now'))
+          ON CONFLICT(id) DO UPDATE SET
+            status = 'sanitization-pending', updated_at = datetime('now')
+        `).run()
+        this.database.exec('COMMIT')
+      } catch (error) {
+        if (this.database.isTransaction) this.database.exec('ROLLBACK')
+        throw error
+      }
+      sanitizeSqliteStorage(this.database)
+      this.database.prepare(`
+        UPDATE encrypted_cache_state
+        SET status = 'ready', updated_at = datetime('now') WHERE id = 1
+      `).run()
+    } catch (error) {
+      if (error instanceof RepositoryError) throw error
+      throw cacheFailure('Failed to replace the encrypted local mail cache.', error)
     }
   }
 

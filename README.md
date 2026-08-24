@@ -19,8 +19,10 @@ per-installation data key is protected by the operating-system vault. Schema v4
 adds versioned encrypted provider-account and sync-state records with strict
 account isolation; those tables contain no real account. Schema v5 adds an opaque,
 non-sensitive lifecycle journal that can survive deletion of that encryption key.
-Gmail, lifecycle execution, retention maintenance, and AI providers are not
-connected. No real OAuth credential exists, and sending is deliberately disabled.
+Schema v6 and a deterministic application service add fail-closed 90-day
+retention with atomic derived-data eviction; it is not scheduled automatically.
+Gmail, lifecycle execution, and AI providers are not connected. No real OAuth
+credential exists, and sending is deliberately disabled.
 
 Read the build boundaries before extending the prototype:
 

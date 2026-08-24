@@ -1,6 +1,7 @@
 import { fixtures } from '../shared/fixtures'
 import type { AccountStateRepository } from './application/accountState'
 import type { AccountLifecycleRepository } from './application/accountLifecycle'
+import { RetentionMaintenanceService } from './application/retentionMaintenance'
 import { MailApplicationService, systemClock } from './application/mailApplicationService'
 import type { MailRepository } from './application/mailRepository'
 import type { SecretVault } from './application/secretVault'
@@ -24,6 +25,7 @@ export interface LocalDataRuntime {
   secretVault: SecretVault
   accountStateRepository: AccountStateRepository
   accountLifecycleRepository: AccountLifecycleRepository
+  retentionService: RetentionMaintenanceService
 }
 
 export const bootstrapLocalData = async (databasePath: string): Promise<LocalDataRuntime> => {
@@ -44,7 +46,8 @@ export const bootstrapLocalData = async (databasePath: string): Promise<LocalDat
       service: new MailApplicationService(repository, systemClock),
       secretVault,
       accountStateRepository: new EncryptedSqliteAccountStateRepository(database, protector),
-      accountLifecycleRepository: new SqliteAccountLifecycleRepository(database)
+      accountLifecycleRepository: new SqliteAccountLifecycleRepository(database),
+      retentionService: new RetentionMaintenanceService(repository)
     }
   } catch (error) {
     if (repository) repository.close()

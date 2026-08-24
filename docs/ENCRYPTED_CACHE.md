@@ -103,6 +103,15 @@ readable if a delete-local-data workflow has already erased the installation key
 ADR-012 defines this narrow exception. Private account state, provider identity,
 cursors, source mail, and derived content remain encrypted.
 
+## Retention rewrite
+
+Gate 2D retention prepares a complete validated set of new encrypted envelopes
+before mutation. One transaction replaces expired source and dependent derived
+records and marks sanitization pending. The existing recovery path compacts SQLite,
+truncates WAL, and marks the cache ready. A failed validation or encryption before
+the transaction leaves the previous cache unchanged. Maintenance is not scheduled
+or exposed over IPC yet.
+
 ## Legacy fixture migration
 
 For an existing Gate 2B database:

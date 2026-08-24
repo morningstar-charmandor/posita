@@ -110,6 +110,34 @@ describe('EncryptedSqliteMailRepository', () => {
       accounts: [], people: [], messages: [], topics: [], briefItems: []
     })
   })
+
+  it('atomically replaces the encrypted dataset and completes sanitization', () => {
+    const { database, repository } = createInMemoryRepository()
+    repository.seedIfEmpty(fixtures)
+    const retained = structuredClone(fixtures)
+    retained.messages = retained.messages.filter((message) => message.id !== 'apartment-docs')
+    retained.topics = retained.topics.filter((topic) => topic.id !== 'apartment')
+    retained.briefItems = retained.briefItems.filter((item) => item.topicId !== 'apartment')
+    retained.people = retained.people.filter((person) => person.id !== 'ajay')
+
+    repository.replaceDataset(retained)
+
+    expect(repository.loadDataset()).toEqual(retained)
+    expect(database.prepare('SELECT status FROM encrypted_cache_state WHERE id = 1').get())
+      .toEqual({ status: 'ready' })
+  })
+
+  it('preserves the previous cache when replacement validation fails', () => {
+    const { repository } = createInMemoryRepository()
+    repository.seedIfEmpty(fixtures)
+    const invalid = structuredClone(fixtures)
+    invalid.messages[0]!.senderId = 'missing-person'
+
+    expect(() => repository.replaceDataset(invalid)).toThrowError(
+      expect.objectContaining<Partial<RepositoryError>>({ code: 'DATABASE_OPERATION_FAILED' })
+    )
+    expect(repository.loadDataset()).toEqual(fixtures)
+  })
 })
 
 describe('legacy plaintext cache migration', () => {

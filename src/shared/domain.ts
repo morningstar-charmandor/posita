@@ -26,6 +26,7 @@ export interface Message {
   preview: string
   body: string
   receivedAt: string
+  receivedAtIso?: string
   isRead: boolean
 }
 

@@ -136,6 +136,22 @@ Ownership remains singular:
 | Drafts and pending commands | Local user/application state until explicitly confirmed or discarded |
 | Disconnect and local-deletion progress | Non-sensitive lifecycle journal until completion |
 
+### Retention maintenance
+
+The Gate 2D retention service accepts an injected absolute clock and uses the
+source message's validated ISO timestamp, never a presentation label such as
+“Today.” The private-alpha cutoff is exactly 90 days; a message at the boundary is
+retained. Missing or invalid source timestamps fail the operation before storage
+changes.
+
+If an expired message is a source for a topic, Posita removes the complete derived
+topic and its dependent brief items rather than retaining an uncited summary.
+Unreferenced people are removed; mailbox accounts remain. The encrypted repository
+prepares and validates the replacement before a transaction, replaces source and
+derived records together, records sanitization pending, then compacts and marks the
+cache ready. The service is composed in main but has no timer, IPC, or UI trigger;
+future scheduling must run it away from renderer and main event loops.
+
 ## Gmail synchronization
 
 The Gmail adapter will use an initial 90-day import followed by incremental

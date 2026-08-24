@@ -27,6 +27,10 @@ const hasOnlyKeys = (value: JsonRecord, keys: readonly string[]): boolean => {
 }
 
 const isString = (value: unknown): value is string => typeof value === 'string'
+const absoluteTimestampPattern = /^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:\d{2})$/
+export const isAbsoluteTimestamp = (value: unknown): value is string =>
+  typeof value === 'string' && absoluteTimestampPattern.test(value) &&
+  Number.isFinite(Date.parse(value))
 const isBoolean = (value: unknown): value is boolean => typeof value === 'boolean'
 const isStringArray = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every(isString)
@@ -59,6 +63,7 @@ const isMessage = (value: unknown): value is Message =>
   isString(value.preview) &&
   isString(value.body) &&
   isString(value.receivedAt) &&
+  (value.receivedAtIso === undefined || isAbsoluteTimestamp(value.receivedAtIso)) &&
   isBoolean(value.isRead)
 
 const isTimelineEvent = (value: unknown): value is TimelineEvent =>

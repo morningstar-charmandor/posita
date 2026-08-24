@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { fixtures } from '../../../shared/fixtures'
 import { RepositoryError } from '../../application/mailRepository'
 import { openPositaDatabase } from './database'
-import { applyMigrations, CURRENT_SCHEMA_VERSION, getSchemaVersion } from './migrations'
+import { applyMigrations, CURRENT_SCHEMA_VERSION, getSchemaVersion, migrations } from './migrations'
 import { SqliteMailRepository } from './sqliteMailRepository'
 
 const openRepositories: SqliteMailRepository[] = []
@@ -59,7 +59,15 @@ describe('SQLite migrations', () => {
     const database = openPositaDatabase(':memory:')
     const repository = new SqliteMailRepository(database)
     openRepositories.push(repository)
-    applyMigrations(database)
+    getSchemaVersion(database)
+    const recordMigration = database.prepare(`
+      INSERT INTO schema_migrations (version, name, applied_at)
+      VALUES (?, ?, datetime('now'))
+    `)
+    for (const migration of migrations.filter((entry) => entry.version <= 3)) {
+      database.exec(migration.sql)
+      recordMigration.run(migration.version, migration.name)
+    }
     database.prepare(`
       INSERT INTO encrypted_records (
         record_type, record_id, account_scope, position, envelope_scheme, payload,
@@ -67,10 +75,6 @@ describe('SQLite migrations', () => {
       ) VALUES ('account', 'fixture-account', 'fixture-account', 0,
         'aes-256-gcm-v1', ?, datetime('now'), datetime('now'))
     `).run(Buffer.from([1, 2, 3]))
-    database.exec('DROP TABLE account_lifecycle_operations')
-    database.exec('DROP TABLE encrypted_account_records')
-    database.prepare('DELETE FROM schema_migrations WHERE version >= 4').run()
-
     applyMigrations(database)
 
     expect(getSchemaVersion(database)).toBe(CURRENT_SCHEMA_VERSION)

@@ -92,6 +92,19 @@ installation-wide deletion phases from being mixed. Incomplete entries cannot be
 removed through the repository. The journal is not encrypted with the installation
 data key because it must remain readable after that key is deleted.
 
+Schema version 6 adds nullable `messages.received_at_iso` only to the empty legacy
+migration surface so newly seeded compatibility fixtures survive the controlled
+plaintext-to-encrypted migration with an absolute source timestamp. Current
+encrypted message JSON also carries this optional compatibility field. Retention
+requires it and fails closed when an older cache does not contain it; presentation
+labels are never parsed as dates.
+
+Retention replacements validate and encrypt the complete next dataset before
+opening a write transaction. Source messages, derived topics, brief items, and
+unreferenced people are replaced atomically. The transaction records
+`sanitization-pending`; compaction and WAL truncation complete before state returns
+to `ready`, allowing existing startup recovery to handle interruption.
+
 ## Migrations
 
 Migrations are numbered, immutable, and applied in a transaction. Applied
@@ -151,3 +164,6 @@ The local-data and credential foundation requires tests for:
   isolation, metadata authentication, scoped deletion, and invalid-state refusal.
 - lifecycle phase persistence, safe retry errors, pending-operation recovery,
   immutable operation identity/scope, completion-only cleanup, and v3 upgrades.
+- exact retention cutoff behavior, missing/invalid timestamp refusal, derived
+  citation eviction, unreferenced-person cleanup, idempotence, atomic encrypted
+  replacement, rollback on invalid data, and sanitization completion.

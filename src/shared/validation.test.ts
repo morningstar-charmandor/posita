@@ -43,4 +43,11 @@ describe('shared contract validation', () => {
 
     expect(isMailDataset(invalid)).toBe(false)
   })
+
+  it('rejects a display label in the absolute source timestamp field', () => {
+    const invalid = structuredClone(fixtures)
+    invalid.messages[0]!.receivedAtIso = 'Today · 10:42 AM'
+
+    expect(isMailDataset(invalid)).toBe(false)
+  })
 })

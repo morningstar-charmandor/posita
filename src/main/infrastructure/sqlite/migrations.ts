@@ -237,6 +237,13 @@ export const migrations: readonly Migration[] = [
       CREATE INDEX account_lifecycle_pending_idx
         ON account_lifecycle_operations(phase, updated_at);
     `
+  },
+  {
+    version: 6,
+    name: 'absolute_message_retention_timestamp',
+    sql: `
+      ALTER TABLE messages ADD COLUMN received_at_iso TEXT;
+    `
   }
 ]
 

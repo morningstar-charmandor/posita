@@ -95,7 +95,7 @@ export class SqliteMailRepository implements MailRepository {
 
       const messages: Message[] = allRows(this.database.prepare(`
         SELECT id, thread_id, account_id, sender_id, subject, preview, body,
-               received_at, is_read
+               received_at, received_at_iso, is_read
         FROM messages
         ORDER BY display_order
       `)).map((row) => ({
@@ -107,6 +107,9 @@ export class SqliteMailRepository implements MailRepository {
         preview: text(row, 'preview'),
         body: text(row, 'body'),
         receivedAt: text(row, 'received_at'),
+        ...(optionalText(row, 'received_at_iso') === undefined
+          ? {}
+          : { receivedAtIso: optionalText(row, 'received_at_iso') }),
         isRead: integer(row, 'is_read') === 1
       }))
 
@@ -174,7 +177,9 @@ export class SqliteMailRepository implements MailRepository {
           reason: text(row, 'reason'),
           accountId: text(row, 'account_id'),
           citationMessageIds: citationRows.map((citationRow) => text(citationRow, 'message_id')),
-          dueLabel: optionalText(row, 'due_label')
+          ...(optionalText(row, 'due_label') === undefined
+            ? {}
+            : { dueLabel: optionalText(row, 'due_label') })
         }
       })
 
@@ -213,8 +218,8 @@ export class SqliteMailRepository implements MailRepository {
     const insertMessage = this.database.prepare(`
       INSERT INTO messages (
         id, thread_id, account_id, sender_id, subject, preview, body,
-        received_at, is_read, display_order
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        received_at, received_at_iso, is_read, display_order
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `)
     dataset.messages.forEach((message, index) => insertMessage.run(
       message.id,
@@ -225,6 +230,7 @@ export class SqliteMailRepository implements MailRepository {
       message.preview,
       message.body,
       message.receivedAt,
+      message.receivedAtIso ?? null,
       message.isRead ? 1 : 0,
       index
     ))

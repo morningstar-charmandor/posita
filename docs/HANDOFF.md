@@ -24,7 +24,7 @@ Implemented:
   and editable local draft interactions,
 - accessible loading, error, retry, empty, and source-grounding behavior,
 - sandboxed Electron renderer with a narrow validated preload/IPC contract,
-- SQLite schema versions 1–5 with transactional migrations and encrypted seeding,
+- SQLite schema versions 1–6 with transactional migrations and encrypted seeding,
 - main-process `SecretVault` with asynchronous OS-backed protection,
 - fail-closed credential behavior and a test-only deterministic fake,
 - per-installation OS-protected data key and AES-256-GCM record envelopes,
@@ -42,6 +42,10 @@ Implemented:
   pending-command, and lifecycle state,
 - a strict non-sensitive lifecycle journal that retains incomplete disconnect and
   delete-local-data progress outside the deletable cache-key boundary,
+- an injected-clock 90-day retention policy using absolute source timestamps,
+- conservative eviction of expired source mail, cited topics/briefs, and people
+  left without retained references,
+- atomic encrypted dataset replacement with resumable sanitization,
 - accessible names for icon-only workspace controls and reduced-motion styling,
 - deterministic credential-free verification through `npm run verify`.
 
@@ -57,7 +61,8 @@ Not implemented:
 
 - Gmail OAuth, message ingestion, incremental history sync, or account disconnect,
 - runtime sync coordination, provider reconciliation, or deduplication logic,
-- lifecycle action execution, retention maintenance, or account-data recomputation,
+- lifecycle action execution or account-data recomputation,
+- automatic retention scheduling and user-visible maintenance status,
 - a model provider, embeddings, classification, retrieval, or generation,
 - 90-day maintenance and account-scoped disconnect/deletion orchestration,
 - production-scale encrypted search or attachment storage,
@@ -78,16 +83,16 @@ Not implemented:
 
 Proceed with **Gate 2D: encrypted account lifecycle** before implementing OAuth.
 
-Encrypted account state, ownership, and the crash-resume journal are complete.
-Continue in this order:
+Encrypted account state, ownership, the crash-resume journal, and deterministic
+retention are complete. Continue in this order:
 
-1. Implement rolling 90-day maintenance over decrypted message metadata in a
-   worker-safe application service.
-2. Define how shared people and topics are recomputed when one account is removed.
-3. Implement a deletion-pending state machine that survives interruption between
+1. Define how shared people and topics are recomputed when one account is removed.
+2. Implement a deletion-pending state machine that survives interruption between
    credential revocation, data-key erasure, record purge, and compaction.
-4. Test disconnect and full-local-delete crashes at every transition.
-5. Add explicit consent and safe status contracts without exposing private data.
+3. Test disconnect and full-local-delete crashes at every transition.
+4. Add explicit consent and safe status contracts without exposing private data.
+5. Decide the controlled compatibility behavior for older fixture caches that do
+   not contain absolute retention timestamps before scheduling maintenance.
 6. Keep real Gmail ingestion disabled until the lifecycle gate passes.
 
 Do not solve encrypted search casually. Any index must avoid becoming a second
@@ -111,7 +116,7 @@ plaintext mailbox. Record the selected search tradeoff in `docs/DECISIONS.md`.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 15 test files, 65 tests, strict typecheck, structure
+- Current verified baseline: 16 test files, 73 tests, strict typecheck, structure
   checks, and production Electron build passing.
 
 Native verification migrated the development database to schema v3 with 21

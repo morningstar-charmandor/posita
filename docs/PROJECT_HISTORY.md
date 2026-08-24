@@ -305,6 +305,44 @@ Limitations: transition execution and user-facing retry status remain deferred.
 No real account or private content is stored by the journal, and Gmail remains
 disconnected.
 
+## Gate 2D foundation — Deterministic 90-day retention
+
+Date: 2026-08-24
+Checkpoint: use the Git commit whose subject is `feat: add encrypted retention maintenance`
+
+Goal: enforce the private-alpha retention promise over encrypted source and
+derived data without parsing display labels or enabling background work.
+
+Delivered:
+
+- separate absolute ISO source timestamps while preserving human display labels,
+- an injected-clock, exact-boundary 90-day retention policy,
+- fail-closed behavior for missing, display-only, or malformed timestamps,
+- conservative deletion of a whole derived topic and dependent brief items when
+  any of its cited source messages expires,
+- removal of people only when no retained source or topic references them,
+- one validated encrypted-cache rewrite transaction for source and derived data,
+- resumable sanitization, compaction, WAL truncation, and idempotent repeat runs,
+- schema version 6 for timestamp preservation through the legacy fixture migration.
+
+Important decisions:
+
+- never infer retention time from “Today,” “Yesterday,” or another UI label,
+- retain messages exactly on the cutoff boundary,
+- prefer deleting derived context over preserving an uncited or partly grounded
+  summary,
+- keep accounts connected when their current 90-day cache becomes empty,
+- compose the service without scheduling it on the Electron main event loop.
+
+Evidence: 16 test files and 73 tests passed with strict typechecking, structural
+checks, and a production build. Tests cover cutoff behavior, source-derived
+eviction, people cleanup, invalid metadata refusal, idempotence, atomic encrypted
+replacement, invalid replacement rollback, and sanitization completion.
+
+Limitations: automatic scheduling, progress UI, older fixture-cache timestamp
+compatibility, and account-disconnect execution remain deferred. Gmail and AI
+remain disconnected.
+
 ## How future entries should be written
 
 For each material milestone, record:

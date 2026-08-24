@@ -135,6 +135,9 @@ if (!localDataBootstrap.includes('new EncryptedSqliteAccountStateRepository(data
 if (!localDataBootstrap.includes('new SqliteAccountLifecycleRepository(database)')) {
   fail('production composition must use the account lifecycle journal')
 }
+if (!localDataBootstrap.includes('new RetentionMaintenanceService(repository)')) {
+  fail('production composition must expose retention through the application service')
+}
 if (localDataBootstrap.includes('new SqliteMailRepository(')) {
   fail('production composition must not write mail through the legacy plaintext repository')
 }

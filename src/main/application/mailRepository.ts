@@ -7,6 +7,10 @@ export interface MailRepository {
   close(): void
 }
 
+export interface MutableMailRepository extends MailRepository {
+  replaceDataset(dataset: MailDataset): void
+}
+
 export class RepositoryError extends Error {
   readonly code: 'MIGRATION_UNSUPPORTED' | 'DATABASE_OPERATION_FAILED'
 
