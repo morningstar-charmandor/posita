@@ -1,6 +1,6 @@
 # Posita Continuity Handoff
 
-Last reviewed: 2026-08-24
+Last reviewed: 2026-08-27
 
 This is the first document to read when Posita work continues in a new AI model,
 thread, chat, or development session. It records current state and the safest
@@ -43,6 +43,8 @@ Implemented:
 - a strict non-sensitive lifecycle journal that retains incomplete disconnect and
   delete-local-data progress outside the deletable cache-key boundary,
 - an injected-clock 90-day retention policy using absolute source timestamps,
+- controlled startup replacement of only the exact timestamp-free historical
+  fixture dataset, with mixed, edited, partial, and unknown caches refused,
 - conservative eviction of expired source mail, cited topics/briefs, and people
   left without retained references,
 - atomic encrypted dataset replacement with resumable sanitization,
@@ -126,13 +128,11 @@ retention, account removal, disconnect, full local deletion, explicit confirmati
 safe status, full-deletion startup recovery, read-only lifecycle UI, and explicitly
 confirmed local deletion are complete at their current layers. Continue in this order:
 
-1. Decide the controlled compatibility behavior for older fixture caches that do
-   not contain absolute retention timestamps before scheduling maintenance.
-2. Define confirmation-receipt cleanup and move production-scale sanitization off
+1. Define confirmation-receipt cleanup and move production-scale sanitization off
    the Electron main event loop before real mailbox ingestion.
-3. Keep pending disconnect visible but inactive until a real idempotent Google
+2. Keep pending disconnect visible but inactive until a real idempotent Google
    revocation adapter can be composed and tested.
-4. Keep real Gmail ingestion disabled until the remaining lifecycle activation
+3. Keep real Gmail ingestion disabled until the remaining lifecycle activation
    and consent gates pass.
 
 Do not solve encrypted search casually. Any index must avoid becoming a second
@@ -156,7 +156,7 @@ plaintext mailbox. Record the selected search tradeoff in `docs/DECISIONS.md`.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 28 test files, 174 tests, strict typecheck, structure
+- Current verified baseline: 28 test files, 179 tests, strict typecheck, structure
   checks, and production Electron build passing.
 
 Native verification migrated the development database to schema v3 with 21

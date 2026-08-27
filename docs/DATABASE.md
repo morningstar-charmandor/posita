@@ -96,8 +96,11 @@ Schema version 6 adds nullable `messages.received_at_iso` only to the empty lega
 migration surface so newly seeded compatibility fixtures survive the controlled
 plaintext-to-encrypted migration with an absolute source timestamp. Current
 encrypted message JSON also carries this optional compatibility field. Retention
-requires it and fails closed when an older cache does not contain it; presentation
-labels are never parsed as dates.
+requires it and fails closed when a cache does not contain it; presentation labels
+are never parsed as dates. Normal startup now upgrades only the exact historical
+fixture dataset when every message lacks the field. It uses the existing encrypted
+replacement and sanitization transaction, refuses mixed or changed datasets, and
+does not run while account disconnect is pending. This adds no schema version.
 
 Schema version 7 adds `local_action_confirmations`. It stores only contract
 version, opaque confirmation and operation IDs, the allow-listed
@@ -214,7 +217,8 @@ The local-data and credential foundation requires tests for:
 - lifecycle phase persistence, safe retry errors, pending-operation recovery,
   immutable operation identity/scope, completion-only cleanup, and v3 upgrades.
 - exact retention cutoff behavior, missing/invalid timestamp refusal, derived
-  citation eviction, unreferenced-person cleanup, idempotence, atomic encrypted
+  citation eviction, unreferenced-person cleanup, idempotence, exact legacy-fixture
+  recognition, ambiguous-cache refusal, restart upgrade, atomic encrypted
   replacement, rollback on invalid data, and sanitization completion.
 - account-scoped source deletion, touched-derived eviction, unaffected source and
   topic preservation, people recomputation, invalid IDs, and idempotent retries.

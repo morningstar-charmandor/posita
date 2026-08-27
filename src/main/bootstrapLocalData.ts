@@ -119,7 +119,11 @@ export const bootstrapLocalDataWithDependencies = async (
     key.fill(0)
     repository = new EncryptedSqliteMailRepository(database, protector)
     migrateLegacyPlaintextCache(database, protector)
-    if (recovery.pendingDisconnects === 0) repository.seedIfEmpty(fixtures)
+    const retentionService = new RetentionMaintenanceService(repository)
+    if (recovery.pendingDisconnects === 0) {
+      repository.seedIfEmpty(fixtures)
+      retentionService.ensureFixtureCompatibility(fixtures)
+    }
     const accountStateRepository = new EncryptedSqliteAccountStateRepository(database, protector)
     const activeDeletion = new DeleteLocalDataService(
       accountLifecycleRepository,
@@ -138,7 +142,7 @@ export const bootstrapLocalDataWithDependencies = async (
       secretVault,
       accountStateRepository,
       accountLifecycleRepository,
-      retentionService: new RetentionMaintenanceService(repository),
+      retentionService,
       accountDataRemovalService: new AccountDataRemovalService(repository),
       confirmationService: confirmation,
       deleteLocalDataService: activeDeletion

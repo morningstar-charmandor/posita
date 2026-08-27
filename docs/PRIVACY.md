@@ -73,6 +73,13 @@ one encrypted-cache transaction, followed by SQLite sanitization. This never
 modifies Gmail. Automatic/background execution and user-visible status remain
 deferred.
 
+Historical encrypted sample caches receive one narrow startup compatibility
+upgrade. Posita replaces them only when every timestamp is absent and all other
+data exactly matches the known deterministic fixture dataset. The replacement
+uses current absolute fixture timestamps; it does not derive dates from display
+labels. Mixed, edited, partial, and unknown caches fail before mutation. This rule
+cannot be applied to real provider data.
+
 Gate 2D also implements the local source/derived projection for removing one
 account. Other accounts' source messages are never deleted merely because they
 shared a topic. Any topic touched by the removed account is deleted rather than

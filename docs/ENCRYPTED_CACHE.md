@@ -112,6 +112,14 @@ truncates WAL, and marks the cache ready. A failed validation or encryption befo
 the transaction leaves the previous cache unchanged. Maintenance is not scheduled
 or exposed over IPC yet.
 
+Startup also uses this existing rewrite for one fixture-only compatibility case.
+If every message timestamp is absent and the full decrypted dataset otherwise
+equals the known historical fixtures, Posita replaces it with the current
+timestamped fixture dataset and sanitizes storage. Any mixed timestamp state,
+content edit, missing record, extra record, or other mismatch is refused before
+mutation. Pending account disconnect bypasses this check so startup cannot restore
+data already removed by lifecycle work.
+
 Account-data removal uses this same validated rewrite rather than issuing
 independent record deletes. This keeps removal of account sources, touched derived
 objects, and unreferenced people atomic. The disconnect orchestrator invokes the

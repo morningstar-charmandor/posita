@@ -266,3 +266,22 @@
   only for bounded fixture data and must move off the Electron main event loop
   before real mailbox volume. Confirmation-receipt cleanup remains a separate
   retention decision.
+
+## ADR-020: Replace only an exactly recognized timestamp-free fixture cache
+
+- Status: accepted for Gate 2D
+- Context: Historical encrypted fixture caches can contain valid simulated mail
+  records without the absolute `receivedAtIso` metadata required by retention.
+  Parsing display labels would invent source time, while silently replacing an
+  edited, partial, or future real dataset could destroy user data.
+- Decision: during normal ready-mode startup, compare a cache with missing source
+  timestamps against the complete known historical fixture dataset after omitting
+  that field. Upgrade only when every message timestamp is absent and every other
+  value and ordering position matches. Replace the whole simulated dataset with
+  current timestamped fixtures through the existing atomic encrypted rewrite and
+  sanitization path. Refuse mixed, edited, partial, or unknown caches before any
+  mutation, and skip the compatibility path while disconnect is pending.
+- Consequence: known sample installations become eligible for deterministic
+  retention without guessed dates or a parallel migration system. The policy is
+  intentionally fixture-only and is not a precedent for repairing real provider
+  records. No dependency or schema migration is added.

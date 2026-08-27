@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import type { DatabaseSync } from 'node:sqlite'
 import { afterEach, describe, expect, it } from 'vitest'
 import { DELETE_LOCAL_DATA_CONFIRMATION_TEXT } from '../shared/contracts'
+import { fixtures } from '../shared/fixtures'
 import {
   bootstrapLocalDataWithDependencies,
   type LocalDataBootstrapDependencies
@@ -14,7 +15,10 @@ import { ApplicationStateService } from './application/applicationStateService'
 import { LocalDataDeletionCommandService } from './application/localDataDeletionCommand'
 import { DeterministicFakeStringProtector } from './infrastructure/security/deterministicFakeStringProtector'
 import { openPositaDatabase } from './infrastructure/sqlite/database'
-import { countEncryptedRecords } from './infrastructure/sqlite/encryptedSqliteMailRepository'
+import {
+  countEncryptedRecords,
+  EncryptedSqliteMailRepository
+} from './infrastructure/sqlite/encryptedSqliteMailRepository'
 import { applyMigrations } from './infrastructure/sqlite/migrations'
 import { SqliteAccountLifecycleRepository } from './infrastructure/sqlite/sqliteAccountLifecycleRepository'
 import { SqliteSecretVault } from './infrastructure/sqlite/sqliteSecretVault'
@@ -57,6 +61,23 @@ afterEach(async () => {
 })
 
 describe('bootstrapLocalData lifecycle recovery', () => {
+  it('upgrades an exact legacy encrypted fixture cache with absolute retention timestamps', async () => {
+    const databasePath = await createDatabasePath()
+    const initial = await bootstrapLocalDataWithDependencies(databasePath, dependencies())
+    if (initial.mode !== 'ready') throw new Error('Expected ready runtime.')
+    const legacyFixtures = structuredClone(fixtures)
+    for (const message of legacyFixtures.messages) delete message.receivedAtIso
+    const repository = initial.repository as EncryptedSqliteMailRepository
+    repository.replaceDataset(legacyFixtures)
+    repository.sanitizeStorage()
+    repository.close()
+
+    const restarted = await bootstrapLocalDataWithDependencies(databasePath, dependencies())
+    expect(restarted.mode).toBe('ready')
+    expect(restarted.repository.loadDataset()).toEqual(fixtures)
+    restarted.repository.close()
+  })
+
   it('executes confirmed active deletion and remains deleted after restart', async () => {
     const databasePath = await createDatabasePath()
     let generated = 0

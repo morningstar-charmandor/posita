@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from 'node:util'
 import type { MailDataset } from '../../shared/domain'
 import { isAbsoluteTimestamp } from '../../shared/validation'
 import type { MutableMailRepository } from './mailRepository'
@@ -17,14 +18,69 @@ export interface RetentionResult {
   }
 }
 
+export interface FixtureRetentionCompatibilityResult {
+  changed: boolean
+  restoredTimestamps: number
+}
+
 export class RetentionError extends Error {
   readonly code: 'RETENTION_CLOCK_INVALID' | 'RETENTION_TIMESTAMP_MISSING' |
-    'RETENTION_TIMESTAMP_INVALID'
+    'RETENTION_TIMESTAMP_INVALID' | 'RETENTION_FIXTURE_REFERENCE_INVALID' |
+    'RETENTION_COMPATIBILITY_UNRECOGNIZED'
 
   constructor(code: RetentionError['code'], message: string) {
     super(message)
     this.name = 'RetentionError'
     this.code = code
+  }
+}
+
+const withoutSourceTimestamps = (dataset: MailDataset): MailDataset => ({
+  ...dataset,
+  messages: dataset.messages.map(({ receivedAtIso: _receivedAtIso, ...message }) => message)
+})
+
+export const planFixtureRetentionCompatibility = (
+  dataset: MailDataset,
+  currentFixtures: MailDataset
+): { dataset: MailDataset; result: FixtureRetentionCompatibilityResult } => {
+  if (!currentFixtures.messages.every((message) =>
+    message.receivedAtIso !== undefined && isAbsoluteTimestamp(message.receivedAtIso))) {
+    throw new RetentionError(
+      'RETENTION_FIXTURE_REFERENCE_INVALID',
+      'The current fixture reference does not contain valid absolute source timestamps.'
+    )
+  }
+
+  if (dataset.messages.every((message) =>
+    message.receivedAtIso !== undefined && isAbsoluteTimestamp(message.receivedAtIso))) {
+    return {
+      dataset,
+      result: { changed: false, restoredTimestamps: 0 }
+    }
+  }
+
+  const isRecognizedLegacyFixture =
+    dataset.messages.length > 0 &&
+    dataset.messages.every((message) => message.receivedAtIso === undefined) &&
+    isDeepStrictEqual(
+      withoutSourceTimestamps(dataset),
+      withoutSourceTimestamps(currentFixtures)
+    )
+
+  if (!isRecognizedLegacyFixture) {
+    throw new RetentionError(
+      'RETENTION_COMPATIBILITY_UNRECOGNIZED',
+      'A cache without complete retention timestamps is not a recognized fixture dataset.'
+    )
+  }
+
+  return {
+    dataset: structuredClone(currentFixtures),
+    result: {
+      changed: true,
+      restoredTimestamps: currentFixtures.messages.length
+    }
   }
 }
 
@@ -97,6 +153,18 @@ export const applyRetentionPolicy = (
 
 export class RetentionMaintenanceService {
   constructor(private readonly repository: MutableMailRepository) {}
+
+  ensureFixtureCompatibility(currentFixtures: MailDataset): FixtureRetentionCompatibilityResult {
+    const planned = planFixtureRetentionCompatibility(
+      this.repository.loadDataset(),
+      currentFixtures
+    )
+    if (planned.result.changed) {
+      this.repository.replaceDataset(planned.dataset)
+      this.repository.sanitizeStorage()
+    }
+    return planned.result
+  }
 
   run(now: Date): RetentionResult {
     const planned = applyRetentionPolicy(this.repository.loadDataset(), now)

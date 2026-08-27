@@ -116,6 +116,7 @@
     "provider-identity-and-sync-state-use-authenticated-encryption",
     "deletion-progress-survives-cache-key-loss-without-storing-private-content",
     "retention-uses-absolute-source-timestamps-and-evicts-derived-citations",
+    "timestamp-free-fixture-compatibility-requires-an-exact-complete-fixture-match",
     "account-removal-evicts-touched-derived-state-and-preserves-unaffected-sources",
     "disconnect-steps-are-journaled-idempotent-and-single-flight-per-account",
     "full-local-deletion-erases-credentials-private-records-and-key-material-in-journaled-order",

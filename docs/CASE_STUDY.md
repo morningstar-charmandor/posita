@@ -173,6 +173,8 @@ At the current Gate 2D foundation checkpoint, Posita has:
   private-data key without containing private content,
 - deterministic 90-day retention with absolute timestamps, conservative
   source-derived eviction, and atomic encrypted-cache rewriting,
+- exact historical-fixture compatibility that restores known absolute timestamps
+  without parsing display labels or replacing ambiguous data,
 - idempotent account removal that preserves other-account sources while deleting
   every derived topic touched by removed provenance,
 - ordered single-flight disconnect orchestration with durable progress and safe
@@ -190,7 +192,7 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - future sync ownership and account-isolation contracts without premature
   provider implementation,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 28 automated test files containing 174 passing tests,
+- 28 automated test files containing 179 passing tests,
 - passing strict TypeScript, structural security checks, and production builds.
 
 These are engineering outcomes, not evidence of customer adoption or AI quality.
@@ -198,11 +200,10 @@ No real mailbox, OAuth credential, or model provider has been used.
 
 ## What comes next
 
-The next Gate 2D slice should settle older-fixture retention compatibility and the
-cleanup policy for non-private confirmation receipts. Production-scale sanitization
-must move off the Electron main event loop before real mailbox volume. Gmail OAuth
-and its deterministic sync adapter remain blocked behind the remaining lifecycle
-and consent gates.
+The next Gate 2D slice should settle the cleanup policy for non-private confirmation
+receipts. Production-scale sanitization must move off the Electron main event loop
+before real mailbox volume. Gmail OAuth and its deterministic sync adapter remain
+blocked behind the remaining lifecycle and consent gates.
 
 Later evidence should include measured sync reliability, duplicate prevention,
 citation correctness, draft usefulness, correction rate, and time to attention.

@@ -4,12 +4,14 @@ import type { MailDataset } from '../../shared/domain'
 import type { MutableMailRepository } from './mailRepository'
 import {
   applyRetentionPolicy,
+  planFixtureRetentionCompatibility,
   RetentionError,
   RetentionMaintenanceService
 } from './retentionMaintenance'
 
 class FakeMutableMailRepository implements MutableMailRepository {
   replacements = 0
+  sanitizations = 0
 
   constructor(private dataset: MailDataset) {}
 
@@ -20,13 +22,83 @@ class FakeMutableMailRepository implements MutableMailRepository {
     this.dataset = structuredClone(dataset)
     this.replacements += 1
   }
-  sanitizeStorage(): void {}
+  sanitizeStorage(): void { this.sanitizations += 1 }
   deleteAllRecords(): void {}
   destroyEncryptionContext(): void {}
   close(): void {}
 }
 
 const now = new Date('2026-08-24T12:00:00.000Z')
+
+describe('legacy fixture retention compatibility', () => {
+  const withoutTimestamps = (): MailDataset => {
+    const dataset = structuredClone(fixtures)
+    for (const message of dataset.messages) delete message.receivedAtIso
+    return dataset
+  }
+
+  it('replaces only the exact historical fixture dataset with current timestamped fixtures', () => {
+    const repository = new FakeMutableMailRepository(withoutTimestamps())
+    const service = new RetentionMaintenanceService(repository)
+
+    expect(service.ensureFixtureCompatibility(fixtures)).toEqual({
+      changed: true,
+      restoredTimestamps: fixtures.messages.length
+    })
+    expect(repository.loadDataset()).toEqual(fixtures)
+    expect(repository.replacements).toBe(1)
+    expect(repository.sanitizations).toBe(1)
+  })
+
+  it('leaves a timestamp-complete dataset unchanged', () => {
+    const repository = new FakeMutableMailRepository(structuredClone(fixtures))
+    const service = new RetentionMaintenanceService(repository)
+
+    expect(service.ensureFixtureCompatibility(fixtures)).toEqual({
+      changed: false,
+      restoredTimestamps: 0
+    })
+    expect(repository.replacements).toBe(0)
+    expect(repository.sanitizations).toBe(0)
+  })
+
+  it('fails before mutation for mixed or edited timestamp-free caches', () => {
+    const mixed = withoutTimestamps()
+    mixed.messages[0]!.receivedAtIso = fixtures.messages[0]!.receivedAtIso
+    const mixedRepository = new FakeMutableMailRepository(mixed)
+
+    expect(() => new RetentionMaintenanceService(mixedRepository)
+      .ensureFixtureCompatibility(fixtures)).toThrowError(
+      expect.objectContaining<Partial<RetentionError>>({
+        code: 'RETENTION_COMPATIBILITY_UNRECOGNIZED'
+      })
+    )
+    expect(mixedRepository.replacements).toBe(0)
+    expect(mixedRepository.sanitizations).toBe(0)
+
+    const edited = withoutTimestamps()
+    edited.messages[0]!.subject = 'Locally changed fixture subject'
+    const editedRepository = new FakeMutableMailRepository(edited)
+    expect(() => new RetentionMaintenanceService(editedRepository)
+      .ensureFixtureCompatibility(fixtures)).toThrowError(
+      expect.objectContaining<Partial<RetentionError>>({
+        code: 'RETENTION_COMPATIBILITY_UNRECOGNIZED'
+      })
+    )
+    expect(editedRepository.replacements).toBe(0)
+  })
+
+  it('rejects an invalid current fixture reference', () => {
+    const invalidReference = structuredClone(fixtures)
+    delete invalidReference.messages[0]!.receivedAtIso
+
+    expect(() => planFixtureRetentionCompatibility(fixtures, invalidReference)).toThrowError(
+      expect.objectContaining<Partial<RetentionError>>({
+        code: 'RETENTION_FIXTURE_REFERENCE_INVALID'
+      })
+    )
+  })
+})
 
 describe('rolling retention maintenance', () => {
   it('retains a message exactly at the 90-day boundary', () => {

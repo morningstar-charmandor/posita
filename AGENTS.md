@@ -9,14 +9,15 @@ exists deeper in the tree.
 - Current milestone: Gate 2D, encrypted account lifecycle in progress.
 - Current data: deterministic fixtures stored as authenticated encrypted records.
 - Encrypted provider-account and sync-state storage is implemented but empty.
-- A non-sensitive lifecycle journal is implemented; deletion execution is not.
-- Deterministic 90-day retention is implemented but not scheduled automatically.
+- A non-sensitive lifecycle journal and confirmed full local-deletion execution are implemented.
+- Deterministic 90-day retention and exact legacy-fixture compatibility are implemented
+  but maintenance is not scheduled automatically.
 - Account-data removal projection is implemented and used by the inactive disconnect orchestrator.
 - Disconnect orchestration is implemented against interfaces/fakes but has no live revoker or UI trigger.
-- Full local-data deletion orchestration is implemented against interfaces/fakes
-  but is not composed at startup and has no user trigger or recovery owner.
-- New full deletion requires a bounded typed confirmation; safe lifecycle status
-  and recovery contracts exist but have no preload, IPC, or UI surface.
+- Full local-data deletion is composed at startup and available through a narrow
+  confirmed Settings & privacy flow; it affects Posita data only.
+- New full deletion requires a bounded typed confirmation; safe lifecycle status,
+  recovery, preload, IPC, and UI surfaces are implemented.
 - Startup keylessly resumes a pending full deletion and honors its completed
   marker without recreating a data key or reseeding fixtures.
 - An OS-protected credential vault is implemented but contains no real token.

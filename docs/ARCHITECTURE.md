@@ -145,6 +145,14 @@ source message's validated ISO timestamp, never a presentation label such as
 retained. Missing or invalid source timestamps fail the operation before storage
 changes.
 
+Before retention can be scheduled, startup applies one controlled compatibility
+rule for historical fixture caches. A cache is eligible only when every source
+timestamp is absent and the complete decrypted dataset semantically equals the
+known historical fixtures after omitting that field. Posita then replaces the
+whole simulated dataset with the current timestamped fixtures through the existing
+atomic encrypted rewrite and sanitization path. Mixed, edited, partial, or unknown
+data fails closed. Pending disconnect startup skips this compatibility path.
+
 If an expired message is a source for a topic, Posita removes the complete derived
 topic and its dependent brief items rather than retaining an uncited summary.
 Unreferenced people are removed; mailbox accounts remain. The encrypted repository

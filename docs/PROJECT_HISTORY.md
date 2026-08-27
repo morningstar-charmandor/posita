@@ -641,6 +641,47 @@ off the main event loop before real mailbox volume. Confirmation-receipt cleanup
 live disconnect, Gmail, AI, sending, packaging, and external-user evidence remain
 deferred.
 
+## Gate 2D foundation — Legacy fixture retention compatibility
+
+Date: 2026-08-27
+Checkpoint: use the Git commit whose subject is `feat: upgrade legacy fixture retention metadata`
+
+Goal: make historical fixture-only installations eligible for deterministic
+retention without guessing dates or creating a migration rule that could overwrite
+unknown data.
+
+Delivered:
+
+- a pure compatibility planner within the existing retention source of truth,
+- exact semantic recognition of the complete historical fixture dataset with all
+  source timestamps absent,
+- replacement with current timestamped fixtures through the existing atomic
+  encrypted rewrite and SQLite sanitization path,
+- fail-closed refusal for mixed, edited, partial, and otherwise unknown caches,
+- startup composition only in normal ready mode, explicitly bypassed while an
+  account disconnect is pending,
+- ADR-020 and aligned privacy, cache, database, architecture, continuity, and
+  portfolio documentation.
+
+Important decisions:
+
+- never parse presentation labels such as “Today” into retention dates,
+- never repair a cache from a partial match or message IDs alone,
+- replace only deterministic sample data and never apply this policy to provider
+  records,
+- reuse the existing repository rewrite and sanitization boundaries rather than
+  introducing a second migration framework.
+
+Evidence: 28 test files and 179 tests passed before final checkpoint verification.
+Coverage includes exact legacy recognition, complete-cache no-op, mixed and edited
+cache refusal before mutation, invalid reference refusal, and a real encrypted
+cache restart upgrade.
+
+Limitations: retention remains unscheduled. Confirmation-receipt cleanup and
+production-scale off-main-event-loop sanitization remain the next lifecycle work.
+No dependency or schema migration was added; Gmail, AI, sending, and live account
+disconnect remain deferred.
+
 ## How future entries should be written
 
 For each material milestone, record:

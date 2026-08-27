@@ -21,6 +21,9 @@ account isolation; those tables contain no real account. Schema v5 adds an opaqu
 non-sensitive lifecycle journal that can survive deletion of that encryption key.
 Schema v6 and a deterministic application service add fail-closed 90-day
 retention with atomic derived-data eviction; it is not scheduled automatically.
+Startup upgrades only an exact historical fixture cache whose messages all lack
+absolute timestamps. It replaces that known simulated dataset with the current
+timestamped encrypted fixtures and refuses mixed, edited, partial, or unknown data.
 Schema v7 stores only opaque, operation-bound confirmation receipts for destructive
 local deletion; the typed confirmation text is never persisted.
 Account removal now deterministically preserves unaffected sources while evicting
