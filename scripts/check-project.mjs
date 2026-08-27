@@ -135,8 +135,13 @@ if (!localDataBootstrap.includes('new EncryptedSqliteAccountStateRepository(data
 if (!localDataBootstrap.includes('new SqliteAccountLifecycleRepository(database)')) {
   fail('production composition must use the account lifecycle journal')
 }
-if (!localDataBootstrap.includes('new RetentionMaintenanceService(repository)')) {
+if (!localDataBootstrap.includes(
+  'new RetentionMaintenanceService(repository, storageSanitizer)'
+)) {
   fail('production composition must expose retention through the application service')
+}
+if (!localDataBootstrap.includes('new WorkerThreadSqliteStorageSanitizer(databasePath)')) {
+  fail('file-backed production sanitization must run through the worker adapter')
 }
 if (!localDataBootstrap.includes('new AccountDataRemovalService(repository)')) {
   fail('production composition must expose account-data removal through the application service')

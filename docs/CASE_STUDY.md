@@ -136,6 +136,12 @@ must be erased before completion is reported. Posita now journals credentials,
 account state, mail records, compaction, OS-vault key deletion, and in-memory key
 destruction as retryable phases.
 
+Secure SQLite compaction presented a responsiveness problem because the built-in
+API and `VACUUM` are synchronous. Posita now routes file-backed sanitization through
+one single-flight worker thread and a bounded versioned protocol. Retention,
+disconnect, deletion, and restart recovery share an injectable application
+contract, while raw database and worker failures stay out of the renderer.
+
 The command boundary separates authorization from recovery. A new destructive
 operation needs exact typed confirmation within five minutes, while recovery can
 only resume an already-journaled operation and cannot silently create one. The
@@ -185,6 +191,8 @@ At the current Gate 2D foundation checkpoint, Posita has:
   recovery-only resume entry point, and bounded safe lifecycle status,
 - startup cleanup that removes expired confirmation metadata only after its
   deletion operation no longer needs the authorization binding,
+- file-backed WAL checkpointing and SQLite compaction in one packaged single-flight
+  worker, with safe retry errors and real deleted-byte verification,
 - keyless pre-bootstrap recovery, shutdown cancellation between phases, and a
   durable deleted mode that remains empty across repeated restarts,
 - one validated read-only application-state query and accessible pending,
@@ -194,7 +202,7 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - future sync ownership and account-isolation contracts without premature
   provider implementation,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 28 automated test files containing 185 passing tests,
+- 29 automated test files containing 188 passing tests,
 - passing strict TypeScript, structural security checks, and production builds.
 
 These are engineering outcomes, not evidence of customer adoption or AI quality.
@@ -202,9 +210,10 @@ No real mailbox, OAuth credential, or model provider has been used.
 
 ## What comes next
 
-The next Gate 2D slice should move production-scale sanitization off the Electron
-main event loop before real mailbox volume. Gmail OAuth and its deterministic sync
-adapter remain blocked behind the remaining lifecycle and consent gates.
+The next Gate 2D slice should define the explicit connect-consent boundary and
+keep pending disconnect inactive until a real idempotent Google revocation adapter
+can be safely composed. Gmail OAuth and deterministic sync remain blocked behind
+those lifecycle and consent gates.
 
 Later evidence should include measured sync reliability, duplicate prevention,
 citation correctness, draft usefulness, correction rate, and time to attention.

@@ -72,7 +72,7 @@ const createHarness = () => {
       calls.push('mail')
       if (failMailDeletion) throw new Error('injected mail deletion failure')
     },
-    sanitizeStorage: () => { calls.push('storage') },
+    sanitizeStorage: async () => { calls.push('storage') },
     eraseDataKey: async () => { calls.push('key') }
   }
   const confirmation = new LocalActionConfirmationService(

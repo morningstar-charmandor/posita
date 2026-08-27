@@ -49,6 +49,11 @@ journaled, it resumes through deletion-only SQLite and vault operations without
 loading or creating the encryption key. A completed marker keeps later restarts
 in `local-data-deleted` mode and prevents fixture reseeding. Pending account
 disconnect remains inactive because no live authorization revoker exists.
+File-backed retention, fixture compatibility, disconnect, and deletion sanitization now run
+through one single-flight worker-thread adapter, keeping `VACUUM` and WAL
+checkpoint work off Electron's main event loop. Bounded in-memory tests retain an
+explicit inline adapter; the existing one-time legacy plaintext migration remains
+inline so its migration transaction keeps one connection owner.
 
 Preparing local deletion only returns bounded consequence copy and two opaque IDs;
 it creates no deletion journal. The execute request is accepted only from the same
@@ -119,8 +124,9 @@ The React renderer has no Node.js access. Electron context isolation and process
 sandboxing are enabled, navigation is denied by default, and the preload bridge
 exposes one versioned read-only application-state method and two narrowly scoped
 prepare/execute methods for confirmed local deletion, plus non-sensitive desktop
-metadata. SQLite lives behind main-process repository and credential-vault
-interfaces; the renderer receives only a validated application state. Source and
+metadata. SQLite lives behind main-process repository, sanitization, and
+credential-vault interfaces; file-backed compaction runs in a dedicated worker
+and the renderer receives only a validated application state. Source and
 derived fixture records
 use authenticated encryption with an OS-protected installation key. Neither the
 key nor vault has an IPC surface. Personal-mail ingestion remains blocked until

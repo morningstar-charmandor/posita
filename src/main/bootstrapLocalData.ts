@@ -30,6 +30,8 @@ import {
 import { applyMigrations } from './infrastructure/sqlite/migrations'
 import { SqliteSecretVault } from './infrastructure/sqlite/sqliteSecretVault'
 import { SqliteLocalActionConfirmationRepository } from './infrastructure/sqlite/sqliteLocalActionConfirmationRepository'
+import { InlineSqliteStorageSanitizer } from './infrastructure/sqlite/sqliteSanitization'
+import { WorkerThreadSqliteStorageSanitizer } from './infrastructure/sqlite/workerThreadSqliteStorageSanitizer'
 
 interface LocalDataRuntimeBase {
   mode: 'ready' | 'local-data-deleted'
@@ -94,6 +96,9 @@ export const bootstrapLocalDataWithDependencies = async (
     applyMigrations(database)
     const secretVault = new SqliteSecretVault(database, dependencies.credentialProtector)
     const keyManager = new CacheDataKeyManager(secretVault)
+    const storageSanitizer = databasePath === ':memory:'
+      ? new InlineSqliteStorageSanitizer(database)
+      : new WorkerThreadSqliteStorageSanitizer(databasePath)
     const accountLifecycleRepository = new SqliteAccountLifecycleRepository(database)
     const confirmation = new LocalActionConfirmationService(
       new SqliteLocalActionConfirmationRepository(database),
@@ -102,7 +107,12 @@ export const bootstrapLocalDataWithDependencies = async (
     )
     const deletionRecovery = new DeleteLocalDataService(
       accountLifecycleRepository,
-      new SqliteDeleteLocalDataRecoveryActions(database, secretVault, keyManager),
+      new SqliteDeleteLocalDataRecoveryActions(
+        database,
+        secretVault,
+        keyManager,
+        storageSanitizer
+      ),
       confirmation
     )
     const recovery = await new StartupLifecycleRecoveryOwner(
@@ -120,10 +130,10 @@ export const bootstrapLocalDataWithDependencies = async (
     key.fill(0)
     repository = new EncryptedSqliteMailRepository(database, protector)
     migrateLegacyPlaintextCache(database, protector)
-    const retentionService = new RetentionMaintenanceService(repository)
+    const retentionService = new RetentionMaintenanceService(repository, storageSanitizer)
     if (recovery.pendingDisconnects === 0) {
       repository.seedIfEmpty(fixtures)
-      retentionService.ensureFixtureCompatibility(fixtures)
+      await retentionService.ensureFixtureCompatibility(fixtures)
     }
     const accountStateRepository = new EncryptedSqliteAccountStateRepository(database, protector)
     const activeDeletion = new DeleteLocalDataService(
@@ -132,7 +142,8 @@ export const bootstrapLocalDataWithDependencies = async (
         secretVault,
         accountStateRepository,
         repository,
-        keyManager
+        keyManager,
+        storageSanitizer
       ),
       confirmation
     )

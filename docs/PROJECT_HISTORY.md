@@ -721,6 +721,46 @@ Production-scale SQLite sanitization remains synchronous and must move off the
 Electron main event loop before real mailbox volume. Gmail, AI, sending, and live
 account disconnect remain deferred.
 
+## Gate 2D foundation — Off-main-thread SQLite sanitization
+
+Date: 2026-08-27
+Checkpoint: use the Git commit whose subject is `feat: move sqlite sanitization off main thread`
+
+Goal: prevent secure SQLite compaction from blocking Electron's main event loop
+before Posita handles mailbox-scale encrypted data.
+
+Delivered:
+
+- one async application-level storage-sanitizer contract shared by retention,
+  fixture compatibility, disconnect, active deletion, and startup recovery,
+- a single-flight Node worker-thread adapter for every file-backed runtime,
+- one packaged worker entry with an exact bounded versioned message protocol,
+- a separate SQLite connection inside the worker for WAL checkpoint, `VACUUM`,
+  final checkpoint, and resumable cache-state completion,
+- stable safe failure mapping without returning raw worker or database details,
+- focused real-file tests for deleted-byte removal, completion state, concurrent
+  call coalescing, worker failure, and refusal of unsupported in-memory paths,
+- ADR-022 and aligned agent, cache, database, privacy, architecture, handoff, and
+  portfolio documentation.
+
+Important decisions:
+
+- keep sanitization as one atomic lifecycle phase and honor shutdown cancellation
+  between phases instead of terminating `VACUUM` midway,
+- retain the inline adapter only for bounded in-memory tests and the one-time
+  legacy plaintext migration, which keeps its existing connection owner,
+- centralize sanitization outside `MailRepository` rather than retaining duplicate
+  repository and recovery compaction paths,
+- add no dependency, schema migration, renderer method, IPC channel, provider,
+  timer, or compatibility layer.
+
+Evidence: 29 test files and 188 tests passed before final checkpoint verification.
+The production build emits a distinct `out/main/sqliteSanitizationWorker.js` entry.
+
+Limitations: retention and account lifecycle scheduling remain inactive. The
+worker phase is intentionally non-interruptible once started. Gmail, AI, sending,
+live account disconnect, and explicit connect consent remain deferred.
+
 ## How future entries should be written
 
 For each material milestone, record:

@@ -93,7 +93,6 @@ describe('bootstrapLocalData lifecycle recovery', () => {
     for (const message of legacyFixtures.messages) delete message.receivedAtIso
     const repository = initial.repository as EncryptedSqliteMailRepository
     repository.replaceDataset(legacyFixtures)
-    repository.sanitizeStorage()
     repository.close()
 
     const restarted = await bootstrapLocalDataWithDependencies(databasePath, dependencies())

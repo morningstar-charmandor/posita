@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { fixtures } from '../../shared/fixtures'
 import type { MailDataset } from '../../shared/domain'
 import type { MutableMailRepository } from './mailRepository'
+import type { StorageSanitizer } from './storageSanitizer'
 import {
   applyRetentionPolicy,
   planFixtureRetentionCompatibility,
@@ -11,7 +12,6 @@ import {
 
 class FakeMutableMailRepository implements MutableMailRepository {
   replacements = 0
-  sanitizations = 0
 
   constructor(private dataset: MailDataset) {}
 
@@ -22,10 +22,14 @@ class FakeMutableMailRepository implements MutableMailRepository {
     this.dataset = structuredClone(dataset)
     this.replacements += 1
   }
-  sanitizeStorage(): void { this.sanitizations += 1 }
   deleteAllRecords(): void {}
   destroyEncryptionContext(): void {}
   close(): void {}
+}
+
+class FakeStorageSanitizer implements StorageSanitizer {
+  calls = 0
+  async sanitize(): Promise<void> { this.calls += 1 }
 }
 
 const now = new Date('2026-08-24T12:00:00.000Z')
@@ -37,50 +41,51 @@ describe('legacy fixture retention compatibility', () => {
     return dataset
   }
 
-  it('replaces only the exact historical fixture dataset with current timestamped fixtures', () => {
+  it('replaces only the exact historical fixture dataset with current timestamped fixtures', async () => {
     const repository = new FakeMutableMailRepository(withoutTimestamps())
-    const service = new RetentionMaintenanceService(repository)
+    const sanitizer = new FakeStorageSanitizer()
+    const service = new RetentionMaintenanceService(repository, sanitizer)
 
-    expect(service.ensureFixtureCompatibility(fixtures)).toEqual({
+    await expect(service.ensureFixtureCompatibility(fixtures)).resolves.toEqual({
       changed: true,
       restoredTimestamps: fixtures.messages.length
     })
     expect(repository.loadDataset()).toEqual(fixtures)
     expect(repository.replacements).toBe(1)
-    expect(repository.sanitizations).toBe(1)
+    expect(sanitizer.calls).toBe(1)
   })
 
-  it('leaves a timestamp-complete dataset unchanged', () => {
+  it('leaves a timestamp-complete dataset unchanged', async () => {
     const repository = new FakeMutableMailRepository(structuredClone(fixtures))
-    const service = new RetentionMaintenanceService(repository)
+    const sanitizer = new FakeStorageSanitizer()
+    const service = new RetentionMaintenanceService(repository, sanitizer)
 
-    expect(service.ensureFixtureCompatibility(fixtures)).toEqual({
+    await expect(service.ensureFixtureCompatibility(fixtures)).resolves.toEqual({
       changed: false,
       restoredTimestamps: 0
     })
     expect(repository.replacements).toBe(0)
-    expect(repository.sanitizations).toBe(0)
+    expect(sanitizer.calls).toBe(0)
   })
 
-  it('fails before mutation for mixed or edited timestamp-free caches', () => {
+  it('fails before mutation for mixed or edited timestamp-free caches', async () => {
     const mixed = withoutTimestamps()
     mixed.messages[0]!.receivedAtIso = fixtures.messages[0]!.receivedAtIso
     const mixedRepository = new FakeMutableMailRepository(mixed)
 
-    expect(() => new RetentionMaintenanceService(mixedRepository)
-      .ensureFixtureCompatibility(fixtures)).toThrowError(
+    await expect(new RetentionMaintenanceService(mixedRepository, new FakeStorageSanitizer())
+      .ensureFixtureCompatibility(fixtures)).rejects.toThrowError(
       expect.objectContaining<Partial<RetentionError>>({
         code: 'RETENTION_COMPATIBILITY_UNRECOGNIZED'
       })
     )
     expect(mixedRepository.replacements).toBe(0)
-    expect(mixedRepository.sanitizations).toBe(0)
 
     const edited = withoutTimestamps()
     edited.messages[0]!.subject = 'Locally changed fixture subject'
     const editedRepository = new FakeMutableMailRepository(edited)
-    expect(() => new RetentionMaintenanceService(editedRepository)
-      .ensureFixtureCompatibility(fixtures)).toThrowError(
+    await expect(new RetentionMaintenanceService(editedRepository, new FakeStorageSanitizer())
+      .ensureFixtureCompatibility(fixtures)).rejects.toThrowError(
       expect.objectContaining<Partial<RetentionError>>({
         code: 'RETENTION_COMPATIBILITY_UNRECOGNIZED'
       })
@@ -155,15 +160,17 @@ describe('rolling retention maintenance', () => {
     )
   })
 
-  it('rewrites storage once and is idempotent on a repeated run', () => {
+  it('rewrites storage once and is idempotent on a repeated run', async () => {
     const dataset = structuredClone(fixtures)
     dataset.messages.find((message) => message.id === 'apartment-docs')!.receivedAtIso =
       '2026-01-01T00:00:00.000Z'
     const repository = new FakeMutableMailRepository(dataset)
-    const service = new RetentionMaintenanceService(repository)
+    const sanitizer = new FakeStorageSanitizer()
+    const service = new RetentionMaintenanceService(repository, sanitizer)
 
-    expect(service.run(now).changed).toBe(true)
-    expect(service.run(now).changed).toBe(false)
+    await expect(service.run(now)).resolves.toMatchObject({ changed: true })
+    await expect(service.run(now)).resolves.toMatchObject({ changed: false })
     expect(repository.replacements).toBe(1)
+    expect(sanitizer.calls).toBe(1)
   })
 })

@@ -69,7 +69,8 @@ Gate 2D now implements deterministic 90-day maintenance as an unscheduled
 application service. It requires an absolute source timestamp, retains the exact
 cutoff boundary, and fails before mutation if metadata is missing or invalid.
 Expired source records and every topic/brief that depends on them are replaced in
-one encrypted-cache transaction, followed by SQLite sanitization. This never
+one encrypted-cache transaction, followed by SQLite sanitization. For a file-backed
+cache, checkpoints and `VACUUM` execute in a dedicated worker thread. This never
 modifies Gmail. Automatic/background execution and user-visible status remain
 deferred.
 
@@ -130,6 +131,12 @@ already absent. Cancellation leaves the current journal phase available for the
 next restart. Conflicting lifecycle state fails closed rather than choosing which
 destructive operation to trust. Pending disconnect is not automatically resumed
 until a real idempotent authorization revoker exists.
+
+Sanitization is a non-interruptible lifecycle phase: Posita records progress
+before it starts and observes shutdown cancellation at the next phase boundary.
+Worker failures expose only a stable safe code and leave the durable operation
+available for retry. No private content, database path, or raw worker error is
+sent to the renderer or written to lifecycle state.
 
 Retention configuration is deferred to Gate 3. A future setting may shorten the
 window but must not silently lengthen an existing user's window.

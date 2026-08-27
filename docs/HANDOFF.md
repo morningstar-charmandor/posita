@@ -81,6 +81,9 @@ Implemented:
 - ready-mode active deletion composition that removes fixture cache and credentials,
   sanitizes SQLite, erases the OS-protected key, destroys the live protector, and
   transitions the read-only application state only after completion,
+- one async storage-sanitizer contract with a single-flight worker-thread adapter
+  for every file-backed database, bounded versioned worker messages, and safe
+  failure mapping; the inline adapter is limited to in-memory tests and legacy migration,
 - read-only conflict preflight before confirmation so preparation never creates a
   receipt or lifecycle operation while other durable work is pending,
 - accessible names for icon-only workspace controls and reduced-motion styling,
@@ -130,10 +133,9 @@ retention, account removal, disconnect, full local deletion, explicit confirmati
 safe status, full-deletion startup recovery, read-only lifecycle UI, and explicitly
 confirmed local deletion are complete at their current layers. Continue in this order:
 
-1. Move production-scale sanitization off the Electron main event loop before
-   real mailbox ingestion.
-2. Keep pending disconnect visible but inactive until a real idempotent Google
+1. Keep pending disconnect visible but inactive until a real idempotent Google
    revocation adapter can be composed and tested.
+2. Define and implement the explicit connect-consent boundary before OAuth.
 3. Keep real Gmail ingestion disabled until the remaining lifecycle activation
    and consent gates pass.
 
@@ -158,7 +160,7 @@ plaintext mailbox. Record the selected search tradeoff in `docs/DECISIONS.md`.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 28 test files, 185 tests, strict typecheck, structure
+- Current verified baseline: 29 test files, 188 tests, strict typecheck, structure
   checks, and production Electron build passing.
 
 Native verification migrated the development database to schema v3 with 21

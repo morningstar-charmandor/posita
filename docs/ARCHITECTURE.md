@@ -158,8 +158,10 @@ topic and its dependent brief items rather than retaining an uncited summary.
 Unreferenced people are removed; mailbox accounts remain. The encrypted repository
 prepares and validates the replacement before a transaction, replaces source and
 derived records together, records sanitization pending, then compacts and marks the
-cache ready. The service is composed in main but has no timer, IPC, or UI trigger;
-future scheduling must run it away from renderer and main event loops.
+cache ready. The service is composed in main but has no timer, IPC, or UI trigger.
+Its file-backed checkpoint and `VACUUM` phase runs through the shared sanitizer
+worker; future scheduling must also keep dataset loading, planning, and encryption
+away from renderer and main event loops.
 
 ### Account-removal projection
 
@@ -258,9 +260,11 @@ provider account, credential, message, or remote action. Pending disconnects are
 counted but not resumed because production has no Google
 revocation adapter. Their presence requires the existing key and suppresses
 fixture seeding, so startup cannot undo a completed local-mail phase. Recovery
-uses synchronous SQLite only for the current bounded
-fixture prototype; production-sized compaction must move to a worker or utility
-process before real mailbox ingestion.
+uses the same async sanitization contract as active lifecycle work. File-backed
+databases use one single-flight Node worker with a separate SQLite connection;
+only bounded in-memory tests and the legacy migration adapter sanitize inline.
+The phase remains atomic, so shutdown cancellation is observed between lifecycle
+phases rather than interrupting `VACUUM` midway.
 
 ## Gmail synchronization
 

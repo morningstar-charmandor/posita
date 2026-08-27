@@ -4,9 +4,9 @@ import { SqliteMailRepository } from './sqliteMailRepository'
 import {
   countEncryptedRecords,
   insertEncryptedRecords,
-  prepareEncryptedDataset,
-  sanitizeSqliteStorage
+  prepareEncryptedDataset
 } from './encryptedSqliteMailRepository'
+import { sanitizeSqliteStorage } from './sqliteSanitization'
 
 interface CountRow {
   count: number

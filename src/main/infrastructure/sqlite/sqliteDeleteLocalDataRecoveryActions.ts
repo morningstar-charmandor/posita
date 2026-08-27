@@ -4,11 +4,9 @@ import type {
   DeleteLocalDataActions
 } from '../../application/deleteLocalData'
 import type { SecretVault } from '../../application/secretVault'
+import type { StorageSanitizer } from '../../application/storageSanitizer'
 import { deleteAllEncryptedAccountState } from './encryptedSqliteAccountStateRepository'
-import {
-  completeEncryptedCacheSanitization,
-  deleteAllEncryptedMailRecords
-} from './encryptedSqliteMailRepository'
+import { deleteAllEncryptedMailRecords } from './encryptedSqliteMailRepository'
 
 /**
  * Deletion-only startup adapter. It never loads, creates, decrypts, or replaces
@@ -18,7 +16,8 @@ export class SqliteDeleteLocalDataRecoveryActions implements DeleteLocalDataActi
   constructor(
     private readonly database: DatabaseSync,
     private readonly vault: SecretVault,
-    private readonly keyEraser: CacheDataKeyEraser
+    private readonly keyEraser: CacheDataKeyEraser,
+    private readonly storageSanitizer: StorageSanitizer
   ) {}
 
   async deleteRefreshCredentials(): Promise<void> {
@@ -33,8 +32,8 @@ export class SqliteDeleteLocalDataRecoveryActions implements DeleteLocalDataActi
     deleteAllEncryptedMailRecords(this.database)
   }
 
-  sanitizeStorage(): void {
-    completeEncryptedCacheSanitization(this.database)
+  sanitizeStorage(): Promise<void> {
+    return this.storageSanitizer.sanitize()
   }
 
   async eraseDataKey(): Promise<void> {

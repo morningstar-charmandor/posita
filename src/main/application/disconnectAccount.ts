@@ -8,8 +8,8 @@ import {
 } from './accountLifecycle'
 import { type AccountStateRepository, isAccountId } from './accountState'
 import type { AccountDataRemovalService } from './accountDataRemoval'
-import type { MutableMailRepository } from './mailRepository'
 import { googleRefreshTokenName, type SecretVault } from './secretVault'
+import type { StorageSanitizer } from './storageSanitizer'
 
 export interface AccountAuthorizationRevoker {
   /** Must be idempotent: an already revoked or absent grant is success. */
@@ -78,7 +78,7 @@ export class DisconnectAccountService {
     private readonly vault: SecretVault,
     private readonly accountState: AccountStateRepository,
     private readonly accountData: AccountDataRemovalService,
-    private readonly mailRepository: MutableMailRepository
+    private readonly storageSanitizer: StorageSanitizer
   ) {}
 
   disconnect(request: DisconnectAccountRequestV1): Promise<DisconnectAccountResultV1> {
@@ -185,7 +185,7 @@ export class DisconnectAccountService {
         await this.vault.delete(googleRefreshTokenName(accountId)); return
       case 'account-state-delete-pending': this.accountState.deleteAccountState(accountId); return
       case 'mail-data-delete-pending': this.accountData.run(accountId); return
-      case 'compaction-pending': this.mailRepository.sanitizeStorage(); return
+      case 'compaction-pending': await this.storageSanitizer.sanitize(); return
     }
   }
 

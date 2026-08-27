@@ -173,7 +173,13 @@ const createHarness = (failure?: FailureStep) => {
   const keyEraser = new FakeKeyEraser(actions, failure)
   const service = new DeleteLocalDataService(
     lifecycle,
-    new ComposedDeleteLocalDataActions(vault, accountState, mail, keyEraser),
+    new ComposedDeleteLocalDataActions(
+      vault,
+      accountState,
+      mail,
+      keyEraser,
+      { sanitize: async () => mail.sanitizeStorage() }
+    ),
     confirmation
   )
   return { actions, accountState, confirmation, keyEraser, lifecycle, mail, service, vault }
@@ -301,7 +307,8 @@ describe('DeleteLocalDataService', () => {
         new FakeVault(harness.actions),
         new FakeAccountState(harness.actions),
         harness.mail,
-        { delete: () => pending }
+        { delete: () => pending },
+        { sanitize: async () => harness.mail.sanitizeStorage() }
       ),
       harness.confirmation
     )

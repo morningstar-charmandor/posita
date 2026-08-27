@@ -25,9 +25,10 @@ and scrubs the legacy plaintext rows. Gmail remains disconnected.
 
 Electron 43.4 embeds Node 24.18 and SQLite 3.53. Gate 2A uses the built-in
 `node:sqlite` `DatabaseSync` API in the main process. This avoids a native npm
-add-on and Electron ABI rebuilds. The synchronous API is acceptable for the
-small bounded prototype snapshot; real sync and heavy indexing must move to a
-worker or utility process before Gate 2 handles production-sized mailboxes.
+add-on and Electron ABI rebuilds. The synchronous API remains acceptable for small
+bounded snapshot reads and writes. File-backed WAL checkpointing and `VACUUM` now
+run through a dedicated single-flight worker-thread adapter. Real sync, broad
+decrypt/scan, and heavy indexing must likewise run outside Electron's main event loop.
 
 Database construction uses defensive mode, a bounded busy timeout, foreign-key
 enforcement, and extension loading disabled. File-backed databases use WAL;
@@ -117,10 +118,11 @@ Retention replacements validate and encrypt the complete next dataset before
 opening a write transaction. Source messages, derived topics, brief items, and
 unreferenced people are replaced atomically. The transaction records
 `sanitization-pending`. Logical replacement and sanitization are separate
-repository methods: retention invokes both in one application operation, while
-disconnect journals `compaction-pending` between them. Compaction and WAL
+application capabilities: retention invokes both in one application operation,
+while disconnect journals `compaction-pending` between them. File-backed compaction and WAL
 truncation complete before state returns to `ready`, and startup recovery handles
-an interruption.
+an interruption through the same async single-flight worker adapter. The inline
+adapter is retained only for bounded in-memory tests and legacy migration.
 
 Account-data removal reuses the same replacement boundary. The application layer
 computes retained accounts, source messages, untouched derived topics/briefs, and

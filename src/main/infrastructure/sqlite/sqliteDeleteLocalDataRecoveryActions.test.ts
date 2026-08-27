@@ -4,6 +4,7 @@ import type { SecretName, SecretVault } from '../../application/secretVault'
 import { openPositaDatabase } from './database'
 import { applyMigrations } from './migrations'
 import { SqliteDeleteLocalDataRecoveryActions } from './sqliteDeleteLocalDataRecoveryActions'
+import { InlineSqliteStorageSanitizer } from './sqliteSanitization'
 
 class MemoryVault implements SecretVault {
   readonly values = new Map<SecretName, string>()
@@ -50,17 +51,22 @@ describe('SqliteDeleteLocalDataRecoveryActions', () => {
     vault.values.set('oauth.google.work.refresh-token', 'refresh')
     vault.values.set('cache.installation.data-key-v1', 'key')
     let keyDeleteCalls = 0
-    const actions = new SqliteDeleteLocalDataRecoveryActions(database, vault, {
-      delete: async () => {
-        keyDeleteCalls += 1
-        return vault.delete('cache.installation.data-key-v1')
-      }
-    })
+    const actions = new SqliteDeleteLocalDataRecoveryActions(
+      database,
+      vault,
+      {
+        delete: async () => {
+          keyDeleteCalls += 1
+          return vault.delete('cache.installation.data-key-v1')
+        }
+      },
+      new InlineSqliteStorageSanitizer(database)
+    )
 
     await actions.deleteRefreshCredentials()
     actions.deleteAccountState()
     actions.deleteMailRecords()
-    actions.sanitizeStorage()
+    await actions.sanitizeStorage()
     await actions.eraseDataKey()
 
     expect(database.prepare('SELECT COUNT(*) AS count FROM encrypted_account_records').get())

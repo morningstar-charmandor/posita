@@ -10,6 +10,7 @@ import type { AccountStateRepository } from './accountState'
 import type { LocalActionConfirmationVerifier } from './localActionConfirmation'
 import type { MutableMailRepository } from './mailRepository'
 import type { SecretVault } from './secretVault'
+import type { StorageSanitizer } from './storageSanitizer'
 
 export interface CacheDataKeyEraser {
   delete(): Promise<boolean>
@@ -19,7 +20,7 @@ export interface DeleteLocalDataActions {
   deleteRefreshCredentials(): Promise<void>
   deleteAccountState(): void
   deleteMailRecords(): void
-  sanitizeStorage(): void
+  sanitizeStorage(): Promise<void>
   eraseDataKey(): Promise<void>
 }
 
@@ -28,7 +29,8 @@ export class ComposedDeleteLocalDataActions implements DeleteLocalDataActions {
     private readonly vault: SecretVault,
     private readonly accountState: AccountStateRepository,
     private readonly mailRepository: MutableMailRepository,
-    private readonly keyEraser: CacheDataKeyEraser
+    private readonly keyEraser: CacheDataKeyEraser,
+    private readonly storageSanitizer: StorageSanitizer
   ) {}
 
   async deleteRefreshCredentials(): Promise<void> {
@@ -43,8 +45,8 @@ export class ComposedDeleteLocalDataActions implements DeleteLocalDataActions {
     this.mailRepository.deleteAllRecords()
   }
 
-  sanitizeStorage(): void {
-    this.mailRepository.sanitizeStorage()
+  sanitizeStorage(): Promise<void> {
+    return this.storageSanitizer.sanitize()
   }
 
   async eraseDataKey(): Promise<void> {
@@ -314,7 +316,7 @@ export class DeleteLocalDataService {
       }
       case 'account-state-delete-pending': this.actions.deleteAccountState(); return
       case 'mail-data-delete-pending': this.actions.deleteMailRecords(); return
-      case 'compaction-pending': this.actions.sanitizeStorage(); return
+      case 'compaction-pending': await this.actions.sanitizeStorage(); return
       case 'data-key-delete-pending': await this.actions.eraseDataKey(); return
     }
   }

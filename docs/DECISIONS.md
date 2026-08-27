@@ -225,8 +225,8 @@
   pending lifecycle entries fail closed. Pending disconnect is reported but not
   resumed until a real idempotent revocation adapter exists, and startup cannot
   undo its local deletion phase. Current bounded fixture recovery runs during
-  startup; production-scale compaction must move off the Electron main event loop
-  before real mailbox volume.
+  startup. ADR-022 now moves file-backed compaction off the Electron main event
+  loop before real mailbox volume.
 
 ## ADR-018: Expose one read-only application-state query
 
@@ -262,9 +262,9 @@
 - Consequence: the user can delete Posita's local data from Settings & privacy,
   while preparation remains non-destructive and interruption remains recoverable
   at startup. The entered phrase exists transiently in renderer/main memory but is
-  never logged or persisted. The current synchronous sanitization is acceptable
-  only for bounded fixture data and must move off the Electron main event loop
-  before real mailbox volume. ADR-021 defines confirmation-receipt cleanup.
+  never logged or persisted. ADR-022 now moves file-backed sanitization off the
+  Electron main event loop; the inline path remains only for bounded tests and
+  legacy migration. ADR-021 defines confirmation-receipt cleanup.
 
 ## ADR-020: Replace only an exactly recognized timestamp-free fixture cache
 
@@ -302,3 +302,24 @@
   Cleanup failures use the existing safe storage error and fail startup rather
   than silently claiming maintenance succeeded. No timer, IPC method, dependency,
   or schema migration is added.
+
+## ADR-022: Run file-backed SQLite sanitization in one worker
+
+- Status: accepted for Gate 2D
+- Context: secure deletion requires synchronous WAL checkpoints and `VACUUM`.
+  These operations are small for fixtures but can block Electron's main event
+  loop at real mailbox volume. Retention, migration, disconnect, active deletion,
+  and startup recovery must share one behavior and safe failure contract.
+- Decision: define one async `StorageSanitizer` application capability. File-backed
+  startup composes a single-flight Node worker-thread adapter with a bounded,
+  versioned request/result protocol and a separate SQLite connection. The worker
+  returns only allow-listed outcomes; raw paths and errors never cross renderer
+  IPC or enter logs. Keep the synchronous adapter only for bounded `:memory:`
+  tests and the existing legacy migration transaction. Treat sanitization as one
+  atomic phase and observe lifecycle cancellation between phases.
+- Consequence: production file compaction no longer blocks the Electron main event
+  loop, and all lifecycle use cases depend on one injectable contract. Concurrent
+  calls on one adapter share a promise. Worker failure becomes the stable
+  `STORAGE_SANITIZATION_FAILED` application error and leaves journal/cache state
+  retryable. This adds one packaged main entry, no dependency, schema, IPC, UI,
+  provider, or compatibility path.

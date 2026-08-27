@@ -12,6 +12,8 @@ exists deeper in the tree.
 - A non-sensitive lifecycle journal and confirmed full local-deletion execution are implemented.
 - Deterministic 90-day retention and exact legacy-fixture compatibility are implemented
   but maintenance is not scheduled automatically.
+- File-backed SQLite sanitization runs in a single-flight worker thread; the
+  synchronous adapter remains only for bounded in-memory tests and legacy migration.
 - Account-data removal projection is implemented and used by the inactive disconnect orchestrator.
 - Disconnect orchestration is implemented against interfaces/fakes but has no live revoker or UI trigger.
 - Full local-data deletion is composed at startup and available through a narrow

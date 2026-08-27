@@ -147,7 +147,7 @@ const createHarness = (failure?: FailureStep) => {
     new FakeVault(actions, failure),
     new FakeAccountState(actions, failure),
     new AccountDataRemovalService(mailRepository),
-    mailRepository
+    { sanitize: async () => mailRepository.sanitizeStorage() }
   )
   return { actions, lifecycle, mailRepository, service }
 }
@@ -250,7 +250,7 @@ describe('DisconnectAccountService', () => {
       new FakeVault(harness.actions),
       new FakeAccountState(harness.actions),
       new AccountDataRemovalService(harness.mailRepository),
-      harness.mailRepository
+      { sanitize: async () => harness.mailRepository.sanitizeStorage() }
     )
 
     const first = waitingService.disconnect(request)

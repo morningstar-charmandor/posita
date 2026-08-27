@@ -108,7 +108,10 @@ cursors, source mail, and derived content remain encrypted.
 Gate 2D retention prepares a complete validated set of new encrypted envelopes
 before mutation. One transaction replaces expired source and dependent derived
 records and marks sanitization pending. The existing recovery path compacts SQLite,
-truncates WAL, and marks the cache ready. A failed validation or encryption before
+truncates WAL, and marks the cache ready. File-backed sanitization is executed by
+one single-flight worker-thread adapter through a bounded versioned protocol; the
+inline adapter exists only for in-memory tests and legacy migration. A failed
+validation or encryption before
 the transaction leaves the previous cache unchanged. Maintenance is not scheduled
 or exposed over IPC yet.
 
@@ -162,6 +165,12 @@ account state, deletes all mail/derived ciphertext, compacts SQLite and truncate
 WAL, then deletes `cache.installation.data-key-v1` from the OS-protected vault and
 destroys the live protector key. Repeating any action after a journal-write crash
 is safe, and key deletion is deliberately last.
+
+The sanitizer is an async application contract rather than a repository method.
+For a file database it opens a separate connection in a Node worker and maps any
+worker or protocol failure to one safe retryable error. One adapter permits only
+one active sanitization promise. The operation is intentionally not terminated
+mid-`VACUUM`; lifecycle cancellation is honored between durable phases.
 
 The recovery-only orchestrator is composed before key bootstrap. It can finish any
 full-deletion phase when the key is already absent, and a completed journal marker

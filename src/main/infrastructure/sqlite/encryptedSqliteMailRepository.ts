@@ -226,15 +226,6 @@ export class EncryptedSqliteMailRepository implements MutableMailRepository {
     }
   }
 
-  sanitizeStorage(): void {
-    completeEncryptedCacheSanitization(this.database)
-  }
-
-  deleteAll(): void {
-    this.deleteAllRecords()
-    this.sanitizeStorage()
-  }
-
   deleteAllRecords(): void {
     deleteAllEncryptedMailRecords(this.database)
   }
@@ -246,25 +237,6 @@ export class EncryptedSqliteMailRepository implements MutableMailRepository {
   close(): void {
     this.protector.destroy()
     if (this.database.isOpen) this.database.close()
-  }
-}
-
-export const sanitizeSqliteStorage = (database: DatabaseSync): void => {
-  database.exec('PRAGMA wal_checkpoint(TRUNCATE)')
-  database.exec('VACUUM')
-  database.exec('PRAGMA wal_checkpoint(TRUNCATE)')
-}
-
-export const completeEncryptedCacheSanitization = (database: DatabaseSync): void => {
-  try {
-    sanitizeSqliteStorage(database)
-    database.prepare(`
-      UPDATE encrypted_cache_state
-      SET status = 'ready', updated_at = datetime('now') WHERE id = 1
-    `).run()
-  } catch (error) {
-    if (error instanceof RepositoryError) throw error
-    throw cacheFailure('Failed to sanitize encrypted local mail storage.', error)
   }
 }
 

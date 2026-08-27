@@ -13,6 +13,7 @@ import {
   EncryptedSqliteMailRepository
 } from './encryptedSqliteMailRepository'
 import { SqliteMailRepository } from './sqliteMailRepository'
+import { InlineSqliteStorageSanitizer } from './sqliteSanitization'
 
 const testKey = Uint8Array.from({ length: 32 }, (_, index) => index * 3 + 1)
 const openDatabases: DatabaseSync[] = []
@@ -99,11 +100,12 @@ describe('EncryptedSqliteMailRepository', () => {
     )
   })
 
-  it('purges all encrypted records and remains an empty valid cache', () => {
+  it('purges all encrypted records and remains an empty valid cache', async () => {
     const { database, repository } = createInMemoryRepository()
     repository.seedIfEmpty(fixtures)
 
-    repository.deleteAll()
+    repository.deleteAllRecords()
+    await new InlineSqliteStorageSanitizer(database).sanitize()
 
     expect(countEncryptedRecords(database)).toBe(0)
     expect(repository.loadDataset()).toEqual({
@@ -111,7 +113,7 @@ describe('EncryptedSqliteMailRepository', () => {
     })
   })
 
-  it('tracks logical record deletion as pending until storage is sanitized', () => {
+  it('tracks logical record deletion as pending until storage is sanitized', async () => {
     const { database, repository } = createInMemoryRepository()
     repository.seedIfEmpty(fixtures)
 
@@ -120,12 +122,12 @@ describe('EncryptedSqliteMailRepository', () => {
     expect(countEncryptedRecords(database)).toBe(0)
     expect(database.prepare('SELECT status FROM encrypted_cache_state WHERE id = 1').get())
       .toEqual({ status: 'sanitization-pending' })
-    repository.sanitizeStorage()
+    await new InlineSqliteStorageSanitizer(database).sanitize()
     expect(database.prepare('SELECT status FROM encrypted_cache_state WHERE id = 1').get())
       .toEqual({ status: 'ready' })
   })
 
-  it('atomically replaces the encrypted dataset and tracks sanitization separately', () => {
+  it('atomically replaces the encrypted dataset and tracks sanitization separately', async () => {
     const { database, repository } = createInMemoryRepository()
     repository.seedIfEmpty(fixtures)
     const retained = structuredClone(fixtures)
@@ -140,7 +142,7 @@ describe('EncryptedSqliteMailRepository', () => {
     expect(database.prepare('SELECT status FROM encrypted_cache_state WHERE id = 1').get())
       .toEqual({ status: 'sanitization-pending' })
 
-    repository.sanitizeStorage()
+    await new InlineSqliteStorageSanitizer(database).sanitize()
     expect(database.prepare('SELECT status FROM encrypted_cache_state WHERE id = 1').get())
       .toEqual({ status: 'ready' })
   })
@@ -250,7 +252,8 @@ describe('legacy plaintext cache migration', () => {
     `).get() as unknown as { payload: Uint8Array }
     const deletedCiphertext = Buffer.from(stored.payload)
 
-    repository.deleteAll()
+    repository.deleteAllRecords()
+    await new InlineSqliteStorageSanitizer(database).sanitize()
     repository.close()
     const index = openDatabases.indexOf(database)
     if (index >= 0) openDatabases.splice(index, 1)

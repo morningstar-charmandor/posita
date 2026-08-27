@@ -3,6 +3,7 @@ import type { MailDataset } from '../../shared/domain'
 import { isAbsoluteTimestamp } from '../../shared/validation'
 import type { MutableMailRepository } from './mailRepository'
 import { retainReferencedPeople } from './mailDatasetProjection'
+import type { StorageSanitizer } from './storageSanitizer'
 
 export const PRIVATE_ALPHA_RETENTION_DAYS = 90
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -152,25 +153,30 @@ export const applyRetentionPolicy = (
 }
 
 export class RetentionMaintenanceService {
-  constructor(private readonly repository: MutableMailRepository) {}
+  constructor(
+    private readonly repository: MutableMailRepository,
+    private readonly storageSanitizer: StorageSanitizer
+  ) {}
 
-  ensureFixtureCompatibility(currentFixtures: MailDataset): FixtureRetentionCompatibilityResult {
+  async ensureFixtureCompatibility(
+    currentFixtures: MailDataset
+  ): Promise<FixtureRetentionCompatibilityResult> {
     const planned = planFixtureRetentionCompatibility(
       this.repository.loadDataset(),
       currentFixtures
     )
     if (planned.result.changed) {
       this.repository.replaceDataset(planned.dataset)
-      this.repository.sanitizeStorage()
+      await this.storageSanitizer.sanitize()
     }
     return planned.result
   }
 
-  run(now: Date): RetentionResult {
+  async run(now: Date): Promise<RetentionResult> {
     const planned = applyRetentionPolicy(this.repository.loadDataset(), now)
     if (planned.result.changed) {
       this.repository.replaceDataset(planned.dataset)
-      this.repository.sanitizeStorage()
+      await this.storageSanitizer.sanitize()
     }
     return planned.result
   }
