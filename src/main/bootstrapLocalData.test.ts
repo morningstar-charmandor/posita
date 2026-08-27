@@ -3,11 +3,15 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { DatabaseSync } from 'node:sqlite'
 import { afterEach, describe, expect, it } from 'vitest'
+import { DELETE_LOCAL_DATA_CONFIRMATION_TEXT } from '../shared/contracts'
 import {
   bootstrapLocalDataWithDependencies,
   type LocalDataBootstrapDependencies
 } from './bootstrapLocalData'
 import { CACHE_DATA_KEY_NAME } from './application/secretVault'
+import { AccountLifecycleStatusService } from './application/accountLifecycleStatus'
+import { ApplicationStateService } from './application/applicationStateService'
+import { LocalDataDeletionCommandService } from './application/localDataDeletionCommand'
 import { DeterministicFakeStringProtector } from './infrastructure/security/deterministicFakeStringProtector'
 import { openPositaDatabase } from './infrastructure/sqlite/database'
 import { countEncryptedRecords } from './infrastructure/sqlite/encryptedSqliteMailRepository'
@@ -53,6 +57,55 @@ afterEach(async () => {
 })
 
 describe('bootstrapLocalData lifecycle recovery', () => {
+  it('executes confirmed active deletion and remains deleted after restart', async () => {
+    const databasePath = await createDatabasePath()
+    let generated = 0
+    const runtime = await bootstrapLocalDataWithDependencies(databasePath, {
+      ...dependencies(),
+      confirmationIdSource: () => generated++ === 0 ? 'confirm-delete-1' : 'delete-local-1'
+    })
+    if (runtime.mode !== 'ready') throw new Error('Expected ready runtime.')
+    const applicationState = new ApplicationStateService(
+      'ready',
+      runtime.service,
+      new AccountLifecycleStatusService(runtime.accountLifecycleRepository)
+    )
+    const command = new LocalDataDeletionCommandService(
+      runtime.confirmationService,
+      runtime.deleteLocalDataService,
+      applicationState
+    )
+    const prepared = command.prepare({ version: 1, action: 'delete-local-data' })
+    if (!prepared.ok) throw new Error(prepared.error.message)
+
+    await expect(command.execute({
+      version: 1,
+      confirmationId: prepared.value.confirmationId,
+      operationId: prepared.value.operationId,
+      action: prepared.value.action,
+      enteredText: DELETE_LOCAL_DATA_CONFIRMATION_TEXT
+    })).resolves.toMatchObject({
+      ok: true,
+      value: { status: 'local-data-deleted' }
+    })
+    expect(applicationState.load()).toEqual({
+      ok: true,
+      value: { version: 1, mode: 'local-data-deleted' }
+    })
+    runtime.repository.close()
+
+    const deleted = inspect(databasePath)
+    expect(countEncryptedRecords(deleted.database)).toBe(0)
+    expect(deleted.database.prepare('SELECT COUNT(*) AS count FROM encrypted_account_records').get())
+      .toEqual({ count: 0 })
+    expect(await deleted.vault.get(CACHE_DATA_KEY_NAME)).toBeUndefined()
+    deleted.database.close()
+
+    const restarted = await bootstrapLocalDataWithDependencies(databasePath, dependencies())
+    expect(restarted.mode).toBe('local-data-deleted')
+    restarted.repository.close()
+  })
+
   it('recovers full deletion without a key and never reseeds on later restarts', async () => {
     const databasePath = await createDatabasePath()
     const initial = await bootstrapLocalDataWithDependencies(databasePath, dependencies())

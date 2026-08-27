@@ -4,9 +4,15 @@ import { fixtures } from '../../shared/fixtures'
 import { AccountLifecycleStatusService } from '../application/accountLifecycleStatus'
 import type { AccountLifecycleRepository } from '../application/accountLifecycle'
 import { ApplicationStateService } from '../application/applicationStateService'
+import { LocalDataDeletionCommandService } from '../application/localDataDeletionCommand'
 import { MailApplicationService } from '../application/mailApplicationService'
 import type { MailRepository } from '../application/mailRepository'
-import { createLoadApplicationStateHandler } from './applicationIpc'
+import {
+  createExecuteLocalDataDeletionHandler,
+  createLoadApplicationStateHandler,
+  createPrepareLocalDataDeletionHandler,
+  LocalDataDeletionIpcAuthorization
+} from './applicationIpc'
 
 const event = {} as IpcMainInvokeEvent
 const repository: MailRepository = {
@@ -72,5 +78,78 @@ describe('load application-state IPC handler', () => {
         lifecycle: { version: 1, state: 'idle', operations: [] }
       }
     })
+  })
+})
+
+describe('local-data deletion IPC handlers', () => {
+  it('rejects untrusted preparation before the command service is called', () => {
+    const command = new LocalDataDeletionCommandService()
+    const prepare = createPrepareLocalDataDeletionHandler(
+      command,
+      () => false,
+      new LocalDataDeletionIpcAuthorization()
+    )
+
+    expect(prepare(event, { version: 1, action: 'delete-local-data' })).toMatchObject({
+      ok: false,
+      error: { code: 'UNTRUSTED_SENDER', retryable: false }
+    })
+  })
+
+  it('returns unavailable rather than widening the capability outside ready mode', () => {
+    const command = new LocalDataDeletionCommandService()
+    const prepare = createPrepareLocalDataDeletionHandler(
+      command,
+      () => true,
+      new LocalDataDeletionIpcAuthorization()
+    )
+
+    expect(prepare(event, { version: 1, action: 'delete-local-data' })).toMatchObject({
+      ok: false,
+      error: { code: 'DELETION_UNAVAILABLE', retryable: false }
+    })
+  })
+
+  it('rejects an untrusted execute request without inspecting confirmation text', async () => {
+    const command = new LocalDataDeletionCommandService()
+    const execute = createExecuteLocalDataDeletionHandler(
+      command,
+      () => false,
+      new LocalDataDeletionIpcAuthorization()
+    )
+
+    await expect(execute(event, {
+      version: 1,
+      confirmationId: 'confirm-delete-1',
+      operationId: 'delete-local-1',
+      action: 'delete-local-data',
+      enteredText: 'anything'
+    })).resolves.toMatchObject({
+      ok: false,
+      error: { code: 'UNTRUSTED_SENDER', retryable: false }
+    })
+  })
+
+  it('binds a prepared challenge to the window that received it', () => {
+    const authorization = new LocalDataDeletionIpcAuthorization(
+      () => Date.parse('2026-08-24T12:00:00.000Z')
+    )
+    const firstWindow = { sender: { id: 1 } } as IpcMainInvokeEvent
+    const secondWindow = { sender: { id: 2 } } as IpcMainInvokeEvent
+    const request = {
+      version: 1 as const,
+      confirmationId: 'confirm-delete-1',
+      operationId: 'delete-local-1',
+      action: 'delete-local-data' as const,
+      enteredText: 'DELETE LOCAL DATA'
+    }
+    authorization.record(firstWindow, {
+      confirmationId: request.confirmationId,
+      operationId: request.operationId,
+      expiresAt: '2026-08-24T12:05:00.000Z'
+    })
+
+    expect(authorization.authorize(secondWindow, request)).toBe(false)
+    expect(authorization.authorize(firstWindow, request)).toBe(true)
   })
 })

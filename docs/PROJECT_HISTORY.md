@@ -595,6 +595,52 @@ resumed, the recovery-required screen relies on app restart rather than an IPC
 retry command, and full local deletion has no production initiation path. OAuth,
 Gmail, AI, sending, and every remote mailbox mutation remain disconnected.
 
+## Gate 2D foundation — Confirmed local-deletion capability
+
+Date: 2026-08-24
+Checkpoint: use the Git commit whose subject is `feat: activate confirmed local deletion`
+
+Goal: let the user delete Posita's local data without weakening the existing
+authorization, encryption, recovery, or renderer trust boundaries.
+
+Delivered:
+
+- fixed versioned prepare and execute methods for one local-deletion capability,
+- exact runtime validation in preload and main with stable allow-listed errors,
+- read-only lifecycle-conflict preflight before any challenge is created,
+- five-minute challenge delivery bound to the trusted window that prepared it,
+- exact `DELETE LOCAL DATA` entry before the non-private receipt is persisted,
+- ready-mode composition of credential deletion, account-state removal, cache
+  deletion, SQLite sanitization, protected-key erasure, and live-key destruction,
+- immediate transition to the durable local-data-deleted UI after completion,
+- an accessible Settings & privacy dialog covering overview, preparation,
+  confirmation, progress, error, retry, cancel, and completed states,
+- ADR-019 plus updated privacy, cache, architecture, handoff, and case-study records.
+
+Important decisions:
+
+- keep preparation non-destructive and separate from execution,
+- keep the read-only application-state query free of mutation behavior,
+- bind the challenge to its originating trusted window as defense in depth,
+- preflight durable conflicts before recording confirmation to avoid accumulating
+  authorized operations that cannot start,
+- permit a previously authorized journal operation to retry after confirmation
+  expiry while refusing to create new work from an expired challenge,
+- expose no account, message, provider, credential, SQL, or filesystem target.
+
+Evidence: 28 test files and 174 tests passed before final checkpoint verification.
+Coverage includes exact contract validation, malformed preload responses, trusted-
+window binding, unavailable-state refusal, conflict preflight, no-work preparation,
+text mismatch refusal, ordered active deletion, safe phase failure, post-expiry
+authorized retry, real encrypted bootstrap deletion, key erasure, repeated-restart
+deleted mode, UI disabled states, explicit consequence copy, errors, and retry.
+
+Limitations: current mail is deterministic fixture data and no real OAuth credential
+exists. SQLite sanitization is synchronous for the bounded prototype and must move
+off the main event loop before real mailbox volume. Confirmation-receipt cleanup,
+live disconnect, Gmail, AI, sending, packaging, and external-user evidence remain
+deferred.
+
 ## How future entries should be written
 
 For each material milestone, record:

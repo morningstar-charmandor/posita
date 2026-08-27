@@ -1,11 +1,19 @@
 import { describe, expect, it } from 'vitest'
 import { fixtures } from './fixtures'
 import {
+  DELETE_LOCAL_DATA_CONFIRMATION_TEXT,
+  LOCAL_DATA_DELETION_CONSEQUENCES
+} from './contracts'
+import {
   isAppSnapshot,
+  isExecuteLocalDataDeletionRequest,
+  isExecuteLocalDataDeletionResponse,
   isLoadApplicationStateRequest,
   isLoadApplicationStateResponse,
   isLoadSnapshotResponse,
-  isMailDataset
+  isMailDataset,
+  isPrepareLocalDataDeletionRequest,
+  isPrepareLocalDataDeletionResponse
 } from './validation'
 
 describe('shared contract validation', () => {
@@ -109,5 +117,57 @@ describe('shared contract validation', () => {
     invalid.messages[0]!.receivedAtIso = 'Today · 10:42 AM'
 
     expect(isMailDataset(invalid)).toBe(false)
+  })
+
+  it('validates exact local-data deletion requests and bounded responses', () => {
+    expect(isPrepareLocalDataDeletionRequest({ version: 1, action: 'delete-local-data' }))
+      .toBe(true)
+    expect(isPrepareLocalDataDeletionRequest({
+      version: 1,
+      action: 'delete-local-data',
+      startImmediately: true
+    })).toBe(false)
+
+    const request = {
+      version: 1,
+      confirmationId: 'confirm-delete-1',
+      operationId: 'delete-local-1',
+      action: 'delete-local-data',
+      enteredText: DELETE_LOCAL_DATA_CONFIRMATION_TEXT
+    }
+    expect(isExecuteLocalDataDeletionRequest(request)).toBe(true)
+    expect(isExecuteLocalDataDeletionRequest({ ...request, operationId: request.confirmationId }))
+      .toBe(false)
+    expect(isExecuteLocalDataDeletionRequest({ ...request, enteredText: 'x'.repeat(65) }))
+      .toBe(false)
+
+    expect(isPrepareLocalDataDeletionResponse({
+      ok: true,
+      value: {
+        version: 1,
+        confirmationId: request.confirmationId,
+        operationId: request.operationId,
+        action: request.action,
+        requiredText: DELETE_LOCAL_DATA_CONFIRMATION_TEXT,
+        expiresAt: '2026-08-24T12:05:00.000Z',
+        consequences: LOCAL_DATA_DELETION_CONSEQUENCES
+      }
+    })).toBe(true)
+    expect(isExecuteLocalDataDeletionResponse({
+      ok: true,
+      value: { version: 1, operationId: request.operationId, status: 'local-data-deleted' }
+    })).toBe(true)
+    expect(isPrepareLocalDataDeletionResponse({
+      ok: true,
+      value: {
+        version: 1,
+        confirmationId: request.confirmationId,
+        operationId: request.operationId,
+        action: request.action,
+        requiredText: DELETE_LOCAL_DATA_CONFIRMATION_TEXT,
+        expiresAt: '2026-08-24T12:05:00.000Z',
+        consequences: ['Deletes Gmail mail.', ...LOCAL_DATA_DELETION_CONSEQUENCES.slice(1)]
+      }
+    })).toBe(false)
   })
 })

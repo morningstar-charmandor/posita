@@ -243,3 +243,26 @@
   can fail closed with an explicit recovery-required screen, and completed local
   deletion no longer appears as a generic database error. A future confirmed
   deletion command remains a separate capability with separate authorization.
+
+## ADR-019: Activate full local deletion through separate prepare and execute capabilities
+
+- Status: accepted for Gate 2D
+- Context: Full local deletion is restart-safe and already requires an
+  operation-bound receipt, but exposing one generic mutation method or combining
+  deletion with the read-only state query would weaken reviewability and make it
+  easier for presentation code to create destructive work accidentally.
+- Decision: expose two fixed versioned methods for one capability. `prepare` runs
+  a read-only lifecycle-conflict preflight and returns bounded consequence copy,
+  opaque IDs, exact required text, and expiry; it creates no receipt or journal.
+  `execute` is accepted only from the trusted main frame and the same window that
+  received the challenge. Main records exact confirmation, then calls the existing
+  idempotent orchestrator using the active composition that destroys the live
+  protector after key erasure. Stable allow-listed errors cross IPC; raw errors,
+  paths, credentials, database details, and provider targets do not.
+- Consequence: the user can delete Posita's local data from Settings & privacy,
+  while preparation remains non-destructive and interruption remains recoverable
+  at startup. The entered phrase exists transiently in renderer/main memory but is
+  never logged or persisted. The current synchronous sanitization is acceptable
+  only for bounded fixture data and must move off the Electron main event loop
+  before real mailbox volume. Confirmation-receipt cleanup remains a separate
+  retention decision.

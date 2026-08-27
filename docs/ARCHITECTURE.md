@@ -234,9 +234,14 @@ owner aborts between phases; completed phase actions remain journaled.
 
 One read-only application-state query now composes the mail snapshot and safe
 lifecycle projection in main, validates the union in preload, and renders explicit
-pending, retry-required, recovery-required, and local-data-deleted states. It has
-no mutation capability. Pending disconnects are counted but not resumed because
-production has no Google
+pending, retry-required, recovery-required, and local-data-deleted states. ADR-019
+adds a separate local-deletion capability with fixed prepare and execute channels.
+Preparation performs a lifecycle-conflict preflight but creates no journal or
+receipt. Execution requires the exact operation-bound phrase from the same trusted
+window, then uses the active deletion composition so the live protector is
+destroyed before the UI transitions to deleted mode. No request can select a
+provider account, credential, message, or remote action. Pending disconnects are
+counted but not resumed because production has no Google
 revocation adapter. Their presence requires the existing key and suppresses
 fixture seeding, so startup cannot undo a completed local-mail phase. Recovery
 uses synchronous SQLite only for the current bounded

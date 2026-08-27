@@ -95,8 +95,11 @@ Every phase is retryable and journaled after success; durable pending work preve
 overlap with account disconnect. Startup now resumes this workflow before key
 bootstrap using deletion-only operations. A completed marker prevents later key
 recreation and fixture reseeding. This remains non-user-triggerable: user-facing
-confirmation and every lifecycle mutation command remain deferred. Read-only
-pending, retry-required, recovery-required, and deleted states are now visible.
+account disconnect and every remote mutation remain deferred. Full local deletion
+is user-triggerable through Settings & privacy. Preparing it creates only a bounded
+in-memory challenge; exact confirmation is bound to one operation and the trusted
+window that received it. Pending, retry-required, recovery-required, and deleted
+states are visible.
 
 ADR-016 now implements the pre-command confirmation boundary. A challenge expires
 after five minutes, requires the exact text `DELETE LOCAL DATA`, is bound to one
@@ -105,7 +108,8 @@ database receipt contains opaque IDs, action type, and timestamps; it does not
 contain the entered text, account identity, mail, credentials, or arbitrary copy.
 An existing journal operation can be resumed after confirmation expiry, but the
 recovery entry point cannot create new destructive work. Safe status projection is
-available only through the validated read-only application-state query.
+available only through the validated read-only application-state query. The typed
+phrase crosses the narrow execute boundary but is not logged or persisted.
 
 Recovery never decrypts content and succeeds even when the protected data key is
 already absent. Cancellation leaves the current journal phase available for the

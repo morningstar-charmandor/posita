@@ -3,6 +3,10 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import React from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fixtures } from '@shared/fixtures'
+import {
+  DELETE_LOCAL_DATA_CONFIRMATION_TEXT,
+  LOCAL_DATA_DELETION_CONSEQUENCES
+} from '@shared/contracts'
 import { App } from './App'
 import type { ApplicationStateDataSource } from './application/mailDataSource'
 
@@ -188,5 +192,80 @@ describe('Posita vertical slice', () => {
     const alert = await screen.findByRole('alert', { name: 'Local data activity' })
     expect(alert).toHaveTextContent('Local data needs attention')
     expect(alert).not.toContainElement(screen.queryByRole('button', { name: /retry/i }))
+  })
+
+  it('requires exact typed confirmation before deleting local Posita data', async () => {
+    const prepare = vi.fn().mockResolvedValue({
+      ok: true,
+      value: {
+        version: 1,
+        confirmationId: 'confirm-delete-1',
+        operationId: 'delete-local-1',
+        action: 'delete-local-data',
+        requiredText: DELETE_LOCAL_DATA_CONFIRMATION_TEXT,
+        expiresAt: '2026-08-24T12:05:00.000Z',
+        consequences: LOCAL_DATA_DELETION_CONSEQUENCES
+      }
+    })
+    const execute = vi.fn().mockResolvedValue({
+      ok: true,
+      value: { version: 1, operationId: 'delete-local-1', status: 'local-data-deleted' }
+    })
+    render(<App
+      dataSource={dataSource}
+      deletionDataSource={{ prepare, execute }}
+    />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Settings & privacy' }))
+    expect(screen.getByRole('dialog', { name: 'Privacy & local data' }))
+      .toHaveTextContent('deterministic sample mail only')
+    fireEvent.click(screen.getByRole('button', { name: /Delete local data…/i }))
+
+    const input = await screen.findByLabelText(/Type DELETE LOCAL DATA to continue/i)
+    const deleteButton = screen.getByRole('button', { name: 'Delete local data' })
+    expect(prepare).toHaveBeenCalledTimes(1)
+    expect(execute).not.toHaveBeenCalled()
+    expect(deleteButton).toBeDisabled()
+    expect(screen.getByText('Does not delete or change mail in Gmail.')).toBeInTheDocument()
+
+    fireEvent.change(input, { target: { value: 'delete local data' } })
+    expect(deleteButton).toBeDisabled()
+    fireEvent.change(input, { target: { value: DELETE_LOCAL_DATA_CONFIRMATION_TEXT } })
+    expect(deleteButton).toBeEnabled()
+    fireEvent.click(deleteButton)
+
+    expect(await screen.findByRole('heading', { name: 'Local data has been deleted' }))
+      .toBeInTheDocument()
+    expect(execute).toHaveBeenCalledExactlyOnceWith({
+      version: 1,
+      confirmationId: 'confirm-delete-1',
+      operationId: 'delete-local-1',
+      action: 'delete-local-data',
+      enteredText: DELETE_LOCAL_DATA_CONFIRMATION_TEXT
+    })
+  })
+
+  it('keeps deletion errors inside the confirmation surface with explicit retry', async () => {
+    const prepare = vi.fn().mockResolvedValue({
+      ok: false,
+      error: {
+        version: 1,
+        code: 'STORAGE_UNAVAILABLE',
+        message: 'Posita could not prepare deletion safely.',
+        retryable: true
+      }
+    })
+    render(<App
+      dataSource={dataSource}
+      deletionDataSource={{ prepare, execute: vi.fn() }}
+    />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Settings & privacy' }))
+    fireEvent.click(screen.getByRole('button', { name: /Delete local data…/i }))
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Posita could not prepare deletion safely.')
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
+    await waitFor(() => expect(prepare).toHaveBeenCalledTimes(2))
   })
 })

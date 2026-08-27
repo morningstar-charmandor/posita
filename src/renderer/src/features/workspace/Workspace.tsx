@@ -2,10 +2,12 @@ import { createContext, useContext, useMemo, useState } from 'react'
 import {
   Archive, ArrowLeft, ArrowUp, Bell, Check, ChevronDown, ChevronRight, CircleHelp,
   Clock3, FileText, Inbox, LayoutGrid, Mail, MessageCircleMore, MoreHorizontal,
-  Paperclip, PenLine, Search, Send, Sparkles, Users, X
+  Paperclip, PenLine, Search, Send, Settings, Sparkles, Users, X
 } from 'lucide-react'
 import type { Account, BriefItem, MailDataset, Message, Topic } from '@shared/domain'
+import type { LocalDataDeletionDataSource } from '../../application/localDataDeletionDataSource'
 import { buildDailyBrief, createGroundedDraft, getMessage, getTopic, getTopicMessages } from '../../domain/mailService'
+import { LocalDataSettingsDialog } from '../settings/LocalDataSettingsDialog'
 
 type CenterView = { kind: 'home' } | { kind: 'topic'; topicId: string } | { kind: 'classic' }
 
@@ -28,7 +30,15 @@ function AccountPill({ accountId, compact = false }: { accountId: string; compac
   return <span className={`account-pill account-${account.tone} ${compact ? 'compact' : ''}`}><i />{compact ? account.label : account.address}</span>
 }
 
-function Sidebar({ view, onNavigate }: { view: CenterView; onNavigate: (view: CenterView) => void }): React.JSX.Element {
+function Sidebar({
+  view,
+  onNavigate,
+  onOpenSettings
+}: {
+  view: CenterView
+  onNavigate: (view: CenterView) => void
+  onOpenSettings: () => void
+}): React.JSX.Element {
   const dataset = useMailDataset()
   const isHome = view.kind === 'home'
   return (
@@ -56,6 +66,7 @@ function Sidebar({ view, onNavigate }: { view: CenterView; onNavigate: (view: Ce
       </nav>
       <div className="sidebar-footer">
         <button><CircleHelp size={17} /> Help & feedback</button>
+        <button onClick={onOpenSettings}><Settings size={17} /> Settings & privacy</button>
         <div className="profile"><span className="avatar avatar-user">MS</span><span><strong>Muhamed Shafi</strong><small>3 accounts connected</small></span><MoreHorizontal size={17} /></div>
       </div>
     </aside>
@@ -148,12 +159,19 @@ function DraftPanel({ topic, onClose }: { topic: Topic; onClose: () => void }): 
   return <div className="modal-backdrop" role="presentation" onMouseDown={(event) => event.currentTarget === event.target && onClose()}><section className="draft-panel" role="dialog" aria-modal="true" aria-labelledby="draft-title"><header><div><span className="draft-spark"><Sparkles size={17} /></span><span><strong id="draft-title">Draft reply</strong><small>Generated from 3 cited messages</small></span></div><button onClick={onClose} aria-label="Close draft"><X size={19} /></button></header><div className="draft-fields"><div><span>From</span><AccountPill accountId="work" /></div><div><span>To</span><b>Rahul Menon</b><small>&lt;rahul@northstar.io&gt;</small></div><div><span>Subject</span><b>Re: Pulse launch scope</b></div></div><textarea aria-label="Draft reply text" value={draft} onChange={(event) => setDraft(event.target.value)} /><div className="grounding-note"><Sparkles size={15} /><span><strong>Why this draft?</strong> It confirms the three agreed launch items and moves analytics to the following release.</span></div><footer><button className="discard-button" onClick={onClose}>Discard</button><span>Sending is disabled in prototype mode</span><button className="send-disabled" disabled><Send size={15} /> Review & send</button></footer></section></div>
 }
 
-function WorkspaceContent(): React.JSX.Element {
+function WorkspaceContent({
+  deletionDataSource,
+  onLocalDataDeleted
+}: {
+  deletionDataSource: LocalDataDeletionDataSource
+  onLocalDataDeleted: () => void
+}): React.JSX.Element {
   const dataset = useMailDataset()
   const [view, setView] = useState<CenterView>({ kind: 'home' })
   const [focusedMessageId, setFocusedMessageId] = useState<string | null>(null)
   const [draftTopicId, setDraftTopicId] = useState<string | null>(null)
   const [searchOpen, setSearchOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const topic = useMemo(
     () => view.kind === 'topic' ? getTopic(dataset, view.topicId) : undefined,
     [dataset, view]
@@ -168,16 +186,34 @@ function WorkspaceContent(): React.JSX.Element {
   return (
     <div className="app-shell">
       <div className="titlebar"><span className="drag-space" /><button className="global-search" onClick={() => setSearchOpen(!searchOpen)}><Search size={15} /><span>{searchOpen ? 'Try “What happened with Pulse?”' : 'Search mail or ask Posita'}</span><kbd>⌘K</kbd></button><button className="title-action" aria-label="Notifications, unread"><Bell size={17} /><i /></button><span className="ai-status"><Sparkles size={14} /> Posita <i /></span></div>
-      <div className="workspace"><Sidebar view={view} onNavigate={navigate} />{view.kind === 'home' && <HomeView onOpenTopic={(topicId) => navigate({ kind: 'topic', topicId })} onAsk={ask} />}{view.kind === 'topic' && topic && <TopicView topic={topic} onBack={() => navigate({ kind: 'home' })} onOpenMessage={setFocusedMessageId} onDraft={() => setDraftTopicId(topic.id)} onAsk={ask} />}{view.kind === 'classic' && <ClassicView onOpenMessage={setFocusedMessageId} />}<MailStream focusedMessageId={focusedMessageId} onFocus={setFocusedMessageId} onClose={() => setFocusedMessageId(null)} /></div>
+      <div className="workspace"><Sidebar view={view} onNavigate={navigate} onOpenSettings={() => setSettingsOpen(true)} />{view.kind === 'home' && <HomeView onOpenTopic={(topicId) => navigate({ kind: 'topic', topicId })} onAsk={ask} />}{view.kind === 'topic' && topic && <TopicView topic={topic} onBack={() => navigate({ kind: 'home' })} onOpenMessage={setFocusedMessageId} onDraft={() => setDraftTopicId(topic.id)} onAsk={ask} />}{view.kind === 'classic' && <ClassicView onOpenMessage={setFocusedMessageId} />}<MailStream focusedMessageId={focusedMessageId} onFocus={setFocusedMessageId} onClose={() => setFocusedMessageId(null)} /></div>
       {draftTopic && <DraftPanel topic={draftTopic} onClose={() => setDraftTopicId(null)} />}
+      {settingsOpen && (
+        <LocalDataSettingsDialog
+          dataSource={deletionDataSource}
+          onClose={() => setSettingsOpen(false)}
+          onDeleted={onLocalDataDeleted}
+        />
+      )}
     </div>
   )
 }
 
-export function Workspace({ dataset }: { dataset: MailDataset }): React.JSX.Element {
+export function Workspace({
+  dataset,
+  deletionDataSource,
+  onLocalDataDeleted
+}: {
+  dataset: MailDataset
+  deletionDataSource: LocalDataDeletionDataSource
+  onLocalDataDeleted: () => void
+}): React.JSX.Element {
   return (
     <MailDatasetContext.Provider value={dataset}>
-      <WorkspaceContent />
+      <WorkspaceContent
+        deletionDataSource={deletionDataSource}
+        onLocalDataDeleted={onLocalDataDeleted}
+      />
     </MailDatasetContext.Provider>
   )
 }

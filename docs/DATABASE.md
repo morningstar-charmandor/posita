@@ -169,8 +169,24 @@ The main process validates the calling `webContents`, main frame, request shape,
 and response. In ready mode the response composes the fixture-backed mail snapshot
 with the safe lifecycle-status projection. Deleted and recovery-required modes do
 not carry mail data. The sandboxed preload is fully bundled as one CommonJS file
-and exposes only `loadApplicationState()`; it does not expose channel names or
+and exposes `loadApplicationState()` without exposing channel names or
 `ipcRenderer`.
+
+Gate 2D adds one separately authorized local-deletion capability:
+
+```text
+prepareLocalDataDeletion({ version: 1, action: "delete-local-data" })
+  -> Result<LocalDataDeletionChallengeV1, LocalDataDeletionErrorV1>
+
+executeLocalDataDeletion({ version: 1, opaque IDs, exact enteredText })
+  -> Result<ExecuteLocalDataDeletionResultV1, LocalDataDeletionErrorV1>
+```
+
+Preparation performs a read-only lifecycle preflight and creates only an in-memory,
+five-minute challenge. Execution is bound to the trusted window that received the
+challenge and persists the non-private receipt before creating deletion work. The
+entered phrase is never persisted. Neither method can target Gmail messages or any
+provider mailbox mutation.
 
 Errors use stable codes and safe messages. Database paths, SQL, stack traces, and
 raw provider content never cross the bridge.

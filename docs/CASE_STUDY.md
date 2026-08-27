@@ -18,10 +18,10 @@ and actions.
 **Current stage:** Gate 2D account-lifecycle foundation in progress, with a real
 SQLite path, OS-protected key hierarchy, authenticated mail and provider-account
 state, plus tested crash-resumable disconnect and full local-deletion orchestrators.
-Gmail and AI are not connected, and neither workflow has a user trigger. Disconnect
-has no live revoker; full deletion has keyless startup recovery and an operation-bound
-typed-confirmation gate. A single read-only application-state boundary now renders
-safe lifecycle and deleted states without exposing a destructive command.
+Gmail and AI are not connected. Disconnect has no live revoker or user trigger;
+full deletion now has a Settings & privacy flow, keyless startup recovery, and an
+operation-bound typed-confirmation gate. A separate read-only application-state
+boundary renders lifecycle and deleted outcomes.
 
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
 
@@ -185,10 +185,12 @@ At the current Gate 2D foundation checkpoint, Posita has:
   durable deleted mode that remains empty across repeated restarts,
 - one validated read-only application-state query and accessible pending,
   retry-required, recovery-required, and local-data-deleted UI states,
+- a separately reviewed prepare/execute deletion capability with exact typed
+  confirmation, trusted-window binding, stable safe errors, and no provider target,
 - future sync ownership and account-isolation contracts without premature
   provider implementation,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 26 automated test files containing 157 passing tests,
+- 28 automated test files containing 174 passing tests,
 - passing strict TypeScript, structural security checks, and production builds.
 
 These are engineering outcomes, not evidence of customer adoption or AI quality.
@@ -196,10 +198,11 @@ No real mailbox, OAuth credential, or model provider has been used.
 
 ## What comes next
 
-The next Gate 2D slice can review a narrow confirmed-deletion IPC as a separate
-authorized capability now that the read-only status path is truthful end to end.
-Gmail OAuth and its
-deterministic sync adapter remain blocked behind the lifecycle activation gate.
+The next Gate 2D slice should settle older-fixture retention compatibility and the
+cleanup policy for non-private confirmation receipts. Production-scale sanitization
+must move off the Electron main event loop before real mailbox volume. Gmail OAuth
+and its deterministic sync adapter remain blocked behind the remaining lifecycle
+and consent gates.
 
 Later evidence should include measured sync reliability, duplicate prevention,
 citation correctness, draft usefulness, correction rate, and time to attention.

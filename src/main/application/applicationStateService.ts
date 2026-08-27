@@ -12,10 +12,14 @@ export type ApplicationRuntimeMode =
 
 export class ApplicationStateService {
   constructor(
-    private readonly mode: ApplicationRuntimeMode,
+    private mode: ApplicationRuntimeMode,
     private readonly mail?: MailApplicationService,
     private readonly lifecycle?: AccountLifecycleStatusService
   ) {}
+
+  markLocalDataDeleted(): void {
+    this.mode = 'local-data-deleted'
+  }
 
   load(): LoadApplicationStateResponseV1 {
     if (this.mode !== 'ready') {

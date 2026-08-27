@@ -57,4 +57,19 @@ describe('ApplicationStateService', () => {
       error: { code: 'DATABASE_UNAVAILABLE', retryable: true }
     })
   })
+
+  it('transitions to deleted mode without reading destroyed private data', () => {
+    const service = new ApplicationStateService(
+      'ready',
+      new MailApplicationService(mailRepository, { now: () => new Date() }),
+      new AccountLifecycleStatusService(lifecycleRepository)
+    )
+
+    service.markLocalDataDeleted()
+
+    expect(service.load()).toEqual({
+      ok: true,
+      value: { version: 1, mode: 'local-data-deleted' }
+    })
+  })
 })

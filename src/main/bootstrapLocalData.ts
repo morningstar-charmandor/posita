@@ -4,7 +4,10 @@ import { fixtures } from '../shared/fixtures'
 import type { AccountStateRepository } from './application/accountState'
 import type { AccountLifecycleRepository } from './application/accountLifecycle'
 import { AccountDataRemovalService } from './application/accountDataRemoval'
-import { DeleteLocalDataService } from './application/deleteLocalData'
+import {
+  ComposedDeleteLocalDataActions,
+  DeleteLocalDataService
+} from './application/deleteLocalData'
 import { LocalActionConfirmationService } from './application/localActionConfirmation'
 import { StartupLifecycleRecoveryOwner } from './application/startupLifecycleRecovery'
 import { RetentionMaintenanceService } from './application/retentionMaintenance'
@@ -41,6 +44,8 @@ export interface ReadyLocalDataRuntime extends LocalDataRuntimeBase {
   accountStateRepository: AccountStateRepository
   retentionService: RetentionMaintenanceService
   accountDataRemovalService: AccountDataRemovalService
+  confirmationService: LocalActionConfirmationService
+  deleteLocalDataService: DeleteLocalDataService
 }
 
 export interface DeletedLocalDataRuntime extends LocalDataRuntimeBase {
@@ -115,15 +120,28 @@ export const bootstrapLocalDataWithDependencies = async (
     repository = new EncryptedSqliteMailRepository(database, protector)
     migrateLegacyPlaintextCache(database, protector)
     if (recovery.pendingDisconnects === 0) repository.seedIfEmpty(fixtures)
+    const accountStateRepository = new EncryptedSqliteAccountStateRepository(database, protector)
+    const activeDeletion = new DeleteLocalDataService(
+      accountLifecycleRepository,
+      new ComposedDeleteLocalDataActions(
+        secretVault,
+        accountStateRepository,
+        repository,
+        keyManager
+      ),
+      confirmation
+    )
     return {
       mode: 'ready',
       repository,
       service: new MailApplicationService(repository, systemClock),
       secretVault,
-      accountStateRepository: new EncryptedSqliteAccountStateRepository(database, protector),
+      accountStateRepository,
       accountLifecycleRepository,
       retentionService: new RetentionMaintenanceService(repository),
-      accountDataRemovalService: new AccountDataRemovalService(repository)
+      accountDataRemovalService: new AccountDataRemovalService(repository),
+      confirmationService: confirmation,
+      deleteLocalDataService: activeDeletion
     }
   } catch (error) {
     if (repository) repository.close()

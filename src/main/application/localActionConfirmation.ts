@@ -1,6 +1,10 @@
 import { isOperationId } from './accountLifecycle'
+import {
+  DELETE_LOCAL_DATA_CONFIRMATION_TEXT,
+  LOCAL_DATA_DELETION_CONSEQUENCES
+} from '../../shared/contracts'
 
-export const DELETE_LOCAL_DATA_CONFIRMATION_TEXT = 'DELETE LOCAL DATA' as const
+export { DELETE_LOCAL_DATA_CONFIRMATION_TEXT } from '../../shared/contracts'
 export const LOCAL_ACTION_CONFIRMATION_TTL_MS = 5 * 60 * 1000
 export const MAX_PENDING_LOCAL_ACTION_CONFIRMATIONS = 16
 
@@ -39,7 +43,7 @@ export interface DeleteLocalDataConfirmationChallengeV1 {
   action: 'delete-local-data'
   requiredText: typeof DELETE_LOCAL_DATA_CONFIRMATION_TEXT
   expiresAt: string
-  consequences: readonly [string, string, string]
+  consequences: typeof LOCAL_DATA_DELETION_CONSEQUENCES
 }
 
 export interface ConfirmDeleteLocalDataRequestV1 {
@@ -90,12 +94,6 @@ interface PendingChallenge {
   operationId: string
   expiresAtMs: number
 }
-
-const consequences = Object.freeze([
-  'Removes Posita mailbox cache and derived data from this Mac.',
-  'Removes Google refresh credentials stored by Posita.',
-  'Does not delete or change mail in Gmail.'
-] as const)
 
 const isExactObject = (value: unknown, keys: readonly string[]): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null &&
@@ -161,7 +159,7 @@ export class LocalActionConfirmationService implements LocalActionConfirmationVe
       action: 'delete-local-data',
       requiredText: DELETE_LOCAL_DATA_CONFIRMATION_TEXT,
       expiresAt: new Date(expiresAtMs).toISOString(),
-      consequences
+      consequences: LOCAL_DATA_DELETION_CONSEQUENCES
     }
   }
 

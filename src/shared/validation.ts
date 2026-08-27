@@ -5,11 +5,23 @@ import type {
   ApplicationStateV1,
   LifecycleOperationStatusV1,
   LifecycleStatusSnapshotV1,
+  ExecuteLocalDataDeletionRequestV1,
+  ExecuteLocalDataDeletionResponseV1,
+  ExecuteLocalDataDeletionResultV1,
+  LocalDataDeletionChallengeV1,
+  LocalDataDeletionErrorCodeV1,
+  LocalDataDeletionErrorV1,
   LoadApplicationStateRequestV1,
   LoadApplicationStateResponseV1,
-  LoadSnapshotResponseV1
+  LoadSnapshotResponseV1,
+  PrepareLocalDataDeletionRequestV1,
+  PrepareLocalDataDeletionResponseV1
 } from './contracts'
-import { POSITA_PROTOCOL_VERSION } from './contracts'
+import {
+  DELETE_LOCAL_DATA_CONFIRMATION_TEXT,
+  LOCAL_DATA_DELETION_CONSEQUENCES,
+  POSITA_PROTOCOL_VERSION
+} from './contracts'
 import type {
   Account,
   BriefItem,
@@ -281,4 +293,77 @@ export const isLoadApplicationStateResponse = (
   return value.ok
     ? hasOnlyKeys(value, ['ok', 'value']) && isApplicationState(value.value)
     : hasOnlyKeys(value, ['ok', 'error']) && isAppError(value.error)
+}
+
+const operationIdPattern = /^[A-Za-z0-9_-]{1,128}$/
+const isOperationId = (value: unknown): value is string =>
+  isString(value) && operationIdPattern.test(value)
+
+export const isPrepareLocalDataDeletionRequest = (
+  value: unknown
+): value is PrepareLocalDataDeletionRequestV1 =>
+  isRecord(value) && hasOnlyKeys(value, ['version', 'action']) &&
+  value.version === POSITA_PROTOCOL_VERSION && value.action === 'delete-local-data'
+
+export const isExecuteLocalDataDeletionRequest = (
+  value: unknown
+): value is ExecuteLocalDataDeletionRequestV1 =>
+  isRecord(value) && hasOnlyKeys(value, [
+    'version', 'confirmationId', 'operationId', 'action', 'enteredText'
+  ]) && value.version === POSITA_PROTOCOL_VERSION &&
+  isOperationId(value.confirmationId) && isOperationId(value.operationId) &&
+  value.confirmationId !== value.operationId && value.action === 'delete-local-data' &&
+  isString(value.enteredText) && value.enteredText.length <= 64
+
+const isDeletionChallenge = (value: unknown): value is LocalDataDeletionChallengeV1 =>
+  isRecord(value) && hasOnlyKeys(value, [
+    'version', 'confirmationId', 'operationId', 'action', 'requiredText',
+    'expiresAt', 'consequences'
+  ]) && value.version === POSITA_PROTOCOL_VERSION &&
+  isOperationId(value.confirmationId) && isOperationId(value.operationId) &&
+  value.confirmationId !== value.operationId && value.action === 'delete-local-data' &&
+  value.requiredText === DELETE_LOCAL_DATA_CONFIRMATION_TEXT &&
+  isAbsoluteTimestamp(value.expiresAt) && Array.isArray(value.consequences) &&
+  value.consequences.length === LOCAL_DATA_DELETION_CONSEQUENCES.length &&
+  value.consequences.every((consequence, index) =>
+    consequence === LOCAL_DATA_DELETION_CONSEQUENCES[index])
+
+const deletionErrorCodes: readonly LocalDataDeletionErrorCodeV1[] = [
+  'INVALID_REQUEST', 'UNTRUSTED_SENDER', 'DELETION_UNAVAILABLE',
+  'CONFIRMATION_NOT_FOUND', 'CONFIRMATION_EXPIRED', 'CONFIRMATION_TEXT_MISMATCH',
+  'CONFIRMATION_LIMIT_REACHED', 'STORAGE_UNAVAILABLE', 'OPERATION_CONFLICT',
+  'DELETION_FAILED', 'PROTOCOL_ERROR'
+]
+
+export const isLocalDataDeletionError = (
+  value: unknown
+): value is LocalDataDeletionErrorV1 =>
+  isRecord(value) && hasOnlyKeys(value, ['version', 'code', 'message', 'retryable']) &&
+  value.version === POSITA_PROTOCOL_VERSION &&
+  isOneOf(value.code, deletionErrorCodes) &&
+  isBoundedString(value.message, 240) && isBoolean(value.retryable)
+
+const isExecuteLocalDataDeletionResult = (
+  value: unknown
+): value is ExecuteLocalDataDeletionResultV1 =>
+  isRecord(value) && hasOnlyKeys(value, ['version', 'operationId', 'status']) &&
+  value.version === POSITA_PROTOCOL_VERSION && isOperationId(value.operationId) &&
+  value.status === 'local-data-deleted'
+
+export const isPrepareLocalDataDeletionResponse = (
+  value: unknown
+): value is PrepareLocalDataDeletionResponseV1 => {
+  if (!isRecord(value) || typeof value.ok !== 'boolean') return false
+  return value.ok
+    ? hasOnlyKeys(value, ['ok', 'value']) && isDeletionChallenge(value.value)
+    : hasOnlyKeys(value, ['ok', 'error']) && isLocalDataDeletionError(value.error)
+}
+
+export const isExecuteLocalDataDeletionResponse = (
+  value: unknown
+): value is ExecuteLocalDataDeletionResponseV1 => {
+  if (!isRecord(value) || typeof value.ok !== 'boolean') return false
+  return value.ok
+    ? hasOnlyKeys(value, ['ok', 'value']) && isExecuteLocalDataDeletionResult(value.value)
+    : hasOnlyKeys(value, ['ok', 'error']) && isLocalDataDeletionError(value.error)
 }

@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import { AlertTriangle, Database, RefreshCw, ShieldCheck } from 'lucide-react'
-import type { ApplicationStateV1 } from '@shared/contracts'
+import { POSITA_PROTOCOL_VERSION, type ApplicationStateV1 } from '@shared/contracts'
 import {
   desktopApplicationStateDataSource,
   type ApplicationStateDataSource
 } from './application/mailDataSource'
+import {
+  desktopLocalDataDeletionDataSource,
+  type LocalDataDeletionDataSource
+} from './application/localDataDeletionDataSource'
 import { LifecycleNotice } from './features/lifecycle/LifecycleNotice'
 import { Workspace } from './features/workspace/Workspace'
 
@@ -15,10 +19,12 @@ type LoadState =
 
 export interface AppProps {
   dataSource?: ApplicationStateDataSource
+  deletionDataSource?: LocalDataDeletionDataSource
 }
 
 export function App({
-  dataSource = desktopApplicationStateDataSource
+  dataSource = desktopApplicationStateDataSource,
+  deletionDataSource = desktopLocalDataDeletionDataSource
 }: AppProps): React.JSX.Element {
   const [attempt, setAttempt] = useState(0)
   const [state, setState] = useState<LoadState>({ status: 'loading' })
@@ -101,7 +107,14 @@ export function App({
 
   return (
     <div className="application-ready-state">
-      <Workspace dataset={state.application.snapshot.dataset} />
+      <Workspace
+        dataset={state.application.snapshot.dataset}
+        deletionDataSource={deletionDataSource}
+        onLocalDataDeleted={() => setState({
+          status: 'loaded',
+          application: { version: POSITA_PROTOCOL_VERSION, mode: 'local-data-deleted' }
+        })}
+      />
       <LifecycleNotice
         lifecycle={state.application.lifecycle}
         accounts={state.application.snapshot.dataset.accounts}

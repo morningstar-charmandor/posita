@@ -157,12 +157,13 @@ is safe, and key deletion is deliberately last.
 
 The recovery-only orchestrator is composed before key bootstrap. It can finish any
 full-deletion phase when the key is already absent, and a completed journal marker
-prevents later key generation and fixture reseeding. It exposes no user command or
-IPC. No real account may connect until explicit user-facing consent/status and the
+prevents later key generation and fixture reseeding. The user command is separately
+composed only in ready mode and uses the live protector-destruction path; recovery
+never uses that path or creates new work. No real account may connect until explicit user-facing consent/status and the
 remaining lifecycle activation boundaries are tested.
 
 Starting a new full deletion now requires a short-lived operation-bound
 confirmation receipt. Resuming a journaled deletion is a separate capability and
 cannot create an operation. The receipt and safe lifecycle status contain no
-mailbox content and remain outside the deletable key boundary; neither has an IPC
-surface yet.
+mailbox content and remain outside the deletable key boundary. The renderer sees
+only bounded challenge/status fields and stable errors through validated IPC.

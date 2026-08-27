@@ -70,7 +70,7 @@ export interface DeleteLocalDataResultV1 {
   status: 'completed'
 }
 
-type DeleteLocalDataErrorCode =
+export type DeleteLocalDataErrorCode =
   | 'INVALID_DELETE_LOCAL_DATA_REQUEST'
   | 'DELETE_LOCAL_DATA_OPERATION_CONFLICT'
   | 'DELETE_LOCAL_DATA_IN_PROGRESS'
@@ -121,6 +121,32 @@ export class DeleteLocalDataService {
     private readonly actions: DeleteLocalDataActions,
     private readonly confirmation: LocalActionConfirmationVerifier
   ) {}
+
+  /** Read-only preflight. The authoritative conflict check still runs at creation. */
+  checkCanStart(): void {
+    if (this.active) {
+      throw new DeleteLocalDataError(
+        'DELETE_LOCAL_DATA_IN_PROGRESS', 'Local-data deletion is already in progress.', true
+      )
+    }
+    this.checkNoPendingOperation()
+  }
+
+  private checkNoPendingOperation(): void {
+    let pending
+    try {
+      pending = this.lifecycle.listPending()
+    } catch (error) {
+      throw this.storageError(error)
+    }
+    if (pending.length > 0) {
+      throw new DeleteLocalDataError(
+        'DELETE_LOCAL_DATA_IN_PROGRESS',
+        'Another local-data lifecycle operation must finish first.',
+        true
+      )
+    }
+  }
 
   delete(request: DeleteLocalDataRequestV1): Promise<DeleteLocalDataResultV1> {
     if (request.version !== 1 || !isOperationId(request.operationId) ||
@@ -235,19 +261,7 @@ export class DeleteLocalDataService {
     if (!this.hasValidConfirmation(request.confirmationId, request.operationId)) {
       throw this.notConfirmed()
     }
-    let pending
-    try {
-      pending = this.lifecycle.listPending()
-    } catch (error) {
-      throw this.storageError(error)
-    }
-    if (pending.length > 0) {
-      throw new DeleteLocalDataError(
-        'DELETE_LOCAL_DATA_IN_PROGRESS',
-        'Another local-data lifecycle operation must finish first.',
-        true
-      )
-    }
+    this.checkNoPendingOperation()
     const operation: DeleteLocalDataOperationV1 = {
       version: 1,
       operationId: request.operationId,

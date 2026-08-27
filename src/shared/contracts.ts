@@ -1,9 +1,17 @@
 import type { MailDataset } from './domain'
 
 export const POSITA_PROTOCOL_VERSION = 1 as const
+export const DELETE_LOCAL_DATA_CONFIRMATION_TEXT = 'DELETE LOCAL DATA' as const
+export const LOCAL_DATA_DELETION_CONSEQUENCES = Object.freeze([
+  'Removes Posita mailbox cache and derived data from this Mac.',
+  'Removes Google refresh credentials stored by Posita.',
+  'Does not delete or change mail in Gmail.'
+] as const)
 
 export const IPC_CHANNELS = Object.freeze({
-  loadApplicationState: 'posita:application:load-state:v1'
+  loadApplicationState: 'posita:application:load-state:v1',
+  prepareLocalDataDeletion: 'posita:local-data:prepare-deletion:v1',
+  executeLocalDataDeletion: 'posita:local-data:execute-deletion:v1'
 })
 
 export interface LoadApplicationStateRequestV1 {
@@ -89,8 +97,70 @@ export type ApplicationStateV1 =
 
 export type LoadApplicationStateResponseV1 = AppResultV1<ApplicationStateV1>
 
+export interface PrepareLocalDataDeletionRequestV1 {
+  version: typeof POSITA_PROTOCOL_VERSION
+  action: 'delete-local-data'
+}
+
+export interface LocalDataDeletionChallengeV1 {
+  version: typeof POSITA_PROTOCOL_VERSION
+  confirmationId: string
+  operationId: string
+  action: 'delete-local-data'
+  requiredText: typeof DELETE_LOCAL_DATA_CONFIRMATION_TEXT
+  expiresAt: string
+  consequences: typeof LOCAL_DATA_DELETION_CONSEQUENCES
+}
+
+export interface ExecuteLocalDataDeletionRequestV1 {
+  version: typeof POSITA_PROTOCOL_VERSION
+  confirmationId: string
+  operationId: string
+  action: 'delete-local-data'
+  enteredText: string
+}
+
+export interface ExecuteLocalDataDeletionResultV1 {
+  version: typeof POSITA_PROTOCOL_VERSION
+  operationId: string
+  status: 'local-data-deleted'
+}
+
+export type LocalDataDeletionErrorCodeV1 =
+  | 'INVALID_REQUEST'
+  | 'UNTRUSTED_SENDER'
+  | 'DELETION_UNAVAILABLE'
+  | 'CONFIRMATION_NOT_FOUND'
+  | 'CONFIRMATION_EXPIRED'
+  | 'CONFIRMATION_TEXT_MISMATCH'
+  | 'CONFIRMATION_LIMIT_REACHED'
+  | 'STORAGE_UNAVAILABLE'
+  | 'OPERATION_CONFLICT'
+  | 'DELETION_FAILED'
+  | 'PROTOCOL_ERROR'
+
+export interface LocalDataDeletionErrorV1 {
+  version: typeof POSITA_PROTOCOL_VERSION
+  code: LocalDataDeletionErrorCodeV1
+  message: string
+  retryable: boolean
+}
+
+export type LocalDataDeletionResultV1<T> =
+  | { ok: true; value: T }
+  | { ok: false; error: LocalDataDeletionErrorV1 }
+
+export type PrepareLocalDataDeletionResponseV1 =
+  LocalDataDeletionResultV1<LocalDataDeletionChallengeV1>
+export type ExecuteLocalDataDeletionResponseV1 =
+  LocalDataDeletionResultV1<ExecuteLocalDataDeletionResultV1>
+
 export interface PositaDesktopApi {
   platform: string
   prototypeMode: true
   loadApplicationState(): Promise<LoadApplicationStateResponseV1>
+  prepareLocalDataDeletion(): Promise<PrepareLocalDataDeletionResponseV1>
+  executeLocalDataDeletion(
+    request: ExecuteLocalDataDeletionRequestV1
+  ): Promise<ExecuteLocalDataDeletionResponseV1>
 }

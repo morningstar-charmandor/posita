@@ -3,6 +3,7 @@ import { app, BrowserWindow, shell } from 'electron'
 import { bootstrapLocalData } from './bootstrapLocalData'
 import { AccountLifecycleStatusService } from './application/accountLifecycleStatus'
 import { ApplicationStateService } from './application/applicationStateService'
+import { LocalDataDeletionCommandService } from './application/localDataDeletionCommand'
 import type { MailRepository } from './application/mailRepository'
 import { registerApplicationIpc, type ApplicationIpcRegistration } from './ipc/applicationIpc'
 
@@ -57,6 +58,7 @@ app.once('before-quit', () => lifecycleRecoveryAbort.abort())
 app.whenReady().then(async () => {
   let repository: MailRepository | undefined
   let service = new ApplicationStateService('recovery-required')
+  let localDataDeletion = new LocalDataDeletionCommandService()
 
   try {
     const runtime = await bootstrapLocalData(
@@ -71,11 +73,21 @@ app.whenReady().then(async () => {
           new AccountLifecycleStatusService(runtime.accountLifecycleRepository)
         )
       : new ApplicationStateService('local-data-deleted')
+    if (runtime.mode === 'ready') {
+      localDataDeletion = new LocalDataDeletionCommandService(
+        runtime.confirmationService,
+        runtime.deleteLocalDataService,
+        service
+      )
+    }
   } catch {
     console.error('Posita local data initialization failed.')
   }
 
-  const applicationIpc: ApplicationIpcRegistration = registerApplicationIpc(service)
+  const applicationIpc: ApplicationIpcRegistration = registerApplicationIpc({
+    applicationState: service,
+    localDataDeletion
+  })
   const openWindow = (): void => {
     const window = createWindow()
     applicationIpc.allowWindow(window)
