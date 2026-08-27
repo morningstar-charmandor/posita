@@ -107,7 +107,11 @@ version, opaque confirmation and operation IDs, the allow-listed
 `delete-local-data` action type, and confirmation/expiry timestamps. The entered
 confirmation text is never persisted. Unique operation binding prevents one
 confirmation from being reassigned to another destructive command. These records
-are operational audit evidence, not encrypted mailbox content.
+are operational audit evidence, not encrypted mailbox content. After lifecycle
+recovery, startup deletes records strictly before the current expiry boundary only
+when no incomplete delete-local-data operation has the same operation ID. The
+single SQL deletion is idempotent and preserves pending retries. No new schema is
+required.
 
 Retention replacements validate and encrypt the complete next dataset before
 opening a write transaction. Source messages, derived topics, brief items, and
@@ -229,7 +233,8 @@ The local-data and credential foundation requires tests for:
   status, compaction, OS-vault key erasure, and in-memory key destruction.
 - exact-text confirmation, expiry, operation binding, idempotent confirmation
   persistence, authorization failure, confirmation-free recovery of existing work,
-  recovery refusal to create work, and bounded safe lifecycle-status projection.
+  recovery refusal to create work, exact-boundary receipt cleanup, pending-operation
+  preservation, cleanup failure, and bounded safe lifecycle-status projection.
 - pre-key-bootstrap recovery with a missing key, repeated deleted-mode restart,
   no fixture reseed or replacement key, terminal-phase completion, cancellation,
   conflicting-journal refusal, and keyless deletion-adapter behavior.

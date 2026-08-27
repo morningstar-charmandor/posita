@@ -109,6 +109,7 @@ export const bootstrapLocalDataWithDependencies = async (
       accountLifecycleRepository,
       deletionRecovery
     ).recover(dependencies.signal)
+    confirmation.cleanupExpired()
     if (recovery.mode === 'local-data-deleted') {
       return deletedRuntime(database, accountLifecycleRepository)
     }

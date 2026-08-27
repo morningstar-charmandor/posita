@@ -21,6 +21,7 @@ import {
 } from './infrastructure/sqlite/encryptedSqliteMailRepository'
 import { applyMigrations } from './infrastructure/sqlite/migrations'
 import { SqliteAccountLifecycleRepository } from './infrastructure/sqlite/sqliteAccountLifecycleRepository'
+import { SqliteLocalActionConfirmationRepository } from './infrastructure/sqlite/sqliteLocalActionConfirmationRepository'
 import { SqliteSecretVault } from './infrastructure/sqlite/sqliteSecretVault'
 
 const temporaryDirectories: string[] = []
@@ -47,6 +48,7 @@ const inspect = (path: string) => {
   return {
     database,
     lifecycle: new SqliteAccountLifecycleRepository(database),
+    confirmations: new SqliteLocalActionConfirmationRepository(database),
     vault: new SqliteSecretVault(database, new DeterministicFakeStringProtector())
   }
 }
@@ -61,6 +63,28 @@ afterEach(async () => {
 })
 
 describe('bootstrapLocalData lifecycle recovery', () => {
+  it('cleans an expired unlinked confirmation receipt during startup', async () => {
+    const databasePath = await createDatabasePath()
+    const initial = await bootstrapLocalDataWithDependencies(databasePath, dependencies())
+    initial.repository.close()
+    const setup = inspect(databasePath)
+    setup.confirmations.save({
+      version: 1,
+      confirmationId: 'confirm-expired-1',
+      operationId: 'delete-expired-1',
+      action: 'delete-local-data',
+      confirmedAt: '2000-01-01T00:00:00.000Z',
+      expiresAt: '2000-01-01T00:05:00.000Z'
+    })
+    setup.database.close()
+
+    const restarted = await bootstrapLocalDataWithDependencies(databasePath, dependencies())
+    expect(restarted.mode).toBe('ready')
+    restarted.repository.close()
+    const afterRestart = inspect(databasePath)
+    expect(afterRestart.confirmations.load('confirm-expired-1')).toBeUndefined()
+  })
+
   it('upgrades an exact legacy encrypted fixture cache with absolute retention timestamps', async () => {
     const databasePath = await createDatabasePath()
     const initial = await bootstrapLocalDataWithDependencies(databasePath, dependencies())

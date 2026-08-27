@@ -24,6 +24,7 @@ export interface LocalActionConfirmationRecordV1 {
 export interface LocalActionConfirmationRepository {
   save(record: LocalActionConfirmationRecordV1): void
   load(confirmationId: string): LocalActionConfirmationRecordV1 | undefined
+  deleteExpiredWithoutPendingOperation(expiresBefore: string): number
 }
 
 export interface LocalActionConfirmationVerifier {
@@ -220,6 +221,18 @@ export class LocalActionConfirmationService implements LocalActionConfirmationVe
 
   matches(confirmationId: string, operationId: string): boolean {
     return this.load(confirmationId)?.operationId === operationId
+  }
+
+  cleanupExpired(): number {
+    const now = this.clock.now()
+    if (!Number.isFinite(now.getTime())) {
+      throw this.storageError(new Error('Confirmation cleanup clock is invalid.'))
+    }
+    try {
+      return this.repository.deleteExpiredWithoutPendingOperation(now.toISOString())
+    } catch (error) {
+      throw this.storageError(error)
+    }
   }
 
   private load(confirmationId: string): LocalActionConfirmationRecordV1 | undefined {

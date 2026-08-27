@@ -6,6 +6,7 @@ import {
 } from '../../application/localActionConfirmation'
 import { openPositaDatabase } from './database'
 import { applyMigrations } from './migrations'
+import { SqliteAccountLifecycleRepository } from './sqliteAccountLifecycleRepository'
 import { SqliteLocalActionConfirmationRepository } from './sqliteLocalActionConfirmationRepository'
 
 const openDatabases: DatabaseSync[] = []
@@ -90,5 +91,59 @@ describe('SqliteLocalActionConfirmationRepository', () => {
         code: 'CONFIRMATION_STORAGE_FAILED'
       })
     )
+  })
+
+  it('deletes only receipts strictly before the cleanup boundary', () => {
+    const { repository } = createRepository()
+    repository.save(record())
+
+    expect(repository.deleteExpiredWithoutPendingOperation(
+      '2026-08-24T12:05:00.000Z'
+    )).toBe(0)
+    expect(repository.load('confirm-delete-1')).toEqual(record())
+    expect(repository.deleteExpiredWithoutPendingOperation(
+      '2026-08-24T12:05:00.001Z'
+    )).toBe(1)
+    expect(repository.load('confirm-delete-1')).toBeUndefined()
+    expect(repository.deleteExpiredWithoutPendingOperation(
+      '2026-08-24T12:05:00.001Z'
+    )).toBe(0)
+  })
+
+  it('preserves an expired receipt until its deletion operation completes', () => {
+    const { database, repository } = createRepository()
+    const lifecycle = new SqliteAccountLifecycleRepository(database)
+    repository.save(record())
+    lifecycle.save({
+      version: 1,
+      operationId: record().operationId,
+      operationType: 'delete-local-data',
+      phase: 'mail-data-delete-pending'
+    })
+
+    expect(repository.deleteExpiredWithoutPendingOperation(
+      '2026-08-24T12:05:00.001Z'
+    )).toBe(0)
+    lifecycle.save({
+      version: 1,
+      operationId: record().operationId,
+      operationType: 'delete-local-data',
+      phase: 'completed'
+    })
+    expect(repository.deleteExpiredWithoutPendingOperation(
+      '2026-08-24T12:05:00.001Z'
+    )).toBe(1)
+  })
+
+  it('rejects a non-canonical cleanup boundary before deletion', () => {
+    const { repository } = createRepository()
+    repository.save(record())
+
+    expect(() => repository.deleteExpiredWithoutPendingOperation('tomorrow')).toThrowError(
+      expect.objectContaining<Partial<LocalActionConfirmationError>>({
+        code: 'CONFIRMATION_STORAGE_FAILED'
+      })
+    )
+    expect(repository.load('confirm-delete-1')).toEqual(record())
   })
 })

@@ -61,6 +61,8 @@ Implemented:
   overlapping same-account disconnect after process restart,
 - a bounded five-minute exact-text confirmation challenge bound to one generated
   full-deletion operation and an auditable non-private SQLite receipt,
+- deterministic startup cleanup of strictly expired confirmation receipts while
+  preserving receipts tied to incomplete local deletion,
 - separate authorized-start and existing-operation recovery entry points,
 - a safe lifecycle-status projection with truthful pending/retry states, bounded
   progress, and allow-listed error detail,
@@ -128,8 +130,8 @@ retention, account removal, disconnect, full local deletion, explicit confirmati
 safe status, full-deletion startup recovery, read-only lifecycle UI, and explicitly
 confirmed local deletion are complete at their current layers. Continue in this order:
 
-1. Define confirmation-receipt cleanup and move production-scale sanitization off
-   the Electron main event loop before real mailbox ingestion.
+1. Move production-scale sanitization off the Electron main event loop before
+   real mailbox ingestion.
 2. Keep pending disconnect visible but inactive until a real idempotent Google
    revocation adapter can be composed and tested.
 3. Keep real Gmail ingestion disabled until the remaining lifecycle activation
@@ -156,7 +158,7 @@ plaintext mailbox. Record the selected search tradeoff in `docs/DECISIONS.md`.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 28 test files, 179 tests, strict typecheck, structure
+- Current verified baseline: 28 test files, 185 tests, strict typecheck, structure
   checks, and production Electron build passing.
 
 Native verification migrated the development database to schema v3 with 21

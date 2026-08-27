@@ -12,6 +12,7 @@ import {
 class MemoryConfirmationRepository implements LocalActionConfirmationRepository {
   readonly records = new Map<string, LocalActionConfirmationRecordV1>()
   fail = false
+  pendingOperationIds = new Set<string>()
 
   save(record: LocalActionConfirmationRecordV1): void {
     if (this.fail) throw new Error('storage failed')
@@ -22,6 +23,18 @@ class MemoryConfirmationRepository implements LocalActionConfirmationRepository 
     if (this.fail) throw new Error('storage failed')
     const record = this.records.get(confirmationId)
     return record && structuredClone(record)
+  }
+
+  deleteExpiredWithoutPendingOperation(expiresBefore: string): number {
+    if (this.fail) throw new Error('storage failed')
+    let deleted = 0
+    for (const [confirmationId, record] of this.records) {
+      if (record.expiresAt < expiresBefore && !this.pendingOperationIds.has(record.operationId)) {
+        this.records.delete(confirmationId)
+        deleted += 1
+      }
+    }
+    return deleted
   }
 }
 
@@ -145,6 +158,53 @@ describe('LocalActionConfirmationService', () => {
     second.advance(LOCAL_ACTION_CONFIRMATION_TTL_MS + 1)
     expect(second.service.isValid(confirmed.confirmationId, confirmed.operationId)).toBe(false)
     expect(second.service.matches(confirmed.confirmationId, confirmed.operationId)).toBe(true)
+  })
+
+  it('cleans only expired receipts without pending deletion work', () => {
+    const { repository, service, advance } = createHarness()
+    const challenge = prepare(service)
+    service.confirm({
+      version: 1,
+      confirmationId: challenge.confirmationId,
+      operationId: challenge.operationId,
+      action: challenge.action,
+      enteredText: DELETE_LOCAL_DATA_CONFIRMATION_TEXT
+    })
+
+    advance(LOCAL_ACTION_CONFIRMATION_TTL_MS)
+    expect(service.cleanupExpired()).toBe(0)
+    expect(repository.records.size).toBe(1)
+
+    repository.pendingOperationIds.add(challenge.operationId)
+    advance(1)
+    expect(service.cleanupExpired()).toBe(0)
+    expect(repository.records.size).toBe(1)
+
+    repository.pendingOperationIds.delete(challenge.operationId)
+    expect(service.cleanupExpired()).toBe(1)
+    expect(repository.records.size).toBe(0)
+    expect(service.cleanupExpired()).toBe(0)
+  })
+
+  it('maps cleanup storage and clock failures to the existing safe error', () => {
+    const harness = createHarness()
+    harness.repository.fail = true
+    expect(() => harness.service.cleanupExpired()).toThrowError(
+      expect.objectContaining<Partial<LocalActionConfirmationError>>({
+        code: 'CONFIRMATION_STORAGE_FAILED', retryable: true
+      })
+    )
+
+    const invalidClock = new LocalActionConfirmationService(
+      new MemoryConfirmationRepository(),
+      { now: () => new Date(Number.NaN) },
+      () => 'unused-id'
+    )
+    expect(() => invalidClock.cleanupExpired()).toThrowError(
+      expect.objectContaining<Partial<LocalActionConfirmationError>>({
+        code: 'CONFIRMATION_STORAGE_FAILED', retryable: true
+      })
+    )
   })
 
   it('maps persistence failure to a safe retryable error', () => {

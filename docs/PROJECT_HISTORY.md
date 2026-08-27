@@ -682,6 +682,45 @@ production-scale off-main-event-loop sanitization remain the next lifecycle work
 No dependency or schema migration was added; Gmail, AI, sending, and live account
 disconnect remain deferred.
 
+## Gate 2D foundation — Confirmation-receipt cleanup
+
+Date: 2026-08-27
+Checkpoint: use the Git commit whose subject is `feat: clean expired deletion confirmations`
+
+Goal: minimize retained operational authorization metadata without breaking a
+safe retry of already-authorized deletion work.
+
+Delivered:
+
+- one narrow repository cleanup capability using the existing confirmation and
+  lifecycle tables,
+- strict expiry comparison that retains a receipt at the exact boundary,
+- atomic preservation of receipts linked to incomplete delete-local-data journals,
+- deterministic removal after expiry when no pending operation needs the binding,
+- startup composition after lifecycle recovery establishes authoritative state,
+- existing safe storage-error mapping for invalid clocks and cleanup failures,
+- ADR-021 and aligned architecture, privacy, database, handoff, agent, and case-
+  study documentation.
+
+Important decisions:
+
+- preserve an expired receipt while in-process retry can still require its exact
+  confirmation-to-operation binding,
+- let restart recovery remain confirmation-free for already-journaled work,
+- remove completed or unstarted expired receipts rather than retaining audit rows
+  indefinitely,
+- add no timer, renderer method, IPC channel, dependency, or schema migration.
+
+Evidence: 28 test files and 185 tests passed before final checkpoint verification.
+Coverage includes exact expiry, pending-operation preservation, completion cleanup,
+idempotence, invalid-boundary refusal, storage and clock failures, and real startup
+cleanup against SQLite.
+
+Limitations: cleanup currently runs at startup rather than on a recurring schedule.
+Production-scale SQLite sanitization remains synchronous and must move off the
+Electron main event loop before real mailbox volume. Gmail, AI, sending, and live
+account disconnect remain deferred.
+
 ## How future entries should be written
 
 For each material milestone, record:

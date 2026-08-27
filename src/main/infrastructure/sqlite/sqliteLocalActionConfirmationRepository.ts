@@ -86,4 +86,27 @@ implements LocalActionConfirmationRepository {
       throw storageFailure('Failed to load local-action confirmation.', error)
     }
   }
+
+  deleteExpiredWithoutPendingOperation(expiresBefore: string): number {
+    const beforeMs = Date.parse(expiresBefore)
+    if (!Number.isFinite(beforeMs) || new Date(beforeMs).toISOString() !== expiresBefore) {
+      throw storageFailure('The confirmation cleanup boundary is invalid.', undefined)
+    }
+    try {
+      const result = this.database.prepare(`
+        DELETE FROM local_action_confirmations
+        WHERE expires_at < ?
+          AND NOT EXISTS (
+            SELECT 1 FROM account_lifecycle_operations
+            WHERE operation_id = local_action_confirmations.operation_id
+              AND operation_type = 'delete-local-data'
+              AND phase != 'completed'
+          )
+      `).run(expiresBefore)
+      return Number(result.changes)
+    } catch (error) {
+      if (error instanceof LocalActionConfirmationError) throw error
+      throw storageFailure('Failed to clean up local-action confirmations.', error)
+    }
+  }
 }

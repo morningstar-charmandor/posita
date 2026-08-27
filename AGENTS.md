@@ -18,6 +18,8 @@ exists deeper in the tree.
   confirmed Settings & privacy flow; it affects Posita data only.
 - New full deletion requires a bounded typed confirmation; safe lifecycle status,
   recovery, preload, IPC, and UI surfaces are implemented.
+- Expired confirmation receipts are cleaned at startup unless their deletion
+  operation remains pending.
 - Startup keylessly resumes a pending full deletion and honors its completed
   marker without recreating a data key or reseeding fixtures.
 - An OS-protected credential vault is implemented but contains no real token.

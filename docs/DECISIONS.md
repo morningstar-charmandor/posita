@@ -264,8 +264,7 @@
   at startup. The entered phrase exists transiently in renderer/main memory but is
   never logged or persisted. The current synchronous sanitization is acceptable
   only for bounded fixture data and must move off the Electron main event loop
-  before real mailbox volume. Confirmation-receipt cleanup remains a separate
-  retention decision.
+  before real mailbox volume. ADR-021 defines confirmation-receipt cleanup.
 
 ## ADR-020: Replace only an exactly recognized timestamp-free fixture cache
 
@@ -285,3 +284,21 @@
   retention without guessed dates or a parallel migration system. The policy is
   intentionally fixture-only and is not a precedent for repairing real provider
   records. No dependency or schema migration is added.
+
+## ADR-021: Retain expired confirmation receipts only for pending deletion work
+
+- Status: accepted for Gate 2D
+- Context: Confirmation authority lasts five minutes, but an already-journaled
+  local deletion may need the same operation-bound receipt for an in-process retry
+  after that expiry. Keeping every receipt forever adds unnecessary operational
+  history, while deleting solely by time can strand a safe retry.
+- Decision: after startup lifecycle recovery, atomically delete a receipt only
+  when its expiry is strictly earlier than the injected absolute clock and no
+  incomplete `delete-local-data` journal exists for its operation ID. Preserve the
+  exact expiry boundary and every receipt linked to pending deletion. Once the
+  operation completes, the expired receipt becomes eligible on the next cleanup.
+- Consequence: authorization metadata remains available exactly while current
+  authority or unfinished work can need it, then is removed deterministically.
+  Cleanup failures use the existing safe storage error and fail startup rather
+  than silently claiming maintenance succeeded. No timer, IPC method, dependency,
+  or schema migration is added.

@@ -122,6 +122,7 @@
     "full-local-deletion-erases-credentials-private-records-and-key-material-in-journaled-order",
     "durable-lifecycle-work-prevents-overlapping-installation-deletion-and-account-disconnect",
     "new-full-local-deletion-requires-explicit-short-lived-operation-bound-confirmation",
+    "expired-confirmation-receipts-are-kept-only-for-incomplete-local-deletion",
     "local-deletion-preparation-never-creates-lifecycle-work",
     "confirmed-local-deletion-is-bound-to-the-trusted-window-that-prepared-it",
     "lifecycle-status-exposes-only-bounded-safe-progress-and-error-codes",

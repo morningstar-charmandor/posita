@@ -118,6 +118,13 @@ recovery entry point cannot create new destructive work. Safe status projection 
 available only through the validated read-only application-state query. The typed
 phrase crosses the narrow execute boundary but is not logged or persisted.
 
+Receipt cleanup runs at startup after lifecycle recovery. A receipt is removed
+only when it is strictly expired and no incomplete local-deletion journal refers
+to its operation. The exact expiry boundary is retained, as is an expired receipt
+needed to bind an in-process retry of already-authorized work. Completed or
+unstarted expired receipts are eligible for deterministic removal; cleanup never
+touches Gmail or encrypted mailbox content.
+
 Recovery never decrypts content and succeeds even when the protected data key is
 already absent. Cancellation leaves the current journal phase available for the
 next restart. Conflicting lifecycle state fails closed rather than choosing which

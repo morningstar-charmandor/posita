@@ -228,6 +228,12 @@ before creating its journal. Its separate `resume` entry point refuses to create
 work and can only continue an existing journal operation, even after confirmation
 expiry.
 
+ADR-021 bounds receipt lifetime without breaking retries. After lifecycle recovery,
+startup atomically removes receipts whose expiry is strictly before the current
+absolute clock and whose operation has no incomplete delete-local-data journal.
+The exact expiry instant remains valid, and an incomplete operation protects its
+receipt until completion. Cleanup has no renderer, IPC, timer, or provider surface.
+
 The lifecycle status service reads the journal and projects only operation type,
 opaque IDs, optional opaque account scope, bounded progress, safe stage names, and
 allow-listed retry codes. A marker is described as `pending`, not “running,”

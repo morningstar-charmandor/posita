@@ -25,7 +25,9 @@ Startup upgrades only an exact historical fixture cache whose messages all lack
 absolute timestamps. It replaces that known simulated dataset with the current
 timestamped encrypted fixtures and refuses mixed, edited, partial, or unknown data.
 Schema v7 stores only opaque, operation-bound confirmation receipts for destructive
-local deletion; the typed confirmation text is never persisted.
+local deletion; the typed confirmation text is never persisted. Startup removes
+strictly expired receipts unless their deletion operation is still pending, so a
+safe in-process retry cannot lose its authorization binding.
 Account removal now deterministically preserves unaffected sources while evicting
 touched derived context. A crash-resumable disconnect orchestrator now coordinates
 revocation, credential deletion, provider-state deletion, local-data removal, and

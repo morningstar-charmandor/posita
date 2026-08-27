@@ -55,6 +55,8 @@ class MemoryConfirmationRepository implements LocalActionConfirmationRepository 
     const record = this.records.get(confirmationId)
     return record && structuredClone(record)
   }
+
+  deleteExpiredWithoutPendingOperation(): number { return 0 }
 }
 
 const createHarness = () => {
