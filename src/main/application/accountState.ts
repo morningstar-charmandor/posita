@@ -1,3 +1,5 @@
+import { GOOGLE_CONNECT_CONSENT } from '../../shared/contracts'
+
 export type MailProvider = 'google'
 
 export interface ProviderAccountRecordV1 {
@@ -5,7 +7,7 @@ export interface ProviderAccountRecordV1 {
   accountId: string
   provider: MailProvider
   providerAccountId: string
-  consentVersion: number
+  consentVersion: typeof GOOGLE_CONNECT_CONSENT.consentVersion
   connectedAt: string
 }
 
@@ -70,8 +72,7 @@ export const isProviderAccountRecordV1 = (
     record.provider === 'google' &&
     typeof record.providerAccountId === 'string' &&
     PROVIDER_ACCOUNT_ID_PATTERN.test(record.providerAccountId) &&
-    Number.isSafeInteger(record.consentVersion) &&
-    (record.consentVersion as number) > 0 &&
+    record.consentVersion === GOOGLE_CONNECT_CONSENT.consentVersion &&
     isTimestamp(record.connectedAt)
 }
 

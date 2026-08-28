@@ -26,7 +26,7 @@ const providerAccount = (accountId: string): ProviderAccountRecordV1 => ({
   accountId,
   provider: 'google',
   providerAccountId: `google-sub-${accountId}`,
-  consentVersion: 1,
+  consentVersion: 'google-gmail-readonly-v1',
   connectedAt: '2026-08-24T10:00:00.000Z'
 })
 
@@ -150,6 +150,20 @@ describe('EncryptedSqliteAccountStateRepository', () => {
     }
 
     expect(() => repository.saveSyncState(invalidState)).toThrowError(
+      expect.objectContaining<Partial<AccountStateError>>({ code: 'INVALID_ACCOUNT_STATE' })
+    )
+    expect(database.prepare('SELECT COUNT(*) AS count FROM encrypted_account_records').get())
+      .toEqual({ count: 0 })
+  })
+
+  it('rejects the obsolete numeric consent identity before persistence', () => {
+    const { database, repository } = createRepository()
+    const invalidAccount = {
+      ...providerAccount('work'),
+      consentVersion: 1
+    } as unknown as ProviderAccountRecordV1
+
+    expect(() => repository.saveProviderAccount(invalidAccount)).toThrowError(
       expect.objectContaining<Partial<AccountStateError>>({ code: 'INVALID_ACCOUNT_STATE' })
     )
     expect(database.prepare('SELECT COUNT(*) AS count FROM encrypted_account_records').get())

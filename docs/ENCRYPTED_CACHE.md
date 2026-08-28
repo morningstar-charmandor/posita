@@ -95,6 +95,13 @@ The account-state repository is main-process-only and is composed at startup wit
 the existing cache protector. It stores no real account yet and does not authorize,
 sync, poll, disconnect, or expose anything over IPC.
 
+Provider-account payload version 1 now binds `consentVersion` to the exact reviewed
+string `google-gmail-readonly-v1`, matching the shared consent and authorization
+contracts. The table is known to contain no real or fixture provider account, so
+this is a fail-closed contract correction rather than a data migration. A stale
+simulated payload using the obsolete numeric value is rejected instead of guessed
+or silently rewritten.
+
 ## Schema version 5 operational exception
 
 The lifecycle journal is intentionally not an encrypted private-data record. It

@@ -342,3 +342,29 @@
   client, PKCE state, browser flow, credential, account record, new IPC method,
   dependency, schema migration, or persisted consent receipt is added. Activation
   remains a separate user-approved milestone.
+
+## ADR-024: Establish authorization sessions before activating OAuth
+
+- Status: accepted for Gate 2D
+- Context: Posita needs a testable boundary for future installed-app authorization,
+  but composing Google OAuth, a browser flow, credentials, or an enabled renderer
+  command would cross the current approval gate. The encrypted provider-account
+  contract also used a numeric consent placeholder that did not match the reviewed
+  shared consent identity.
+- Decision: define one provider-independent, trusted-main-only adapter with
+  versioned `begin`, `complete`, and `cancel` operations. Accept exactly the
+  reviewed `google-gmail-readonly-v1` consent and `gmail.readonly` scope; require
+  bounded HTTPS authorization targets and explicit-port loopback callbacks; and
+  return stable safe errors. A deterministic credential-free fake serializes one
+  pending session and proves exact expiry, callback matching, cancellation, and
+  retryable provider failure. A successful grant is transient main-process data
+  that a future coordinator must move directly into `SecretVault` and encrypted
+  account state. Align provider-account payload validation to the reviewed string
+  consent identity.
+- Consequence: application and failure contracts can be exercised without network
+  access, personal data, or billable services. The fake is not startup composition,
+  and no Google client, client ID, PKCE implementation, listener, browser launch,
+  code exchange, credential persistence, account creation, IPC method, or UI
+  activation is added. The provider-account table is known empty, so the consent
+  correction needs no migration or compatibility path; an unexpected obsolete
+  numeric simulated payload fails closed. No dependency or schema change is added.

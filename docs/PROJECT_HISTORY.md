@@ -801,6 +801,53 @@ checkpoint, so layout assurance came from semantic component tests and productio
 build verification. OAuth remains entirely inactive. No real Gmail account, AI
 provider, credential, or mailbox data was used.
 
+## Gate 2D foundation — Authorization-session contract and deterministic fake
+
+Date: 2026-08-28
+Checkpoint: use the Git commit whose subject is `feat: add authorization session contract`
+
+Goal: make the future Gmail authorization lifecycle precise and testable before
+adding a Google client, browser flow, credential, live account, or UI activation.
+
+Delivered:
+
+- one provider-independent trusted-main `AccountAuthorizationAdapter` with
+  versioned begin, complete, and cancel operations,
+- exact validation of the reviewed `google-gmail-readonly-v1` consent and single
+  `gmail.readonly` scope,
+- bounded HTTPS authorization targets, explicit-port loopback callbacks, session
+  identity, expiry, provider subject, and refresh-grant contracts,
+- stable typed failures for invalid requests, overlap, missing or expired sessions,
+  rejected callbacks, and provider unavailability,
+- one deterministic credential-free fake covering a single pending session,
+  exact expiry, cancellation, callback preservation, retry, and safe failures,
+- alignment of encrypted provider-account consent validation with the reviewed
+  string identity, plus rejection coverage for the obsolete numeric placeholder,
+- ADR-024 and aligned agent, architecture, Gmail, privacy, cache, database,
+  handoff, project-map, and portfolio documentation.
+
+Important decisions:
+
+- keep successful refresh grants inside the trusted main-process contract and
+  require a future coordinator to move them directly into `SecretVault`,
+- keep the fake out of production startup and enforce that boundary structurally,
+- serialize one pending authorization session in the fake to make overlap explicit,
+- add no dependency, schema migration, renderer method, IPC channel, Google
+  configuration, browser action, external request, or production credential,
+- add no compatibility path for the numeric consent placeholder because encrypted
+  provider-account storage is verified empty; unexpected stale simulated data
+  fails closed instead of being rewritten.
+
+Evidence: 30 test files and 198 tests passed before final checkpoint verification.
+Coverage includes exact request and grant validation, scope widening, unknown
+fields, overlap, cancellation, mismatched callbacks, exact expiry, retryable
+provider failure, encrypted persistence, and obsolete-consent rejection.
+
+Limitations: no real OAuth adapter, PKCE generation, loopback listener, browser
+launch, code exchange, credential persistence, account creation, startup
+composition, preload/IPC command, or enabled UI action exists. No real Gmail
+account, AI provider, credential, mailbox data, or network call was used.
+
 ## How future entries should be written
 
 For each material milestone, record:

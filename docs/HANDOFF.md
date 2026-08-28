@@ -90,6 +90,13 @@ Implemented:
 - a reviewed `google-gmail-readonly-v1` consent projection inside the existing
   read-only application state, with an accessible Settings preview for scope,
   retention, encryption, AI inactivity, disconnect, and disabled activation,
+- a bounded provider-independent authorization-session contract with exact
+  read-only consent/scope, HTTPS launch, loopback callback, expiry, cancellation,
+  trusted-main-only grants, and stable safe errors,
+- a deterministic credential-free authorization fake proving lifecycle and
+  failure behavior without startup, preload, IPC, UI, browser, or network composition,
+- encrypted provider-account validation aligned to the reviewed string consent
+  identity, with obsolete numeric simulated records rejected before persistence,
 - truthful sample-mode labels that do not describe fixture accounts, briefs, or
   deterministic drafts as live Gmail or production AI,
 - deterministic credential-free verification through `npm run verify`.
@@ -105,6 +112,7 @@ Simulated or deliberately inactive:
   no real account or credential exists,
 - account disconnect remains application-only and has no preload, IPC, or UI trigger,
 - Gmail connection consent is preview-only and its activation control is disabled,
+- authorization-session behavior exists only behind a deterministic test fake,
 - sending and every other remote mailbox mutation are disabled.
 
 Not implemented:
@@ -141,8 +149,10 @@ confirmed local deletion are complete at their current layers. Continue in this 
 
 1. Keep pending disconnect visible but inactive until a real idempotent Google
    revocation adapter can be composed and tested.
-2. Define the provider-independent authorization-session contract and deterministic
-   fake without creating a Google client, credential, browser flow, or live account.
+2. Compose a credential-free account-connection application service against the
+   authorization, vault, and encrypted account-state interfaces and deterministic
+   fakes. Prove grant-to-vault-to-account-state ordering and safe rollback without
+   startup, renderer, browser, network, or live credentials.
 3. Keep real Gmail ingestion disabled until authorization activation is separately
    approved and the remaining lifecycle activation
    and consent gates pass.
@@ -168,7 +178,7 @@ plaintext mailbox. Record the selected search tradeoff in `docs/DECISIONS.md`.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 29 test files, 190 tests, strict typecheck, structure
+- Current verified baseline: 30 test files, 198 tests, strict typecheck, structure
   checks, and production Electron build passing.
 
 Native verification migrated the development database to schema v3 with 21

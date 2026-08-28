@@ -85,6 +85,12 @@ envelope and installation key. Only an allow-listed record kind and opaque Posit
 account scope remain queryable; no address, provider subject, or cursor is stored
 in plaintext.
 
+The provider-account payload accepts only the reviewed consent identity
+`google-gmail-readonly-v1`. Earlier development code used a numeric placeholder,
+but the encrypted provider-account table is known empty, so no migration or
+compatibility reader is required. Any unexpected stale simulated record fails
+runtime validation without mutation.
+
 Schema version 5 adds `account_lifecycle_operations`, a deliberately non-sensitive
 crash-resume journal. It contains only a contract version, opaque operation ID,
 allow-listed operation and phase, optional opaque account scope, safe error code,

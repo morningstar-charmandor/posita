@@ -1,7 +1,7 @@
 # Posita Portfolio Case Study
 
 Status: evolving working draft  
-Last reviewed: 2026-08-24
+Last reviewed: 2026-08-28
 
 This document turns verified project history into a portfolio-ready narrative.
 It should remain honest about what is implemented, simulated, measured, and
@@ -21,7 +21,9 @@ state, plus tested crash-resumable disconnect and full local-deletion orchestrat
 Gmail and AI are not connected. Disconnect has no live revoker or user trigger;
 full deletion now has a Settings & privacy flow, keyless startup recovery, and an
 operation-bound typed-confirmation gate. A separate read-only application-state
-boundary renders lifecycle and deleted outcomes.
+boundary renders lifecycle and deleted outcomes. A provider-independent
+authorization-session contract and deterministic fake exist only in the trusted
+backend; OAuth activation and credential persistence remain unavailable.
 
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
 
@@ -165,6 +167,13 @@ window, local encryption, inactive AI boundary, remote-mail safeguards, and
 disconnect behavior. The connect action remains disabled, demonstrating the
 permission experience without pretending OAuth or a live mailbox exists.
 
+Before activation, Posita now also has a provider-independent authorization-session
+boundary and deterministic fake. It proves exact read-only consent and scope,
+bounded launch/callback URLs, expiry, cancellation, callback rejection, and safe
+provider failure without a Google client, browser action, network request, or real
+credential. Successful grants remain trusted-main-only and are not yet composed
+into storage or the interface.
+
 ### Choosing bounded context
 
 The private alpha will import and retain a rolling 90-day window. This trades
@@ -204,6 +213,8 @@ At the current Gate 2D foundation checkpoint, Posita has:
   worker, with safe retry errors and real deleted-byte verification,
 - an exact read-only Gmail consent projection and accessible Settings preview with
   disabled activation and no OAuth state, credential, or live account,
+- a bounded trusted-main authorization-session contract and deterministic fake
+  with no production composition, browser action, network access, or live credential,
 - explicit sample-mode labels across account, brief, search, and draft surfaces,
 - keyless pre-bootstrap recovery, shutdown cancellation between phases, and a
   durable deleted mode that remains empty across repeated restarts,
@@ -214,7 +225,7 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - future sync ownership and account-isolation contracts without premature
   provider implementation,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 29 automated test files containing 190 passing tests,
+- 30 automated test files containing 198 passing tests,
 - passing strict TypeScript, structural security checks, and production builds.
 
 These are engineering outcomes, not evidence of customer adoption or AI quality.
@@ -222,10 +233,11 @@ No real mailbox, OAuth credential, or model provider has been used.
 
 ## What comes next
 
-The next Gate 2D slice should define provider-independent authorization-session
-contracts and deterministic fakes while keeping browser authorization, credentials,
-and pending disconnect inactive. Gmail OAuth and deterministic sync remain blocked
-behind explicit user approval and the remaining lifecycle activation gates.
+The next Gate 2D slice should compose a credential-free account-connection service
+against authorization, vault, and account-state interfaces and deterministic fakes.
+It should prove write ordering and rollback while keeping startup, browser
+authorization, live credentials, and pending disconnect inactive. Gmail OAuth and
+sync remain blocked behind explicit user approval and the remaining lifecycle gates.
 
 Later evidence should include measured sync reliability, duplicate prevention,
 citation correctness, draft usefulness, correction rate, and time to attention.

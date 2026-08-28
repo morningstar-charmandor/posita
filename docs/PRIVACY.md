@@ -172,3 +172,11 @@ and disconnect outcome. It also states that Gmail is not connected. The contract
 is runtime validated as an exact shape, and the authorization control is disabled;
 no consent acceptance, OAuth client, credential, browser flow, or account record
 is created by viewing it.
+
+The authorization-session contract remains main-process-only and explicitly marks
+its successful refresh credential as a value that must move directly into
+`SecretVault`. Its authorization URL, callback, provider subject, and credential
+have no renderer or persistence surface in this milestone. The deterministic fake
+contains only test fixtures, performs no external action, and is not production
+composition. Real credential handling still requires separate approval and
+end-to-end composition review.

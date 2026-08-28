@@ -169,6 +169,9 @@ if (localDataBootstrap.includes('new SqliteMailRepository(')) {
 if (localDataBootstrap.includes('DeterministicFakeStringProtector')) {
   fail('production composition must not use the deterministic fake credential protector')
 }
+if (localDataBootstrap.includes('DeterministicFakeAccountAuthorizationAdapter')) {
+  fail('production composition must not use the deterministic fake authorization adapter')
+}
 
 const gitignore = await readText('.gitignore')
 for (const ignored of ['node_modules/', 'out/', '.env', '*.tsbuildinfo']) {

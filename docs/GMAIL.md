@@ -12,6 +12,20 @@ validated read-only application-state response and requests only `gmail.readonly
 Its activation button is disabled. It creates no authorization state, PKCE
 verifier, browser navigation, token, provider account, or consent receipt.
 
+Gate 2D now defines the provider-independent main-process authorization-session
+interface and a deterministic fake. The boundary accepts only the reviewed
+`google-gmail-readonly-v1` consent and `gmail.readonly`, requires an HTTPS
+authorization target and an explicit-port loopback callback, permits one pending
+session, and models exact expiry, cancellation, callback rejection, and safe
+provider failure. A validated successful result contains the provider subject and
+refresh credential only inside the trusted main-process contract so a future
+coordinator can move it directly into encrypted account state and `SecretVault`.
+
+The fake uses conspicuous test-only values, performs no network or browser action,
+and is not composed at startup. The real Google adapter, PKCE generation, loopback
+listener, system-browser launch, code exchange, credential persistence, account
+creation, preload/IPC command, and enabled UI action remain unimplemented.
+
 ## Desktop OAuth flow
 
 Posita will use Google's installed-desktop application flow with Authorization

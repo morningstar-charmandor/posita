@@ -272,6 +272,14 @@ no client ID, authorization URL, state, verifier, token, account identity, or
 command. Settings renders that projection and keeps authorization disabled. This
 avoids a second consent source of truth or a premature privileged IPC method.
 
+The next internal boundary is `AccountAuthorizationAdapter`. It owns provider
+authorization preparation, verified callback completion, and cancellation behind
+provider-neutral application types. Inputs and outputs are exact, bounded, and
+versioned; the successful grant is trusted-main-only and never an IPC type. The
+deterministic fake proves one pending session, expiry, callback matching,
+cancellation, and typed failures without network access. No implementation is
+composed in `index.ts`, so the disabled consent UI cannot start authorization.
+
 ## Gmail synchronization
 
 The Gmail adapter will use an initial 90-day import followed by incremental

@@ -50,6 +50,12 @@ window, inactive AI-provider boundary, and disconnect behavior. The connect acti
 is intentionally disabled: no Google OAuth client, credential, or live account is
 configured.
 
+The trusted backend now defines a bounded provider-independent authorization
+session contract and deterministic fake for credential-free testing. It validates
+the reviewed consent, read-only scope, HTTPS authorization target, loopback
+callback, expiry, cancellation, and safe failures. Nothing composes this adapter
+into startup or exposes it through preload, IPC, Settings, or a browser.
+
 Startup now has one cancellable lifecycle-recovery owner. If a full deletion is
 journaled, it resumes through deletion-only SQLite and vault operations without
 loading or creating the encryption key. A completed marker keeps later restarts
