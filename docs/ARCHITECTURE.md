@@ -301,6 +301,16 @@ blocks authorization, but
 the query never repairs, deletes, or overwrites either store and remains outside
 startup, preload, IPC, and UI.
 
+`AccountConnectionRecoveryService` applies the approved conservative policy to a
+diagnosed one-sided pair. Its exact versioned request is bound to an opaque
+confirmation ID, operation ID, account ID, action, and expected orphan status. A
+confirmation verifier must prove a durable short-lived receipt for that entire
+request. The service refuses `connected` and `absent`, rejects stale status,
+rechecks after confirmation, deletes only the orphaned credential or the account's
+encrypted provider/sync state, and verifies `absent` before reporting success.
+It does not revoke, reconnect, reconstruct, or contact a provider. No confirmation
+producer or production composition exists, so the running app cannot invoke it.
+
 ## Gmail synchronization
 
 The Gmail adapter will use an initial 90-day import followed by incremental

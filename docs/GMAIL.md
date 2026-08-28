@@ -44,6 +44,13 @@ and its vault presence check does not decrypt the credential. This status blocks
 new authorization when either side is inconsistent but performs no automatic or
 user-triggered repair. Reconnecting Gmail remains impossible in this build.
 
+An application-only recovery service now encodes the approved local policy: after
+an exact account- and orphan-status-bound confirmation, discard only the orphaned
+credential or encrypted provider/sync state and require a fresh connection. It
+refuses a complete connection and performs no revocation or Google request. The
+required durable confirmation producer and every startup, preload, IPC, and UI
+entry point remain unimplemented, so the behavior is deterministic-test-only.
+
 ## Desktop OAuth flow
 
 Posita will use Google's installed-desktop application flow with Authorization

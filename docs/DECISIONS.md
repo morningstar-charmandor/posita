@@ -416,3 +416,27 @@
   unprotection. A future destructive repair policy still requires explicit owner
   approval and confirmation design. No new service, dependency, schema migration,
   compatibility path, startup composition, external action, or real secret is added.
+
+## ADR-027: Recover one-sided connection state by confirmed discard
+
+- Status: accepted for Gate 2D
+- Context: the connection coordinator can diagnose a credential without encrypted
+  provider state or encrypted provider state without a credential. Neither side
+  contains enough information to safely reconstruct the other, while automatic
+  deletion would hide a destructive account change behind startup or inspection.
+- Decision: require a separate exact, versioned recovery request bound to an
+  opaque confirmation ID, operation ID, account ID, discard action, and expected
+  one-sided status. A verifier must prove an auditable short-lived receipt for all
+  fields. Recheck consistency after confirmation, delete only the orphaned local
+  credential or account-scoped encrypted provider/sync state, and report success
+  only after the canonical inspection returns `absent`. Refuse `connected`,
+  `absent`, stale, malformed, unconfirmed, failed, and incomplete operations.
+  Always require a fresh connection; never reconstruct data or contact Google.
+- Consequence: the approved destructive policy and safe failure contract are
+  deterministic-testable without a credential, provider, renderer, or network.
+  A new application service is intentionally separate from connection creation,
+  while consistency remains sourced from the existing coordinator and deletion
+  reuses existing vault/account-state capabilities. No confirmation producer is
+  implemented, so the service is not composed into startup, preload, IPC, or UI
+  and cannot run in the product. There is no dependency, schema migration,
+  compatibility path, external action, real secret, or mailbox mutation.

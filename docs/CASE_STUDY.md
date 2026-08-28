@@ -181,11 +181,13 @@ credential before encrypted provider identity, and reverses both writes after an
 ambiguous state failure. A failed cleanup is surfaced as recovery-required rather
 than hidden behind a connected status.
 
-The next failure boundary is now inspectable without becoming self-healing.
+The next failure boundary is inspectable without becoming self-healing.
 Posita classifies an account's local pair as absent, connected, credential-only,
 or provider-state-only. The vault answers only whether a protected record exists,
-without decrypting or rotating it. Inconsistent state remains untouched until a
-separately approved recovery experience defines explicit user intent.
+without decrypting or rotating it. The approved recovery policy then requires a
+receipt bound to the exact account and orphan type, discards only that local side,
+and requires reconnect. It remains application-only until a durable confirmation
+producer and product surface are separately approved.
 
 ### Choosing bounded context
 
@@ -232,6 +234,8 @@ At the current Gate 2D foundation checkpoint, Posita has:
   vault-before-state ordering, ambiguous-write rollback, and explicit recovery failure,
 - a bounded read-only consistency diagnosis covering both one-sided failure states
   without credential decryption, repair, deletion, startup, or renderer exposure,
+- a confirmed discard-only recovery policy that refuses complete/absent/stale
+  state, removes one orphaned local side, verifies absence, and requires reconnect,
 - explicit sample-mode labels across account, brief, search, and draft surfaces,
 - keyless pre-bootstrap recovery, shutdown cancellation between phases, and a
   durable deleted mode that remains empty across repeated restarts,
@@ -242,7 +246,7 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - future sync ownership and account-isolation contracts without premature
   provider implementation,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 31 automated test files containing 214 passing tests,
+- 32 automated test files containing 221 passing tests,
 - passing strict TypeScript, structural security checks, and production builds.
 
 These are engineering outcomes, not evidence of customer adoption or AI quality.
@@ -250,11 +254,12 @@ No real mailbox, OAuth credential, or model provider has been used.
 
 ## What comes next
 
-The next Gate 2D decision is whether an explicitly confirmed local recovery command
-should discard the orphaned side and require a fresh connection. Posita should not
-infer missing identity or credential data. Real Google OAuth, browser activation,
-credentials, IPC/UI enablement, and sync remain blocked behind explicit owner
-approval and lifecycle gates.
+The discard-only recovery policy is now accepted and tested at the trusted
+application layer. The next Gate 2D decision is the durable, short-lived
+account/status-bound confirmation producer and its schema; it must not weaken the
+existing installation-wide deletion confirmation. Real Google OAuth, browser
+activation, credentials, recovery IPC/UI enablement, and sync remain blocked
+behind explicit owner approval and lifecycle gates.
 
 Later evidence should include measured sync reliability, duplicate prevention,
 citation correctness, draft usefulness, correction rate, and time to attention.

@@ -70,6 +70,14 @@ inspection for one opaque account. It reports only `absent`, `connected`,
 for protected credential existence without decrypting or re-protecting it. No
 repair, deletion, startup check, IPC response, or UI status is activated.
 
+The approved local recovery policy is implemented as a separate trusted service.
+It accepts only an account- and status-bound confirmation receipt, refuses complete
+or already-absent connections, rechecks for stale state, and deletes exactly the
+orphaned credential or encrypted provider/sync state. Success returns the account
+to `absent` and requires a fresh connection. The confirmation producer is not yet
+implemented, so this command remains outside startup, preload, IPC, and UI and
+cannot affect local data in the running build.
+
 Startup now has one cancellable lifecycle-recovery owner. If a full deletion is
 journaled, it resumes through deletion-only SQLite and vault operations without
 loading or creating the encryption key. A completed marker keeps later restarts

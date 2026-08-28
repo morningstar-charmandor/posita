@@ -945,6 +945,50 @@ local side and require reconnection remains an explicit owner decision. No real
 Gmail account, AI provider, credential, personal mailbox data, browser, network
 call, or renderer behavior was used.
 
+## Gate 2D foundation — Confirmed one-sided connection recovery policy
+
+Date: 2026-08-28
+Checkpoint: use the Git commit whose subject is `feat: define confirmed connection recovery`
+
+Goal: encode the approved conservative recovery policy without exposing a
+destructive product command or weakening full-deletion confirmation.
+
+Delivered:
+
+- one exact versioned recovery request bound to confirmation, operation, opaque
+  account, discard action, and expected one-sided status,
+- one main-process-only recovery service that reuses canonical consistency
+  inspection and existing account-scoped deletion capabilities,
+- refusal of complete, absent, stale, malformed, and unconfirmed recovery,
+- deletion of only the orphaned credential or encrypted provider/sync state,
+- post-deletion verification of `absent` and an explicit reconnect requirement,
+- stable safe confirmation, deletion, state-change, and incomplete-result errors,
+- structural enforcement that recovery stays outside startup, preload, and IPC,
+- ADR-027 and aligned architecture, privacy, Gmail, encrypted-cache, handoff,
+  project-map, agent-contract, and portfolio documentation.
+
+Important decisions:
+
+- discard orphaned local state instead of inferring or reconstructing missing data,
+- bind confirmation to the exact account and diagnosed orphan type so a stale
+  receipt cannot authorize a different deletion,
+- keep full-deletion confirmation unchanged and defer a dedicated durable producer
+  rather than widening its installation-scoped schema prematurely,
+- never revoke, reconnect, contact Google, expose recovery to the renderer, or
+  present deterministic behavior as live account handling,
+- add no dependency, schema migration, compatibility path, startup composition,
+  external action, credential, personal data, or mailbox mutation.
+
+Evidence: 32 test files and 221 tests passed before final checkpoint verification.
+Coverage includes both discard paths, complete/absent refusal, stale expected
+state before and after confirmation, invalid and failing confirmation, deletion
+failure, incomplete deletion, exact input validation, single-side mutation, and
+reconnect-required output.
+
+Limitations: the confirmation verifier is a required contract, not a production
+producer. No durable recovery receipt schema, challenge UI, preload/IPC command,
+startup composition, real account, credential, browser, or network call exists.
+
 ## How future entries should be written
 
 For each material milestone, record:

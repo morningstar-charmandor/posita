@@ -196,3 +196,12 @@ stored secret. The resulting versioned status contains only the supplied opaque
 account ID and an allow-listed state; it never includes provider identity or
 credential material. Credential-only and provider-state-only states are reported
 without deletion or repair and continue to block authorization.
+
+The approved recovery policy never infers the missing half of a connection. A
+future confirmation producer must create an auditable, short-lived receipt bound
+to the exact opaque account and diagnosed orphan type. Only then may the trusted
+recovery service discard the one orphaned local side and require reconnection.
+Complete and absent accounts are refused, state is checked again before deletion,
+and no provider mailbox is contacted or changed. Because no confirmation producer,
+IPC, UI, or startup composition exists, this policy cannot currently delete data
+in the running application.

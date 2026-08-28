@@ -124,6 +124,9 @@ const applicationStateService = await readText('src/main/application/application
 const secretVaultContract = await readText('src/main/application/secretVault.ts')
 const accountStateContract = await readText('src/main/application/accountState.ts')
 const accountConnectionService = await readText('src/main/application/accountConnection.ts')
+const accountConnectionRecovery = await readText(
+  'src/main/application/recoverAccountConnection.ts'
+)
 const gmailConsentPanel = await readText(
   'src/renderer/src/features/settings/GmailConnectConsentPanel.tsx'
 )
@@ -145,6 +148,13 @@ if (!secretVaultContract.includes('has(name: SecretName): Promise<boolean>') ||
     !accountConnectionService.includes("| 'credential-only'") ||
     !accountConnectionService.includes("| 'provider-state-only'")) {
   fail('account connection consistency must remain presence-only and fail-closed')
+}
+if (!accountConnectionRecovery.includes("action: 'discard-orphaned-local-connection-state'") ||
+    !accountConnectionRecovery.includes('reconnectRequired: true') ||
+    !accountConnectionRecovery.includes('AccountConnectionRecoveryConfirmationVerifier') ||
+    !accountConnectionRecovery.includes("current === 'connected'") ||
+    !accountConnectionRecovery.includes("finalState.status !== 'absent'")) {
+  fail('account connection recovery must stay confirmed, discard-only, and fail-closed')
 }
 
 const localDataBootstrap = await readText('src/main/bootstrapLocalData.ts')
@@ -187,6 +197,11 @@ if (localDataBootstrap.includes('DeterministicFakeAccountAuthorizationAdapter'))
 if (localDataBootstrap.includes('AccountConnectionService') ||
     mainIndex.includes('AccountConnectionService')) {
   fail('account connection must remain outside production composition before approval')
+}
+if (localDataBootstrap.includes('AccountConnectionRecoveryService') ||
+    mainIndex.includes('AccountConnectionRecoveryService') ||
+    preload.includes('recoverAccountConnection')) {
+  fail('account connection recovery must remain outside startup and IPC before approval')
 }
 
 const gitignore = await readText('.gitignore')

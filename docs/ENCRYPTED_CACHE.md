@@ -205,3 +205,9 @@ confirmation receipt. Resuming a journaled deletion is a separate capability and
 cannot create an operation. The receipt and safe lifecycle status contain no
 mailbox content and remain outside the deletable key boundary. The renderer sees
 only bounded challenge/status fields and stable errors through validated IPC.
+
+Account-connection recovery reuses the existing account-scoped provider/sync-state
+deletion when those encrypted records are the only remaining half of a confirmed
+connection pair. It never decrypts or reconstructs missing data, never touches a
+different account, and verifies the presence-only result is `absent`. This policy
+has no production confirmation or invocation path in the current milestone.
