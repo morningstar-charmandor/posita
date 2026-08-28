@@ -132,6 +132,16 @@ when no incomplete delete-local-data operation has the same operation ID. The
 single SQL deletion is idempotent and preserves pending retries. No new schema is
 required.
 
+Schema version 8 adds `account_connection_recovery_confirmations`. It stores a
+contract version, opaque confirmation and operation IDs, the allow-listed discard
+action, opaque Posita account scope, the diagnosed one-sided status, and confirmation
+and expiry timestamps. The required typed text and any credential or provider
+identity are never persisted. Unique operation binding and exact record validation
+prevent a receipt from being rebound to another account, orphan type, or operation.
+Expired receipts are removed deterministically through a strict timestamp boundary;
+the uncomposed recovery service still rechecks live consistency before deleting
+exactly one orphaned local side.
+
 Retention replacements validate and encrypt the complete next dataset before
 opening a write transaction. Source messages, derived topics, brief items, and
 unreferenced people are replaced atomically. The transaction records

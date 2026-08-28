@@ -259,6 +259,30 @@ export const migrations: readonly Migration[] = [
         CHECK (expires_at >= confirmed_at)
       ) STRICT;
     `
+  },
+  {
+    version: 8,
+    name: 'account_connection_recovery_confirmations',
+    sql: `
+      CREATE TABLE account_connection_recovery_confirmations (
+        version INTEGER NOT NULL CHECK (version = 1),
+        confirmation_id TEXT PRIMARY KEY,
+        operation_id TEXT NOT NULL UNIQUE,
+        action_type TEXT NOT NULL CHECK (
+          action_type = 'discard-orphaned-local-connection-state'
+        ),
+        account_scope TEXT NOT NULL,
+        expected_status TEXT NOT NULL CHECK (
+          expected_status IN ('credential-only', 'provider-state-only')
+        ),
+        confirmed_at TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        CHECK (expires_at >= confirmed_at)
+      ) STRICT;
+
+      CREATE INDEX account_connection_recovery_confirmations_expiry_idx
+        ON account_connection_recovery_confirmations(expires_at);
+    `
   }
 ]
 

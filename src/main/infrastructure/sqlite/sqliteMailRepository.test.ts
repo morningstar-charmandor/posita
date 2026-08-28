@@ -37,7 +37,8 @@ describe('SQLite migrations', () => {
       { name: 'protected_secrets' },
       { name: 'encrypted_account_records' },
       { name: 'account_lifecycle_operations' },
-      { name: 'local_action_confirmations' }
+      { name: 'local_action_confirmations' },
+      { name: 'account_connection_recovery_confirmations' }
     ]))
   })
 

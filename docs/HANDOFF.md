@@ -112,6 +112,9 @@ Implemented:
   and orphan-status-bound confirmation, refuses complete and absent accounts,
   rechecks stale state, discards only the orphaned local side, verifies `absent`,
   and requires a fresh connection,
+- a dedicated five-minute recovery confirmation producer that preflights the
+  diagnosed orphan state and persists only opaque account/status-bound receipt
+  metadata in schema v8, distinct from installation-wide deletion confirmation,
 - truthful sample-mode labels that do not describe fixture accounts, briefs, or
   deterministic drafts as live Gmail or production AI,
 - deterministic credential-free verification through `npm run verify`.
@@ -132,8 +135,8 @@ Simulated or deliberately inactive:
   collaborators and is not composed into production startup,
 - account consistency is main-process-only diagnostic behavior with no repair,
   preload, IPC, UI, startup, or provider action,
-- account recovery is exercised only with deterministic in-memory collaborators;
-  no durable confirmation producer or product invocation path exists,
+- account recovery and its durable confirmation producer are exercised only with
+  deterministic collaborators; no product invocation path exists,
 - sending and every other remote mailbox mutation are disabled.
 
 Not implemented:
@@ -141,8 +144,7 @@ Not implemented:
 - Gmail OAuth, message ingestion, incremental history sync, or user-triggered/live disconnect,
 - runtime sync coordination, provider reconciliation, or deduplication logic,
 - user-triggered account disconnect or any remote mailbox mutation control,
-- a durable account-recovery confirmation producer and any recovery preload, IPC,
-  UI, or startup composition,
+- any account-recovery preload, IPC, UI, or startup composition,
 - automatic pending-disconnect resume with a live idempotent revocation adapter,
 - automatic retention scheduling and user-visible maintenance status,
 - a model provider, embeddings, classification, retrieval, or generation,
@@ -172,11 +174,11 @@ confirmed local deletion are complete at their current layers. Continue in this 
 
 1. Keep pending disconnect visible but inactive until a real idempotent Google
    revocation adapter can be composed and tested.
-2. Design the durable short-lived account- and orphan-status-bound confirmation
-   receipt/producer before exposing the approved discard-only recovery command.
-   Keep it distinct from the installation-wide `DELETE LOCAL DATA` confirmation.
-3. Request explicit owner approval before adding that schema/producer or composing
-   a recovery IPC/UI, real Google adapter, credentials, browser authorization,
+2. Keep the new durable account- and orphan-status-bound confirmation producer
+   uncomposed while reviewing the narrow prepare/execute IPC contract. It remains
+   distinct from the installation-wide `DELETE LOCAL DATA` confirmation.
+3. Request explicit owner approval before composing a recovery IPC/UI, real Google
+   adapter, credentials, browser authorization,
    startup/IPC/UI activation, or live account.
 4. Keep real Gmail ingestion disabled until authorization activation is separately
    approved and the remaining lifecycle activation
@@ -185,14 +187,13 @@ confirmed local deletion are complete at their current layers. Continue in this 
 Do not solve encrypted search casually. Any index must avoid becoming a second
 plaintext mailbox. Record the selected search tradeoff in `docs/DECISIONS.md`.
 
-Milestone change report: one `AccountConnectionRecoveryService` and one narrow
-confirmation-verifier contract were added to isolate the approved destructive
-policy from connection creation. Consistency and deletion reuse existing services
-and repositories; no parallel state store or compatibility path was introduced.
-There are no new dependencies, schema migrations, production composition paths,
-external actions, real secrets, or mailbox mutations. The durable confirmation
-producer is deliberately deferred rather than weakening or duplicating the
-installation-wide full-deletion confirmation implementation.
+Milestone change report: schema v8, one dedicated confirmation producer, and one
+SQLite repository now supply the existing `AccountConnectionRecoveryService`
+verifier contract. Consistency still reuses the existing connection coordinator;
+full deletion remains unchanged. There are no new dependencies, compatibility
+paths, production composition paths, external actions, real secrets, or mailbox
+mutations. Recovery confirmation storage is intentionally separate rather than
+weakening the installation-wide full-deletion confirmation implementation.
 
 ## How to resume
 

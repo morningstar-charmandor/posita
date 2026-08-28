@@ -989,6 +989,48 @@ Limitations: the confirmation verifier is a required contract, not a production
 producer. No durable recovery receipt schema, challenge UI, preload/IPC command,
 startup composition, real account, credential, browser, or network call exists.
 
+## Gate 2D foundation — Durable account-recovery confirmation
+
+Date: 2026-08-28
+Checkpoint: use the Git commit whose subject is `feat: persist recovery confirmation`
+
+Goal: supply the approved discard-only recovery policy with distinct, durable,
+short-lived authorization without exposing it to the running product.
+
+Delivered:
+
+- schema version 8 and a strict SQLite receipt containing only opaque recovery
+  identifiers, opaque account scope, expected orphan status, action, and timestamps,
+- a bounded in-memory prepare challenge after canonical consistency preflight,
+- exact five-minute typed confirmation whose entered text is never persisted,
+- account, status, operation, action, and expiry verification through the existing
+  recovery verifier contract,
+- idempotent persistence, rebinding refusal, deterministic strict-boundary cleanup,
+  stable safe errors, and injected clock/ID sources,
+- ADR-028 and aligned database, privacy, handoff, project-map, README, and portfolio
+  documentation.
+
+Important decisions:
+
+- keep account recovery confirmation separate from installation-wide full deletion,
+- refuse challenge creation unless one exact orphan state is currently diagnosed,
+- retain recovery's second consistency check immediately before deletion,
+- keep the producer, repository, and recovery command outside startup, preload,
+  IPC, and UI,
+- add no dependency, compatibility path, provider action, credential, personal
+  data, or mailbox mutation.
+
+Evidence: 34 test files and 227 tests are defined at this checkpoint. Targeted
+service and SQLite cases cover state preflight, exact binding, typed text, expiry,
+idempotency, rebinding, malformed input, cleanup boundaries, and safe storage
+failure. Strict typecheck and the structural security check pass. Full test
+execution requires the repository's declared Node 24.18 runtime; this cloud image
+currently provides Node 20.20 and cannot download the requested runtime.
+
+Limitations: no recovery startup composition, preload/IPC method, renderer UI,
+Google adapter, live account, browser, network call, or credential exists. The
+running application cannot invoke this destructive policy.
+
 ## How future entries should be written
 
 For each material milestone, record:

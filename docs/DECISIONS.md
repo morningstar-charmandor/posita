@@ -440,3 +440,24 @@
   implemented, so the service is not composed into startup, preload, IPC, or UI
   and cannot run in the product. There is no dependency, schema migration,
   compatibility path, external action, real secret, or mailbox mutation.
+
+## ADR-028: Persist recovery confirmation separately from full deletion
+
+- Status: accepted for Gate 2D
+- Context: the discard-only recovery policy needs auditable, short-lived proof
+  bound to one opaque account and diagnosed orphan type. Reusing the installation-
+  wide `DELETE LOCAL DATA` receipt would weaken both scopes and allow unrelated
+  destructive actions to share an authorization shape.
+- Decision: add schema v8 with a dedicated recovery-confirmation table and one
+  trusted producer. Prepare only after canonical consistency inspection matches
+  `credential-only` or `provider-state-only`. Require exact
+  `DISCARD LOCAL CONNECTION` text within five minutes, persist only opaque IDs,
+  opaque account scope, expected status, action, and timestamps, and validate every
+  field during verification. Keep challenges bounded in memory and clean expired
+  durable receipts using a strict injected-clock boundary. Recovery continues to
+  recheck consistency before deleting one local side.
+- Consequence: deterministic code can prove account/status binding, expiry,
+  idempotent persistence, rebinding refusal, and safe storage failures without
+  credentials or provider access. The full-deletion schema and service remain
+  unchanged. No startup, preload, IPC, UI, browser, Google adapter, external action,
+  dependency, compatibility path, real secret, or mailbox mutation is added.
