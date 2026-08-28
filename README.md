@@ -70,13 +70,16 @@ inspection for one opaque account. It reports only `absent`, `connected`,
 for protected credential existence without decrypting or re-protecting it. No
 repair, deletion, startup check, IPC response, or UI status is activated.
 
-The approved local recovery policy is implemented as a separate trusted service.
-It accepts only an account- and status-bound confirmation receipt, refuses complete
-or already-absent connections, rechecks for stale state, and deletes exactly the
-orphaned credential or encrypted provider/sync state. Success returns the account
-to `absent` and requires a fresh connection. The confirmation producer is not yet
-implemented, so this command remains outside startup, preload, IPC, and UI and
-cannot affect local data in the running build.
+The approved local recovery policy and its dedicated durable confirmation producer
+are implemented as trusted, uncomposed services. Schema v8 stores only opaque,
+short-lived account/status-bound recovery receipts; the exact typed challenge text
+is never persisted. A receipt is atomically marked consumed before deletion, so
+it cannot authorize a later orphan with the same account and status. Recovery
+refuses complete or already-absent connections, rechecks for stale state, and
+deletes exactly the orphaned credential or encrypted provider/sync state. Success
+returns the account to `absent` and requires a fresh connection. A failed or
+interrupted deletion requires fresh confirmation. Both services remain outside
+startup, preload, IPC, and UI, so they cannot affect local data in the running build.
 
 Startup now has one cancellable lifecycle-recovery owner. If a full deletion is
 journaled, it resumes through deletion-only SQLite and vault operations without

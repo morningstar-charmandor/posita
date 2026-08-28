@@ -127,6 +127,12 @@ const accountConnectionService = await readText('src/main/application/accountCon
 const accountConnectionRecovery = await readText(
   'src/main/application/recoverAccountConnection.ts'
 )
+const accountConnectionRecoveryConfirmation = await readText(
+  'src/main/application/accountConnectionRecoveryConfirmation.ts'
+)
+const accountConnectionRecoveryConfirmationRepository = await readText(
+  'src/main/infrastructure/sqlite/sqliteAccountConnectionRecoveryConfirmationRepository.ts'
+)
 const gmailConsentPanel = await readText(
   'src/renderer/src/features/settings/GmailConnectConsentPanel.tsx'
 )
@@ -155,6 +161,14 @@ if (!accountConnectionRecovery.includes("action: 'discard-orphaned-local-connect
     !accountConnectionRecovery.includes("current === 'connected'") ||
     !accountConnectionRecovery.includes("finalState.status !== 'absent'")) {
   fail('account connection recovery must stay confirmed, discard-only, and fail-closed')
+}
+if (!accountConnectionRecovery.includes('this.confirmations.consume(recoveryRequest)') ||
+    !accountConnectionRecoveryConfirmation.includes(
+      "ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_TEXT = 'DISCARD LOCAL CONNECTION'"
+    ) ||
+    !accountConnectionRecoveryConfirmationRepository.includes('SET consumed_at = ?') ||
+    !accountConnectionRecoveryConfirmationRepository.includes('consumed_at IS NULL')) {
+  fail('account recovery confirmation must remain exact, one-use, and atomically consumed')
 }
 
 const localDataBootstrap = await readText('src/main/bootstrapLocalData.ts')
@@ -200,7 +214,10 @@ if (localDataBootstrap.includes('AccountConnectionService') ||
 }
 if (localDataBootstrap.includes('AccountConnectionRecoveryService') ||
     mainIndex.includes('AccountConnectionRecoveryService') ||
-    preload.includes('recoverAccountConnection')) {
+    preload.includes('recoverAccountConnection') ||
+    localDataBootstrap.includes('AccountConnectionRecoveryConfirmationService') ||
+    mainIndex.includes('AccountConnectionRecoveryConfirmationService') ||
+    preload.includes('prepareAccountConnectionRecovery')) {
   fail('account connection recovery must remain outside startup and IPC before approval')
 }
 

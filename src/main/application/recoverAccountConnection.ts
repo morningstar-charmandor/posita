@@ -30,15 +30,17 @@ export interface AccountConnectionRecoveryResultV1 {
 
 /**
  * A producer of this verifier must persist an auditable, short-lived receipt
- * bound to every field in the request. No production verifier exists yet.
+ * bound to every field in the request and atomically consume it once. The
+ * implemented producer remains outside production composition.
  */
 export interface AccountConnectionRecoveryConfirmationVerifier {
-  isValid(request: RecoverAccountConnectionRequestV1): boolean
+  consume(request: RecoverAccountConnectionRequestV1): boolean
 }
 
 export type AccountConnectionRecoveryErrorCode =
   | 'INVALID_ACCOUNT_CONNECTION_RECOVERY_REQUEST'
   | 'ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_REQUIRED'
+  | 'ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_UNAVAILABLE'
   | 'ACCOUNT_CONNECTION_RECOVERY_NOT_NEEDED'
   | 'ACCOUNT_CONNECTION_RECOVERY_REFUSED'
   | 'ACCOUNT_CONNECTION_RECOVERY_STATE_CHANGED'
@@ -78,7 +80,8 @@ export const isRecoverAccountConnectionRequestV1 = (
 /**
  * Main-process-only recovery policy. It never contacts a provider, reconstructs
  * missing data, or repairs a complete account. Production composition remains
- * blocked until an explicit confirmation producer is approved and implemented.
+ * blocked until the approved confirmation producer is composed into a reviewed
+ * product command.
  */
 export class AccountConnectionRecoveryService {
   constructor(
@@ -102,10 +105,27 @@ export class AccountConnectionRecoveryService {
     const initial = await this.connections.inspect(recoveryRequest.accountId)
     this.assertRecoverable(initial.status, recoveryRequest.expectedStatus)
 
-    let confirmed: boolean
+    const beforeConsumption = await this.connections.inspect(recoveryRequest.accountId)
+    if (beforeConsumption.status !== recoveryRequest.expectedStatus) {
+      throw new AccountConnectionRecoveryError(
+        'ACCOUNT_CONNECTION_RECOVERY_STATE_CHANGED',
+        'The account connection state changed before confirmation was consumed.',
+        false
+      )
+    }
+
+    let consumed: boolean
     try {
-      confirmed = this.confirmations.isValid(recoveryRequest)
+      consumed = this.confirmations.consume(recoveryRequest)
     } catch (error) {
+      if (isRetryableFailure(error)) {
+        throw new AccountConnectionRecoveryError(
+          'ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_UNAVAILABLE',
+          'The account connection recovery confirmation could not be verified. Try again.',
+          true,
+          { cause: error }
+        )
+      }
       throw new AccountConnectionRecoveryError(
         'ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_REQUIRED',
         'The account connection recovery confirmation could not be verified.',
@@ -113,10 +133,10 @@ export class AccountConnectionRecoveryService {
         { cause: error }
       )
     }
-    if (!confirmed) {
+    if (!consumed) {
       throw new AccountConnectionRecoveryError(
         'ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_REQUIRED',
-        'A valid account-bound confirmation is required.',
+        'A valid unused account-bound confirmation is required.',
         false
       )
     }
@@ -213,3 +233,7 @@ export class AccountConnectionRecoveryService {
     )
   }
 }
+
+const isRetryableFailure = (error: unknown): boolean =>
+  typeof error === 'object' && error !== null &&
+  'retryable' in error && error.retryable === true

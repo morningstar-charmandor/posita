@@ -306,10 +306,13 @@ diagnosed one-sided pair. Its exact versioned request is bound to an opaque
 confirmation ID, operation ID, account ID, action, and expected orphan status. A
 confirmation verifier must prove a durable short-lived receipt for that entire
 request. The service refuses `connected` and `absent`, rejects stale status,
-rechecks after confirmation, deletes only the orphaned credential or the account's
-encrypted provider/sync state, and verifies `absent` before reporting success.
-It does not revoke, reconnect, reconstruct, or contact a provider. No confirmation
-producer or production composition exists, so the running app cannot invoke it.
+rechecks before consumption, atomically consumes the exact unused receipt, rechecks
+again, deletes only the orphaned credential or the account's encrypted provider/
+sync state, and verifies `absent` before reporting success. Consumption is durable
+and occurs before mutation, preventing replay against newly recreated state; a
+failed or interrupted deletion requires fresh confirmation. The dedicated schema-v8
+producer and repository are implemented but uncomposed. The service does not revoke,
+reconnect, reconstruct, or contact a provider, so the running app cannot invoke it.
 
 ## Gmail synchronization
 

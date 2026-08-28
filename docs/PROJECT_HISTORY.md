@@ -989,6 +989,52 @@ Limitations: the confirmation verifier is a required contract, not a production
 producer. No durable recovery receipt schema, challenge UI, preload/IPC command,
 startup composition, real account, credential, browser, or network call exists.
 
+## Gate 2D foundation — Durable account-recovery confirmation
+
+Date: 2026-08-28
+Checkpoint: use the Git commit whose subject is `feat: persist recovery confirmation`
+
+Goal: supply the approved discard-only recovery policy with distinct, durable,
+short-lived authorization without exposing it to the running product.
+
+Delivered:
+
+- schema version 8 and a strict SQLite receipt containing only opaque recovery
+  identifiers, opaque account scope, expected orphan status, action, timestamps,
+  and optional consumption time,
+- a bounded in-memory prepare challenge after canonical consistency preflight,
+- exact five-minute typed confirmation whose entered text is never persisted,
+- atomic one-use consumption bound to account, status, operation, action, and
+  validity window before any local deletion,
+- semantic idempotent persistence independent of object property order, rebinding
+  refusal, replay refusal, deterministic strict-boundary cleanup, safe inspection/
+  storage errors, and injected clock/ID sources,
+- ADR-028 and aligned database, privacy, handoff, project-map, README, and portfolio
+  documentation.
+
+Important decisions:
+
+- keep account recovery confirmation separate from installation-wide full deletion,
+- refuse challenge creation unless one exact orphan state is currently diagnosed,
+- check consistency before consumption and again before deletion,
+- require fresh confirmation after a failed or interrupted deletion instead of
+  adding a parallel recovery-operation journal,
+- keep the producer, repository, and recovery command outside startup, preload,
+  IPC, and UI,
+- add no dependency, compatibility path, provider action, credential, personal
+  data, or mailbox mutation.
+
+Evidence: 34 test files and 229 tests pass under the declared Node 24.18 runtime.
+Coverage includes state preflight and inspection failure, exact binding, typed
+text, expiry, order-independent idempotency, rebinding, one-use consumption,
+replay refusal after deletion failure, malformed input, cleanup boundaries, and
+safe storage failures. Strict typecheck, structural security checks, and all
+production Electron builds pass.
+
+Limitations: no recovery startup composition, preload/IPC method, renderer UI,
+Google adapter, live account, browser, network call, or credential exists. The
+running application cannot invoke this destructive policy.
+
 ## How future entries should be written
 
 For each material milestone, record:

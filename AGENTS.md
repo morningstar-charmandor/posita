@@ -33,8 +33,9 @@ exists deeper in the tree.
   to-encrypted-state ordering and rollback, but it has no production composition.
 - Read-only account-connection consistency inspection distinguishes absent,
   connected, credential-only, and provider-state-only states without repair.
-- A confirmed discard-only policy for one-sided local connection state is tested
-  but has no confirmation producer, startup, preload, IPC, or UI composition.
+- A confirmed discard-only policy and one-use durable confirmation producer for
+  one-sided local connection state are tested but have no startup, preload, IPC,
+  or UI composition.
 - Gmail, lifecycle scheduling, retention scheduling, and model providers are not connected.
 - Sending mail is intentionally disabled.
 - Product promise: **Your inboxes, understood as one.**

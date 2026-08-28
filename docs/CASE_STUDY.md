@@ -236,6 +236,9 @@ At the current Gate 2D foundation checkpoint, Posita has:
   without credential decryption, repair, deletion, startup, or renderer exposure,
 - a confirmed discard-only recovery policy that refuses complete/absent/stale
   state, removes one orphaned local side, verifies absence, and requires reconnect,
+- a separate five-minute typed recovery confirmation with durable opaque
+  account/status binding, atomic one-use consumption, replay refusal, and no
+  production IPC or UI composition,
 - explicit sample-mode labels across account, brief, search, and draft surfaces,
 - keyless pre-bootstrap recovery, shutdown cancellation between phases, and a
   durable deleted mode that remains empty across repeated restarts,
@@ -246,7 +249,7 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - future sync ownership and account-isolation contracts without premature
   provider implementation,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 32 automated test files containing 221 passing tests,
+- 34 automated test files containing 229 passing tests,
 - passing strict TypeScript, structural security checks, and production builds.
 
 These are engineering outcomes, not evidence of customer adoption or AI quality.
@@ -254,12 +257,12 @@ No real mailbox, OAuth credential, or model provider has been used.
 
 ## What comes next
 
-The discard-only recovery policy is now accepted and tested at the trusted
-application layer. The next Gate 2D decision is the durable, short-lived
-account/status-bound confirmation producer and its schema; it must not weaken the
-existing installation-wide deletion confirmation. Real Google OAuth, browser
-activation, credentials, recovery IPC/UI enablement, and sync remain blocked
-behind explicit owner approval and lifecycle gates.
+The discard-only recovery policy now has a dedicated durable, short-lived
+account/status-bound confirmation producer and schema without weakening the
+installation-wide deletion confirmation. The next Gate 2D decision is the narrow
+prepare/execute IPC contract and accessible recovery surface. Real Google OAuth,
+browser activation, credentials, recovery IPC/UI enablement, and sync remain
+blocked behind explicit owner approval and lifecycle gates.
 
 Later evidence should include measured sync reliability, duplicate prevention,
 citation correctness, draft usefulness, correction rate, and time to attention.

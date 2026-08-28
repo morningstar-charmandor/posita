@@ -78,14 +78,22 @@ class MemoryAccountState implements AccountStateRepository {
 class ConfirmationVerifier implements AccountConnectionRecoveryConfirmationVerifier {
   valid = true
   fail = false
+  retryableFail = false
   onValidate?: () => void
   calls: RecoverAccountConnectionRequestV1[] = []
 
-  isValid(value: RecoverAccountConnectionRequestV1): boolean {
+  consume(value: RecoverAccountConnectionRequestV1): boolean {
     this.calls.push(value)
+    if (this.retryableFail) {
+      throw Object.assign(new Error('unsafe test-only retryable confirmation failure'), {
+        retryable: true
+      })
+    }
     if (this.fail) throw new Error('unsafe test-only confirmation failure')
     this.onValidate?.()
-    return this.valid
+    const result = this.valid
+    if (result) this.valid = false
+    return result
   }
 }
 
@@ -201,6 +209,18 @@ describe('AccountConnectionRecoveryService', () => {
     })
     expect(verificationFailure.vault.deleteCalls).toEqual([])
 
+    const retryableVerificationFailure = createHarness()
+    retryableVerificationFailure.vault.values.set(
+      credentialName,
+      'orphaned-test-credential'
+    )
+    retryableVerificationFailure.confirmations.retryableFail = true
+    await expect(retryableVerificationFailure.service.recover(request)).rejects.toMatchObject({
+      code: 'ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_UNAVAILABLE',
+      retryable: true
+    })
+    expect(retryableVerificationFailure.vault.deleteCalls).toEqual([])
+
     const deletionFailure = createHarness()
     deletionFailure.vault.values.set(credentialName, 'orphaned-test-credential')
     deletionFailure.vault.failDelete = true
@@ -209,6 +229,12 @@ describe('AccountConnectionRecoveryService', () => {
       retryable: true
     })
     expect(deletionFailure.vault.values.has(credentialName)).toBe(true)
+    deletionFailure.vault.failDelete = false
+    await expect(deletionFailure.service.recover(request)).rejects.toMatchObject({
+      code: 'ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_REQUIRED',
+      retryable: false
+    })
+    expect(deletionFailure.vault.deleteCalls).toEqual([credentialName])
   })
 
   it('detects a post-confirmation state change and an incomplete deletion', async () => {

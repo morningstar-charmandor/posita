@@ -209,5 +209,8 @@ only bounded challenge/status fields and stable errors through validated IPC.
 Account-connection recovery reuses the existing account-scoped provider/sync-state
 deletion when those encrypted records are the only remaining half of a confirmed
 connection pair. It never decrypts or reconstructs missing data, never touches a
-different account, and verifies the presence-only result is `absent`. This policy
-has no production confirmation or invocation path in the current milestone.
+different account, and verifies the presence-only result is `absent`. Schema v8
+stores only bounded operational confirmation metadata outside encrypted private
+records. Its exact receipt is atomically consumed before encrypted account-state
+deletion and cannot be replayed. This policy has no production invocation path in
+the current milestone.

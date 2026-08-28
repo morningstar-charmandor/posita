@@ -48,8 +48,10 @@ An application-only recovery service now encodes the approved local policy: afte
 an exact account- and orphan-status-bound confirmation, discard only the orphaned
 credential or encrypted provider/sync state and require a fresh connection. It
 refuses a complete connection and performs no revocation or Google request. The
-required durable confirmation producer and every startup, preload, IPC, and UI
-entry point remain unimplemented, so the behavior is deterministic-test-only.
+dedicated schema-v8 producer atomically consumes an exact unused receipt before
+local deletion, preventing replay; a failed attempt needs fresh confirmation.
+The producer, recovery service, and repository remain outside startup, preload,
+IPC, and UI, so the behavior is deterministic-test-only.
 
 ## Desktop OAuth flow
 
