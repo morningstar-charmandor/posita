@@ -121,6 +121,9 @@ if (!rendererStyles.includes('@media (prefers-reduced-motion: reduce)')) {
 
 const sharedContracts = await readText('src/shared/contracts.ts')
 const applicationStateService = await readText('src/main/application/applicationStateService.ts')
+const secretVaultContract = await readText('src/main/application/secretVault.ts')
+const accountStateContract = await readText('src/main/application/accountState.ts')
+const accountConnectionService = await readText('src/main/application/accountConnection.ts')
 const gmailConsentPanel = await readText(
   'src/renderer/src/features/settings/GmailConnectConsentPanel.tsx'
 )
@@ -134,6 +137,14 @@ if (!applicationStateService.includes('connectConsent: GOOGLE_CONNECT_CONSENT'))
 if (!gmailConsentPanel.includes('Connect Gmail unavailable in this build') ||
     !gmailConsentPanel.includes('disabled')) {
   fail('Gmail authorization must remain visibly inactive before approval')
+}
+if (!secretVaultContract.includes('has(name: SecretName): Promise<boolean>') ||
+    !accountStateContract.includes('hasProviderAccount(accountId: string): boolean') ||
+    !accountConnectionService.includes('this.accountState.hasProviderAccount(accountId)') ||
+    !accountConnectionService.includes('this.vault.has(googleRefreshTokenName(accountId))') ||
+    !accountConnectionService.includes("| 'credential-only'") ||
+    !accountConnectionService.includes("| 'provider-state-only'")) {
+  fail('account connection consistency must remain presence-only and fail-closed')
 }
 
 const localDataBootstrap = await readText('src/main/bootstrapLocalData.ts')

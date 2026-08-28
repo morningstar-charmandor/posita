@@ -4,6 +4,7 @@ export type SecretName =
 
 export interface SecretVault {
   set(name: SecretName, value: string): Promise<void>
+  has(name: SecretName): Promise<boolean>
   get(name: SecretName): Promise<string | undefined>
   delete(name: SecretName): Promise<boolean>
   deleteGoogleRefreshTokens(): Promise<number>

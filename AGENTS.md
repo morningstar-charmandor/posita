@@ -31,6 +31,8 @@ exists deeper in the tree.
   are implemented but are not composed into startup, preload, IPC, or UI.
 - A credential-free account-connection coordinator proves authorization-to-vault-
   to-encrypted-state ordering and rollback, but it has no production composition.
+- Read-only account-connection consistency inspection distinguishes absent,
+  connected, credential-only, and provider-state-only states without repair.
 - Gmail, lifecycle scheduling, retention scheduling, and model providers are not connected.
 - Sending mail is intentionally disabled.
 - Product promise: **Your inboxes, understood as one.**

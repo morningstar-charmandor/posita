@@ -6,7 +6,11 @@ import {
   type AuthorizedAccountGrantV1,
   type BeginAccountAuthorizationRequestV1
 } from './accountAuthorization'
-import { AccountConnectionError, AccountConnectionService } from './accountConnection'
+import {
+  AccountConnectionError,
+  AccountConnectionService,
+  isAccountConnectionConsistencyV1
+} from './accountConnection'
 import type {
   AccountStateRepository,
   ProviderAccountRecordV1,
@@ -41,6 +45,11 @@ class MemoryVault implements SecretVault {
     return this.values.get(name)
   }
 
+  async has(name: SecretName): Promise<boolean> {
+    this.events.push('vault:has')
+    return this.values.has(name)
+  }
+
   async delete(name: SecretName): Promise<boolean> {
     this.events.push('vault:delete')
     if (this.failDelete) throw new Error('unsafe test-only delete failure')
@@ -62,6 +71,11 @@ class MemoryAccountState implements AccountStateRepository {
     this.events.push('state:save')
     this.accounts.set(record.accountId, record)
     if (this.failSaveAfterWrite) throw new Error('unsafe test-only state failure')
+  }
+
+  hasProviderAccount(accountId: string): boolean {
+    this.events.push('state:has')
+    return this.accounts.has(accountId)
   }
 
   loadProviderAccount(accountId: string): ProviderAccountRecordV1 | undefined {
@@ -117,6 +131,76 @@ const completeRequest = {
 }
 
 describe('AccountConnectionService', () => {
+  it('diagnoses every account-connection consistency state without mutation', async () => {
+    const absent = createHarness()
+    await expect(absent.service.inspect(request.accountId)).resolves.toEqual({
+      version: 1,
+      accountId: request.accountId,
+      status: 'absent'
+    })
+
+    const credentialOnly = createHarness()
+    credentialOnly.vault.values.set(
+      'oauth.google.account-work-1.refresh-token',
+      'orphaned-test-credential'
+    )
+    await expect(credentialOnly.service.inspect(request.accountId)).resolves.toMatchObject({
+      status: 'credential-only'
+    })
+
+    const providerStateOnly = createHarness()
+    providerStateOnly.state.accounts.set(request.accountId, {
+      version: 1,
+      accountId: request.accountId,
+      provider: 'google',
+      providerAccountId: 'provider-subject-fixture-1',
+      consentVersion: GOOGLE_CONNECT_CONSENT.consentVersion,
+      connectedAt: '2026-08-28T07:00:00.000Z'
+    })
+    await expect(providerStateOnly.service.inspect(request.accountId)).resolves.toMatchObject({
+      status: 'provider-state-only'
+    })
+
+    providerStateOnly.vault.values.set(
+      'oauth.google.account-work-1.refresh-token',
+      'deterministic-test-refresh-credential'
+    )
+    const connected = await providerStateOnly.service.inspect(request.accountId)
+    expect(connected).toEqual({
+      version: 1,
+      accountId: request.accountId,
+      status: 'connected'
+    })
+    expect(isAccountConnectionConsistencyV1(connected)).toBe(true)
+    expect(providerStateOnly.vault.values.size).toBe(1)
+    expect(providerStateOnly.state.accounts.size).toBe(1)
+  })
+
+  it('rejects malformed consistency queries before reading either store', async () => {
+    const { service, vault, state } = createHarness()
+
+    await expect(service.inspect('../not-an-account')).rejects.toMatchObject({
+      code: 'INVALID_ACCOUNT_CONNECTION_REQUEST',
+      retryable: false
+    })
+    expect(vault.events).toEqual([])
+    expect(state.events).toEqual([])
+  })
+
+  it('validates consistency results as exact bounded objects', () => {
+    expect(isAccountConnectionConsistencyV1({
+      version: 1,
+      accountId: request.accountId,
+      status: 'credential-only'
+    })).toBe(true)
+    expect(isAccountConnectionConsistencyV1({
+      version: 1,
+      accountId: request.accountId,
+      status: 'credential-only',
+      credential: 'must-not-be-exposed'
+    })).toBe(false)
+  })
+
   it('stores the refresh credential before encrypted provider-account state', async () => {
     const { service, vault, state } = createHarness()
     await service.begin(request)

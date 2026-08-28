@@ -393,3 +393,26 @@
   credential. The coordinator is not composed into startup, preload, IPC, UI, or
   a Google adapter. No dependency, schema migration, compatibility path, external
   action, or production secret is added.
+
+## ADR-026: Diagnose connection inconsistency before choosing repair
+
+- Status: accepted for Gate 2D
+- Context: cross-store rollback can fail, and a future crash can leave only a
+  refresh credential or only encrypted provider-account state. Automatically
+  deleting either side would be destructive, while loading a credential merely
+  to test its presence unnecessarily exposes secret material and may rotate its
+  protected value.
+- Decision: extend the existing `AccountConnectionService` with one versioned,
+  main-process-only inspection for a validated opaque account ID. Return exactly
+  `absent`, `connected`, `credential-only`, or `provider-state-only`. Add a narrow
+  `SecretVault.has` and `AccountStateRepository.hasProviderAccount` capabilities
+  whose SQLite adapters check row presence without decrypting either payload.
+  Reuse this projection for connection preflight.
+  Do not repair, delete, overwrite, contact Google, or expose the result over IPC.
+- Consequence: callers can distinguish a clean connection boundary from both
+  one-sided failure states without handling token or provider identity. Invalid
+  IDs and storage failures map to stable safe errors. Deterministic tests prove
+  all four outcomes, exact result shape, no mutation, and no credential
+  unprotection. A future destructive repair policy still requires explicit owner
+  approval and confirmation design. No new service, dependency, schema migration,
+  compatibility path, startup composition, external action, or real secret is added.

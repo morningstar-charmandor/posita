@@ -32,14 +32,33 @@ describe('SqliteSecretVault', () => {
     const { vault } = createVault()
     const name = googleRefreshTokenName('personal')
 
+    expect(await vault.has(name)).toBe(false)
     expect(await vault.get(name)).toBeUndefined()
     await vault.set(name, 'first-refresh-token')
+    expect(await vault.has(name)).toBe(true)
     expect(await vault.get(name)).toBe('first-refresh-token')
     await vault.set(name, 'replacement-refresh-token')
     expect(await vault.get(name)).toBe('replacement-refresh-token')
     expect(await vault.delete(name)).toBe(true)
+    expect(await vault.has(name)).toBe(false)
     expect(await vault.delete(name)).toBe(false)
     expect(await vault.get(name)).toBeUndefined()
+  })
+
+  it('checks credential presence without unprotecting its value', async () => {
+    const protector: StringProtector = {
+      scheme: 'presence-test-v1',
+      protect: async (value) => Buffer.from(`opaque:${value}`),
+      unprotect: async () => {
+        throw new Error('presence checks must not unprotect')
+      }
+    }
+    const { vault } = createVault(protector)
+    const name = googleRefreshTokenName('work')
+    await vault.set(name, 'test-only-refresh-value')
+
+    await expect(vault.has(name)).resolves.toBe(true)
+    await expect(vault.get(name)).rejects.toThrow('presence checks must not unprotect')
   })
 
   it('never persists the credential value as plaintext', async () => {

@@ -189,3 +189,10 @@ credential, and deterministic tests verify that an ambiguous state write leaves
 neither record. If cleanup itself fails, the service reports a stable recovery-
 required condition instead of claiming connection or silently overwriting data.
 No production token or account has passed through this code.
+
+Consistency diagnosis now uses a presence-only `SecretVault.has` query. Unlike
+credential retrieval, this query does not unprotect or opportunistically rotate a
+stored secret. The resulting versioned status contains only the supplied opaque
+account ID and an allow-listed state; it never includes provider identity or
+credential material. Credential-only and provider-state-only states are reported
+without deletion or repair and continue to block authorization.

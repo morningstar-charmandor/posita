@@ -139,6 +139,7 @@
     "gmail-connect-consent-is-versioned-read-only-and-inactive-without-explicit-authorization",
     "authorization-sessions-are-bounded-main-process-only-and-fake-testable-without-credentials",
     "account-connection-writes-vault-before-encrypted-state-and-rolls-back-fail-closed",
+    "account-connection-inconsistency-is-read-only-bounded-and-never-auto-repaired",
     "startup-full-deletion-recovery-never-loads-creates-or-replaces-the-cache-key",
     "completed-full-deletion-prevents-key-recreation-and-fixture-reseeding",
     "one-sync-coordinator-owns-all-provider-io",

@@ -98,6 +98,11 @@ ambiguous and removes account state and then the credential. There is no automat
 repair or startup activation; inconsistent pre-existing records fail closed for a
 future explicit recovery capability.
 
+`SecretVault.has` performs a bounded name lookup only. Account-connection
+consistency uses it with encrypted provider-account record presence to classify
+the pair without unprotecting a credential. The query does not alter either
+table, and inconsistent states remain untouched.
+
 Schema version 5 adds `account_lifecycle_operations`, a deliberately non-sensitive
 crash-resume journal. It contains only a contract version, opaque operation ID,
 allow-listed operation and phase, optional opaque account scope, safe error code,

@@ -32,6 +32,7 @@ export interface ProviderSyncStateV1 {
 
 export interface AccountStateRepository {
   saveProviderAccount(record: ProviderAccountRecordV1): void
+  hasProviderAccount(accountId: string): boolean
   loadProviderAccount(accountId: string): ProviderAccountRecordV1 | undefined
   saveSyncState(state: ProviderSyncStateV1): void
   loadSyncState(accountId: string): ProviderSyncStateV1 | undefined

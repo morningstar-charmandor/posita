@@ -102,6 +102,12 @@ Implemented:
   vault-before-encrypted-state, and rolls back both on ambiguous state failure,
 - stable duplicate, inconsistent-state, storage, invalid-provider-result, and
   cleanup-recovery failures without exposing the refresh grant,
+- a versioned read-only consistency result for absent, connected, credential-only,
+  and provider-state-only account pairs, reused by connection preflight,
+- a vault presence capability that diagnoses protected credential existence
+  without unprotecting, rotating, returning, deleting, or overwriting the value,
+- an encrypted provider-account presence capability that avoids decrypting or
+  returning provider identity during consistency inspection,
 - truthful sample-mode labels that do not describe fixture accounts, briefs, or
   deterministic drafts as live Gmail or production AI,
 - deterministic credential-free verification through `npm run verify`.
@@ -120,6 +126,8 @@ Simulated or deliberately inactive:
 - authorization-session behavior exists only behind a deterministic test fake,
 - account-connection persistence is exercised only through deterministic in-memory
   collaborators and is not composed into production startup,
+- account consistency is main-process-only diagnostic behavior with no repair,
+  preload, IPC, UI, startup, or provider action,
 - sending and every other remote mailbox mutation are disabled.
 
 Not implemented:
@@ -156,9 +164,9 @@ confirmed local deletion are complete at their current layers. Continue in this 
 
 1. Keep pending disconnect visible but inactive until a real idempotent Google
    revocation adapter can be composed and tested.
-2. Before any activation, decide and document the recovery command/status for a
-   one-sided credential or provider-account record. Keep it main-process-only and
-   deterministic; do not silently overwrite or delete inconsistent state.
+2. Decide whether a future explicitly confirmed recovery command should discard
+   the orphaned local side and require reconnection. No automatic repair should
+   infer or reconstruct missing identity or credential data.
 3. Request explicit owner approval before composing a real Google adapter,
    credentials, browser authorization, startup/IPC/UI activation, or live account.
 4. Keep real Gmail ingestion disabled until authorization activation is separately
@@ -168,10 +176,11 @@ confirmed local deletion are complete at their current layers. Continue in this 
 Do not solve encrypted search casually. Any index must avoid becoming a second
 plaintext mailbox. Record the selected search tradeoff in `docs/DECISIONS.md`.
 
-Milestone change report: `AccountConnectionService` is the only new abstraction.
-There are no new dependencies, schema migrations, compatibility paths, production
-composition paths, or intentional duplicate implementations. Existing vault,
-account-state, authorization, and deterministic-fake contracts are retained.
+Milestone change report: no new service abstraction was added. The existing
+`AccountConnectionService` gained one versioned consistency result, and the
+existing vault and account-state contracts gained presence-only queries. There
+are no new dependencies, schema migrations, compatibility paths, production
+composition paths, destructive commands, or intentional duplicate implementations.
 
 ## How to resume
 
@@ -191,7 +200,7 @@ account-state, authorization, and deterministic-fake contracts are retained.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 31 test files, 209 tests, strict typecheck, structure
+- Current verified baseline: 31 test files, 214 tests, strict typecheck, structure
   checks, and production Electron build passing.
 
 Native verification migrated the development database to schema v3 with 21

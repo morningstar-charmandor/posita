@@ -181,6 +181,12 @@ credential before encrypted provider identity, and reverses both writes after an
 ambiguous state failure. A failed cleanup is surfaced as recovery-required rather
 than hidden behind a connected status.
 
+The next failure boundary is now inspectable without becoming self-healing.
+Posita classifies an account's local pair as absent, connected, credential-only,
+or provider-state-only. The vault answers only whether a protected record exists,
+without decrypting or rotating it. Inconsistent state remains untouched until a
+separately approved recovery experience defines explicit user intent.
+
 ### Choosing bounded context
 
 The private alpha will import and retain a rolling 90-day window. This trades
@@ -224,6 +230,8 @@ At the current Gate 2D foundation checkpoint, Posita has:
   with no production composition, browser action, network access, or live credential,
 - a credential-free account-connection coordinator with duplicate preflight,
   vault-before-state ordering, ambiguous-write rollback, and explicit recovery failure,
+- a bounded read-only consistency diagnosis covering both one-sided failure states
+  without credential decryption, repair, deletion, startup, or renderer exposure,
 - explicit sample-mode labels across account, brief, search, and draft surfaces,
 - keyless pre-bootstrap recovery, shutdown cancellation between phases, and a
   durable deleted mode that remains empty across repeated restarts,
@@ -234,7 +242,7 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - future sync ownership and account-isolation contracts without premature
   provider implementation,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 31 automated test files containing 209 passing tests,
+- 31 automated test files containing 214 passing tests,
 - passing strict TypeScript, structural security checks, and production builds.
 
 These are engineering outcomes, not evidence of customer adoption or AI quality.
@@ -242,10 +250,11 @@ No real mailbox, OAuth credential, or model provider has been used.
 
 ## What comes next
 
-The next Gate 2D slice should define how a user or startup owner safely recovers
-from a one-sided credential/provider-state record without silently overwriting or
-deleting it. Real Google OAuth, browser activation, credentials, IPC/UI enablement,
-and sync remain blocked behind explicit owner approval and lifecycle gates.
+The next Gate 2D decision is whether an explicitly confirmed local recovery command
+should discard the orphaned side and require a fresh connection. Posita should not
+infer missing identity or credential data. Real Google OAuth, browser activation,
+credentials, IPC/UI enablement, and sync remain blocked behind explicit owner
+approval and lifecycle gates.
 
 Later evidence should include measured sync reliability, duplicate prevention,
 citation correctness, draft usefulness, correction rate, and time to attention.

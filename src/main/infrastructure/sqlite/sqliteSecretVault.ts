@@ -42,6 +42,16 @@ export class SqliteSecretVault implements SecretVault {
     }
   }
 
+  async has(name: SecretName): Promise<boolean> {
+    this.assertName(name)
+    try {
+      return this.database.prepare('SELECT 1 FROM protected_secrets WHERE name = ?')
+        .get(name) !== undefined
+    } catch (error) {
+      throw this.storageFailure('The credential presence could not be checked.', error)
+    }
+  }
+
   async get(name: SecretName): Promise<string | undefined> {
     this.assertName(name)
     let row: ProtectedSecretRow | undefined

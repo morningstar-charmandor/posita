@@ -291,6 +291,16 @@ condition rather than a false success. Provider-unavailable and callback-rejecte
 authorization errors retain their in-memory session for retry. The coordinator is
 tested only with deterministic fakes and is not composed in startup or IPC.
 
+The coordinator also owns the single read-only consistency projection for this
+cross-store boundary. For one validated opaque account ID it reports exactly one
+of `absent`, `connected`, `credential-only`, or `provider-state-only`. It uses the
+vault and encrypted account-state presence-only queries, so diagnosis does not
+decrypt, return, or rotate either payload. Connection preflight consumes this
+same projection rather than reimplementing consistency rules. Inconsistent state
+blocks authorization, but
+the query never repairs, deletes, or overwrites either store and remains outside
+startup, preload, IPC, and UI.
+
 ## Gmail synchronization
 
 The Gmail adapter will use an initial 90-day import followed by incremental

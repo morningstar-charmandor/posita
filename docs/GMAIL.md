@@ -37,6 +37,13 @@ metadata but never the refresh credential. This service uses deterministic fakes
 only and is not a Google client, production credential path, startup component,
 IPC capability, or enabled connection action.
 
+The coordinator can now diagnose the local connection pair without contacting
+Google. Its versioned main-only result distinguishes no records, both records,
+credential-only, and provider-state-only. It returns no provider subject or token,
+and its vault presence check does not decrypt the credential. This status blocks
+new authorization when either side is inconsistent but performs no automatic or
+user-triggered repair. Reconnecting Gmail remains impossible in this build.
+
 ## Desktop OAuth flow
 
 Posita will use Google's installed-desktop application flow with Authorization

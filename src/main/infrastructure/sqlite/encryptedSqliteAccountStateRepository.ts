@@ -54,6 +54,18 @@ export class EncryptedSqliteAccountStateRepository implements AccountStateReposi
     this.save('provider-account', record.accountId, record)
   }
 
+  hasProviderAccount(accountId: string): boolean {
+    this.assertAccountId(accountId)
+    try {
+      return this.database.prepare(`
+        SELECT 1 FROM encrypted_account_records
+        WHERE record_type = 'provider-account' AND account_scope = ?
+      `).get(accountId) !== undefined
+    } catch (error) {
+      throw storageFailure('Failed to check encrypted provider-account state.', error)
+    }
+  }
+
   loadProviderAccount(accountId: string): ProviderAccountRecordV1 | undefined {
     const value = this.load('provider-account', accountId)
     if (value === undefined) return undefined

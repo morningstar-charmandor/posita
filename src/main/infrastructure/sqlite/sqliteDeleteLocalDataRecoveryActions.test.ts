@@ -9,6 +9,7 @@ import { InlineSqliteStorageSanitizer } from './sqliteSanitization'
 class MemoryVault implements SecretVault {
   readonly values = new Map<SecretName, string>()
   async set(name: SecretName, value: string): Promise<void> { this.values.set(name, value) }
+  async has(name: SecretName): Promise<boolean> { return this.values.has(name) }
   async get(name: SecretName): Promise<string | undefined> { return this.values.get(name) }
   async delete(name: SecretName): Promise<boolean> { return this.values.delete(name) }
   async deleteGoogleRefreshTokens(): Promise<number> {

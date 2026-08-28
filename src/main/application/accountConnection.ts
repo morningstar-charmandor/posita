@@ -9,6 +9,7 @@ import {
   type CompleteAccountAuthorizationRequestV1
 } from './accountAuthorization'
 import {
+  isAccountId,
   isProviderAccountRecordV1,
   type AccountStateRepository,
   type ProviderAccountRecordV1
@@ -16,6 +17,7 @@ import {
 import { googleRefreshTokenName, type SecretVault } from './secretVault'
 
 export type AccountConnectionErrorCode =
+  | 'INVALID_ACCOUNT_CONNECTION_REQUEST'
   | 'ACCOUNT_ALREADY_CONNECTED'
   | 'ACCOUNT_CONNECTION_RECOVERY_REQUIRED'
   | 'AUTHORIZATION_RESULT_INVALID'
@@ -38,6 +40,30 @@ export class AccountConnectionError extends Error {
 interface PendingConnection {
   sessionId: string
   accountId: string
+}
+
+export type AccountConnectionConsistencyStatus =
+  | 'absent'
+  | 'connected'
+  | 'credential-only'
+  | 'provider-state-only'
+
+export interface AccountConnectionConsistencyV1 {
+  version: 1
+  accountId: string
+  status: AccountConnectionConsistencyStatus
+}
+
+export const isAccountConnectionConsistencyV1 = (
+  value: unknown
+): value is AccountConnectionConsistencyV1 => {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false
+  const result = value as Record<string, unknown>
+  return Object.keys(result).length === 3 &&
+    Object.keys(result).every((key) => ['version', 'accountId', 'status'].includes(key)) &&
+    result.version === 1 && isAccountId(result.accountId) &&
+    (result.status === 'absent' || result.status === 'connected' ||
+      result.status === 'credential-only' || result.status === 'provider-state-only')
 }
 
 /**
@@ -173,12 +199,19 @@ export class AccountConnectionService {
     return cancelled
   }
 
-  private async assertAccountIsAvailable(accountId: string): Promise<void> {
-    let account: ProviderAccountRecordV1 | undefined
-    let credential: string | undefined
+  async inspect(accountId: string): Promise<AccountConnectionConsistencyV1> {
+    if (!isAccountId(accountId)) {
+      throw new AccountConnectionError(
+        'INVALID_ACCOUNT_CONNECTION_REQUEST',
+        'The account connection request is invalid.',
+        false
+      )
+    }
+    let hasProviderState: boolean
+    let hasCredential: boolean
     try {
-      account = this.accountState.loadProviderAccount(accountId)
-      credential = await this.vault.get(googleRefreshTokenName(accountId))
+      hasProviderState = this.accountState.hasProviderAccount(accountId)
+      hasCredential = await this.vault.has(googleRefreshTokenName(accountId))
     } catch (error) {
       throw new AccountConnectionError(
         'ACCOUNT_CONNECTION_RECOVERY_REQUIRED',
@@ -187,14 +220,22 @@ export class AccountConnectionService {
         { cause: error }
       )
     }
-    if (account !== undefined && credential !== undefined) {
+    const status: AccountConnectionConsistencyStatus = hasProviderState
+      ? (hasCredential ? 'connected' : 'provider-state-only')
+      : (hasCredential ? 'credential-only' : 'absent')
+    return { version: 1, accountId, status }
+  }
+
+  private async assertAccountIsAvailable(accountId: string): Promise<void> {
+    const consistency = await this.inspect(accountId)
+    if (consistency.status === 'connected') {
       throw new AccountConnectionError(
         'ACCOUNT_ALREADY_CONNECTED',
         'This Posita account is already connected.',
         false
       )
     }
-    if (account !== undefined || credential !== undefined) {
+    if (consistency.status !== 'absent') {
       throw new AccountConnectionError(
         'ACCOUNT_CONNECTION_RECOVERY_REQUIRED',
         'Incomplete account connection state requires recovery.',

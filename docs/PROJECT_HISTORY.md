@@ -899,6 +899,52 @@ not composed into startup, preload, IPC, Settings, or a real provider. No Gmail
 account, AI provider, production credential, personal mailbox data, browser, or
 network call was used.
 
+## Gate 2D foundation — Read-only account-connection consistency
+
+Date: 2026-08-28
+Checkpoint: use the Git commit whose subject is `feat: diagnose account connection consistency`
+
+Goal: make cross-store connection failures diagnosable without decrypting a
+credential or inventing an automatic destructive repair policy.
+
+Delivered:
+
+- one exact versioned consistency result on the existing
+  `AccountConnectionService`,
+- deterministic classification of `absent`, `connected`, `credential-only`, and
+  `provider-state-only` for one validated opaque account ID,
+- reuse of the same result by authorization preflight so consistency rules remain
+  one source of truth,
+- a narrow `SecretVault.has` contract and SQLite implementation that checks
+  protected-record presence without unprotecting or rotating the credential,
+- a matching encrypted provider-account presence query that avoids payload
+  decryption and provider-identity materialization,
+- strict output-shape validation that rejects additional credential-like fields,
+- stable invalid-request and storage-verification failures,
+- ADR-026 and aligned agent, architecture, Gmail, privacy, database, encrypted-
+  cache, handoff, project-map, and portfolio documentation.
+
+Important decisions:
+
+- diagnosis returns only opaque account identity and an allow-listed status,
+- do not repair, delete, overwrite, reconnect, or contact Google from inspection,
+- keep the capability in the trusted application layer and outside startup,
+  preload, IPC, and UI,
+- extend the existing coordinator and vault contracts instead of adding a second
+  consistency service or decrypting credentials for presence checks,
+- add no dependency, schema migration, compatibility path, destructive command,
+  production composition, external action, or real secret.
+
+Evidence: 31 test files and 214 tests passed before final checkpoint verification.
+Coverage includes all four states, exact result validation, malformed account IDs,
+no store mutation, connection-preflight reuse, and real SQLite presence queries
+that succeed while credential or provider-state decryption is forced to fail.
+
+Limitations: no recovery command exists. Choosing whether to discard an orphaned
+local side and require reconnection remains an explicit owner decision. No real
+Gmail account, AI provider, credential, personal mailbox data, browser, network
+call, or renderer behavior was used.
+
 ## How future entries should be written
 
 For each material milestone, record:

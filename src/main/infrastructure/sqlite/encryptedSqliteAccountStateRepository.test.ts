@@ -97,6 +97,23 @@ describe('EncryptedSqliteAccountStateRepository', () => {
     `).get()).toEqual({ count: 1 })
   })
 
+  it('checks provider-account presence without decrypting its payload', () => {
+    const { database, repository } = createRepository()
+    repository.saveProviderAccount(providerAccount('work'))
+    database.prepare(`
+      UPDATE encrypted_account_records SET payload = ?
+      WHERE record_type = 'provider-account' AND account_scope = 'work'
+    `).run(Buffer.from('intentionally-invalid-test-envelope'))
+
+    expect(repository.hasProviderAccount('work')).toBe(true)
+    expect(repository.hasProviderAccount('personal')).toBe(false)
+    expect(() => repository.loadProviderAccount('work')).toThrowError(
+      expect.objectContaining<Partial<AccountStateError>>({
+        code: 'ACCOUNT_STATE_STORAGE_FAILED'
+      })
+    )
+  })
+
   it('deletes only the selected account state', () => {
     const { repository } = createRepository()
     repository.saveProviderAccount(providerAccount('work'))

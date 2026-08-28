@@ -89,6 +89,7 @@ class FakeVault implements SecretVault {
     this.failOnce = failOnce
   }
   async set(): Promise<void> {}
+  async has(): Promise<boolean> { return false }
   async get(): Promise<string | undefined> { return undefined }
   async delete(_name: SecretName): Promise<boolean> {
     this.actions.push('delete-credential')
@@ -107,6 +108,7 @@ class FakeAccountState implements AccountStateRepository {
     this.failOnce = failOnce
   }
   saveProviderAccount(_record: ProviderAccountRecordV1): void {}
+  hasProviderAccount(): boolean { return false }
   loadProviderAccount(): ProviderAccountRecordV1 | undefined { return undefined }
   saveSyncState(_state: ProviderSyncStateV1): void {}
   loadSyncState(): ProviderSyncStateV1 | undefined { return undefined }

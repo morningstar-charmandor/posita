@@ -64,6 +64,12 @@ write. Cleanup failure becomes an explicit recovery-required error. The service
 is not production composition and has no renderer, browser, network, or real-token
 path.
 
+The same coordinator now provides a main-process-only, versioned consistency
+inspection for one opaque account. It reports only `absent`, `connected`,
+`credential-only`, or `provider-state-only`. A new vault presence query checks
+for protected credential existence without decrypting or re-protecting it. No
+repair, deletion, startup check, IPC response, or UI status is activated.
+
 Startup now has one cancellable lifecycle-recovery owner. If a full deletion is
 journaled, it resumes through deletion-only SQLite and vault operations without
 loading or creating the encryption key. A completed marker keeps later restarts

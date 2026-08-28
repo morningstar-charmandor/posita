@@ -110,6 +110,12 @@ cleanup failure is explicit recovery-required state, never a successful
 connection. This behavior is deterministic application testing only; no account
 record or production credential is created by startup.
 
+A read-only consistency query now compares provider-account record presence with
+protected-credential presence for one opaque account. It never decrypts either
+payload, and it returns no provider identity or secret. `provider-state-only` and
+`credential-only` remain fail-closed diagnostic states; no migration, automatic
+repair, or silent deletion is attached to the query.
+
 ## Schema version 5 operational exception
 
 The lifecycle journal is intentionally not an encrypted private-data record. It
