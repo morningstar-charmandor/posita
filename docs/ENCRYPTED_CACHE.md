@@ -102,6 +102,14 @@ this is a fail-closed contract correction rather than a data migration. A stale
 simulated payload using the obsolete numeric value is rejected instead of guessed
 or silently rewritten.
 
+The credential-free account-connection coordinator treats this repository as the
+second half of a cross-store commit. It writes the protected refresh credential
+first, then this encrypted provider-account record. If the record write fails or
+may have committed, it deletes account state before deleting the credential. A
+cleanup failure is explicit recovery-required state, never a successful
+connection. This behavior is deterministic application testing only; no account
+record or production credential is created by startup.
+
 ## Schema version 5 operational exception
 
 The lifecycle journal is intentionally not an encrypted private-data record. It

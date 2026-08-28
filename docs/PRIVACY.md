@@ -180,3 +180,12 @@ have no renderer or persistence surface in this milestone. The deterministic fak
 contains only test fixtures, performs no external action, and is not production
 composition. Real credential handling still requires separate approval and
 end-to-end composition review.
+
+The credential-free account-connection coordinator now proves the only accepted
+cross-store write order: vault credential first, encrypted provider-account state
+second. It preflights both stores, refuses partially existing state, and performs
+reverse cleanup if provider-state persistence fails. It never returns a refresh
+credential, and deterministic tests verify that an ambiguous state write leaves
+neither record. If cleanup itself fails, the service reports a stable recovery-
+required condition instead of claiming connection or silently overwriting data.
+No production token or account has passed through this code.

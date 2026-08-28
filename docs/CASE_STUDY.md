@@ -174,6 +174,13 @@ provider failure without a Google client, browser action, network request, or re
 credential. Successful grants remain trusted-main-only and are not yet composed
 into storage or the interface.
 
+A credential-free connection coordinator now tests the cross-store boundary that
+OAuth activation will eventually use. It rejects existing or inconsistent local
+state, binds a completed grant to the pending opaque account, writes the protected
+credential before encrypted provider identity, and reverses both writes after an
+ambiguous state failure. A failed cleanup is surfaced as recovery-required rather
+than hidden behind a connected status.
+
 ### Choosing bounded context
 
 The private alpha will import and retain a rolling 90-day window. This trades
@@ -215,6 +222,8 @@ At the current Gate 2D foundation checkpoint, Posita has:
   disabled activation and no OAuth state, credential, or live account,
 - a bounded trusted-main authorization-session contract and deterministic fake
   with no production composition, browser action, network access, or live credential,
+- a credential-free account-connection coordinator with duplicate preflight,
+  vault-before-state ordering, ambiguous-write rollback, and explicit recovery failure,
 - explicit sample-mode labels across account, brief, search, and draft surfaces,
 - keyless pre-bootstrap recovery, shutdown cancellation between phases, and a
   durable deleted mode that remains empty across repeated restarts,
@@ -225,7 +234,7 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - future sync ownership and account-isolation contracts without premature
   provider implementation,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 30 automated test files containing 198 passing tests,
+- 31 automated test files containing 209 passing tests,
 - passing strict TypeScript, structural security checks, and production builds.
 
 These are engineering outcomes, not evidence of customer adoption or AI quality.
@@ -233,11 +242,10 @@ No real mailbox, OAuth credential, or model provider has been used.
 
 ## What comes next
 
-The next Gate 2D slice should compose a credential-free account-connection service
-against authorization, vault, and account-state interfaces and deterministic fakes.
-It should prove write ordering and rollback while keeping startup, browser
-authorization, live credentials, and pending disconnect inactive. Gmail OAuth and
-sync remain blocked behind explicit user approval and the remaining lifecycle gates.
+The next Gate 2D slice should define how a user or startup owner safely recovers
+from a one-sided credential/provider-state record without silently overwriting or
+deleting it. Real Google OAuth, browser activation, credentials, IPC/UI enablement,
+and sync remain blocked behind explicit owner approval and lifecycle gates.
 
 Later evidence should include measured sync reliability, duplicate prevention,
 citation correctness, draft usefulness, correction rate, and time to attention.

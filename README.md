@@ -56,6 +56,14 @@ the reviewed consent, read-only scope, HTTPS authorization target, loopback
 callback, expiry, cancellation, and safe failures. Nothing composes this adapter
 into startup or exposes it through preload, IPC, Settings, or a browser.
 
+A trusted account-connection coordinator now composes that interface with the
+existing vault and encrypted account-state contracts in credential-free tests.
+It preflights duplicate or inconsistent state, stores a successful refresh grant
+in the vault before provider identity, and removes both on an ambiguous state
+write. Cleanup failure becomes an explicit recovery-required error. The service
+is not production composition and has no renderer, browser, network, or real-token
+path.
+
 Startup now has one cancellable lifecycle-recovery owner. If a full deletion is
 journaled, it resumes through deletion-only SQLite and vault operations without
 loading or creating the encryption key. A completed marker keeps later restarts

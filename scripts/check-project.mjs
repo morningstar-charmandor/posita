@@ -137,6 +137,7 @@ if (!gmailConsentPanel.includes('Connect Gmail unavailable in this build') ||
 }
 
 const localDataBootstrap = await readText('src/main/bootstrapLocalData.ts')
+const mainIndex = await readText('src/main/index.ts')
 if (!localDataBootstrap.includes('new ElectronSafeStorageProtector()')) {
   fail('production composition must use the Electron OS-backed credential protector')
 }
@@ -171,6 +172,10 @@ if (localDataBootstrap.includes('DeterministicFakeStringProtector')) {
 }
 if (localDataBootstrap.includes('DeterministicFakeAccountAuthorizationAdapter')) {
   fail('production composition must not use the deterministic fake authorization adapter')
+}
+if (localDataBootstrap.includes('AccountConnectionService') ||
+    mainIndex.includes('AccountConnectionService')) {
+  fail('account connection must remain outside production composition before approval')
 }
 
 const gitignore = await readText('.gitignore')

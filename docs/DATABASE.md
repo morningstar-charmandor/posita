@@ -91,6 +91,13 @@ but the encrypted provider-account table is known empty, so no migration or
 compatibility reader is required. Any unexpected stale simulated record fails
 runtime validation without mutation.
 
+Account connection now has an uncomposed application coordinator for this schema.
+It writes a successful refresh grant to the OS-protected vault before saving the
+provider-account envelope. If the envelope write throws, it treats the outcome as
+ambiguous and removes account state and then the credential. There is no automatic
+repair or startup activation; inconsistent pre-existing records fail closed for a
+future explicit recovery capability.
+
 Schema version 5 adds `account_lifecycle_operations`, a deliberately non-sensitive
 crash-resume journal. It contains only a contract version, opaque operation ID,
 allow-listed operation and phase, optional opaque account scope, safe error code,

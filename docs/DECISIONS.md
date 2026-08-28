@@ -368,3 +368,28 @@
   activation is added. The provider-account table is known empty, so the consent
   correction needs no migration or compatibility path; an unexpected obsolete
   numeric simulated payload fails closed. No dependency or schema change is added.
+
+## ADR-025: Persist a completed connection in fail-closed cross-store order
+
+- Status: accepted for Gate 2D
+- Context: a completed authorization grant spans two independent stores: the
+  OS-protected credential vault and encrypted provider-account state. There is no
+  transaction across them, and a crash or failure must not produce a visible
+  account without a credential, overwrite an existing connection, or report a
+  false success.
+- Decision: place one trusted `AccountConnectionService` above authorization,
+  vault, and account-state interfaces. Preflight both stores before beginning and
+  again before persistence. Refuse fully existing and one-sided state. Bind the
+  completed grant to the pending session and opaque Posita account, store the
+  refresh credential first, then store the encrypted provider-account record. If
+  the second write fails or may have committed, delete account state and then the
+  credential. Treat cleanup failure as a distinct recovery-required error. Never
+  return the refresh credential from the service.
+- Consequence: deterministic tests prove ordering, duplicate/inconsistent-state
+  refusal, retryable provider completion, malformed provider-result rejection,
+  ambiguous-write cleanup, and cleanup failure without credentials or network
+  access. A successful credential without account state remains invisible and is
+  removable; a provider record is never intentionally committed without its
+  credential. The coordinator is not composed into startup, preload, IPC, UI, or
+  a Google adapter. No dependency, schema migration, compatibility path, external
+  action, or production secret is added.

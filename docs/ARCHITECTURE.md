@@ -280,6 +280,17 @@ deterministic fake proves one pending session, expiry, callback matching,
 cancellation, and typed failures without network access. No implementation is
 composed in `index.ts`, so the disabled consent UI cannot start authorization.
 
+`AccountConnectionService` is the next trusted application layer above that
+adapter. It validates begin output against the requested account, binds completion
+to the pending session, rejects pre-existing or one-sided vault/account-state
+records, and never returns the refresh credential. Completion stores the refresh
+grant in `SecretVault` first and the encrypted provider-account projection second.
+If the second write fails or has an ambiguous outcome, it removes account state
+and then the credential; a cleanup failure becomes a distinct recovery-required
+condition rather than a false success. Provider-unavailable and callback-rejected
+authorization errors retain their in-memory session for retry. The coordinator is
+tested only with deterministic fakes and is not composed in startup or IPC.
+
 ## Gmail synchronization
 
 The Gmail adapter will use an initial 90-day import followed by incremental

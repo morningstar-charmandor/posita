@@ -848,6 +848,57 @@ launch, code exchange, credential persistence, account creation, startup
 composition, preload/IPC command, or enabled UI action exists. No real Gmail
 account, AI provider, credential, mailbox data, or network call was used.
 
+## Gate 2D foundation — Credential-free account-connection coordination
+
+Date: 2026-08-28
+Checkpoint: use the Git commit whose subject is `feat: coordinate account connection persistence`
+
+Goal: prove how an authorized account becomes durable across the credential vault
+and encrypted account-state repository without activating OAuth or using a real
+credential.
+
+Delivered:
+
+- one trusted `AccountConnectionService` over the existing authorization, vault,
+  and account-state interfaces,
+- exact begin-input and provider-output validation with pending session/account
+  binding,
+- preflight rejection for already connected and one-sided credential/provider
+  state before authorization and again before persistence,
+- vault-first, encrypted-provider-state-second completion ordering,
+- reverse cleanup of ambiguous provider-state writes and their stored credential,
+- a distinct recovery-required failure when cleanup cannot prove both records are
+  absent,
+- preservation of retryable provider and callback failures without losing the
+  in-memory authorization session,
+- structural enforcement that neither the coordinator nor deterministic
+  authorization fake enters production composition,
+- ADR-025 and aligned agent, architecture, Gmail, privacy, handoff, project-map,
+  and portfolio documentation.
+
+Important decisions:
+
+- never return the refresh grant from the coordinator; success returns only the
+  validated encrypted provider-account projection,
+- refuse inconsistent existing state instead of overwriting or silently deleting it,
+- treat a provider-state save as potentially committed when it throws, deleting
+  account state before removing the credential,
+- keep explicit recovery as the next design step rather than inventing a hidden
+  startup repair or renderer mutation,
+- add no dependency, schema migration, compatibility path, production composition,
+  IPC method, UI activation, Google client, browser action, external request, or
+  real credential.
+
+Evidence: 31 test files and 209 tests passed before final checkpoint verification.
+Coverage includes successful ordering, invalid input, existing and inconsistent
+state, credential-write failure, ambiguous state-write rollback, rollback failure,
+provider retry, mismatched grants, cancellation, and stable safe errors.
+
+Limitations: no recovery command for one-sided state exists yet. The service is
+not composed into startup, preload, IPC, Settings, or a real provider. No Gmail
+account, AI provider, production credential, personal mailbox data, browser, or
+network call was used.
+
 ## How future entries should be written
 
 For each material milestone, record:

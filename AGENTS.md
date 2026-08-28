@@ -29,6 +29,8 @@ exists deeper in the tree.
   activation remains unavailable and no Google client or credential is configured.
 - Provider-independent authorization-session contracts and a deterministic fake
   are implemented but are not composed into startup, preload, IPC, or UI.
+- A credential-free account-connection coordinator proves authorization-to-vault-
+  to-encrypted-state ordering and rollback, but it has no production composition.
 - Gmail, lifecycle scheduling, retention scheduling, and model providers are not connected.
 - Sending mail is intentionally disabled.
 - Product promise: **Your inboxes, understood as one.**

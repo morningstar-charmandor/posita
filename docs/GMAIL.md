@@ -26,6 +26,17 @@ and is not composed at startup. The real Google adapter, PKCE generation, loopba
 listener, system-browser launch, code exchange, credential persistence, account
 creation, preload/IPC command, and enabled UI action remain unimplemented.
 
+Gate 2D also defines a credential-free `AccountConnectionService` above the
+authorization adapter. It verifies that the opaque Posita account has neither an
+existing provider record nor refresh credential before authorization and again
+before persistence. A valid grant is stored in `SecretVault` before its encrypted
+provider-account projection. Failed or ambiguous account-state writes trigger
+reverse cleanup of account state and credential; incomplete cleanup is reported
+as recovery-required. The returned result contains provider identity and consent
+metadata but never the refresh credential. This service uses deterministic fakes
+only and is not a Google client, production credential path, startup component,
+IPC capability, or enabled connection action.
+
 ## Desktop OAuth flow
 
 Posita will use Google's installed-desktop application flow with Authorization
