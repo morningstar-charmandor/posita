@@ -36,7 +36,14 @@ describe('ApplicationStateService', () => {
         version: 1,
         mode: 'ready',
         snapshot: { dataset: fixtures },
-        lifecycle: { state: 'idle', operations: [] }
+        lifecycle: { state: 'idle', operations: [] },
+        connectConsent: {
+          consentVersion: 'google-gmail-readonly-v1',
+          status: 'preview-only',
+          requestedScope: 'gmail.readonly',
+          initialImportDays: 90,
+          rollingRetentionDays: 90
+        }
       }
     })
   })

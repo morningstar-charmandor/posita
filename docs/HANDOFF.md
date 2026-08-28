@@ -1,6 +1,6 @@
 # Posita Continuity Handoff
 
-Last reviewed: 2026-08-27
+Last reviewed: 2026-08-28
 
 This is the first document to read when Posita work continues in a new AI model,
 thread, chat, or development session. It records current state and the safest
@@ -87,6 +87,11 @@ Implemented:
 - read-only conflict preflight before confirmation so preparation never creates a
   receipt or lifecycle operation while other durable work is pending,
 - accessible names for icon-only workspace controls and reduced-motion styling,
+- a reviewed `google-gmail-readonly-v1` consent projection inside the existing
+  read-only application state, with an accessible Settings preview for scope,
+  retention, encryption, AI inactivity, disconnect, and disabled activation,
+- truthful sample-mode labels that do not describe fixture accounts, briefs, or
+  deterministic drafts as live Gmail or production AI,
 - deterministic credential-free verification through `npm run verify`.
 
 Simulated or deliberately inactive:
@@ -99,6 +104,7 @@ Simulated or deliberately inactive:
 - local deletion operates only on deterministic fixture-backed Posita data because
   no real account or credential exists,
 - account disconnect remains application-only and has no preload, IPC, or UI trigger,
+- Gmail connection consent is preview-only and its activation control is disabled,
 - sending and every other remote mailbox mutation are disabled.
 
 Not implemented:
@@ -135,8 +141,10 @@ confirmed local deletion are complete at their current layers. Continue in this 
 
 1. Keep pending disconnect visible but inactive until a real idempotent Google
    revocation adapter can be composed and tested.
-2. Define and implement the explicit connect-consent boundary before OAuth.
-3. Keep real Gmail ingestion disabled until the remaining lifecycle activation
+2. Define the provider-independent authorization-session contract and deterministic
+   fake without creating a Google client, credential, browser flow, or live account.
+3. Keep real Gmail ingestion disabled until authorization activation is separately
+   approved and the remaining lifecycle activation
    and consent gates pass.
 
 Do not solve encrypted search casually. Any index must avoid becoming a second
@@ -160,7 +168,7 @@ plaintext mailbox. Record the selected search tradeoff in `docs/DECISIONS.md`.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 29 test files, 188 tests, strict typecheck, structure
+- Current verified baseline: 29 test files, 190 tests, strict typecheck, structure
   checks, and production Electron build passing.
 
 Native verification migrated the development database to schema v3 with 21

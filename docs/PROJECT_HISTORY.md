@@ -761,6 +761,46 @@ Limitations: retention and account lifecycle scheduling remain inactive. The
 worker phase is intentionally non-interruptible once started. Gmail, AI, sending,
 live account disconnect, and explicit connect consent remain deferred.
 
+## Gate 2D foundation — Read-only Gmail consent preview
+
+Date: 2026-08-28
+Checkpoint: use the Git commit whose subject is `feat: add gmail consent preview`
+
+Goal: make Posita's future Gmail access understandable and reviewable before any
+authorization capability or credential exists.
+
+Delivered:
+
+- one immutable `google-gmail-readonly-v1` shared consent contract,
+- exact runtime validation of scope, retention, and disclosure copy,
+- composition into the existing read-only ready-state query rather than a new IPC
+  capability,
+- an accessible Settings preview covering `gmail.readonly`, the 90-day import and
+  rolling cache, local encryption, inactive AI processing, and disconnect effects,
+- a visibly disabled connection action with explicit no-client/no-credential copy,
+- truthful sample-mode labels for fixture mailboxes, briefs, search, and drafts,
+- ADR-023 and aligned Gmail, privacy, architecture, handoff, agent, and portfolio
+  documentation.
+
+Important decisions:
+
+- reviewing consent creates no authorization state, account, token, browser flow,
+  or persisted receipt,
+- any scope or copy change requires a reviewed versioned contract change,
+- keep the renderer as a structured presentation layer and avoid duplicating
+  consent constants in UI code,
+- add no dependency, schema migration, provider adapter, IPC method, credential,
+  external action, or compatibility path.
+
+Evidence: 29 test files and 190 tests passed before final checkpoint verification.
+Coverage includes exact consent validation, malformed scope/disclosure rejection,
+main/IPC composition, disabled activation, and truthful fixture labeling.
+
+Limitations: the browser-control runtime was unavailable during the automated
+checkpoint, so layout assurance came from semantic component tests and production
+build verification. OAuth remains entirely inactive. No real Gmail account, AI
+provider, credential, or mailbox data was used.
+
 ## How future entries should be written
 
 For each material milestone, record:

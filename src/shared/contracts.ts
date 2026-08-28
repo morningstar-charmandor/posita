@@ -7,6 +7,44 @@ export const LOCAL_DATA_DELETION_CONSEQUENCES = Object.freeze([
   'Removes Google refresh credentials stored by Posita.',
   'Does not delete or change mail in Gmail.'
 ] as const)
+export const GOOGLE_CONNECT_CONSENT = Object.freeze({
+  version: POSITA_PROTOCOL_VERSION,
+  consentVersion: 'google-gmail-readonly-v1',
+  provider: 'google',
+  status: 'preview-only',
+  requestedScope: 'gmail.readonly',
+  initialImportDays: 90,
+  rollingRetentionDays: 90,
+  disclosures: Object.freeze([
+    Object.freeze({
+      id: 'read-only-access',
+      title: 'Read-only Gmail access',
+      description: 'Posita will request permission to read mail. It will not request send, delete, archive, label, or compose access.'
+    }),
+    Object.freeze({
+      id: 'bounded-retention',
+      title: 'A rolling 90-day local window',
+      description: 'The first import and encrypted local cache are limited to the previous 90 days. Local cleanup never changes Gmail.'
+    }),
+    Object.freeze({
+      id: 'local-encryption',
+      title: 'Encrypted on this Mac',
+      description: 'Cached source and derived data use authenticated encryption with a key protected by the operating system.'
+    }),
+    Object.freeze({
+      id: 'ai-inactive',
+      title: 'No AI provider is connected',
+      description: 'This build uses deterministic sample summaries and drafts. No mailbox content is sent to an AI provider.'
+    }),
+    Object.freeze({
+      id: 'disconnect-control',
+      title: 'Disconnect removes Posita access',
+      description: 'Disconnect will revoke local use and remove the credential, cursor, cached mail, and account-derived data without deleting Gmail messages.'
+    })
+  ] as const)
+} as const)
+
+export type GoogleConnectConsentV1 = typeof GOOGLE_CONNECT_CONSENT
 
 export const IPC_CHANNELS = Object.freeze({
   loadApplicationState: 'posita:application:load-state:v1',
@@ -85,6 +123,7 @@ export type ApplicationStateV1 =
       mode: 'ready'
       snapshot: AppSnapshotV1
       lifecycle: LifecycleStatusSnapshotV1
+      connectConsent: GoogleConnectConsentV1
     }
   | {
       version: typeof POSITA_PROTOCOL_VERSION

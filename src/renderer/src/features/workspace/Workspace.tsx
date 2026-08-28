@@ -5,6 +5,7 @@ import {
   Paperclip, PenLine, Search, Send, Settings, Sparkles, Users, X
 } from 'lucide-react'
 import type { Account, BriefItem, MailDataset, Message, Topic } from '@shared/domain'
+import type { GoogleConnectConsentV1 } from '@shared/contracts'
 import type { LocalDataDeletionDataSource } from '../../application/localDataDeletionDataSource'
 import { buildDailyBrief, createGroundedDraft, getMessage, getTopic, getTopicMessages } from '../../domain/mailService'
 import { LocalDataSettingsDialog } from '../settings/LocalDataSettingsDialog'
@@ -60,14 +61,14 @@ function Sidebar({
             </button>
           ))}
         </div>
-        <div className="nav-heading mailbox-heading"><span>Mailboxes</span></div>
+        <div className="nav-heading mailbox-heading"><span>Sample mailboxes</span></div>
         <button className={`nav-item ${view.kind === 'classic' ? 'active' : ''}`} onClick={() => onNavigate({ kind: 'classic' })}><Inbox /><span>All mail</span><span className="count quiet">12</span></button>
         {dataset.accounts.map((account) => <button className="account-link" key={account.id}><span className={`account-dot account-${account.tone}`} /><span>{account.label}</span></button>)}
       </nav>
       <div className="sidebar-footer">
         <button><CircleHelp size={17} /> Help & feedback</button>
         <button onClick={onOpenSettings}><Settings size={17} /> Settings & privacy</button>
-        <div className="profile"><span className="avatar avatar-user">MS</span><span><strong>Muhamed Shafi</strong><small>3 accounts connected</small></span><MoreHorizontal size={17} /></div>
+        <div className="profile"><span className="avatar avatar-user">MS</span><span><strong>Muhamed Shafi</strong><small>3 sample accounts</small></span><MoreHorizontal size={17} /></div>
       </div>
     </aside>
   )
@@ -96,7 +97,7 @@ function AskBar({ onSubmit }: { onSubmit: (query: string) => void }): React.JSX.
   return (
     <div className="ask-wrap">
       <div className="ask-bar"><Sparkles size={18} /><input aria-label="Ask Posita" value={value} onChange={(event) => setValue(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && submit()} placeholder="Ask Posita anything about your mail…" /><button onClick={submit} aria-label="Send question"><ArrowUp size={17} /></button></div>
-      <span className="prototype-note">Prototype data · no mail leaves this device</span>
+      <span className="prototype-note">Deterministic sample data · Gmail and AI are not connected</span>
     </div>
   )
 }
@@ -107,7 +108,7 @@ function HomeView({ onOpenTopic, onAsk }: { onOpenTopic: (id: string) => void; o
   return (
     <main className="center-pane">
       <div className="center-scroll">
-        <header className="brief-header"><div><span className="date-label">FRIDAY, 15 AUGUST</span><h1>Good afternoon, Shafi.</h1><p>Here’s what matters across your three inboxes.</p></div><button className="refresh-button"><Sparkles size={15} /> Brief is up to date</button></header>
+        <header className="brief-header"><div><span className="date-label">FRIDAY, 15 AUGUST</span><h1>Good afternoon, Shafi.</h1><p>Here’s what matters across three sample inboxes.</p></div><button className="refresh-button"><Sparkles size={15} /> Sample brief is up to date</button></header>
         <section className="brief-section"><div className="section-title"><span className="section-icon needs"><Bell size={16} /></span><div><h2>{brief.needsYou.length} things need you</h2><p>Ordered by urgency and consequence</p></div></div><div className="brief-grid">{brief.needsYou.map((item) => <BriefCard key={item.id} item={item} onOpen={() => onOpenTopic(item.topicId)} />)}</div></section>
         <section className="brief-section compact-section"><div className="section-title"><span className="section-icon waiting"><Clock3 size={16} /></span><div><h2>You’re waiting for</h2><p>Posita will keep an eye on these</p></div></div>{brief.waiting.map((item) => <button key={item.id} className="brief-row" onClick={() => onOpenTopic(item.topicId)}><span className="avatar avatar-neutral">NS</span><span className="brief-row-copy"><strong>{item.title}</strong><small>{item.detail}</small></span><AccountPill accountId={item.accountId} compact /><ChevronRight size={17} /></button>)}</section>
         <section className="brief-section compact-section"><div className="section-title"><span className="section-icon knowing"><Sparkles size={16} /></span><div><h2>Worth knowing</h2><p>Useful updates, no action required</p></div></div>{brief.worthKnowing.map((item) => <button key={item.id} className="brief-row" onClick={() => onOpenTopic(item.topicId)}><span className="avatar avatar-maya">MC</span><span className="brief-row-copy"><strong>{item.title}</strong><small>{item.detail}</small></span><span className="resolved"><Check size={13} /> No action</span><ChevronRight size={17} /></button>)}</section>
@@ -156,13 +157,15 @@ function MessageDetail({ message, onClose }: { message: Message; onClose: () => 
 
 function DraftPanel({ topic, onClose }: { topic: Topic; onClose: () => void }): React.JSX.Element {
   const [draft, setDraft] = useState(createGroundedDraft(topic))
-  return <div className="modal-backdrop" role="presentation" onMouseDown={(event) => event.currentTarget === event.target && onClose()}><section className="draft-panel" role="dialog" aria-modal="true" aria-labelledby="draft-title"><header><div><span className="draft-spark"><Sparkles size={17} /></span><span><strong id="draft-title">Draft reply</strong><small>Generated from 3 cited messages</small></span></div><button onClick={onClose} aria-label="Close draft"><X size={19} /></button></header><div className="draft-fields"><div><span>From</span><AccountPill accountId="work" /></div><div><span>To</span><b>Rahul Menon</b><small>&lt;rahul@northstar.io&gt;</small></div><div><span>Subject</span><b>Re: Pulse launch scope</b></div></div><textarea aria-label="Draft reply text" value={draft} onChange={(event) => setDraft(event.target.value)} /><div className="grounding-note"><Sparkles size={15} /><span><strong>Why this draft?</strong> It confirms the three agreed launch items and moves analytics to the following release.</span></div><footer><button className="discard-button" onClick={onClose}>Discard</button><span>Sending is disabled in prototype mode</span><button className="send-disabled" disabled><Send size={15} /> Review & send</button></footer></section></div>
+  return <div className="modal-backdrop" role="presentation" onMouseDown={(event) => event.currentTarget === event.target && onClose()}><section className="draft-panel" role="dialog" aria-modal="true" aria-labelledby="draft-title"><header><div><span className="draft-spark"><Sparkles size={17} /></span><span><strong id="draft-title">Draft reply</strong><small>Deterministic sample draft · 3 cited messages</small></span></div><button onClick={onClose} aria-label="Close draft"><X size={19} /></button></header><div className="draft-fields"><div><span>From</span><AccountPill accountId="work" /></div><div><span>To</span><b>Rahul Menon</b><small>&lt;rahul@northstar.io&gt;</small></div><div><span>Subject</span><b>Re: Pulse launch scope</b></div></div><textarea aria-label="Draft reply text" value={draft} onChange={(event) => setDraft(event.target.value)} /><div className="grounding-note"><Sparkles size={15} /><span><strong>Why this draft?</strong> It confirms the three agreed launch items and moves analytics to the following release.</span></div><footer><button className="discard-button" onClick={onClose}>Discard</button><span>Sending is disabled in prototype mode</span><button className="send-disabled" disabled><Send size={15} /> Review & send</button></footer></section></div>
 }
 
 function WorkspaceContent({
+  connectConsent,
   deletionDataSource,
   onLocalDataDeleted
 }: {
+  connectConsent: GoogleConnectConsentV1
   deletionDataSource: LocalDataDeletionDataSource
   onLocalDataDeleted: () => void
 }): React.JSX.Element {
@@ -185,11 +188,12 @@ function WorkspaceContent({
   }
   return (
     <div className="app-shell">
-      <div className="titlebar"><span className="drag-space" /><button className="global-search" onClick={() => setSearchOpen(!searchOpen)}><Search size={15} /><span>{searchOpen ? 'Try “What happened with Pulse?”' : 'Search mail or ask Posita'}</span><kbd>⌘K</kbd></button><button className="title-action" aria-label="Notifications, unread"><Bell size={17} /><i /></button><span className="ai-status"><Sparkles size={14} /> Posita <i /></span></div>
+      <div className="titlebar"><span className="drag-space" /><button className="global-search" onClick={() => setSearchOpen(!searchOpen)}><Search size={15} /><span>{searchOpen ? 'Try “What happened with Pulse?”' : 'Search sample mail or ask Posita'}</span><kbd>⌘K</kbd></button><button className="title-action" aria-label="Notifications, unread"><Bell size={17} /><i /></button><span className="ai-status"><Sparkles size={14} /> Sample mode</span></div>
       <div className="workspace"><Sidebar view={view} onNavigate={navigate} onOpenSettings={() => setSettingsOpen(true)} />{view.kind === 'home' && <HomeView onOpenTopic={(topicId) => navigate({ kind: 'topic', topicId })} onAsk={ask} />}{view.kind === 'topic' && topic && <TopicView topic={topic} onBack={() => navigate({ kind: 'home' })} onOpenMessage={setFocusedMessageId} onDraft={() => setDraftTopicId(topic.id)} onAsk={ask} />}{view.kind === 'classic' && <ClassicView onOpenMessage={setFocusedMessageId} />}<MailStream focusedMessageId={focusedMessageId} onFocus={setFocusedMessageId} onClose={() => setFocusedMessageId(null)} /></div>
       {draftTopic && <DraftPanel topic={draftTopic} onClose={() => setDraftTopicId(null)} />}
       {settingsOpen && (
         <LocalDataSettingsDialog
+          connectConsent={connectConsent}
           dataSource={deletionDataSource}
           onClose={() => setSettingsOpen(false)}
           onDeleted={onLocalDataDeleted}
@@ -201,16 +205,19 @@ function WorkspaceContent({
 
 export function Workspace({
   dataset,
+  connectConsent,
   deletionDataSource,
   onLocalDataDeleted
 }: {
   dataset: MailDataset
+  connectConsent: GoogleConnectConsentV1
   deletionDataSource: LocalDataDeletionDataSource
   onLocalDataDeleted: () => void
 }): React.JSX.Element {
   return (
     <MailDatasetContext.Provider value={dataset}>
       <WorkspaceContent
+        connectConsent={connectConsent}
         deletionDataSource={deletionDataSource}
         onLocalDataDeleted={onLocalDataDeleted}
       />

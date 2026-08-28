@@ -25,6 +25,8 @@ exists deeper in the tree.
 - Startup keylessly resumes a pending full deletion and honors its completed
   marker without recreating a data key or reseeding fixtures.
 - An OS-protected credential vault is implemented but contains no real token.
+- A versioned read-only Gmail consent preview is visible in Settings; OAuth
+  activation remains unavailable and no Google client or credential is configured.
 - Gmail, lifecycle scheduling, retention scheduling, and model providers are not connected.
 - Sending mail is intentionally disabled.
 - Product promise: **Your inboxes, understood as one.**

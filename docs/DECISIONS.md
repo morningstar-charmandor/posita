@@ -323,3 +323,22 @@
   `STORAGE_SANITIZATION_FAILED` application error and leaves journal/cache state
   retryable. This adds one packaged main entry, no dependency, schema, IPC, UI,
   provider, or compatibility path.
+
+## ADR-023: Preview exact Gmail consent before authorization exists
+
+- Status: accepted for Gate 2D
+- Context: Posita must explain sensitive Gmail access before asking the user to
+  authorize it, but adding an OAuth command, client configuration, or renderer-
+  owned copy would prematurely widen the trust boundary and risk consent drift.
+- Decision: define one immutable `google-gmail-readonly-v1` consent projection in
+  the shared contract. Main includes it only in the existing validated ready-state
+  query. It names `gmail.readonly`, the initial and rolling 90-day window, local
+  encryption, inactive AI processing, prohibited remote mutations, and disconnect
+  consequences. Settings renders the projection with authorization visibly
+  disabled. Exact runtime validation rejects scope or disclosure changes unless
+  the reviewed contract version changes.
+- Consequence: users and automation can inspect the future permission boundary
+  without creating authorization state or implying a live connection. No OAuth
+  client, PKCE state, browser flow, credential, account record, new IPC method,
+  dependency, schema migration, or persisted consent receipt is added. Activation
+  remains a separate user-approved milestone.

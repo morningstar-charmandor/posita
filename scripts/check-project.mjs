@@ -119,6 +119,23 @@ if (!rendererStyles.includes('@media (prefers-reduced-motion: reduce)')) {
   fail('renderer styles must respect the reduced-motion preference')
 }
 
+const sharedContracts = await readText('src/shared/contracts.ts')
+const applicationStateService = await readText('src/main/application/applicationStateService.ts')
+const gmailConsentPanel = await readText(
+  'src/renderer/src/features/settings/GmailConnectConsentPanel.tsx'
+)
+if (!sharedContracts.includes("consentVersion: 'google-gmail-readonly-v1'") ||
+    !sharedContracts.includes("requestedScope: 'gmail.readonly'")) {
+  fail('the reviewed Gmail consent contract must remain versioned and read-only')
+}
+if (!applicationStateService.includes('connectConsent: GOOGLE_CONNECT_CONSENT')) {
+  fail('Gmail consent must use the existing read-only application-state projection')
+}
+if (!gmailConsentPanel.includes('Connect Gmail unavailable in this build') ||
+    !gmailConsentPanel.includes('disabled')) {
+  fail('Gmail authorization must remain visibly inactive before approval')
+}
+
 const localDataBootstrap = await readText('src/main/bootstrapLocalData.ts')
 if (!localDataBootstrap.includes('new ElectronSafeStorageProtector()')) {
   fail('production composition must use the Electron OS-backed credential protector')

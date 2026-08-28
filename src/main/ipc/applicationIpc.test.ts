@@ -1,6 +1,7 @@
 import type { IpcMainInvokeEvent } from 'electron'
 import { describe, expect, it } from 'vitest'
 import { fixtures } from '../../shared/fixtures'
+import { GOOGLE_CONNECT_CONSENT } from '../../shared/contracts'
 import { AccountLifecycleStatusService } from '../application/accountLifecycleStatus'
 import type { AccountLifecycleRepository } from '../application/accountLifecycle'
 import { ApplicationStateService } from '../application/applicationStateService'
@@ -75,7 +76,8 @@ describe('load application-state IPC handler', () => {
           loadedAt: '2026-08-24T05:30:00.000Z',
           dataset: fixtures
         },
-        lifecycle: { version: 1, state: 'idle', operations: [] }
+        lifecycle: { version: 1, state: 'idle', operations: [] },
+        connectConsent: GOOGLE_CONNECT_CONSENT
       }
     })
   })

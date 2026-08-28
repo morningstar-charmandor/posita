@@ -1,15 +1,21 @@
 import { useEffect, useRef, useState } from 'react'
-import { AlertTriangle, Database, LoaderCircle, ShieldCheck, Trash2, X } from 'lucide-react'
+import {
+  AlertTriangle, Database, LoaderCircle, MailPlus,
+  ShieldCheck, Trash2, X
+} from 'lucide-react'
 import {
   DELETE_LOCAL_DATA_CONFIRMATION_TEXT,
   POSITA_PROTOCOL_VERSION,
   type ExecuteLocalDataDeletionRequestV1,
+  type GoogleConnectConsentV1,
   type LocalDataDeletionChallengeV1
 } from '@shared/contracts'
 import type { LocalDataDeletionDataSource } from '../../application/localDataDeletionDataSource'
+import { GmailConnectConsentPanel } from './GmailConnectConsentPanel'
 
 type DialogState =
   | { kind: 'overview' }
+  | { kind: 'connect-consent' }
   | { kind: 'preparing' }
   | { kind: 'challenge'; challenge: LocalDataDeletionChallengeV1; enteredText: string }
   | { kind: 'deleting'; request: ExecuteLocalDataDeletionRequestV1 }
@@ -22,12 +28,14 @@ type DialogState =
     }
 
 export interface LocalDataSettingsDialogProps {
+  connectConsent: GoogleConnectConsentV1
   dataSource: LocalDataDeletionDataSource
   onClose(): void
   onDeleted(): void
 }
 
 export function LocalDataSettingsDialog({
+  connectConsent,
   dataSource,
   onClose,
   onDeleted
@@ -93,7 +101,9 @@ export function LocalDataSettingsDialog({
   }
 
   const canClose = state.kind !== 'deleting'
-  const title = state.kind === 'overview' ? 'Privacy & local data' : 'Delete local data'
+  const title = state.kind === 'overview'
+    ? 'Settings & privacy'
+    : state.kind === 'connect-consent' ? 'Connect Gmail' : 'Delete local data'
 
   return (
     <div
@@ -113,7 +123,9 @@ export function LocalDataSettingsDialog({
             <span className="settings-icon"><ShieldCheck size={18} /></span>
             <span>
               <strong id="local-data-settings-title">{title}</strong>
-              <small>On-device privacy controls</small>
+              <small>{state.kind === 'connect-consent'
+                ? 'Read-only connection consent preview'
+                : 'Account and on-device privacy controls'}</small>
             </span>
           </div>
           <button onClick={onClose} aria-label="Close privacy settings" disabled={!canClose}>
@@ -123,6 +135,24 @@ export function LocalDataSettingsDialog({
 
         {state.kind === 'overview' && (
           <div className="settings-content">
+            <section className="settings-section" aria-labelledby="account-connections-title">
+              <h2 id="account-connections-title">Account connections</h2>
+              <div className="settings-summary">
+                <MailPlus size={19} />
+                <span>
+                  <strong>Google account</strong>
+                  <small>Not connected · review the planned read-only access</small>
+                </span>
+              </div>
+              <button
+                className="secondary-button settings-full-button"
+                onClick={() => setState({ kind: 'connect-consent' })}
+              >
+                Review Gmail connection…
+              </button>
+            </section>
+            <section className="settings-section" aria-labelledby="local-data-title">
+              <h2 id="local-data-title">Local data</h2>
             <div className="settings-summary">
               <Database size={19} />
               <span>
@@ -135,7 +165,15 @@ export function LocalDataSettingsDialog({
             <button className="danger-button" onClick={() => void prepare()}>
               <Trash2 size={15} /> Delete local data…
             </button>
+            </section>
           </div>
+        )}
+
+        {state.kind === 'connect-consent' && (
+          <GmailConnectConsentPanel
+            consent={connectConsent}
+            onBack={() => setState({ kind: 'overview' })}
+          />
         )}
 
         {state.kind === 'preparing' && (

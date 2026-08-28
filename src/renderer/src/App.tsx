@@ -109,6 +109,7 @@ export function App({
     <div className="application-ready-state">
       <Workspace
         dataset={state.application.snapshot.dataset}
+        connectConsent={state.application.connectConsent}
         deletionDataSource={deletionDataSource}
         onLocalDataDeleted={() => setState({
           status: 'loaded',

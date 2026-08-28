@@ -3,6 +3,7 @@ import type {
   AppErrorV1,
   AppSnapshotV1,
   ApplicationStateV1,
+  GoogleConnectConsentV1,
   LifecycleOperationStatusV1,
   LifecycleStatusSnapshotV1,
   ExecuteLocalDataDeletionRequestV1,
@@ -19,6 +20,7 @@ import type {
 } from './contracts'
 import {
   DELETE_LOCAL_DATA_CONFIRMATION_TEXT,
+  GOOGLE_CONNECT_CONSENT,
   LOCAL_DATA_DELETION_CONSEQUENCES,
   POSITA_PROTOCOL_VERSION
 } from './contracts'
@@ -276,12 +278,38 @@ export const isLifecycleStatusSnapshot = (
   return value.operations.some((operation) => operation.status === 'retry-required')
 }
 
+export const isGoogleConnectConsent = (value: unknown): value is GoogleConnectConsentV1 => {
+  if (!isRecord(value) || !hasOnlyKeys(value, [
+    'version', 'consentVersion', 'provider', 'status', 'requestedScope',
+    'initialImportDays', 'rollingRetentionDays', 'disclosures'
+  ]) || value.version !== GOOGLE_CONNECT_CONSENT.version ||
+      value.consentVersion !== GOOGLE_CONNECT_CONSENT.consentVersion ||
+      value.provider !== GOOGLE_CONNECT_CONSENT.provider ||
+      value.status !== GOOGLE_CONNECT_CONSENT.status ||
+      value.requestedScope !== GOOGLE_CONNECT_CONSENT.requestedScope ||
+      value.initialImportDays !== GOOGLE_CONNECT_CONSENT.initialImportDays ||
+      value.rollingRetentionDays !== GOOGLE_CONNECT_CONSENT.rollingRetentionDays ||
+      !Array.isArray(value.disclosures) ||
+      value.disclosures.length !== GOOGLE_CONNECT_CONSENT.disclosures.length) return false
+
+  return value.disclosures.every((disclosure, index) => {
+    const expected = GOOGLE_CONNECT_CONSENT.disclosures[index]
+    return expected !== undefined && isRecord(disclosure) &&
+      hasOnlyKeys(disclosure, ['id', 'title', 'description']) &&
+      disclosure.id === expected.id && disclosure.title === expected.title &&
+      disclosure.description === expected.description
+  })
+}
+
 export const isApplicationState = (value: unknown): value is ApplicationStateV1 => {
   if (!isRecord(value) || value.version !== POSITA_PROTOCOL_VERSION ||
       !isOneOf(value.mode, ['ready', 'local-data-deleted', 'recovery-required'])) return false
   if (value.mode === 'ready') {
-    return hasOnlyKeys(value, ['version', 'mode', 'snapshot', 'lifecycle']) &&
-      isAppSnapshot(value.snapshot) && isLifecycleStatusSnapshot(value.lifecycle)
+    return hasOnlyKeys(value, [
+      'version', 'mode', 'snapshot', 'lifecycle', 'connectConsent'
+    ]) && isAppSnapshot(value.snapshot) &&
+      isLifecycleStatusSnapshot(value.lifecycle) &&
+      isGoogleConnectConsent(value.connectConsent)
   }
   return hasOnlyKeys(value, ['version', 'mode'])
 }

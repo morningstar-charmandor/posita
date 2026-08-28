@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest'
 import { fixtures } from './fixtures'
 import {
   DELETE_LOCAL_DATA_CONFIRMATION_TEXT,
+  GOOGLE_CONNECT_CONSENT,
   LOCAL_DATA_DELETION_CONSEQUENCES
 } from './contracts'
 import {
   isAppSnapshot,
   isExecuteLocalDataDeletionRequest,
   isExecuteLocalDataDeletionResponse,
+  isGoogleConnectConsent,
   isLoadApplicationStateRequest,
   isLoadApplicationStateResponse,
   isLoadSnapshotResponse,
@@ -63,7 +65,8 @@ describe('shared contract validation', () => {
             totalSteps: 5,
             message: 'Account disconnection is pending.'
           }]
-        }
+        },
+        connectConsent: GOOGLE_CONNECT_CONSENT
       }
     })).toBe(true)
     expect(isLoadApplicationStateResponse({
@@ -72,12 +75,25 @@ describe('shared contract validation', () => {
         version: 1,
         mode: 'ready',
         snapshot: { version: 1 },
-        lifecycle: { version: 1, state: 'idle', operations: [{ status: 'pending' }] }
+        lifecycle: { version: 1, state: 'idle', operations: [{ status: 'pending' }] },
+        connectConsent: GOOGLE_CONNECT_CONSENT
       }
     })).toBe(false)
     expect(isLoadApplicationStateResponse({
       ok: true,
       value: { version: 1, mode: 'local-data-deleted', retryOperationId: 'hidden-command' }
+    })).toBe(false)
+  })
+
+  it('accepts only the reviewed Gmail consent version and exact disclosures', () => {
+    expect(isGoogleConnectConsent(GOOGLE_CONNECT_CONSENT)).toBe(true)
+    expect(isGoogleConnectConsent({
+      ...GOOGLE_CONNECT_CONSENT,
+      requestedScope: 'gmail.modify'
+    })).toBe(false)
+    expect(isGoogleConnectConsent({
+      ...GOOGLE_CONNECT_CONSENT,
+      disclosures: GOOGLE_CONNECT_CONSENT.disclosures.slice(1)
     })).toBe(false)
   })
 

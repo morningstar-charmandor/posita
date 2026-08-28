@@ -156,6 +156,15 @@ still exists, and complete when it is already absent. The completed marker acts 
 a durable deleted-mode tombstone, preventing later restarts from generating a new
 key and reseeding sample data. Conflicting lifecycle rows fail closed.
 
+### Explaining access before asking for it
+
+The first Gmail permission screen is now a versioned product contract rather than
+renderer-owned marketing copy. Main projects the exact `gmail.readonly` consent
+through the existing validated read-only state, and Settings explains the 90-day
+window, local encryption, inactive AI boundary, remote-mail safeguards, and
+disconnect behavior. The connect action remains disabled, demonstrating the
+permission experience without pretending OAuth or a live mailbox exists.
+
 ### Choosing bounded context
 
 The private alpha will import and retain a rolling 90-day window. This trades
@@ -193,6 +202,9 @@ At the current Gate 2D foundation checkpoint, Posita has:
   deletion operation no longer needs the authorization binding,
 - file-backed WAL checkpointing and SQLite compaction in one packaged single-flight
   worker, with safe retry errors and real deleted-byte verification,
+- an exact read-only Gmail consent projection and accessible Settings preview with
+  disabled activation and no OAuth state, credential, or live account,
+- explicit sample-mode labels across account, brief, search, and draft surfaces,
 - keyless pre-bootstrap recovery, shutdown cancellation between phases, and a
   durable deleted mode that remains empty across repeated restarts,
 - one validated read-only application-state query and accessible pending,
@@ -202,7 +214,7 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - future sync ownership and account-isolation contracts without premature
   provider implementation,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 29 automated test files containing 188 passing tests,
+- 29 automated test files containing 190 passing tests,
 - passing strict TypeScript, structural security checks, and production builds.
 
 These are engineering outcomes, not evidence of customer adoption or AI quality.
@@ -210,10 +222,10 @@ No real mailbox, OAuth credential, or model provider has been used.
 
 ## What comes next
 
-The next Gate 2D slice should define the explicit connect-consent boundary and
-keep pending disconnect inactive until a real idempotent Google revocation adapter
-can be safely composed. Gmail OAuth and deterministic sync remain blocked behind
-those lifecycle and consent gates.
+The next Gate 2D slice should define provider-independent authorization-session
+contracts and deterministic fakes while keeping browser authorization, credentials,
+and pending disconnect inactive. Gmail OAuth and deterministic sync remain blocked
+behind explicit user approval and the remaining lifecycle activation gates.
 
 Later evidence should include measured sync reliability, duplicate prevention,
 citation correctness, draft usefulness, correction rate, and time to attention.

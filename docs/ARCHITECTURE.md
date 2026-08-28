@@ -266,6 +266,12 @@ only bounded in-memory tests and the legacy migration adapter sanitize inline.
 The phase remains atomic, so shutdown cancellation is observed between lifecycle
 phases rather than interrupting `VACUUM` midway.
 
+The same ready-state query carries the immutable `google-gmail-readonly-v1`
+consent projection. It contains reviewed public copy and capability metadata only:
+no client ID, authorization URL, state, verifier, token, account identity, or
+command. Settings renders that projection and keeps authorization disabled. This
+avoids a second consent source of truth or a premature privileged IPC method.
+
 ## Gmail synchronization
 
 The Gmail adapter will use an initial 90-day import followed by incremental

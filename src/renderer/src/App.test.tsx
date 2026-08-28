@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fixtures } from '@shared/fixtures'
 import {
   DELETE_LOCAL_DATA_CONFIRMATION_TEXT,
+  GOOGLE_CONNECT_CONSENT,
   LOCAL_DATA_DELETION_CONSEQUENCES
 } from '@shared/contracts'
 import { App } from './App'
@@ -27,7 +28,8 @@ const successResponse = {
       version: 1 as const,
       state: 'idle' as const,
       operations: []
-    }
+    },
+    connectConsent: GOOGLE_CONNECT_CONSENT
   }
 }
 
@@ -194,6 +196,25 @@ describe('Posita vertical slice', () => {
     expect(alert).not.toContainElement(screen.queryByRole('button', { name: /retry/i }))
   })
 
+  it('shows reviewed Gmail consent without activating OAuth or implying live accounts', async () => {
+    render(<App dataSource={dataSource} />)
+
+    expect(await screen.findByText('3 sample accounts')).toBeInTheDocument()
+    expect(screen.getByText('Deterministic sample data · Gmail and AI are not connected'))
+      .toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Settings & privacy' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Review Gmail connection…' }))
+
+    const dialog = screen.getByRole('dialog', { name: 'Connect Gmail' })
+    expect(dialog).toHaveTextContent('Gmail is not connected')
+    expect(dialog).toHaveTextContent('gmail.readonly')
+    expect(dialog).toHaveTextContent('A rolling 90-day local window')
+    expect(dialog).toHaveTextContent('No AI provider is connected')
+    expect(dialog).toHaveTextContent('google-gmail-readonly-v1')
+    expect(screen.getByRole('button', { name: 'Connect Gmail unavailable in this build' }))
+      .toBeDisabled()
+  })
+
   it('requires exact typed confirmation before deleting local Posita data', async () => {
     const prepare = vi.fn().mockResolvedValue({
       ok: true,
@@ -217,7 +238,7 @@ describe('Posita vertical slice', () => {
     />)
 
     fireEvent.click(await screen.findByRole('button', { name: 'Settings & privacy' }))
-    expect(screen.getByRole('dialog', { name: 'Privacy & local data' }))
+    expect(screen.getByRole('dialog', { name: 'Settings & privacy' }))
       .toHaveTextContent('deterministic sample mail only')
     fireEvent.click(screen.getByRole('button', { name: /Delete local data…/i }))
 

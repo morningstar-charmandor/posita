@@ -164,3 +164,11 @@ The connect flow must explain the selected Gmail permissions, 90-day local
 window, local encryption, AI-processing boundary, disconnect behavior, and the
 fact that Posita cannot send or modify mail without a separate confirmed action.
 Consent is versioned and auditable without storing addresses or message content.
+
+Gate 2D now exposes the reviewed `google-gmail-readonly-v1` consent contract in
+the existing read-only application state. Settings shows the exact read-only
+scope, rolling 90-day window, local encryption boundary, inactive AI provider,
+and disconnect outcome. It also states that Gmail is not connected. The contract
+is runtime validated as an exact shape, and the authorization control is disabled;
+no consent acceptance, OAuth client, credential, browser flow, or account record
+is created by viewing it.

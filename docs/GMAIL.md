@@ -6,6 +6,12 @@ Gmail is not connected and Posita does not yet contain a Google OAuth client ID.
 This document is the contract for the next implementation gate; it does not
 authorize live mailbox access.
 
+Settings now renders a credential-free consent preview identified as
+`google-gmail-readonly-v1`. The exact projection is carried through the existing
+validated read-only application-state response and requests only `gmail.readonly`.
+Its activation button is disabled. It creates no authorization state, PKCE
+verifier, browser navigation, token, provider account, or consent receipt.
+
 ## Desktop OAuth flow
 
 Posita will use Google's installed-desktop application flow with Authorization

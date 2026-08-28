@@ -44,6 +44,12 @@ outcomes. No other lifecycle command is exposed. Gmail and AI providers
 are not connected, no real OAuth credential exists, and sending is deliberately
 disabled.
 
+Settings now includes a validated `google-gmail-readonly-v1` connection-consent
+preview. It explains the planned `gmail.readonly` scope, 90-day encrypted local
+window, inactive AI-provider boundary, and disconnect behavior. The connect action
+is intentionally disabled: no Google OAuth client, credential, or live account is
+configured.
+
 Startup now has one cancellable lifecycle-recovery owner. If a full deletion is
 journaled, it resumes through deletion-only SQLite and vault operations without
 loading or creating the encryption key. A completed marker keeps later restarts

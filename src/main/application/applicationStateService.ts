@@ -1,4 +1,5 @@
 import {
+  GOOGLE_CONNECT_CONSENT,
   POSITA_PROTOCOL_VERSION,
   type LoadApplicationStateResponseV1
 } from '../../shared/contracts'
@@ -39,7 +40,8 @@ export class ApplicationStateService {
           version: POSITA_PROTOCOL_VERSION,
           mode: 'ready',
           snapshot: snapshot.value,
-          lifecycle: this.lifecycle.load()
+          lifecycle: this.lifecycle.load(),
+          connectConsent: GOOGLE_CONNECT_CONSENT
         }
       }
     } catch {
