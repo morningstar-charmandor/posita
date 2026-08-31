@@ -9,6 +9,13 @@ until account-scoped retention, disconnect, and deletion orchestration are
 implemented and tested. Gate 2D has started by encrypting and validating the
 future provider-account identity and sync-state records; no real account exists.
 
+The canonical provider-mail contract now validates sensitive normalized source
+data before application use, and the credential-free sync coordinator accepts
+only that exact bounded shape. Neither is composed into persistent storage or a
+provider. Existing sample messages remain fixture compatibility records and are
+not assigned fabricated provider provenance. No personal mailbox data has passed
+through the contract or its deterministic fakes.
+
 Gate 2B implements one production security primitive: OAuth refresh credentials
 can be stored in a main-process-only vault protected by Electron's asynchronous
 `safeStorage` API. On macOS this uses Keychain, on Windows it uses DPAPI, and on

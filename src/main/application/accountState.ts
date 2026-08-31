@@ -1,6 +1,7 @@
 import { GOOGLE_CONNECT_CONSENT } from '../../shared/contracts'
+import type { MailProvider } from '../../shared/providerMail'
 
-export type MailProvider = 'google'
+export type { MailProvider } from '../../shared/providerMail'
 
 export interface ProviderAccountRecordV1 {
   version: 1

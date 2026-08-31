@@ -52,6 +52,15 @@ Pure TypeScript types and rules for accounts, people, topics, messages, threads,
 actions, briefs, citations, and drafts. Domain code does not import Electron,
 React, Gmail, a database driver, or an AI SDK.
 
+`ProviderMailMessageV1` and `ProviderMailThreadV1` are the sole canonical
+provider-ingestion contracts. They carry account-scoped provider identity,
+sender/recipient roles, absolute timestamps, normalized plain and reviewed HTML
+bodies, labels, read state, bounded attachment metadata, and immutable source
+provenance. Their exact validators reject unknown fields and unbounded payloads.
+The older shared `Message` remains only the encrypted deterministic-fixture view;
+it is not accepted at the provider boundary and will not be assigned invented
+provider identity.
+
 ### Application
 
 Use cases such as `buildDailyBrief`, `getTopicContext`, `searchMail`, and
@@ -342,6 +351,16 @@ cache is a projection, while user corrections, derived artifacts, drafts, and
 confirmed commands retain separate ownership. Deduplication uses account-scoped
 provider identity, and cross-account topic relationships never merge source
 records or authorization contexts.
+
+The credential-free `MailSyncCoordinator` now implements this application
+boundary against `ProviderMailAdapter` and `MailSyncProjection` interfaces. It
+performs a 90-day initial request, account single-flight, bounded cross-account
+concurrency, normalized-batch validation, atomic batch-plus-cursor commits,
+account-scoped provider-ID replay handling, one bounded resync after an invalid
+cursor, and cancellation for disconnect, supersession, and shutdown. The
+deterministic provider/projection fakes prove these rules without credentials or
+network access. No production adapter, encrypted projection repository, startup
+owner, preload/IPC method, UI status, or polling schedule is composed.
 
 Sync work uses bounded per-account batches and cross-account concurrency,
 cancellation, explicit timeouts, and bounded backoff. Production sync, parsing,

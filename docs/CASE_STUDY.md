@@ -28,8 +28,10 @@ connection state for sample accounts, while OAuth activation and real credential
 persistence remain unavailable. Automatic encrypted retention now runs at startup
 and on a bounded daily cadence in a worker, with truthful status in Settings.
 The Gate 2D readiness audit confirms that this local lifecycle foundation is ready
-at its current boundary while live Gmail remains correctly blocked by the missing
-canonical provider mail model, sync coordinator, and production provider adapters.
+at its current boundary. Canonical provider-independent message/thread contracts
+and one credential-free sync coordinator are now verified with deterministic
+fakes, while live Gmail remains correctly blocked by the missing encrypted
+provider-mail projection, sample-to-live transition, and production adapters.
 
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
 
@@ -107,9 +109,10 @@ This makes project context inspectable rather than trapped inside a chat.
 The collaboration follows an “account for every line” discipline: search for the
 existing source of truth before adding code, treat file size as a signal to review
 responsibilities rather than a score, and document retained compatibility paths.
-Future mailbox work has one account-scoped normalized model and one sync owner so
-UI and AI features cannot quietly become alternate provider clients. This is a
-documented boundary, not a claim that live sync has been implemented.
+Future mailbox work now has one exact account-scoped normalized source model and
+one tested sync owner so UI and AI features cannot quietly become alternate
+provider clients. The coordinator remains credential-free and uncomposed; this is
+verified contract behavior, not a claim that live sync has been implemented.
 
 ## Key challenges and tradeoffs
 
@@ -270,8 +273,15 @@ At the current Gate 2D foundation checkpoint, Posita has:
   confirmation, trusted-window binding, stable safe errors, and no provider target,
 - future sync ownership and account-isolation contracts without premature
   provider implementation,
+- an exact canonical source-message/thread model with bounded recipients, bodies,
+  labels, attachment metadata, and immutable account/provider provenance,
+- one credential-free sync coordinator proving a 90-day initial path, single-
+  flight account work, bounded cross-account concurrency, replay deduplication,
+  atomic batch/cursor ordering, bounded cursor recovery, and cancellation,
+- an explicit compatibility boundary that keeps fixture `Message` records sample-
+  only rather than fabricating provider identity,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 39 automated test files containing 258 passing tests,
+- 41 automated test files containing 272 passing tests,
 - a desktop visual and accessibility-tree check of the local-only Settings entry,
   sample-account controls, normal no-recovery-needed outcome, and automatic
   retention card with readable next/last status and Gmail non-mutation copy,
@@ -282,13 +292,13 @@ No real mailbox, OAuth credential, or model provider has been used.
 
 ## What comes next
 
-The discard-only local recovery flow and automatic fixed-window retention lifecycle
-are complete at their current Gate 2D boundaries. The readiness audit recommends
-a credential-free normalized provider-mail and sync-contract milestone next. It
-will define source provenance, account isolation, idempotent batching, atomic
-cursor ordering, cancellation, and deterministic failures before any Google code
-or live data. Real Google OAuth, browser activation, credentials, live account
-connection, and sync remain separate actions blocked behind explicit owner approval.
+The discard-only local recovery flow, automatic fixed-window retention lifecycle,
+canonical provider-mail contract, and credential-free sync coordinator are complete
+at their current Gate 2D boundaries. The next milestone is an encrypted canonical-
+mail projection that atomically stores normalized records with the account cursor
+while remaining empty and uncomposed from Google. Real OAuth, browser activation,
+credentials, live account connection, and production sync remain separate actions
+blocked behind explicit owner approval.
 
 Later evidence should include measured sync reliability, duplicate prevention,
 citation correctness, draft usefulness, correction rate, and time to attention.
@@ -324,5 +334,7 @@ Rather than connecting Gmail immediately, the project advances through verified
 gates. It first proved the core Daily Brief-to-source-to-draft experience, then
 moved that experience onto a versioned SQLite and IPC foundation, added fail-closed
 OS-protected credential storage, and encrypted private cache records with a
-protected installation key. Real mail remains blocked until account-scoped
-retention and deletion behavior are proven.
+protected installation key. It now also validates one canonical provider-mail
+shape and coordinates credential-free synchronization through deterministic
+interfaces. Real mail remains blocked until that shape has an encrypted atomic
+projection and the remaining provider activation gates pass.

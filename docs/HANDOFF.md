@@ -135,8 +135,19 @@ Implemented:
 - bounded running, last-run, next-run, and attention-required retention status in
   Settings, refreshed in place through one validated fixed notification,
 - a Gate 2D lifecycle-readiness audit that verifies the credential-free local
-  foundation and keeps live Gmail blocked by the incomplete canonical provider
-  mail model, sync coordinator, disconnect activation, and Google adapter,
+  foundation and records the remaining activation blockers,
+- one exact versioned canonical provider-independent source-message/thread model
+  with account-scoped provenance, recipient roles, normalized body forms, labels,
+  read state, bounded attachment metadata, and strict unknown-field rejection,
+- one uncomposed credential-free sync coordinator with a 90-day initial request,
+  per-account single-flight, bounded cross-account concurrency, normalized-batch
+  validation, account-scoped replay deduplication, atomic projection/cursor
+  ordering, one bounded invalid-cursor resync, and explicit cancellation,
+- deterministic provider and atomic-projection fakes that prove isolation,
+  replay, cursor recovery, typed failures, rollback, supersession, and shutdown
+  behavior without credentials, provider access, or persistence,
+- an explicit fixture compatibility decision: existing encrypted sample messages
+  remain a presentation view and never receive fabricated provider provenance,
 - truthful sample-mode labels that do not describe fixture accounts, briefs, or
   deterministic drafts as live Gmail or production AI,
 - deterministic credential-free verification through `npm run verify`.
@@ -155,6 +166,8 @@ Simulated or deliberately inactive:
 - authorization-session behavior exists only behind a deterministic test fake,
 - account-connection persistence is exercised only through deterministic in-memory
   collaborators and is not composed into production startup,
+- canonical provider-mail and sync behavior is exercised only through
+  deterministic fakes and is not composed into encrypted persistence or startup,
 - account consistency is not independently exposed; the recovery command uses it
   inside main without mutation or provider action,
 - local account recovery is active only for inconsistent local records and has no
@@ -164,7 +177,7 @@ Simulated or deliberately inactive:
 Not implemented:
 
 - Gmail OAuth, message ingestion, incremental history sync, or user-triggered/live disconnect,
-- runtime sync coordination, provider reconciliation, or deduplication logic,
+- encrypted canonical provider-mail projection or production sync composition,
 - user-triggered account disconnect or any remote mailbox mutation control,
 - automatic pending-disconnect resume with a live idempotent revocation adapter,
 - a model provider, embeddings, classification, retrieval, or generation,
@@ -198,10 +211,10 @@ confirmed local deletion are complete at their current layers. Continue in this 
    automatic startup repair; failed execution must continue to require fresh review.
 3. Treat automatic retention scheduling and its Settings status as complete at
    the current fixed 90-day boundary. Do not add configurable retention yet.
-4. Continue with the credential-free provider mail and sync contract milestone in
-   `GATE_2D_READINESS.md`: define the canonical provider-independent source model,
-   fixture compatibility/migration decision, one sync coordinator, and deterministic
-   failure-path fake without startup, preload, UI, network, or Google composition.
+4. Continue with the credential-free encrypted provider-mail projection milestone
+   in `GATE_2D_READINESS.md`: add authenticated canonical source/thread record
+   kinds and atomically commit a normalized batch with its account cursor. Keep
+   the projection empty and uncomposed from startup, preload, UI, network, or Google.
 5. Request explicit owner approval before composing a real Google adapter,
    credentials, browser authorization, connection activation, or live account.
 6. Keep real Gmail ingestion disabled until authorization activation is separately
@@ -211,14 +224,16 @@ confirmed local deletion are complete at their current layers. Continue in this 
 Do not solve encrypted search casually. Any index must avoid becoming a second
 plaintext mailbox. Record the selected search tradeoff in `docs/DECISIONS.md`.
 
-Milestone change report: `GATE_2D_READINESS.md` records a credential-free audit,
-not an activation. The encrypted lifecycle foundation is ready at its current
-boundary, but the fixture-oriented shared `Message` type does not yet satisfy the
-accepted provider source/provenance contract and no sync coordinator exists. The
-next milestone is therefore normalized model and sync contract work, not OAuth.
-No new abstraction, dependency, schema migration, compatibility path, provider
-adapter, external action, secret, mailbox data, mutation, or intentional duplicate
-implementation was added by the audit.
+Milestone change report: canonical provider mail and sync contracts are now
+credential-free verified, not activated. New abstractions are the versioned
+provider message/thread contract, one sync coordinator, its provider/projection
+interfaces, and deterministic fakes. No dependency, schema migration, production
+adapter, startup/IPC/UI composition, external action, secret, personal mailbox
+data, or mutation was added. One intentional compatibility distinction remains:
+the legacy `Message` is a deterministic sample-presentation record, while only
+`ProviderMailMessageV1` may enter future provider ingestion. There is no conversion
+path because Posita will not invent provider provenance. The next milestone is an
+empty encrypted canonical-mail projection with atomic cursor persistence, not OAuth.
 
 ## How to resume
 
@@ -238,7 +253,7 @@ implementation was added by the audit.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 39 test files, 258 tests, strict typecheck, structure
+- Current verified baseline: 41 test files, 272 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,

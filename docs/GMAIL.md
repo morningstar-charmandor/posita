@@ -58,6 +58,16 @@ normal checks report that no recovery is needed. This composition does not add a
 Google adapter, OAuth client, browser action, provider request, real credential,
 live account, or mailbox mutation.
 
+Gate 2D now also defines the canonical provider-independent message/thread
+contract and one credential-free `MailSyncCoordinator`. Exact validators require
+account-scoped provider identity, sender and recipient roles, absolute timestamps,
+normalized plain and reviewed HTML bodies, labels, read state, bounded attachment
+metadata, and immutable source provenance. The coordinator proves one 90-day
+initial path, single-flight account work, bounded cross-account concurrency,
+atomic batch/cursor commits, replay deduplication, one bounded invalid-cursor
+resync, cancellation, and typed failures using deterministic fakes. It has no
+encrypted provider-mail repository or production composition.
+
 ## Desktop OAuth flow
 
 Posita will use Google's installed-desktop application flow with Authorization
@@ -163,7 +173,9 @@ invalid history cursors are distinct typed failures. Cursor recovery uses a
 documented bounded resync window and never silently wipes local corrections or
 derived provenance.
 
-The current fixture-oriented shared `Message` type does not yet contain every
-field required by this section. `GATE_2D_READINESS.md` therefore keeps live Gmail
-authorization and ingestion blocked and defines the credential-free normalized-
-model and sync-contract milestone that must come first.
+The fixture-oriented shared `Message` type intentionally remains a sample-only
+compatibility view and is not a provider contract. Posita will not invent Gmail
+IDs or recipient metadata to migrate it. `GATE_2D_READINESS.md` keeps live Gmail
+authorization and ingestion blocked until the new canonical records have an
+encrypted atomic projection, sample-to-live transition behavior is reviewed, and
+the remaining connection/disconnect activation gates pass.

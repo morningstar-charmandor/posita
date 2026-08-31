@@ -11,10 +11,11 @@ full local deletion, account-removal, connection consistency, confirmed orphan
 recovery, and disconnect orchestration contracts.
 
 **Live Gmail authorization and ingestion are not ready to activate.** This is a
-deliberate gate, not a failed implementation. The current shared `Message` model
-is still shaped for deterministic product fixtures and does not yet satisfy the
-accepted provider-normalization and resumable-sync contract in `GMAIL.md`.
-Disconnect also has no production revoker or active user command.
+deliberate gate, not a failed implementation. The canonical provider-independent
+mail contract and credential-free sync coordinator are now verified, but no
+encrypted canonical-mail projection, Google adapter, production composition, or
+sample-to-live transition exists. Disconnect also has no production revoker or
+active user command.
 
 No credential, provider connection, browser authorization, network request, Gmail
 SDK, mailbox data, or model provider was used for this audit.
@@ -34,44 +35,43 @@ SDK, mailbox data, or model provider was used for this audit.
 | Retention | Ready | exact 90-day eviction, daily worker schedule, safe retry/status | Cleanup affects encrypted Posita data only |
 | Full local deletion | Ready | confirmed Settings command, durable recovery, keyless restart, cryptographic erasure | Never deletes provider mail |
 | Account disconnect | Orchestrator-ready, inactive | journaled idempotent application service and deterministic revoker tests | Needs a real idempotent revoker and separately reviewed user command |
-| Canonical provider mail model | **Not ready** | accepted requirements exist in `GMAIL.md`; current fixture `Message` lacks required provider fields | Blocks real ingestion |
-| Sync coordinator | **Not implemented** | ownership, batching, cursor, retry, cancellation, and reconciliation rules are documented | Blocks real ingestion |
+| Canonical provider mail model | Contract-ready | exact versioned source/thread validators require provenance, recipients, bodies, labels, and attachments | Needs encrypted projection before ingestion |
+| Sync coordinator | Contract-ready, fake only | 90-day initial path, batching, atomic cursor ordering, replay, isolation, bounded recovery/concurrency, and cancellation are deterministic-tested | Needs encrypted projection and production composition |
 | Gmail adapter | **Not implemented** | adapter contract is documented only | Blocks OAuth and mail access |
 | AI provider | Deferred | no model adapter, prompt, embedding, or model output path | Fixture summaries/drafts remain explicitly simulated |
 
 ## Blocking gaps before real mail
 
-### 1. Canonical provider-independent source model
+### 1. Encrypted canonical provider-mail projection
 
-Before a Gmail payload may enter application state, one versioned canonical model
-must represent at least:
+The canonical contract is complete at its credential-free boundary. Before a
+Gmail payload may enter application state, one encrypted projection must persist:
 
-- opaque Posita account ID and namespaced provider message/thread IDs,
-- sender and all recipient roles,
-- absolute sent and received timestamps,
-- subject, normalized plain body, and reviewed/sanitized HTML representation,
-- labels, read state, and bounded attachment metadata,
-- immutable provider provenance and a safe path to the original source,
-- runtime validation that rejects unknown or unbounded provider data.
+- canonical source messages and threads under one opaque Posita account,
+- account-scoped provider source identity for central replay deduplication,
+- a bounded normalized batch and its next sync cursor in one atomic commit,
+- authenticated metadata and record-size limits consistent with the cache threat model,
+- deterministic rollback/retry behavior for storage and cursor conflicts.
 
-The existing fixture model should not be silently stretched or duplicated. The
-next implementation must define an explicit compatibility/migration plan for the
-current encrypted fixtures before changing persistent source records.
+ADR-031 settles fixture compatibility: the current encrypted `Message` stays a
+sample-only view and receives no fabricated provider provenance. The projection
+starts empty. A later reviewed sample-to-live transition must prevent fixture and
+provider records from appearing as one mailbox dataset.
 
-### 2. One resumable sync owner
+### 2. Compose the resumable sync owner only after persistence
 
-One trusted coordinator must own provider I/O and prove, with a deterministic
-fake:
+One trusted coordinator now owns the provider boundary and proves, with a
+deterministic fake:
 
 - a bounded initial 90-day import,
 - account-scoped single-flight execution and bounded cross-account concurrency,
-- atomic batch plus cursor commit,
+- atomic batch plus cursor commit through its projection contract,
 - idempotent replay using `(accountId, providerMessageId)`,
 - cancellation on shutdown, disconnect, and supersession,
 - typed offline, authentication, permission, quota, malformed-payload, invalid-
   cursor, and provider-unavailable outcomes,
-- documented bounded cursor recovery without erasing user corrections or derived
-  provenance.
+- one bounded invalid-cursor resync that upserts provider state without erasing
+  retained source records.
 
 UI and AI features may request this coordinator; neither may become another Gmail
 client or polling owner.
@@ -100,20 +100,38 @@ state, screenshots, tests, or portfolio assets.
 
 ## Recommended next milestone
 
-Proceed with a **credential-free provider mail and sync contract milestone**:
+Proceed with a **credential-free encrypted provider-mail projection milestone**:
 
-1. design the canonical provider-independent source/thread/recipient/attachment
-   model and its versioned validators,
-2. document the fixture compatibility and encrypted-record migration decision,
-3. define one sync coordinator interface, stable typed errors, cancellation, and
-   deterministic fake,
-4. prove account isolation, idempotent replay, atomic cursor ordering, and failure
-   paths without network access,
-5. keep startup, preload, UI activation, Google code, credentials, and live data
-   unchanged.
+1. add versioned encrypted record kinds for canonical source messages and threads,
+2. implement the coordinator's atomic projection interface so normalized records
+   and the account cursor commit together,
+3. prove tamper rejection, account isolation, replay updates, cursor conflicts,
+   crash/failure rollback, deletion, and empty startup state,
+4. keep deterministic sample records in their existing compatibility path and
+   document the future sample-to-live transition without fabricating provenance,
+5. keep startup sync ownership, preload, UI activation, Google code, credentials,
+   and live data unchanged.
 
 This follows already accepted architecture and does not itself authorize Gmail.
-It is the smallest safe step that removes a real technical blocker.
+It is the smallest safe step that connects the verified contracts to the existing
+encrypted-storage boundary without external access.
+
+## Completed credential-free contract evidence
+
+- `ProviderMailMessageV1` and `ProviderMailThreadV1` are the only provider-ingestion
+  contracts; exact validators reject unknown, unbounded, cross-account, and
+  internally inconsistent normalized data.
+- `MailSyncCoordinator` is the single provider I/O owner at the application layer
+  and remains uncomposed from the running product.
+- Deterministic tests prove the 90-day request boundary, per-account single-flight,
+  bounded cross-account work, replay deduplication, batch/cursor ordering, commit
+  failure rollback, one invalid-cursor resync without source erasure, cancellation,
+  supersession, and safe provider failures.
+- The verified baseline is 41 test files and 272 tests plus strict TypeScript,
+  renderer structure/security checks, and production Electron builds.
+- No dependency, schema migration, production provider adapter, credential,
+  personal mailbox data, network action, renderer surface, or mailbox mutation was
+  added.
 
 ## Owner decision gate
 
@@ -122,7 +140,7 @@ work. Explicit owner approval is required before any real Google adapter,
 credential configuration, browser authorization, production connection command,
 or live mailbox access is introduced.
 
-## Audit evidence
+## Original audit evidence
 
 - `npm run verify` passes at the audit baseline: 39 test files, 258 tests, strict
   TypeScript, structural renderer-security checks, and production Electron builds.

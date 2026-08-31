@@ -108,6 +108,15 @@ trusted window after exact `DELETE LOCAL DATA` confirmation. It removes Posita's
 local fixture cache, stored Posita credentials, and encryption key, but never
 deletes or changes provider mail.
 
+A versioned canonical provider-independent source-message/thread contract and one
+credential-free sync coordinator now prove strict normalization, 90-day initial
+import, account isolation, replay deduplication, atomic batch/cursor ordering,
+bounded invalid-cursor recovery, concurrency, cancellation, and safe failures
+through deterministic fakes. The existing `Message` remains a sample-only view;
+Posita does not invent provider identity for fixtures. None of this is composed
+into startup, IPC, UI, encrypted provider-mail persistence, or Google, so all
+visible mail remains deterministic sample data.
+
 Read the build boundaries before extending the prototype:
 
 - [Agent contract](AGENTS.md)

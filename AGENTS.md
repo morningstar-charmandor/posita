@@ -37,9 +37,12 @@ exists deeper in the tree.
 - A confirmed discard-only policy and one-use durable confirmation producer for
   one-sided local connection state are composed through a narrow, same-window
   Settings recovery flow. It is local-only and refuses complete or absent state.
-- The Gate 2D readiness audit keeps live Gmail blocked until the canonical
-  provider-independent mail model and one sync coordinator are verified.
-- Gmail, pending-disconnect scheduling, and model providers are not connected.
+- A versioned canonical provider-independent source-message/thread contract and
+  one credential-free sync coordinator are verified but not persisted or composed.
+- The deterministic fixture `Message` remains a sample-presentation compatibility
+  record and is never accepted as provider-ingestion data.
+- Gmail, provider-mail projection persistence, pending-disconnect scheduling,
+  and model providers are not connected.
 - Sending mail is intentionally disabled.
 - Product promise: **Your inboxes, understood as one.**
 

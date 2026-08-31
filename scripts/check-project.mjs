@@ -32,7 +32,11 @@ const requiredFiles = [
   'src/renderer/AGENTS.md',
   'src/renderer/src/main.tsx',
   'src/shared/AGENTS.md',
-  'src/shared/domain.ts'
+  'src/shared/domain.ts',
+  'src/shared/providerMail.ts',
+  'src/main/application/mailSync.ts',
+  'src/main/application/mailSyncCoordinator.ts',
+  'src/main/infrastructure/providers/deterministicFakeMailSync.ts'
 ]
 
 for (const path of requiredFiles) {
@@ -148,6 +152,12 @@ const retentionWorkerAdapter = await readText(
 const retentionStatusPanel = await readText(
   'src/renderer/src/features/settings/RetentionMaintenanceStatusPanel.tsx'
 )
+const canonicalProviderMail = await readText('src/shared/providerMail.ts')
+const mailSyncContract = await readText('src/main/application/mailSync.ts')
+const mailSyncCoordinator = await readText('src/main/application/mailSyncCoordinator.ts')
+const deterministicMailSync = await readText(
+  'src/main/infrastructure/providers/deterministicFakeMailSync.ts'
+)
 const electronViteConfig = await readText('electron.vite.config.ts')
 const accountConnectionRecoveryClient = await readText(
   'src/preload/accountConnectionRecoveryClient.ts'
@@ -168,6 +178,18 @@ if (!applicationStateService.includes('connectConsent: GOOGLE_CONNECT_CONSENT'))
 if (!gmailConsentPanel.includes('Connect Gmail unavailable in this build') ||
     !gmailConsentPanel.includes('disabled')) {
   fail('Gmail authorization must remain visibly inactive before approval')
+}
+if (!canonicalProviderMail.includes('interface ProviderMailMessageV1') ||
+    !canonicalProviderMail.includes('interface ProviderMailThreadV1') ||
+    !canonicalProviderMail.includes('isProviderMailMessageV1') ||
+    !canonicalProviderMail.includes('providerMessageId') ||
+    !mailSyncCoordinator.includes('class MailSyncCoordinator') ||
+    !mailSyncContract.includes('interface MailSyncProjection') ||
+    !mailSyncContract.includes('INITIAL_SYNC_DAYS = 90') ||
+    !mailSyncContract.includes("reconciliation: 'incremental' | 'bounded-resync'") ||
+    !deterministicMailSync.includes('class DeterministicFakeMailProviderAdapter') ||
+    !deterministicMailSync.includes('class DeterministicFakeMailSyncProjection')) {
+  fail('canonical provider mail and the single credential-free sync boundary must remain verified')
 }
 if (!secretVaultContract.includes('has(name: SecretName): Promise<boolean>') ||
     !accountStateContract.includes('hasProviderAccount(accountId: string): boolean') ||
@@ -247,6 +269,12 @@ if (localDataBootstrap.includes('DeterministicFakeAccountAuthorizationAdapter'))
 if (localDataBootstrap.includes('AccountConnectionService') ||
     mainIndex.includes('AccountConnectionService')) {
   fail('account connection must remain outside production composition before approval')
+}
+if (localDataBootstrap.includes('MailSyncCoordinator') ||
+    mainIndex.includes('MailSyncCoordinator') ||
+    localDataBootstrap.includes('DeterministicFakeMailProviderAdapter') ||
+    mainIndex.includes('DeterministicFakeMailProviderAdapter')) {
+  fail('provider mail sync must remain outside production composition before persistence review')
 }
 if (!localDataBootstrap.includes('new AccountConnectionRecoveryService(') ||
     !localDataBootstrap.includes('new AccountConnectionRecoveryConfirmationService(') ||

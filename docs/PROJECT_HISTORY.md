@@ -1185,6 +1185,67 @@ Limitations: this is an engineering readiness assessment, not Google verificatio
 external security review, user research, sync reliability evidence, or approval
 to connect an account.
 
+## Gate 2D milestone — Canonical provider mail and sync contracts
+
+Date: 2026-08-31
+Checkpoint: use the Git commit whose subject is `feat: define provider mail sync contracts`
+
+Goal: remove the model and sync-ownership blockers identified by the readiness
+audit without connecting Gmail, creating credentials, changing the renderer, or
+inventing provider provenance for deterministic fixtures.
+
+Delivered:
+
+- one exact versioned provider-independent source-message contract covering
+  account-scoped message/thread identity, sender, recipient roles, absolute sent
+  and received timestamps, normalized plain and reviewed HTML bodies, labels,
+  read state, bounded attachment metadata, and immutable source provenance,
+- one exact thread contract and strict validators that reject unknown fields,
+  invalid timestamps, unbounded collections/content, duplicate source metadata,
+  unsafe account IDs, and inconsistent batch relationships,
+- consolidation of `MailProvider` into the shared provider-mail source of truth,
+- one application-owned `MailSyncCoordinator` with a fixed 90-day initial request,
+  per-account single-flight, bounded cross-account concurrency, bounded batches,
+  account-scoped replay identity, atomic projection/cursor ordering, one bounded
+  invalid-cursor resync, and cancellation for disconnect, supersession, and shutdown,
+- stable typed provider, validation, cancellation, checkpoint-conflict, batch-limit,
+  and storage failures,
+- deterministic credential-free provider and atomic-projection fakes covering
+  successful, replayed, recovered, cancelled, malformed, and failed paths,
+- ADR-031 and aligned architecture, privacy, Gmail, encrypted-cache, readiness,
+  handoff, project-map, structural, and portfolio documentation.
+
+Important decisions:
+
+- the existing `Message` is retained only as a deterministic sample-presentation
+  and encrypted-cache compatibility record; provider adapters cannot emit it,
+- do not manufacture provider IDs, recipients, labels, HTML review state, or
+  attachment metadata for sample mail,
+- identify canonical source replay only by `(accountId, providerMessageId)`;
+  cross-account lookalikes remain separate,
+- treat an invalid cursor with one bounded 90-day upsert resync that preserves
+  retained source records; never silently erase corrections or derived provenance,
+- make atomic batch-plus-cursor persistence an explicit projection contract, while
+  deferring its encrypted repository implementation to the next milestone,
+- keep the coordinator and both fakes out of startup, preload, IPC, UI, polling,
+  Google, and persistent storage,
+- add no dependency, schema migration, production adapter, external action,
+  credential, personal data, or mailbox mutation.
+
+Evidence: 41 test files and 272 tests pass. New coverage verifies exact canonical
+shape, provenance, unknown-field rejection, initial-window calculation, account
+isolation, same-account single-flight, bounded cross-account work, replay
+deduplication, atomic commit failure, invalid-cursor recovery without source
+erasure, malformed cross-account output, typed offline failure, disconnect/
+shutdown cancellation, and supersession ordering. Strict typecheck, renderer
+structure/security checks, and all production Electron builds pass.
+
+Limitations: the atomic projection is an interface and deterministic in-memory
+fake, not encrypted SQLite persistence. The running app still loads only its
+existing deterministic fixture dataset. No Google client, OAuth flow, provider
+request, credential, live account, production sync owner, UI status, or mailbox
+mutation exists.
+
 ## How future entries should be written
 
 For each material milestone, record:

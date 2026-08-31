@@ -79,6 +79,10 @@
     "encryptedCacheMigration": "src/main/infrastructure/sqlite/encryptedCacheMigration.ts",
     "ipcContract": "src/shared/contracts.ts",
     "domainTypes": "src/shared/domain.ts",
+    "canonicalProviderMailContract": "src/shared/providerMail.ts",
+    "mailSyncContract": "src/main/application/mailSync.ts",
+    "mailSyncCoordinator": "src/main/application/mailSyncCoordinator.ts",
+    "deterministicMailSyncFakes": "src/main/infrastructure/providers/deterministicFakeMailSync.ts",
     "fixtures": "src/shared/fixtures.ts"
   },
   "scopedInstructions": {
@@ -162,7 +166,9 @@
     "startup-full-deletion-recovery-never-loads-creates-or-replaces-the-cache-key",
     "completed-full-deletion-prevents-key-recreation-and-fixture-reseeding",
     "one-sync-coordinator-owns-all-provider-io",
-    "live-gmail-ingestion-is-blocked-until-the-canonical-provider-model-and-sync-coordinator-are-verified",
+    "provider-ingestion-accepts-only-the-versioned-canonical-mail-contract",
+    "fixture-messages-never-receive-fabricated-provider-provenance",
+    "live-gmail-ingestion-is-blocked-until-canonical-mail-has-an-encrypted-atomic-projection",
     "provider-mail-is-authoritative-and-cache-reconciliation-is-explicit",
     "deduplication-and-threading-are-central-and-idempotent",
     "background-work-is-bounded-cancellable-and-off-ui-event-loops",

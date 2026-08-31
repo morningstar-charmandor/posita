@@ -180,6 +180,22 @@ decrypt-and-scan in a worker, keyed blind indexes with leakage tradeoffs, and
 encrypted local search alternatives. It requires a separate ADR and threat-model
 update before implementation.
 
+## Canonical provider-mail compatibility decision
+
+`ProviderMailMessageV1` and `ProviderMailThreadV1` are the canonical validated
+provider-ingestion contracts, but schema v8 has no repository for them. Existing
+encrypted `message` records retain the deterministic sample-view shape so current
+installations remain behavior-compatible. Posita will not manufacture provider
+IDs, recipients, labels, HTML review state, or attachment metadata for fixtures
+merely to make them resemble live mail.
+
+The next credential-free storage milestone must add an encrypted projection that
+atomically commits canonical source/thread records with the account sync cursor.
+It must start empty, preserve the sample dataset until an explicit sample-to-live
+transition is reviewed, and never mix fixture source identity with provider
+identity. This is an intentional bounded compatibility period, not a second
+provider model or permission to ingest Gmail.
+
 ## Deletion boundary
 
 The repository separates logical encrypted-record deletion from SQLite

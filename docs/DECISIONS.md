@@ -521,3 +521,32 @@
   data, external action, mailbox mutation, or configurable retention setting is
   added. The existing synchronous retention service remains for bounded in-memory
   tests and exact startup fixture compatibility.
+
+## ADR-031: Separate canonical provider mail from the sample compatibility view
+
+- Status: accepted for Gate 2D
+- Context: the encrypted prototype `Message` shape was built for a fixed UI
+  dataset. It lacks provider message/thread identity, recipient roles, normalized
+  body representations, labels, attachment metadata, and immutable source
+  provenance. Silently adding invented values would misrepresent fixtures as
+  provider data, while allowing adapters to emit that shape would make it a
+  second and incomplete ingestion contract.
+- Decision: define one exact versioned `ProviderMailMessageV1` and
+  `ProviderMailThreadV1` contract with bounded runtime validation. Keep the old
+  `Message` solely as a deterministic sample-presentation and encrypted-cache
+  compatibility record. Do not migrate or synthesize provider identity for those
+  fixtures. Define one uncomposed `MailSyncCoordinator` over provider and atomic
+  projection interfaces. It owns a 90-day initial window, single-flight account
+  work, bounded cross-account concurrency, normalized batch validation,
+  account-scoped replay identity, atomic record/cursor ordering, one bounded
+  invalid-cursor resync, supersession/disconnect/shutdown cancellation, and safe
+  typed errors. Prove the boundary with credential-free deterministic fakes.
+- Consequence: there are temporarily two intentionally distinct mail shapes, but
+  only the new contract may accept provider data. The fixture shape cannot drift
+  into live ingestion and no lossy migration is guessed. Before live activation,
+  an encrypted provider-mail projection must persist canonical records and cursor
+  commits, and the product must explicitly transition from sample mode without
+  mixing fixtures with live accounts. The coordinator remains outside startup,
+  preload, IPC, UI, Google, and persistent storage. No dependency, schema
+  migration, credential, personal data, network action, or mailbox mutation is
+  added.
