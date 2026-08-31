@@ -1,10 +1,14 @@
 import {
+  type ApplicationStateChangedEventV1,
   POSITA_PROTOCOL_VERSION,
   type LoadApplicationStateResponseV1
 } from '@shared/contracts'
 
 export interface ApplicationStateDataSource {
   loadApplicationState(): Promise<LoadApplicationStateResponseV1>
+  onApplicationStateChanged?(
+    listener: (event: ApplicationStateChangedEventV1) => void
+  ): () => void
 }
 
 const unavailableResponse = (): LoadApplicationStateResponseV1 => ({
@@ -19,5 +23,7 @@ const unavailableResponse = (): LoadApplicationStateResponseV1 => ({
 
 export const desktopApplicationStateDataSource: ApplicationStateDataSource = {
   loadApplicationState: () =>
-    window.posita?.loadApplicationState?.() ?? Promise.resolve(unavailableResponse())
+    window.posita?.loadApplicationState?.() ?? Promise.resolve(unavailableResponse()),
+  onApplicationStateChanged: (listener) =>
+    window.posita?.onApplicationStateChanged?.(listener) ?? (() => undefined)
 }

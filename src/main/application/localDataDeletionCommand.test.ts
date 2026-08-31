@@ -64,6 +64,7 @@ const createHarness = () => {
   let generated = 0
   const lifecycle = new MemoryLifecycleRepository()
   const calls: string[] = []
+  const maintenanceCalls: string[] = []
   let failMailDeletion = false
   const actions: DeleteLocalDataActions = {
     deleteRefreshCredentials: async () => { calls.push('credentials') },
@@ -87,12 +88,17 @@ const createHarness = () => {
   const command = new LocalDataDeletionCommandService(
     confirmation,
     new DeleteLocalDataService(lifecycle, actions, confirmation),
-    transition
+    transition,
+    {
+      suspend: async () => { maintenanceCalls.push('suspend') },
+      resume: () => { maintenanceCalls.push('resume') }
+    }
   )
   return {
     calls,
     command,
     lifecycle,
+    maintenanceCalls,
     transition,
     advance: (milliseconds: number) => { now += milliseconds },
     failMailDeletion: (value: boolean) => { failMailDeletion = value }
@@ -153,6 +159,7 @@ describe('LocalDataDeletionCommandService', () => {
       value: { version: 1, operationId: 'delete-local-1', status: 'local-data-deleted' }
     })
     expect(harness.calls).toEqual(['credentials', 'account-state', 'mail', 'storage', 'key'])
+    expect(harness.maintenanceCalls).toEqual(['suspend'])
     expect(harness.transition.deleted).toBe(true)
     expect(harness.lifecycle.load('delete-local-1')).toMatchObject({ phase: 'completed' })
     expect(harness.command.prepare({ version: 1, action: 'delete-local-data' }))
@@ -174,6 +181,7 @@ describe('LocalDataDeletionCommandService', () => {
       lastErrorCode: 'MAIL_DATA_DELETE_FAILED'
     })
     expect(harness.transition.deleted).toBe(false)
+    expect(harness.maintenanceCalls).toEqual(['suspend', 'resume'])
 
     harness.advance(LOCAL_ACTION_CONFIRMATION_TTL_MS + 1)
     harness.failMailDeletion(false)
@@ -184,6 +192,7 @@ describe('LocalDataDeletionCommandService', () => {
     expect(harness.calls).toEqual([
       'credentials', 'account-state', 'mail', 'mail', 'storage', 'key'
     ])
+    expect(harness.maintenanceCalls).toEqual(['suspend', 'resume', 'suspend'])
   })
 
   it('fails closed when the capability is unavailable or the request adds fields', async () => {

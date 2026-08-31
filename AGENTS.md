@@ -10,8 +10,9 @@ exists deeper in the tree.
 - Current data: deterministic fixtures stored as authenticated encrypted records.
 - Encrypted provider-account and sync-state storage is implemented but empty.
 - A non-sensitive lifecycle journal and confirmed full local-deletion execution are implemented.
-- Deterministic 90-day retention and exact legacy-fixture compatibility are implemented
-  but maintenance is not scheduled automatically.
+- Deterministic 90-day retention and exact legacy-fixture compatibility are implemented;
+  encrypted file-backed maintenance runs at startup and on a bounded 24-hour cadence.
+- Safe retention running, last-run, next-run, and retry status is visible in Settings.
 - File-backed SQLite sanitization runs in a single-flight worker thread; the
   synchronous adapter remains only for bounded in-memory tests and legacy migration.
 - Account-data removal projection is implemented and used by the inactive disconnect orchestrator.
@@ -36,7 +37,7 @@ exists deeper in the tree.
 - A confirmed discard-only policy and one-use durable confirmation producer for
   one-sided local connection state are composed through a narrow, same-window
   Settings recovery flow. It is local-only and refuses complete or absent state.
-- Gmail, lifecycle scheduling, retention scheduling, and model providers are not connected.
+- Gmail, pending-disconnect scheduling, and model providers are not connected.
 - Sending mail is intentionally disabled.
 - Product promise: **Your inboxes, understood as one.**
 

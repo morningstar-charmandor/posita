@@ -20,7 +20,9 @@ adds versioned encrypted provider-account and sync-state records with strict
 account isolation; those tables contain no real account. Schema v5 adds an opaque,
 non-sensitive lifecycle journal that can survive deletion of that encryption key.
 Schema v6 and a deterministic application service add fail-closed 90-day
-retention with atomic derived-data eviction; it is not scheduled automatically.
+retention with atomic derived-data eviction. Main now owns an immediate startup
+pass and bounded 24-hour cadence for file-backed caches, with the full maintenance
+operation running in a dedicated worker.
 Startup upgrades only an exact historical fixture cache whose messages all lack
 absolute timestamps. It replaces that known simulated dataset with the current
 timestamped encrypted fixtures and refuses mixed, edited, partial, or unknown data.
@@ -93,6 +95,12 @@ through one single-flight worker-thread adapter, keeping `VACUUM` and WAL
 checkpoint work off Electron's main event loop. Bounded in-memory tests retain an
 explicit inline adapter; the existing one-time legacy plaintext migration remains
 inline so its migration transaction keeps one connection owner.
+
+Settings & privacy now shows bounded automatic-retention state: running, last
+completed check, next scheduled check, and a safe automatic-retry error. A fixed
+validated main-to-renderer event refreshes this state in place. It exposes no
+database path, raw worker error, key material, or mailbox content, and states that
+local cleanup never changes Gmail.
 
 Preparing local deletion only returns bounded consequence copy and two opaque IDs;
 it creates no deletion journal. The execute request is accepted only from the same

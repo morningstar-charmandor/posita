@@ -19,6 +19,14 @@ const lifecycleRepository: AccountLifecycleRepository = {
   loadLatestDeleteLocalData: () => undefined,
   deleteCompleted: () => false
 }
+const retention = {
+  status: () => ({
+    version: 1 as const,
+    retentionDays: 90 as const,
+    status: 'scheduled' as const,
+    nextRunAt: '2026-08-25T05:30:00.000Z'
+  })
+}
 
 describe('ApplicationStateService', () => {
   it('composes mail and lifecycle reads into one ready state', () => {
@@ -27,7 +35,8 @@ describe('ApplicationStateService', () => {
       new MailApplicationService(mailRepository, {
         now: () => new Date('2026-08-24T05:30:00.000Z')
       }),
-      new AccountLifecycleStatusService(lifecycleRepository)
+      new AccountLifecycleStatusService(lifecycleRepository),
+      retention
     )
 
     expect(service.load()).toMatchObject({
@@ -37,6 +46,11 @@ describe('ApplicationStateService', () => {
         mode: 'ready',
         snapshot: { dataset: fixtures },
         lifecycle: { state: 'idle', operations: [] },
+        retention: {
+          status: 'scheduled',
+          retentionDays: 90,
+          nextRunAt: '2026-08-25T05:30:00.000Z'
+        },
         connectConsent: {
           consentVersion: 'google-gmail-readonly-v1',
           status: 'preview-only',
@@ -69,7 +83,8 @@ describe('ApplicationStateService', () => {
     const service = new ApplicationStateService(
       'ready',
       new MailApplicationService(mailRepository, { now: () => new Date() }),
-      new AccountLifecycleStatusService(lifecycleRepository)
+      new AccountLifecycleStatusService(lifecycleRepository),
+      retention
     )
 
     service.markLocalDataDeleted()

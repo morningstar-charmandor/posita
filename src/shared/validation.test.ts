@@ -21,7 +21,8 @@ import {
   isPrepareLocalDataDeletionRequest,
   isPrepareLocalDataDeletionResponse,
   isPrepareAccountConnectionRecoveryRequest,
-  isPrepareAccountConnectionRecoveryResponse
+  isPrepareAccountConnectionRecoveryResponse,
+  isRetentionMaintenanceStatus
 } from './validation'
 
 describe('shared contract validation', () => {
@@ -72,6 +73,12 @@ describe('shared contract validation', () => {
             message: 'Account disconnection is pending.'
           }]
         },
+        retention: {
+          version: 1,
+          retentionDays: 90,
+          status: 'scheduled',
+          nextRunAt: '2026-08-25T05:30:00.000Z'
+        },
         connectConsent: GOOGLE_CONNECT_CONSENT
       }
     })).toBe(true)
@@ -88,6 +95,55 @@ describe('shared contract validation', () => {
     expect(isLoadApplicationStateResponse({
       ok: true,
       value: { version: 1, mode: 'local-data-deleted', retryOperationId: 'hidden-command' }
+    })).toBe(false)
+  })
+
+  it('accepts exact retention states and rejects unbounded or private details', () => {
+    expect(isRetentionMaintenanceStatus({
+      version: 1,
+      retentionDays: 90,
+      status: 'running',
+      startedAt: '2026-08-24T05:30:00.000Z'
+    })).toBe(true)
+    expect(isRetentionMaintenanceStatus({
+      version: 1,
+      retentionDays: 90,
+      status: 'attention-required',
+      nextRunAt: '2026-08-24T06:30:00.000Z',
+      errorCode: 'RETENTION_MAINTENANCE_FAILED',
+      message: 'Posita could not finish encrypted local cleanup. It will retry automatically.',
+      lastRun: {
+        completedAt: '2026-08-23T05:30:00.000Z',
+        cutoffAt: '2026-05-25T05:30:00.000Z',
+        changed: true,
+        removed: { messages: 2, topics: 1, briefItems: 1, people: 0 }
+      }
+    })).toBe(true)
+    expect(isRetentionMaintenanceStatus({
+      version: 1,
+      retentionDays: 90,
+      status: 'scheduled',
+      nextRunAt: 'not-a-date'
+    })).toBe(false)
+    expect(isRetentionMaintenanceStatus({
+      version: 1,
+      retentionDays: 90,
+      status: 'scheduled',
+      nextRunAt: '2026-08-25T05:30:00.000Z',
+      lastRun: {
+        completedAt: '2026-08-24T05:30:00.000Z',
+        cutoffAt: '2026-05-26T05:30:00.000Z',
+        changed: false,
+        removed: { messages: 1, topics: 0, briefItems: 0, people: 0 }
+      }
+    })).toBe(false)
+    expect(isRetentionMaintenanceStatus({
+      version: 1,
+      retentionDays: 90,
+      status: 'attention-required',
+      nextRunAt: '2026-08-24T06:30:00.000Z',
+      errorCode: 'SQLITE_ERROR',
+      message: '/Users/private/posita.sqlite3'
     })).toBe(false)
   })
 

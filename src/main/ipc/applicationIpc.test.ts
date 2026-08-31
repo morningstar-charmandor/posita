@@ -194,7 +194,15 @@ const lifecycleRepository: AccountLifecycleRepository = {
 const applicationState = new ApplicationStateService(
   'ready',
   service,
-  new AccountLifecycleStatusService(lifecycleRepository)
+  new AccountLifecycleStatusService(lifecycleRepository),
+  {
+    status: () => ({
+      version: 1,
+      retentionDays: 90,
+      status: 'scheduled',
+      nextRunAt: '2026-08-25T05:30:00.000Z'
+    })
+  }
 )
 
 describe('load application-state IPC handler', () => {
@@ -236,6 +244,12 @@ describe('load application-state IPC handler', () => {
           dataset: fixtures
         },
         lifecycle: { version: 1, state: 'idle', operations: [] },
+        retention: {
+          version: 1,
+          retentionDays: 90,
+          status: 'scheduled',
+          nextRunAt: '2026-08-25T05:30:00.000Z'
+        },
         connectConsent: GOOGLE_CONNECT_CONSENT
       }
     })

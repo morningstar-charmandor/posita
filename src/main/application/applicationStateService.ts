@@ -5,6 +5,7 @@ import {
 } from '../../shared/contracts'
 import { AccountLifecycleStatusService } from './accountLifecycleStatus'
 import type { MailApplicationService } from './mailApplicationService'
+import type { RetentionMaintenanceOwner } from './retentionMaintenanceOwner'
 
 export type ApplicationRuntimeMode =
   | 'ready'
@@ -15,7 +16,8 @@ export class ApplicationStateService {
   constructor(
     private mode: ApplicationRuntimeMode,
     private readonly mail?: MailApplicationService,
-    private readonly lifecycle?: AccountLifecycleStatusService
+    private readonly lifecycle?: AccountLifecycleStatusService,
+    private readonly retention?: Pick<RetentionMaintenanceOwner, 'status'>
   ) {}
 
   markLocalDataDeleted(): void {
@@ -29,7 +31,7 @@ export class ApplicationStateService {
         value: { version: POSITA_PROTOCOL_VERSION, mode: this.mode }
       }
     }
-    if (!this.mail || !this.lifecycle) return this.unavailable()
+    if (!this.mail || !this.lifecycle || !this.retention) return this.unavailable()
 
     try {
       const snapshot = this.mail.loadSnapshot()
@@ -41,6 +43,7 @@ export class ApplicationStateService {
           mode: 'ready',
           snapshot: snapshot.value,
           lifecycle: this.lifecycle.load(),
+          retention: this.retention.status(),
           connectConsent: GOOGLE_CONNECT_CONSENT
         }
       }

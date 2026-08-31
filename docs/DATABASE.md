@@ -152,6 +152,9 @@ while disconnect journals `compaction-pending` between them. File-backed compact
 truncation complete before state returns to `ready`, and startup recovery handles
 an interruption through the same async single-flight worker adapter. The inline
 adapter is retained only for bounded in-memory tests and legacy migration.
+Scheduled file-backed retention moves the complete dataset load, cutoff planning,
+encrypted replacement, and sanitization into one short-lived worker. It adds no
+table or migration; schedule and safe status are process-memory state.
 
 Account-data removal reuses the same replacement boundary. The application layer
 computes retained accounts, source messages, untouched derived topics/briefs, and

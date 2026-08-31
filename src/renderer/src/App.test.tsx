@@ -31,6 +31,18 @@ const successResponse = {
       state: 'idle' as const,
       operations: []
     },
+    retention: {
+      version: 1 as const,
+      retentionDays: 90 as const,
+      status: 'scheduled' as const,
+      nextRunAt: '2026-09-01T05:30:00.000Z',
+      lastRun: {
+        completedAt: '2026-08-31T05:30:00.000Z',
+        cutoffAt: '2026-06-02T05:30:00.000Z',
+        changed: false,
+        removed: { messages: 0, topics: 0, briefItems: 0, people: 0 }
+      }
+    },
     connectConsent: GOOGLE_CONNECT_CONSENT
   }
 }
@@ -215,6 +227,54 @@ describe('Posita vertical slice', () => {
     expect(dialog).toHaveTextContent('google-gmail-readonly-v1')
     expect(screen.getByRole('button', { name: 'Connect Gmail unavailable in this build' }))
       .toBeDisabled()
+  })
+
+  it('shows truthful automatic encrypted retention status in privacy settings', async () => {
+    render(<App dataSource={dataSource} />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Settings & privacy' }))
+
+    const status = screen.getByRole('status', { name: 'Automatic retention status' })
+    expect(status).toHaveTextContent('Automatic 90-day local cleanup')
+    expect(status).toHaveTextContent('no expired source mail removed')
+    expect(status).toHaveTextContent('Runs on encrypted Posita data only. Gmail is never changed.')
+  })
+
+  it('refreshes a maintenance update in place without replacing the workspace', async () => {
+    let announce = (): void => undefined
+    const attentionResponse = {
+      ...successResponse,
+      value: {
+        ...successResponse.value,
+        retention: {
+          version: 1 as const,
+          retentionDays: 90 as const,
+          status: 'attention-required' as const,
+          nextRunAt: '2026-08-31T06:30:00.000Z',
+          errorCode: 'RETENTION_MAINTENANCE_FAILED' as const,
+          message: 'Posita could not finish encrypted local cleanup. It will retry automatically.'
+        }
+      }
+    }
+    const loadApplicationState = vi.fn()
+      .mockResolvedValueOnce(successResponse)
+      .mockResolvedValueOnce(attentionResponse)
+    render(<App dataSource={{
+      loadApplicationState,
+      onApplicationStateChanged: (listener) => {
+        announce = () => listener({ version: 1, reason: 'retention-maintenance' })
+        return () => undefined
+      }
+    }} />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Settings & privacy' }))
+
+    announce()
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Automatic local cleanup needs attention')
+    expect(screen.queryByLabelText('Loading Posita')).not.toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: 'Settings & privacy' })).toBeInTheDocument()
+    await waitFor(() => expect(loadApplicationState).toHaveBeenCalledTimes(2))
   })
 
   it('requires exact typed confirmation before deleting local Posita data', async () => {

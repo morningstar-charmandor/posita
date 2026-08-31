@@ -137,6 +137,17 @@ const accountConnectionRecoveryCommand = await readText(
   'src/main/application/accountConnectionRecoveryCommand.ts'
 )
 const applicationIpc = await readText('src/main/ipc/applicationIpc.ts')
+const retentionOwner = await readText('src/main/application/retentionMaintenanceOwner.ts')
+const retentionWorker = await readText(
+  'src/main/infrastructure/sqlite/retentionMaintenanceWorker.ts'
+)
+const retentionWorkerAdapter = await readText(
+  'src/main/infrastructure/sqlite/workerThreadRetentionMaintenance.ts'
+)
+const retentionStatusPanel = await readText(
+  'src/renderer/src/features/settings/RetentionMaintenanceStatusPanel.tsx'
+)
+const electronViteConfig = await readText('electron.vite.config.ts')
 const accountConnectionRecoveryClient = await readText(
   'src/preload/accountConnectionRecoveryClient.ts'
 )
@@ -203,6 +214,22 @@ if (!localDataBootstrap.includes(
 }
 if (!localDataBootstrap.includes('new WorkerThreadSqliteStorageSanitizer(databasePath)')) {
   fail('file-backed production sanitization must run through the worker adapter')
+}
+if (!localDataBootstrap.includes('new WorkerThreadRetentionMaintenance(') ||
+    !mainIndex.includes('new RetentionMaintenanceOwner(') ||
+    !mainIndex.includes('retentionMaintenance?.start()') ||
+    !retentionOwner.includes('RETENTION_MAINTENANCE_INTERVAL_MS = 24 * 60 * 60 * 1000') ||
+    !retentionWorker.includes('new RetentionMaintenanceService(repository') ||
+    !retentionWorkerAdapter.includes("name: 'posita-retention-maintenance'") ||
+    !electronViteConfig.includes('retentionMaintenanceWorker: resolve(')) {
+  fail('automatic file-backed retention must remain bounded, worker-owned, and built for production')
+}
+if (!sharedContracts.includes("applicationStateChanged: 'posita:application:state-changed:v1'") ||
+    !applicationStateService.includes('retention: this.retention.status()') ||
+    !preload.includes('onApplicationStateChanged') ||
+    !retentionStatusPanel.includes('Automatic 90-day local cleanup') ||
+    !retentionStatusPanel.includes('Gmail is never changed')) {
+  fail('retention status must remain bounded, observable, and truthful across the desktop boundary')
 }
 if (!localDataBootstrap.includes('new AccountDataRemovalService(repository)')) {
   fail('production composition must expose account-data removal through the application service')

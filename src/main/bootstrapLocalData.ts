@@ -18,6 +18,7 @@ import { LocalActionConfirmationService } from './application/localActionConfirm
 import { AccountConnectionRecoveryService } from './application/recoverAccountConnection'
 import { StartupLifecycleRecoveryOwner } from './application/startupLifecycleRecovery'
 import { RetentionMaintenanceService } from './application/retentionMaintenance'
+import type { RetentionMaintenanceRunner } from './application/retentionMaintenanceOwner'
 import { MailApplicationService, systemClock } from './application/mailApplicationService'
 import type { MailRepository } from './application/mailRepository'
 import type { SecretVault } from './application/secretVault'
@@ -40,6 +41,7 @@ import { SqliteSecretVault } from './infrastructure/sqlite/sqliteSecretVault'
 import { SqliteLocalActionConfirmationRepository } from './infrastructure/sqlite/sqliteLocalActionConfirmationRepository'
 import { InlineSqliteStorageSanitizer } from './infrastructure/sqlite/sqliteSanitization'
 import { WorkerThreadSqliteStorageSanitizer } from './infrastructure/sqlite/workerThreadSqliteStorageSanitizer'
+import { WorkerThreadRetentionMaintenance } from './infrastructure/sqlite/workerThreadRetentionMaintenance'
 
 interface LocalDataRuntimeBase {
   mode: 'ready' | 'local-data-deleted'
@@ -52,7 +54,7 @@ export interface ReadyLocalDataRuntime extends LocalDataRuntimeBase {
   mode: 'ready'
   secretVault: SecretVault
   accountStateRepository: AccountStateRepository
-  retentionService: RetentionMaintenanceService
+  retentionService: RetentionMaintenanceRunner
   accountDataRemovalService: AccountDataRemovalService
   accountConnectionRecoveryCommandService: AccountConnectionRecoveryCommandService
   confirmationService: LocalActionConfirmationService
@@ -101,6 +103,8 @@ export const bootstrapLocalDataWithDependencies = async (
 ): Promise<LocalDataRuntime> => {
   const database = openPositaDatabase(databasePath)
   let repository: EncryptedSqliteMailRepository | undefined
+  let retentionWorkerKey: Uint8Array | undefined
+  let scheduledRetentionService: RetentionMaintenanceRunner | undefined
   try {
     applyMigrations(database)
     const secretVault = new SqliteSecretVault(database, dependencies.credentialProtector)
@@ -135,6 +139,7 @@ export const bootstrapLocalDataWithDependencies = async (
     const key = recovery.pendingDisconnects > 0
       ? await keyManager.loadExisting()
       : await keyManager.loadOrCreate(countEncryptedRecords(database) > 0)
+    if (databasePath !== ':memory:') retentionWorkerKey = Uint8Array.from(key)
     const protector = new AesGcmCacheProtector(key)
     key.fill(0)
     repository = new EncryptedSqliteMailRepository(database, protector)
@@ -144,6 +149,17 @@ export const bootstrapLocalDataWithDependencies = async (
       repository.seedIfEmpty(fixtures)
       await retentionService.ensureFixtureCompatibility(fixtures)
     }
+    scheduledRetentionService = retentionService
+    if (retentionWorkerKey !== undefined) {
+      scheduledRetentionService = new WorkerThreadRetentionMaintenance(
+        databasePath,
+        retentionWorkerKey
+      )
+      retentionWorkerKey.fill(0)
+      retentionWorkerKey = undefined
+    }
+    const retentionEncryptionContext = scheduledRetentionService instanceof
+      WorkerThreadRetentionMaintenance ? scheduledRetentionService : undefined
     const accountStateRepository = new EncryptedSqliteAccountStateRepository(database, protector)
     const connections: AccountConnectionConsistencyInspector = {
       inspect: (accountId) => inspectAccountConnectionConsistency(
@@ -172,7 +188,8 @@ export const bootstrapLocalDataWithDependencies = async (
         accountStateRepository,
         repository,
         keyManager,
-        storageSanitizer
+        storageSanitizer,
+        retentionEncryptionContext
       ),
       confirmation
     )
@@ -183,7 +200,7 @@ export const bootstrapLocalDataWithDependencies = async (
       secretVault,
       accountStateRepository,
       accountLifecycleRepository,
-      retentionService,
+      retentionService: scheduledRetentionService,
       accountDataRemovalService: new AccountDataRemovalService(repository),
       accountConnectionRecoveryCommandService: new AccountConnectionRecoveryCommandService(
         connections,
@@ -194,6 +211,8 @@ export const bootstrapLocalDataWithDependencies = async (
       deleteLocalDataService: activeDeletion
     }
   } catch (error) {
+    retentionWorkerKey?.fill(0)
+    scheduledRetentionService?.destroyEncryptionContext?.()
     if (repository) repository.close()
     else if (database.isOpen) database.close()
     throw error

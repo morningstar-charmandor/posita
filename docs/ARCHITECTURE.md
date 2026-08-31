@@ -158,10 +158,18 @@ topic and its dependent brief items rather than retaining an uncited summary.
 Unreferenced people are removed; mailbox accounts remain. The encrypted repository
 prepares and validates the replacement before a transaction, replaces source and
 derived records together, records sanitization pending, then compacts and marks the
-cache ready. The service is composed in main but has no timer, IPC, or UI trigger.
-Its file-backed checkpoint and `VACUUM` phase runs through the shared sanitizer
-worker; future scheduling must also keep dataset loading, planning, and encryption
-away from renderer and main event loops.
+cache ready. Main owns one immediate startup pass and a bounded 24-hour cadence,
+with a one-hour retry after a safe failure. For file-backed storage, dataset load,
+retention planning, encrypted replacement, checkpointing, and `VACUUM` all run in
+one dedicated worker operation; no private dataset crosses back to main. A bounded
+status projection is included in the existing read-only application state and a
+fixed notification asks trusted windows to refresh it in place.
+
+The lifecycle owner is single-flight and cancellable at task boundaries. Full
+local deletion first suspends and awaits maintenance so cleanup cannot rewrite
+records while deletion is erasing them. Normal shutdown awaits active work and
+destroys the worker adapter's trusted key copy. That copy is never persisted,
+logged, or sent to the renderer and is also erased by successful full deletion.
 
 ### Account-removal projection
 

@@ -65,14 +65,15 @@ outside the installation data-key boundary so deletion can resume after key loss
 it never stores provider identity, addresses, cursors, credentials, mail, derived
 content, or arbitrary error text.
 
-Gate 2D now implements deterministic 90-day maintenance as an unscheduled
-application service. It requires an absolute source timestamp, retains the exact
+Gate 2D now implements deterministic 90-day maintenance with an immediate startup
+pass and a bounded 24-hour cadence. It requires an absolute source timestamp, retains the exact
 cutoff boundary, and fails before mutation if metadata is missing or invalid.
 Expired source records and every topic/brief that depends on them are replaced in
 one encrypted-cache transaction, followed by SQLite sanitization. For a file-backed
-cache, checkpoints and `VACUUM` execute in a dedicated worker thread. This never
-modifies Gmail. Automatic/background execution and user-visible status remain
-deferred.
+cache, the complete load/plan/rewrite/checkpoint/`VACUUM` operation executes in a
+dedicated worker thread. This never modifies Gmail. Settings exposes only bounded
+running, last-run, next-run, and safe retry state; failures retry after one hour.
+Full local deletion suspends and awaits maintenance before deleting private data.
 
 Historical encrypted sample caches receive one narrow startup compatibility
 upgrade. Posita replaces them only when every timestamp is absent and all other

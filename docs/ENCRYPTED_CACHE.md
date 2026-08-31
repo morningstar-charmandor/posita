@@ -133,8 +133,10 @@ truncates WAL, and marks the cache ready. File-backed sanitization is executed b
 one single-flight worker-thread adapter through a bounded versioned protocol; the
 inline adapter exists only for in-memory tests and legacy migration. A failed
 validation or encryption before
-the transaction leaves the previous cache unchanged. Maintenance is not scheduled
-or exposed over IPC yet.
+the transaction leaves the previous cache unchanged. File-backed maintenance is
+now owned by main on startup and every 24 hours, with the complete operation in a
+dedicated worker. Only bounded status crosses the existing read-only application-
+state boundary; encrypted records, key material, paths, and raw errors do not.
 
 Startup also uses this existing rewrite for one fixture-only compatibility case.
 If every message timestamp is absent and the full decrypted dataset otherwise

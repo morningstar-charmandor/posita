@@ -55,6 +55,7 @@ export type GoogleConnectConsentV1 = typeof GOOGLE_CONNECT_CONSENT
 
 export const IPC_CHANNELS = Object.freeze({
   loadApplicationState: 'posita:application:load-state:v1',
+  applicationStateChanged: 'posita:application:state-changed:v1',
   prepareLocalDataDeletion: 'posita:local-data:prepare-deletion:v1',
   executeLocalDataDeletion: 'posita:local-data:execute-deletion:v1',
   prepareAccountConnectionRecovery: 'posita:account-connection:prepare-recovery:v1',
@@ -63,6 +64,11 @@ export const IPC_CHANNELS = Object.freeze({
 
 export interface LoadApplicationStateRequestV1 {
   version: typeof POSITA_PROTOCOL_VERSION
+}
+
+export interface ApplicationStateChangedEventV1 {
+  version: typeof POSITA_PROTOCOL_VERSION
+  reason: 'retention-maintenance'
 }
 
 export interface AppSnapshotV1 {
@@ -126,12 +132,50 @@ export interface LifecycleStatusSnapshotV1 {
   operations: LifecycleOperationStatusV1[]
 }
 
+export interface RetentionMaintenanceRunV1 {
+  completedAt: string
+  cutoffAt: string
+  changed: boolean
+  removed: {
+    messages: number
+    topics: number
+    briefItems: number
+    people: number
+  }
+}
+
+export const RETENTION_MAINTENANCE_FAILURE_MESSAGE =
+  'Posita could not finish encrypted local cleanup. It will retry automatically.' as const
+
+interface RetentionMaintenanceStatusBaseV1 {
+  version: typeof POSITA_PROTOCOL_VERSION
+  retentionDays: 90
+  lastRun?: RetentionMaintenanceRunV1
+}
+
+export type RetentionMaintenanceStatusV1 =
+  | RetentionMaintenanceStatusBaseV1 & {
+      status: 'scheduled'
+      nextRunAt: string
+    }
+  | RetentionMaintenanceStatusBaseV1 & {
+      status: 'running'
+      startedAt: string
+    }
+  | RetentionMaintenanceStatusBaseV1 & {
+      status: 'attention-required'
+      nextRunAt: string
+      errorCode: 'RETENTION_MAINTENANCE_FAILED'
+      message: typeof RETENTION_MAINTENANCE_FAILURE_MESSAGE
+    }
+
 export type ApplicationStateV1 =
   | {
       version: typeof POSITA_PROTOCOL_VERSION
       mode: 'ready'
       snapshot: AppSnapshotV1
       lifecycle: LifecycleStatusSnapshotV1
+      retention: RetentionMaintenanceStatusV1
       connectConsent: GoogleConnectConsentV1
     }
   | {
@@ -279,6 +323,9 @@ export interface PositaDesktopApi {
   platform: string
   prototypeMode: true
   loadApplicationState(): Promise<LoadApplicationStateResponseV1>
+  onApplicationStateChanged(
+    listener: (event: ApplicationStateChangedEventV1) => void
+  ): () => void
   prepareLocalDataDeletion(): Promise<PrepareLocalDataDeletionResponseV1>
   executeLocalDataDeletion(
     request: ExecuteLocalDataDeletionRequestV1

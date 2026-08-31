@@ -5,7 +5,7 @@ import {
   Paperclip, PenLine, Search, Send, Settings, Sparkles, Users, X
 } from 'lucide-react'
 import type { Account, BriefItem, MailDataset, Message, Topic } from '@shared/domain'
-import type { GoogleConnectConsentV1 } from '@shared/contracts'
+import type { GoogleConnectConsentV1, RetentionMaintenanceStatusV1 } from '@shared/contracts'
 import type { LocalDataDeletionDataSource } from '../../application/localDataDeletionDataSource'
 import { buildDailyBrief, createGroundedDraft, getMessage, getTopic, getTopicMessages } from '../../domain/mailService'
 import { LocalDataSettingsDialog } from '../settings/LocalDataSettingsDialog'
@@ -165,11 +165,13 @@ function DraftPanel({ topic, onClose }: { topic: Topic; onClose: () => void }): 
 
 function WorkspaceContent({
   connectConsent,
+  retention,
   deletionDataSource,
   recoveryDataSource,
   onLocalDataDeleted
 }: {
   connectConsent: GoogleConnectConsentV1
+  retention: RetentionMaintenanceStatusV1
   deletionDataSource: LocalDataDeletionDataSource
   recoveryDataSource: AccountConnectionRecoveryDataSource
   onLocalDataDeleted: () => void
@@ -199,6 +201,7 @@ function WorkspaceContent({
       {settingsOpen && (
         <LocalDataSettingsDialog
           connectConsent={connectConsent}
+          retention={retention}
           accounts={dataset.accounts}
           dataSource={deletionDataSource}
           recoveryDataSource={recoveryDataSource}
@@ -213,12 +216,14 @@ function WorkspaceContent({
 export function Workspace({
   dataset,
   connectConsent,
+  retention,
   deletionDataSource,
   recoveryDataSource,
   onLocalDataDeleted
 }: {
   dataset: MailDataset
   connectConsent: GoogleConnectConsentV1
+  retention: RetentionMaintenanceStatusV1
   deletionDataSource: LocalDataDeletionDataSource
   recoveryDataSource: AccountConnectionRecoveryDataSource
   onLocalDataDeleted: () => void
@@ -227,6 +232,7 @@ export function Workspace({
     <MailDatasetContext.Provider value={dataset}>
       <WorkspaceContent
         connectConsent={connectConsent}
+        retention={retention}
         deletionDataSource={deletionDataSource}
         recoveryDataSource={recoveryDataSource}
         onLocalDataDeleted={onLocalDataDeleted}

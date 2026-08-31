@@ -259,6 +259,7 @@ export const createExecuteAccountConnectionRecoveryHandler = (
 
 export interface ApplicationIpcRegistration {
   allowWindow(window: BrowserWindow): void
+  notifyApplicationStateChanged(): void
   dispose(): void
 }
 
@@ -269,9 +270,9 @@ export interface ApplicationIpcServices {
 }
 
 export const registerApplicationIpc = (services: ApplicationIpcServices): ApplicationIpcRegistration => {
-  const trustedWebContents = new Set<number>()
+  const trustedWindows = new Map<number, BrowserWindow>()
   const isTrusted: TrustPredicate = (event) =>
-    trustedWebContents.has(event.sender.id) &&
+    trustedWindows.has(event.sender.id) &&
     event.senderFrame === event.sender.mainFrame
 
   const handler = createLoadApplicationStateHandler(services.applicationState, isTrusted)
@@ -323,12 +324,23 @@ export const registerApplicationIpc = (services: ApplicationIpcServices): Applic
   return {
     allowWindow(window) {
       const id = window.webContents.id
-      trustedWebContents.add(id)
+      trustedWindows.set(id, window)
       window.once('closed', () => {
-        trustedWebContents.delete(id)
+        trustedWindows.delete(id)
         deletionAuthorization.revokeSender(id)
         recoveryAuthorization.revokeSender(id)
       })
+    },
+    notifyApplicationStateChanged() {
+      const event = Object.freeze({
+        version: POSITA_PROTOCOL_VERSION,
+        reason: 'retention-maintenance' as const
+      })
+      for (const window of trustedWindows.values()) {
+        if (!window.isDestroyed() && !window.webContents.isDestroyed()) {
+          window.webContents.send(IPC_CHANNELS.applicationStateChanged, event)
+        }
+      }
     },
     dispose() {
       ipcMain.removeHandler(IPC_CHANNELS.loadApplicationState)
@@ -336,7 +348,7 @@ export const registerApplicationIpc = (services: ApplicationIpcServices): Applic
       ipcMain.removeHandler(IPC_CHANNELS.executeLocalDataDeletion)
       ipcMain.removeHandler(IPC_CHANNELS.prepareAccountConnectionRecovery)
       ipcMain.removeHandler(IPC_CHANNELS.executeAccountConnectionRecovery)
-      trustedWebContents.clear()
+      trustedWindows.clear()
       deletionAuthorization.clear()
       recoveryAuthorization.clear()
     }

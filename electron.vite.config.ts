@@ -9,6 +9,9 @@ export default defineConfig({
       rollupOptions: {
         input: {
           index: resolve('src/main/index.ts'),
+          retentionMaintenanceWorker: resolve(
+            'src/main/infrastructure/sqlite/retentionMaintenanceWorker.ts'
+          ),
           sqliteSanitizationWorker: resolve(
             'src/main/infrastructure/sqlite/sqliteSanitizationWorker.ts'
           )

@@ -186,6 +186,11 @@ h1 { font-family: Georgia, 'Times New Roman', serif; font-weight: 500; letter-sp
 .recovery-account-list small { overflow: hidden; color: var(--muted); font-size: 8.5px; text-overflow: ellipsis; white-space: nowrap; }
 .connection-recovery-confirmation > p { color: #5f665f; }
 .recovery-safe-icon { color: #58715f !important; }
+.retention-status { display: flex; align-items: flex-start; gap: 11px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: #fafaf7; }
+.retention-status > span { min-width: 0; display: grid; gap: 3px; }
+.retention-status strong { font-size: 10px; }
+.retention-status small { color: var(--muted); font-size: 8.5px; line-height: 1.45; }
+.retention-status-error { border-color: #ead4cb; color: #874e3c; background: #fff8f5; }
 .destructive-warning { border-color: #ead4cb; color: #874e3c; background: #fff8f5; }
 .deletion-confirmation ul { display: grid; gap: 7px; margin: 0; padding-left: 20px; color: #666b64; font-size: 10px; line-height: 1.45; }
 .deletion-confirmation label { margin-top: 2px; color: #4e534d; font-size: 10px; }

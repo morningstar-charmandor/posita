@@ -22,6 +22,11 @@ export interface LocalDataDeletedTransition {
   markLocalDataDeleted(): void
 }
 
+export interface RetentionMaintenanceGate {
+  suspend(): Promise<void>
+  resume(): void
+}
+
 const error = (
   code: LocalDataDeletionErrorCodeV1,
   message: string,
@@ -79,7 +84,8 @@ export class LocalDataDeletionCommandService {
   constructor(
     private readonly confirmation?: LocalActionConfirmationService,
     private readonly deletion?: DeleteLocalDataService,
-    private readonly transition?: LocalDataDeletedTransition
+    private readonly transition?: LocalDataDeletedTransition,
+    private readonly retention?: RetentionMaintenanceGate
   ) {
     this.available = confirmation !== undefined && deletion !== undefined && transition !== undefined
   }
@@ -110,6 +116,7 @@ export class LocalDataDeletionCommandService {
     }
     if (!isExecuteLocalDataDeletionRequest(request)) return this.invalid()
     let expiredConfirmation: LocalActionConfirmationError | undefined
+    let maintenanceSuspended = false
     try {
       try {
         this.confirmation.confirm(request)
@@ -121,6 +128,8 @@ export class LocalDataDeletionCommandService {
           throw cause
         }
       }
+      await this.retention?.suspend()
+      maintenanceSuspended = this.retention !== undefined
       const result = await this.deletion.delete({
         version: POSITA_PROTOCOL_VERSION,
         confirmationId: request.confirmationId,
@@ -152,6 +161,8 @@ export class LocalDataDeletionCommandService {
         ok: false,
         error: mappedError
       }
+    } finally {
+      if (maintenanceSuspended && this.available) this.retention?.resume()
     }
   }
 

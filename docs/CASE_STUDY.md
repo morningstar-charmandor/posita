@@ -25,7 +25,8 @@ boundary renders lifecycle and deleted outcomes. A provider-independent
 authorization-session contract and deterministic fake exist only in the trusted
 backend. A same-window Settings flow can now inspect and discard one-sided local
 connection state for sample accounts, while OAuth activation and real credential
-persistence remain unavailable.
+persistence remain unavailable. Automatic encrypted retention now runs at startup
+and on a bounded daily cadence in a worker, with truthful status in Settings.
 
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
 
@@ -146,6 +147,14 @@ one single-flight worker thread and a bounded versioned protocol. Retention,
 disconnect, deletion, and restart recovery share an injectable application
 contract, while raw database and worker failures stay out of the renderer.
 
+Scheduling retention widened that problem: loading and decrypting the dataset,
+planning derived eviction, and re-encrypting records are also synchronous. The
+automatic path therefore moves the complete maintenance pass into one short-lived
+worker, not merely compaction. Main owns startup, daily, and retry timing, while
+confirmed full deletion suspends and awaits the owner before erasing data. Settings
+receives only bounded status through the existing validated application query;
+mail content, paths, raw errors, and key material remain trusted-process-only.
+
 The command boundary separates authorization from recovery. A new destructive
 operation needs exact typed confirmation within five minutes, while recovery can
 only resume an already-journaled operation and cannot silently create one. The
@@ -217,6 +226,9 @@ At the current Gate 2D foundation checkpoint, Posita has:
   private-data key without containing private content,
 - deterministic 90-day retention with absolute timestamps, conservative
   source-derived eviction, and atomic encrypted-cache rewriting,
+- automatic startup and 24-hour retention passes with a one-hour safe retry,
+  complete file-backed worker isolation, deletion/shutdown coordination, and
+  accessible bounded maintenance status,
 - exact historical-fixture compatibility that restores known absolute timestamps
   without parsing display labels or replacing ambiguous data,
 - idempotent account removal that preserves other-account sources while deleting
@@ -256,9 +268,10 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - future sync ownership and account-isolation contracts without premature
   provider implementation,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 36 automated test files containing 245 passing tests,
+- 39 automated test files containing 258 passing tests,
 - a desktop visual and accessibility-tree check of the local-only Settings entry,
-  sample-account controls, and normal no-recovery-needed outcome,
+  sample-account controls, normal no-recovery-needed outcome, and automatic
+  retention card with readable next/last status and Gmail non-mutation copy,
 - passing strict TypeScript, structural security checks, and production builds.
 
 These are engineering outcomes, not evidence of customer adoption or AI quality.
@@ -266,12 +279,12 @@ No real mailbox, OAuth credential, or model provider has been used.
 
 ## What comes next
 
-The discard-only local recovery flow is now complete for Gate 2D. The next safe
-milestone is to review how deterministic 90-day retention maintenance should be
-scheduled and surfaced without blocking startup or the desktop event loop. Real
-Google OAuth, browser activation, credentials, live account connection, and sync
-remain separate decisions blocked behind explicit owner approval and lifecycle
-gates.
+The discard-only local recovery flow and automatic fixed-window retention lifecycle
+are complete at their current Gate 2D boundaries. The next safe milestone is a
+Gate 2D lifecycle-readiness audit and a written product/security decision for
+whether Gmail authorization activation should begin. Real Google OAuth, browser
+activation, credentials, live account connection, and sync remain separate actions
+blocked behind explicit owner approval.
 
 Later evidence should include measured sync reliability, duplicate prevention,
 citation correctness, draft usefulness, correction rate, and time to attention.

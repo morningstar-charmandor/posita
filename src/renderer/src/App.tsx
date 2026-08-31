@@ -39,6 +39,23 @@ export function App({
 
   useEffect(() => {
     let active = true
+    let sequence = 0
+    const unsubscribe = dataSource.onApplicationStateChanged?.(() => {
+      const requestSequence = ++sequence
+      void dataSource.loadApplicationState().then((response) => {
+        if (active && requestSequence === sequence && response.ok) {
+          setState({ status: 'loaded', application: response.value })
+        }
+      }).catch(() => undefined)
+    })
+    return () => {
+      active = false
+      unsubscribe?.()
+    }
+  }, [dataSource])
+
+  useEffect(() => {
+    let active = true
     setState({ status: 'loading' })
 
     void dataSource.loadApplicationState().then((response) => {
@@ -116,6 +133,7 @@ export function App({
       <Workspace
         dataset={state.application.snapshot.dataset}
         connectConsent={state.application.connectConsent}
+        retention={state.application.retention}
         deletionDataSource={deletionDataSource}
         recoveryDataSource={recoveryDataSource}
         onLocalDataDeleted={() => setState({

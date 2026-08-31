@@ -16,6 +16,10 @@ export interface CacheDataKeyEraser {
   delete(): Promise<boolean>
 }
 
+export interface EncryptionContextDestroyer {
+  destroyEncryptionContext(): void
+}
+
 export interface DeleteLocalDataActions {
   deleteRefreshCredentials(): Promise<void>
   deleteAccountState(): void
@@ -30,7 +34,8 @@ export class ComposedDeleteLocalDataActions implements DeleteLocalDataActions {
     private readonly accountState: AccountStateRepository,
     private readonly mailRepository: MutableMailRepository,
     private readonly keyEraser: CacheDataKeyEraser,
-    private readonly storageSanitizer: StorageSanitizer
+    private readonly storageSanitizer: StorageSanitizer,
+    private readonly additionalEncryptionContext?: EncryptionContextDestroyer
   ) {}
 
   async deleteRefreshCredentials(): Promise<void> {
@@ -52,6 +57,7 @@ export class ComposedDeleteLocalDataActions implements DeleteLocalDataActions {
   async eraseDataKey(): Promise<void> {
     await this.keyEraser.delete()
     this.mailRepository.destroyEncryptionContext()
+    this.additionalEncryptionContext?.destroyEncryptionContext()
   }
 }
 

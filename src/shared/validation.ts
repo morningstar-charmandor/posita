@@ -6,6 +6,7 @@ import type {
   AccountConnectionRecoveryErrorCodeV1,
   AccountConnectionRecoveryErrorV1,
   AccountConnectionRecoveryResultV1,
+  ApplicationStateChangedEventV1,
   ApplicationStateV1,
   GoogleConnectConsentV1,
   LifecycleOperationStatusV1,
@@ -24,7 +25,9 @@ import type {
   PrepareLocalDataDeletionRequestV1,
   PrepareLocalDataDeletionResponseV1,
   PrepareAccountConnectionRecoveryRequestV1,
-  PrepareAccountConnectionRecoveryResponseV1
+  PrepareAccountConnectionRecoveryResponseV1,
+  RetentionMaintenanceRunV1,
+  RetentionMaintenanceStatusV1
 } from './contracts'
 import {
   ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_TEXT,
@@ -32,7 +35,8 @@ import {
   DELETE_LOCAL_DATA_CONFIRMATION_TEXT,
   GOOGLE_CONNECT_CONSENT,
   LOCAL_DATA_DELETION_CONSEQUENCES,
-  POSITA_PROTOCOL_VERSION
+  POSITA_PROTOCOL_VERSION,
+  RETENTION_MAINTENANCE_FAILURE_MESSAGE
 } from './contracts'
 import type {
   Account,
@@ -187,6 +191,13 @@ export const isLoadApplicationStateRequest = (
   hasOnlyKeys(value, ['version']) &&
   value.version === POSITA_PROTOCOL_VERSION
 
+export const isApplicationStateChangedEvent = (
+  value: unknown
+): value is ApplicationStateChangedEventV1 =>
+  isRecord(value) && hasOnlyKeys(value, ['version', 'reason']) &&
+  value.version === POSITA_PROTOCOL_VERSION &&
+  value.reason === 'retention-maintenance'
+
 const errorCodes: readonly AppErrorCodeV1[] = [
   'INVALID_REQUEST',
   'UNTRUSTED_SENDER',
@@ -288,6 +299,48 @@ export const isLifecycleStatusSnapshot = (
   return value.operations.some((operation) => operation.status === 'retry-required')
 }
 
+const isRetentionMaintenanceRun = (
+  value: unknown
+): value is RetentionMaintenanceRunV1 => {
+  if (!isRecord(value) || !hasOnlyKeys(value, [
+    'completedAt', 'cutoffAt', 'changed', 'removed'
+  ]) || !isAbsoluteTimestamp(value.completedAt) ||
+      !isAbsoluteTimestamp(value.cutoffAt) || !isBoolean(value.changed) ||
+      !isRecord(value.removed) || !hasOnlyKeys(value.removed, [
+        'messages', 'topics', 'briefItems', 'people'
+      ])) return false
+  const removed = value.removed
+  if (!['messages', 'topics', 'briefItems', 'people'].every((key) =>
+    isNonNegativeInteger(removed[key]))) return false
+  return value.changed === ['messages', 'topics', 'briefItems', 'people'].some((key) =>
+    (removed[key] as number) > 0)
+}
+
+export const isRetentionMaintenanceStatus = (
+  value: unknown
+): value is RetentionMaintenanceStatusV1 => {
+  if (!isRecord(value) || value.version !== POSITA_PROTOCOL_VERSION ||
+      value.retentionDays !== 90 ||
+      (value.lastRun !== undefined && !isRetentionMaintenanceRun(value.lastRun))) return false
+  const lastRunKey = value.lastRun === undefined ? [] : ['lastRun']
+  if (value.status === 'scheduled') {
+    return hasOnlyKeys(value, [
+      'version', 'retentionDays', 'status', 'nextRunAt', ...lastRunKey
+    ]) && isAbsoluteTimestamp(value.nextRunAt)
+  }
+  if (value.status === 'running') {
+    return hasOnlyKeys(value, [
+      'version', 'retentionDays', 'status', 'startedAt', ...lastRunKey
+    ]) && isAbsoluteTimestamp(value.startedAt)
+  }
+  return value.status === 'attention-required' && hasOnlyKeys(value, [
+    'version', 'retentionDays', 'status', 'nextRunAt', 'errorCode', 'message',
+    ...lastRunKey
+  ]) && isAbsoluteTimestamp(value.nextRunAt) &&
+    value.errorCode === 'RETENTION_MAINTENANCE_FAILED' &&
+    value.message === RETENTION_MAINTENANCE_FAILURE_MESSAGE
+}
+
 export const isGoogleConnectConsent = (value: unknown): value is GoogleConnectConsentV1 => {
   if (!isRecord(value) || !hasOnlyKeys(value, [
     'version', 'consentVersion', 'provider', 'status', 'requestedScope',
@@ -316,9 +369,10 @@ export const isApplicationState = (value: unknown): value is ApplicationStateV1 
       !isOneOf(value.mode, ['ready', 'local-data-deleted', 'recovery-required'])) return false
   if (value.mode === 'ready') {
     return hasOnlyKeys(value, [
-      'version', 'mode', 'snapshot', 'lifecycle', 'connectConsent'
+      'version', 'mode', 'snapshot', 'lifecycle', 'retention', 'connectConsent'
     ]) && isAppSnapshot(value.snapshot) &&
       isLifecycleStatusSnapshot(value.lifecycle) &&
+      isRetentionMaintenanceStatus(value.retention) &&
       isGoogleConnectConsent(value.connectConsent)
   }
   return hasOnlyKeys(value, ['version', 'mode'])

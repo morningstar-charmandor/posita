@@ -126,6 +126,14 @@ Implemented:
   success, safe errors, and fresh-review behavior,
 - main-owned orphan diagnosis: the renderer supplies only a known opaque account
   ID and cannot choose credential versus encrypted provider-state deletion,
+- a main-owned automatic retention lifecycle with an immediate startup pass,
+  bounded 24-hour cadence, one-hour safe retry, and single-flight execution,
+- a packaged retention worker that keeps file-backed load, planning, authenticated
+  rewrite, checkpointing, and compaction off Electron main and the renderer,
+- deletion/shutdown coordination that awaits maintenance and erases the worker
+  adapter's trusted in-memory key copy without exposing it over IPC,
+- bounded running, last-run, next-run, and attention-required retention status in
+  Settings, refreshed in place through one validated fixed notification,
 - truthful sample-mode labels that do not describe fixture accounts, briefs, or
   deterministic drafts as live Gmail or production AI,
 - deterministic credential-free verification through `npm run verify`.
@@ -156,9 +164,8 @@ Not implemented:
 - runtime sync coordination, provider reconciliation, or deduplication logic,
 - user-triggered account disconnect or any remote mailbox mutation control,
 - automatic pending-disconnect resume with a live idempotent revocation adapter,
-- automatic retention scheduling and user-visible maintenance status,
 - a model provider, embeddings, classification, retrieval, or generation,
-- automatic 90-day maintenance or active account lifecycle scheduling,
+- automatic pending-disconnect lifecycle scheduling,
 - production-scale encrypted search or attachment storage,
 - packaging, signing, telemetry, or external-user onboarding.
 
@@ -186,28 +193,29 @@ confirmed local deletion are complete at their current layers. Continue in this 
    revocation adapter can be composed and tested.
 2. Treat the local recovery UI as complete at its current boundary. Do not add
    automatic startup repair; failed execution must continue to require fresh review.
-3. Review the next safe lifecycle milestone: automatic 90-day retention scheduling
-   with bounded background ownership and user-visible maintenance status. Keep it
-   credential-free and off the renderer/main event loops.
-4. Request explicit owner approval before composing a real Google adapter,
+3. Treat automatic retention scheduling and its Settings status as complete at
+   the current fixed 90-day boundary. Do not add configurable retention yet.
+4. Run a Gate 2D lifecycle-readiness audit and prepare the explicit product and
+   security decision for Gmail authorization activation without adding a client,
+   credential, browser action, or provider dependency.
+5. Request explicit owner approval before composing a real Google adapter,
    credentials, browser authorization, connection activation, or live account.
-5. Keep real Gmail ingestion disabled until authorization activation is separately
+6. Keep real Gmail ingestion disabled until authorization activation is separately
    approved and the remaining lifecycle activation
    and consent gates pass.
 
 Do not solve encrypted search casually. Any index must avoid becoming a second
 plaintext mailbox. Record the selected search tradeoff in `docs/DECISIONS.md`.
 
-Milestone change report: the existing schema-v8 producer and discard policy are
-now composed through one command service, two fixed shared/preload/IPC contracts,
-same-window authorization, and one extracted Settings panel. Preparation takes an
-opaque account ID while main derives the orphan type. The receipt is consumed before
-mutation and any failed attempt requires fresh review. Full deletion remains
-unchanged. There are no new dependencies, schema migrations, compatibility paths,
-provider adapters, external actions, real secrets, mailbox mutations, or intentional
-duplicate implementations. The existing consistency rule was extracted as one pure
-shared application function so connection creation and recovery composition use the
-same source of truth.
+Milestone change report: main now owns one automatic retention schedule and one
+file-backed worker boundary. The existing policy, encrypted repository rewrite,
+and sanitizer remain the sources of truth; no parallel retention implementation
+was added. A new owner, worker adapter, bounded status projection, fixed refresh
+event, and extracted Settings status panel are intentional single-purpose
+abstractions. The synchronous service is retained for bounded in-memory tests and
+exact startup fixture compatibility. There are no new dependencies, schema
+migrations, provider adapters, compatibility paths, external actions, real secrets,
+mailbox mutations, or intentional duplicate domain rules.
 
 ## How to resume
 
@@ -227,11 +235,12 @@ same source of truth.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 36 test files, 245 tests, strict typecheck, structure
+- Current verified baseline: 39 test files, 258 tests, strict typecheck, structure
   checks, and production Electron build passing.
-- Desktop visual/AX check: Settings exposes the local-only recovery panel with
-  sample-account labels and account-specific accessible controls; the normal Work
-  fixture returns the expected no-recovery-needed state without mutation.
+- Desktop visual/AX check: Settings exposes the local-only recovery controls and
+  an `Automatic retention status` region with next/last check, zero-removal result,
+  encrypted-local-only scope, and explicit Gmail non-mutation copy. Sample labels
+  and account-specific accessible controls remain intact.
 
 Native verification migrated the development database to schema v3 with 21
 encrypted records, zero legacy account rows, a `ready` cache state, an

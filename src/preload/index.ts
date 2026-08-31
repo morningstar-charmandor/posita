@@ -1,6 +1,7 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import { IPC_CHANNELS, type PositaDesktopApi } from '../shared/contracts'
 import { createLoadApplicationStateClient } from './loadApplicationStateClient'
+import { createApplicationStateChangedClient } from './applicationStateChangedClient'
 import {
   createExecuteLocalDataDeletionClient,
   createPrepareLocalDataDeletionClient
@@ -12,6 +13,11 @@ import {
 
 const loadApplicationState = createLoadApplicationStateClient((request) =>
   ipcRenderer.invoke(IPC_CHANNELS.loadApplicationState, request))
+const onApplicationStateChanged = createApplicationStateChangedClient((listener) => {
+  const receive = (_event: IpcRendererEvent, payload: unknown): void => listener(payload)
+  ipcRenderer.on(IPC_CHANNELS.applicationStateChanged, receive)
+  return () => ipcRenderer.removeListener(IPC_CHANNELS.applicationStateChanged, receive)
+})
 const prepareLocalDataDeletion = createPrepareLocalDataDeletionClient((request) =>
   ipcRenderer.invoke(IPC_CHANNELS.prepareLocalDataDeletion, request))
 const executeLocalDataDeletion = createExecuteLocalDataDeletionClient((request) =>
@@ -25,6 +31,7 @@ const api: PositaDesktopApi = Object.freeze({
   platform: process.platform,
   prototypeMode: true,
   loadApplicationState,
+  onApplicationStateChanged,
   prepareLocalDataDeletion,
   executeLocalDataDeletion,
   prepareAccountConnectionRecovery,

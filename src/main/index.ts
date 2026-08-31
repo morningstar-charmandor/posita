@@ -5,7 +5,9 @@ import { AccountLifecycleStatusService } from './application/accountLifecycleSta
 import { AccountConnectionRecoveryCommandService } from './application/accountConnectionRecoveryCommand'
 import { ApplicationStateService } from './application/applicationStateService'
 import { LocalDataDeletionCommandService } from './application/localDataDeletionCommand'
+import { systemClock } from './application/mailApplicationService'
 import type { MailRepository } from './application/mailRepository'
+import { RetentionMaintenanceOwner } from './application/retentionMaintenanceOwner'
 import { registerApplicationIpc, type ApplicationIpcRegistration } from './ipc/applicationIpc'
 
 const isTrustedExternalUrl = (candidate: string): boolean => {
@@ -54,10 +56,30 @@ const createWindow = (): BrowserWindow => {
 
 app.enableSandbox()
 const lifecycleRecoveryAbort = new AbortController()
-app.once('before-quit', () => lifecycleRecoveryAbort.abort())
+let repository: MailRepository | undefined
+let applicationIpc: ApplicationIpcRegistration | undefined
+let retentionMaintenance: RetentionMaintenanceOwner | undefined
+let shutdownStarted = false
+
+app.on('before-quit', (event) => {
+  lifecycleRecoveryAbort.abort()
+  if (shutdownStarted) return
+  if (!retentionMaintenance) {
+    shutdownStarted = true
+    applicationIpc?.dispose()
+    repository?.close()
+    return
+  }
+  event.preventDefault()
+  shutdownStarted = true
+  void retentionMaintenance.stop().finally(() => {
+    applicationIpc?.dispose()
+    repository?.close()
+    app.quit()
+  })
+})
 
 app.whenReady().then(async () => {
-  let repository: MailRepository | undefined
   let service = new ApplicationStateService('recovery-required')
   let localDataDeletion = new LocalDataDeletionCommandService()
   let accountConnectionRecovery = new AccountConnectionRecoveryCommandService()
@@ -68,43 +90,47 @@ app.whenReady().then(async () => {
       lifecycleRecoveryAbort.signal
     )
     repository = runtime.repository
-    service = runtime.mode === 'ready'
-      ? new ApplicationStateService(
-          'ready',
-          runtime.service,
-          new AccountLifecycleStatusService(runtime.accountLifecycleRepository)
-        )
-      : new ApplicationStateService('local-data-deleted')
     if (runtime.mode === 'ready') {
+      retentionMaintenance = new RetentionMaintenanceOwner(
+        runtime.retentionService,
+        systemClock,
+        undefined,
+        () => applicationIpc?.notifyApplicationStateChanged()
+      )
+      service = new ApplicationStateService(
+        'ready',
+        runtime.service,
+        new AccountLifecycleStatusService(runtime.accountLifecycleRepository),
+        retentionMaintenance
+      )
       localDataDeletion = new LocalDataDeletionCommandService(
         runtime.confirmationService,
         runtime.deleteLocalDataService,
-        service
+        service,
+        retentionMaintenance
       )
       accountConnectionRecovery = runtime.accountConnectionRecoveryCommandService
+    } else {
+      service = new ApplicationStateService('local-data-deleted')
     }
   } catch {
     console.error('Posita local data initialization failed.')
   }
 
-  const applicationIpc: ApplicationIpcRegistration = registerApplicationIpc({
+  applicationIpc = registerApplicationIpc({
     applicationState: service,
     localDataDeletion,
     accountConnectionRecovery
   })
   const openWindow = (): void => {
     const window = createWindow()
-    applicationIpc.allowWindow(window)
+    applicationIpc?.allowWindow(window)
   }
 
   openWindow()
+  retentionMaintenance?.start()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) openWindow()
-  })
-
-  app.once('before-quit', () => {
-    applicationIpc.dispose()
-    repository?.close()
   })
 })
 

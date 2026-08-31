@@ -1090,6 +1090,63 @@ no recovery is needed. Gmail authorization, account connection, revocation, sync
 AI providers, and remote mailbox actions remain unavailable. The interface does
 not automatically repair startup state or reconstruct missing connection data.
 
+## Gate 2D milestone — Automatic encrypted retention maintenance
+
+Date: 2026-08-31
+Checkpoint: use the Git commit whose subject is `feat: schedule encrypted retention maintenance`
+
+Goal: make the fixed 90-day local policy run automatically without blocking the
+desktop event loops, racing full deletion, exposing private state, or implying
+that sample mail is live Gmail.
+
+Delivered:
+
+- a main-owned single-flight lifecycle with an immediate startup pass, bounded
+  24-hour cadence, one-hour safe retry, cancellation, and shutdown cleanup,
+- one packaged file-backed worker operation covering encrypted dataset load,
+  deterministic cutoff planning, authenticated replacement, WAL checkpointing,
+  and SQLite compaction,
+- a trusted adapter key copy that is erased after bootstrap transfer, normal
+  shutdown, and confirmed full local deletion,
+- full-deletion coordination that suspends and awaits active maintenance before
+  destructive phases begin,
+- versioned bounded status in the existing application-state query and a fixed
+  main-to-renderer refresh notification,
+- an accessible Settings status for running, last/next check, removal count, and
+  safe retry, with explicit copy that Gmail is never changed,
+- ADR-030 plus aligned agent, README, architecture, database, privacy,
+  encrypted-cache, handoff, project-map, and portfolio records.
+
+Important decisions:
+
+- one main lifecycle owner, never a renderer timer or independent polling loop,
+- move the complete file-backed maintenance operation—not only `VACUUM`—off the
+  Electron main event loop,
+- keep schedule/status ephemeral rather than add persistent private or operational
+  schema, while relying on atomic rewrite and sanitization markers for recovery,
+- ignore background refresh failures in the loaded UI and retain the last safe
+  application state; the next bounded event or explicit retry can recover,
+- retain the synchronous service only for bounded in-memory tests and exact
+  legacy-fixture startup compatibility,
+- add no dependency, schema migration, provider adapter, compatibility path,
+  credential, personal data, external action, or mailbox mutation.
+
+Evidence: 39 test files and 258 tests pass. Coverage includes exact status schema,
+startup/daily/retry scheduling, single-flight behavior, suspension, shutdown key
+destruction, deletion resume behavior, malformed worker output, preload filtering,
+in-place renderer refresh, truthful Settings states, deterministic policy eviction,
+and sanitization failure paths. Strict typecheck, renderer structure/security
+checks, and the production Electron build—including the retention worker—pass.
+These are engineering measurements, not external-user outcome metrics.
+A native desktop screenshot and accessibility-tree check verified the complete
+Settings card, readable next/last timestamps, sample-data label, and explicit
+“Gmail is never changed” boundary.
+
+Limitations: the running cache still contains deterministic fixtures only. The
+schedule is fixed and process-local; a quit or crash is recovered by the next
+startup pass rather than by a persistent wall-clock job. No Gmail, AI provider,
+live credential, background disconnect resumer, or remote mailbox action exists.
+
 ## How future entries should be written
 
 For each material milestone, record:

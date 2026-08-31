@@ -494,3 +494,30 @@
   or changes a mailbox. No dependency, schema migration, compatibility path,
   provider adapter, real account, secret, personal data, or remote mutation is
   added. Gmail authorization activation remains a separate approval gate.
+
+## ADR-030: Schedule retention through one main-owned worker lifecycle
+
+- Status: accepted for Gate 2D
+- Context: the deterministic 90-day policy was correct but ran only when invoked
+  by tests or startup fixture compatibility. Running file-backed dataset loading,
+  encryption, checkpointing, or `VACUUM` in Electron main would risk desktop
+  responsiveness, while a renderer timer would weaken the trust boundary and
+  create a second lifecycle owner. Retention must also never race full deletion.
+- Decision: give main one single-flight retention owner. Schedule an immediate
+  pass after the first trusted window is registered, then every 24 hours; retry a
+  failed pass after one hour. For file-backed SQLite, run load, plan, authenticated
+  rewrite, and sanitization in one short-lived worker using a transferred copy of
+  a trusted 32-byte key. Retain one adapter key copy only in main memory, erase it
+  on shutdown and full local deletion, and never expose it over IPC. Suspend and
+  await maintenance before confirmed full deletion. Project only versioned,
+  bounded running/last/next/safe-error state through the existing read-only
+  application query, refreshed by one fixed main-to-renderer notification.
+- Consequence: automatic cleanup is responsive, deterministic, single-owner, and
+  observable without presenting fixture data as Gmail or AI. A crash may interrupt
+  a pass, but transactional replacement and the existing sanitization marker keep
+  restart behavior recoverable; the next startup retries. Status is intentionally
+  process-memory state rather than a new persistence surface. No dependency,
+  schema migration, provider adapter, compatibility path, credential, personal
+  data, external action, mailbox mutation, or configurable retention setting is
+  added. The existing synchronous retention service remains for bounded in-memory
+  tests and exact startup fixture compatibility.

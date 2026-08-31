@@ -8,7 +8,8 @@ import {
   POSITA_PROTOCOL_VERSION,
   type ExecuteLocalDataDeletionRequestV1,
   type GoogleConnectConsentV1,
-  type LocalDataDeletionChallengeV1
+  type LocalDataDeletionChallengeV1,
+  type RetentionMaintenanceStatusV1
 } from '@shared/contracts'
 import type { Account } from '@shared/domain'
 import type {
@@ -17,6 +18,7 @@ import type {
 import type { LocalDataDeletionDataSource } from '../../application/localDataDeletionDataSource'
 import { AccountConnectionRecoveryPanel } from './AccountConnectionRecoveryPanel'
 import { GmailConnectConsentPanel } from './GmailConnectConsentPanel'
+import { RetentionMaintenanceStatusPanel } from './RetentionMaintenanceStatusPanel'
 
 type DialogState =
   | { kind: 'overview' }
@@ -35,6 +37,7 @@ type DialogState =
 
 export interface LocalDataSettingsDialogProps {
   connectConsent: GoogleConnectConsentV1
+  retention: RetentionMaintenanceStatusV1
   accounts: Account[]
   dataSource: LocalDataDeletionDataSource
   recoveryDataSource: AccountConnectionRecoveryDataSource
@@ -44,6 +47,7 @@ export interface LocalDataSettingsDialogProps {
 
 export function LocalDataSettingsDialog({
   connectConsent,
+  retention,
   accounts,
   dataSource,
   recoveryDataSource,
@@ -180,6 +184,7 @@ export function LocalDataSettingsDialog({
             </section>
             <section className="settings-section" aria-labelledby="local-data-title">
               <h2 id="local-data-title">Local data</h2>
+              <RetentionMaintenanceStatusPanel retention={retention} />
             <div className="settings-summary">
               <Database size={19} />
               <span>
