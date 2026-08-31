@@ -37,6 +37,8 @@ exists deeper in the tree.
 - A confirmed discard-only policy and one-use durable confirmation producer for
   one-sided local connection state are composed through a narrow, same-window
   Settings recovery flow. It is local-only and refuses complete or absent state.
+- The Gate 2D readiness audit keeps live Gmail blocked until the canonical
+  provider-independent mail model and one sync coordinator are verified.
 - Gmail, pending-disconnect scheduling, and model providers are not connected.
 - Sending mail is intentionally disabled.
 - Product promise: **Your inboxes, understood as one.**
@@ -55,8 +57,9 @@ Read these sources in order before a material change:
 6. `docs/DECISIONS.md` — accepted decisions and their consequences.
 7. `docs/PRIVACY.md` — retention, encryption, consent, and deletion boundaries.
 8. `docs/GMAIL.md` — authorization and least-privilege scope contract.
-9. `docs/ENCRYPTED_CACHE.md` — cache threat model, envelopes, migration, and limits.
-10. `product-spec.md` — long-term vision, not the current implementation scope.
+9. `docs/GATE_2D_READINESS.md` — activation blockers and next credential-free milestone.
+10. `docs/ENCRYPTED_CACHE.md` — cache threat model, envelopes, migration, and limits.
+11. `product-spec.md` — long-term vision, not the current implementation scope.
 
 When these disagree, the narrower current-milestone document wins. Record a new
 decision before intentionally changing an accepted architectural boundary.

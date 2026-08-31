@@ -41,8 +41,9 @@ The coordinator can now diagnose the local connection pair without contacting
 Google. Its versioned main-only result distinguishes no records, both records,
 credential-only, and provider-state-only. It returns no provider subject or token,
 and its vault presence check does not decrypt the credential. This status blocks
-new authorization when either side is inconsistent but performs no automatic or
-user-triggered repair. Reconnecting Gmail remains impossible in this build.
+new authorization when either side is inconsistent and performs no automatic
+repair. The separately confirmed Settings recovery command can discard one
+diagnosed orphaned local side; reconnecting Gmail remains impossible in this build.
 
 The local recovery service now encodes the approved policy: after
 an exact account- and orphan-status-bound confirmation, discard only the orphaned
@@ -161,3 +162,8 @@ permission revocation, quota exhaustion, offline state, malformed payloads, and
 invalid history cursors are distinct typed failures. Cursor recovery uses a
 documented bounded resync window and never silently wipes local corrections or
 derived provenance.
+
+The current fixture-oriented shared `Message` type does not yet contain every
+field required by this section. `GATE_2D_READINESS.md` therefore keeps live Gmail
+authorization and ingestion blocked and defines the credential-free normalized-
+model and sync-contract milestone that must come first.

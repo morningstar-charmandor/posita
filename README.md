@@ -122,6 +122,7 @@ Read the build boundaries before extending the prototype:
 - [Privacy and retention](docs/PRIVACY.md)
 - [Encrypted cache](docs/ENCRYPTED_CACHE.md)
 - [Gmail authorization boundary](docs/GMAIL.md)
+- [Gate 2D lifecycle readiness audit](docs/GATE_2D_READINESS.md)
 - [AI-agent-friendly engineering](docs/ENGINEERING.md)
 - [Original product vision](product-spec.md)
 

@@ -134,6 +134,9 @@ Implemented:
   adapter's trusted in-memory key copy without exposing it over IPC,
 - bounded running, last-run, next-run, and attention-required retention status in
   Settings, refreshed in place through one validated fixed notification,
+- a Gate 2D lifecycle-readiness audit that verifies the credential-free local
+  foundation and keeps live Gmail blocked by the incomplete canonical provider
+  mail model, sync coordinator, disconnect activation, and Google adapter,
 - truthful sample-mode labels that do not describe fixture accounts, briefs, or
   deterministic drafts as live Gmail or production AI,
 - deterministic credential-free verification through `npm run verify`.
@@ -195,9 +198,10 @@ confirmed local deletion are complete at their current layers. Continue in this 
    automatic startup repair; failed execution must continue to require fresh review.
 3. Treat automatic retention scheduling and its Settings status as complete at
    the current fixed 90-day boundary. Do not add configurable retention yet.
-4. Run a Gate 2D lifecycle-readiness audit and prepare the explicit product and
-   security decision for Gmail authorization activation without adding a client,
-   credential, browser action, or provider dependency.
+4. Continue with the credential-free provider mail and sync contract milestone in
+   `GATE_2D_READINESS.md`: define the canonical provider-independent source model,
+   fixture compatibility/migration decision, one sync coordinator, and deterministic
+   failure-path fake without startup, preload, UI, network, or Google composition.
 5. Request explicit owner approval before composing a real Google adapter,
    credentials, browser authorization, connection activation, or live account.
 6. Keep real Gmail ingestion disabled until authorization activation is separately
@@ -207,15 +211,14 @@ confirmed local deletion are complete at their current layers. Continue in this 
 Do not solve encrypted search casually. Any index must avoid becoming a second
 plaintext mailbox. Record the selected search tradeoff in `docs/DECISIONS.md`.
 
-Milestone change report: main now owns one automatic retention schedule and one
-file-backed worker boundary. The existing policy, encrypted repository rewrite,
-and sanitizer remain the sources of truth; no parallel retention implementation
-was added. A new owner, worker adapter, bounded status projection, fixed refresh
-event, and extracted Settings status panel are intentional single-purpose
-abstractions. The synchronous service is retained for bounded in-memory tests and
-exact startup fixture compatibility. There are no new dependencies, schema
-migrations, provider adapters, compatibility paths, external actions, real secrets,
-mailbox mutations, or intentional duplicate domain rules.
+Milestone change report: `GATE_2D_READINESS.md` records a credential-free audit,
+not an activation. The encrypted lifecycle foundation is ready at its current
+boundary, but the fixture-oriented shared `Message` type does not yet satisfy the
+accepted provider source/provenance contract and no sync coordinator exists. The
+next milestone is therefore normalized model and sync contract work, not OAuth.
+No new abstraction, dependency, schema migration, compatibility path, provider
+adapter, external action, secret, mailbox data, mutation, or intentional duplicate
+implementation was added by the audit.
 
 ## How to resume
 

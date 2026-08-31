@@ -19,6 +19,7 @@ const requiredFiles = [
   'docs/DATABASE.md',
   'docs/PRIVACY.md',
   'docs/GMAIL.md',
+  'docs/GATE_2D_READINESS.md',
   'docs/ENGINEERING.md',
   'docs/ENCRYPTED_CACHE.md',
   'docs/HANDOFF.md',

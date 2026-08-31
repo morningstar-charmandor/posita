@@ -27,6 +27,9 @@ backend. A same-window Settings flow can now inspect and discard one-sided local
 connection state for sample accounts, while OAuth activation and real credential
 persistence remain unavailable. Automatic encrypted retention now runs at startup
 and on a bounded daily cadence in a worker, with truthful status in Settings.
+The Gate 2D readiness audit confirms that this local lifecycle foundation is ready
+at its current boundary while live Gmail remains correctly blocked by the missing
+canonical provider mail model, sync coordinator, and production provider adapters.
 
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
 
@@ -280,11 +283,12 @@ No real mailbox, OAuth credential, or model provider has been used.
 ## What comes next
 
 The discard-only local recovery flow and automatic fixed-window retention lifecycle
-are complete at their current Gate 2D boundaries. The next safe milestone is a
-Gate 2D lifecycle-readiness audit and a written product/security decision for
-whether Gmail authorization activation should begin. Real Google OAuth, browser
-activation, credentials, live account connection, and sync remain separate actions
-blocked behind explicit owner approval.
+are complete at their current Gate 2D boundaries. The readiness audit recommends
+a credential-free normalized provider-mail and sync-contract milestone next. It
+will define source provenance, account isolation, idempotent batching, atomic
+cursor ordering, cancellation, and deterministic failures before any Google code
+or live data. Real Google OAuth, browser activation, credentials, live account
+connection, and sync remain separate actions blocked behind explicit owner approval.
 
 Later evidence should include measured sync reliability, duplicate prevention,
 citation correctness, draft usefulness, correction rate, and time to attention.

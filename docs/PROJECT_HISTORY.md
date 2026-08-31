@@ -1147,6 +1147,44 @@ schedule is fixed and process-local; a quit or crash is recovered by the next
 startup pass rather than by a persistent wall-clock job. No Gmail, AI provider,
 live credential, background disconnect resumer, or remote mailbox action exists.
 
+## Gate 2D milestone — Lifecycle activation-readiness audit
+
+Date: 2026-08-31
+Checkpoint: use the Git commit whose subject is `docs: audit gate 2d lifecycle readiness`
+
+Goal: determine whether the verified encrypted lifecycle foundation is sufficient
+to activate Gmail, without introducing credentials, provider code, or live data.
+
+Delivered:
+
+- a readiness matrix across renderer security, vault, encrypted cache, account
+  state, consent, authorization sessions, connection persistence/recovery,
+  retention, deletion, disconnect, normalized mail, sync, Gmail, and AI,
+- a clear split between the lifecycle foundation that is ready and the provider
+  ingestion path that remains blocked,
+- identification that the current fixture-oriented shared `Message` lacks the
+  accepted account-namespaced provider IDs, recipient roles, normalized bodies,
+  labels, attachments, and immutable provider provenance required for live mail,
+- a sequenced credential-free next milestone for one canonical normalized model,
+  compatibility/migration decision, one sync coordinator, and deterministic fake,
+- correction of stale Gmail documentation that said no user-triggered orphan
+  recovery existed after the confirmed local Settings flow had shipped.
+
+Decision: do not activate OAuth or ingest Gmail yet. Continue with already accepted
+provider-independent model and sync boundaries. Explicit owner approval remains
+required before a Google adapter, OAuth client/configuration, browser flow,
+credential, production connection command, dependency, or live mailbox access.
+
+Evidence: the clean public `staging`/`main` baseline was `bf7baf9`; `npm run verify`
+passed with 39 test files and 258 tests before the audit. The audit added only
+documentation and machine-readable continuity checks. No dependency, schema,
+compatibility implementation, provider adapter, secret, personal data, external
+action, mailbox mutation, or intentional duplication was added.
+
+Limitations: this is an engineering readiness assessment, not Google verification,
+external security review, user research, sync reliability evidence, or approval
+to connect an account.
+
 ## How future entries should be written
 
 For each material milestone, record:
