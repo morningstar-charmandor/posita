@@ -12,11 +12,11 @@ recovery, and disconnect orchestration contracts.
 
 **Live Gmail authorization and ingestion are not ready to activate.** This is a
 deliberate gate, not a failed implementation. The canonical provider-independent
-mail contract, credential-free sync coordinator, and empty schema-v9 encrypted
-projection are now verified, but no file-backed projection worker, provider-mail
-retention/disconnect composition, Google adapter, production sync composition, or
-sample-to-live transition exists. Disconnect also has no production revoker or
-active user command.
+mail contract, credential-free sync coordinator, empty schema-v9 encrypted
+projection, and packaged file-backed projection worker are now verified. The
+worker remains uncomposed, and no provider-mail retention/disconnect composition,
+Google adapter, production sync composition, or sample-to-live transition exists.
+Disconnect also has no production revoker or active user command.
 
 No credential, provider connection, browser authorization, network request, Gmail
 SDK, mailbox data, or model provider was used for this audit.
@@ -34,10 +34,10 @@ SDK, mailbox data, or model provider was used for this audit.
 | Connection persistence | Contract-ready, fake only | vault-before-state ordering, duplicate preflight, rollback, safe errors | Not composed into production startup, preload, IPC, or UI |
 | Connection consistency/recovery | Ready locally | presence-only diagnosis plus same-window one-use confirmed orphan discard | Never reconstructs a connection or contacts Google |
 | Retention | Ready | exact 90-day eviction, daily worker schedule, safe retry/status | Cleanup affects encrypted Posita data only |
-| Full local deletion | Ready | confirmed Settings command, durable recovery, keyless restart, cryptographic erasure | Never deletes provider mail |
+| Full local deletion | Ready | confirmed Settings command, durable recovery, keyless restart, cryptographic erasure | Removes local projection ciphertext; never deletes remote provider mail |
 | Account disconnect | Orchestrator-ready, inactive | journaled idempotent application service and deterministic revoker tests | Needs a real idempotent revoker and separately reviewed user command |
-| Canonical provider mail model | Storage-ready, empty | exact validators plus schema-v9 authenticated message/thread envelopes with opaque local row IDs | Needs worker-owned lifecycle integration before ingestion |
-| Sync coordinator | Contract-ready, uncomposed | 90-day initial path, batching, encrypted atomic cursor ordering, replay, isolation, rollback, bounded recovery/concurrency, and cancellation are deterministic-tested | Needs worker-owned projection and production composition |
+| Canonical provider mail model | Storage/worker-ready, empty | exact validators, schema-v9 authenticated envelopes, opaque row IDs, and packaged serial worker | Needs retention/disconnect integration before ingestion |
+| Sync coordinator | Contract-ready, uncomposed | 90-day initial path, batching, worker-backed atomic cursor ordering, replay, isolation, rollback, bounded recovery/concurrency, and cancellation are tested | Needs lifecycle and production composition |
 | Gmail adapter | **Not implemented** | adapter contract is documented only | Blocks OAuth and mail access |
 | AI provider | Deferred | no model adapter, prompt, embedding, or model output path | Fixture summaries/drafts remain explicitly simulated |
 
@@ -59,10 +59,10 @@ sample-only view and receives no fabricated provider provenance. The projection
 starts empty. A later reviewed sample-to-live transition must prevent fixture and
 provider records from appearing as one mailbox dataset.
 
-Before file-backed or live use, the projection's synchronous decrypt/scan/write
-work must move behind one bounded worker owner. Its records must also enter the
-fixed 90-day retention and account-disconnect removal paths. Installation-wide
-deletion already removes the schema-v9 ciphertext keylessly.
+File-backed decrypt/scan/write work now has one packaged bounded serial worker
+owner with validated messages and key cleanup. Before live use, canonical records
+must enter the fixed 90-day retention and account-disconnect removal paths.
+Installation-wide deletion already removes the schema-v9 ciphertext keylessly.
 
 ### 2. Compose the resumable sync owner only after persistence
 
@@ -108,12 +108,12 @@ state, screenshots, tests, or portfolio assets.
 
 Proceed with a **credential-free provider-mail lifecycle integration milestone**:
 
-1. place file-backed canonical projection commits behind one bounded single-flight
-   worker owner with validated messages, cancellation, cleanup, and safe errors,
-2. extend the fixed 90-day policy to canonical provider records using absolute
+1. extend the fixed 90-day policy to canonical provider records using absolute
    `receivedAt`, without creating a plaintext index,
-3. compose account-scoped canonical record removal into the existing journaled
+2. compose account-scoped canonical record removal into the existing journaled
    disconnect mail-data phase and prove retry/idempotency,
+3. coordinate retention/removal with the packaged projection worker's bounded
+   lifecycle and key teardown,
 4. preserve the empty startup state and sample-only compatibility path,
 5. keep startup sync, preload, UI activation, Google code, credentials, and live
    data unchanged.
@@ -137,7 +137,10 @@ already accepted responsiveness, retention, and deletion boundaries.
   identity/content, opaque row IDs, empty migration state, account isolation,
   replay/update classification, cursor conflicts, tamper rejection, transaction
   rollback, account deletion, and keyless installation deletion.
-- The verified baseline is 42 test files and 281 tests plus strict TypeScript,
+- `WorkerThreadMailSyncProjection` packages serialized file-backed reads/commits,
+  exact request/result validation, typed conflict mapping, bounded queueing,
+  malformed-output refusal, transferable key copies, and explicit key destruction.
+- The verified baseline is 43 test files and 286 tests plus strict TypeScript,
   renderer structure/security checks, and production Electron builds.
 - No dependency, production provider adapter, credential,
   personal mailbox data, network action, renderer surface, or mailbox mutation was

@@ -83,6 +83,9 @@
     "mailSyncContract": "src/main/application/mailSync.ts",
     "mailSyncCoordinator": "src/main/application/mailSyncCoordinator.ts",
     "encryptedProviderMailProjection": "src/main/infrastructure/sqlite/encryptedSqliteMailSyncProjection.ts",
+    "providerMailProjectionWorkerProtocol": "src/main/infrastructure/sqlite/mailSyncProjectionWorkerProtocol.ts",
+    "providerMailProjectionWorker": "src/main/infrastructure/sqlite/mailSyncProjectionWorker.ts",
+    "workerThreadProviderMailProjection": "src/main/infrastructure/sqlite/workerThreadMailSyncProjection.ts",
     "deterministicMailSyncFakes": "src/main/infrastructure/providers/deterministicFakeMailSync.ts",
     "fixtures": "src/shared/fixtures.ts"
   },
@@ -171,6 +174,7 @@
     "fixture-messages-never-receive-fabricated-provider-provenance",
     "canonical-provider-mail-and-sync-cursors-commit-atomically-as-authenticated-ciphertext",
     "provider-mail-source-identity-and-content-never-enter-queryable-projection-metadata",
+    "file-backed-provider-mail-projection-is-serialized-worker-owned-and-key-erasing",
     "live-gmail-ingestion-is-blocked-until-canonical-mail-has-worker-owned-retention-and-disconnect-integration",
     "provider-mail-is-authoritative-and-cache-reconciliation-is-explicit",
     "deduplication-and-threading-are-central-and-idempotent",

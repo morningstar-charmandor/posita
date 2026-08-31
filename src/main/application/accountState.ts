@@ -1,7 +1,7 @@
-import { GOOGLE_CONNECT_CONSENT } from '../../shared/contracts'
-import type { MailProvider } from '../../shared/providerMail'
+import { GOOGLE_CONNECT_CONSENT } from '../../shared/contracts.ts'
+import type { MailProvider } from '../../shared/providerMail.ts'
 
-export type { MailProvider } from '../../shared/providerMail'
+export type { MailProvider } from '../../shared/providerMail.ts'
 
 export interface ProviderAccountRecordV1 {
   version: 1

@@ -41,6 +41,8 @@ exists deeper in the tree.
   one credential-free sync coordinator are verified.
 - Schema v9 and an uncomposed credential-free SQLite projection persist canonical
   provider messages/threads with their encrypted account cursor atomically.
+- A bounded serial worker-thread adapter owns file-backed canonical projection
+  reads/commits and key cleanup, but remains uncomposed from startup or sync.
 - Provider-mail payloads and source identities are authenticated ciphertext;
   only opaque local storage IDs, opaque account scope, and record kind are queryable.
 - The deterministic fixture `Message` remains a sample-presentation compatibility

@@ -362,8 +362,10 @@ deterministic provider/projection fakes prove these rules without credentials or
 network access. An uncomposed schema-v9 SQLite projection now proves authenticated
 canonical message/thread persistence and atomic encrypted-cursor advancement with
 opaque local row IDs. It remains a bounded synchronous in-memory proof; no
-file-backed worker owner, production adapter, startup owner, preload/IPC method,
-UI status, or polling schedule is composed.
+production adapter, startup owner, preload/IPC method, UI status, or polling
+schedule is composed. File-backed reads and commits now have a packaged serial
+worker adapter with a bounded validated protocol, transferable in-memory key copy,
+safe errors, and explicit key cleanup. The adapter is verified but uncomposed.
 
 Sync work uses bounded per-account batches and cross-account concurrency,
 cancellation, explicit timeouts, and bounded backoff. Production sync, parsing,

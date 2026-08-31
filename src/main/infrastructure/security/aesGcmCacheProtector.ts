@@ -10,7 +10,7 @@ import {
   MAX_CACHE_PLAINTEXT_BYTES,
   type CacheRecordContext,
   type CacheRecordProtector
-} from '../../application/encryptedCache'
+} from '../../application/encryptedCache.ts'
 
 const magic = Buffer.from('PSTA', 'ascii')
 const headerLength = magic.length + 1

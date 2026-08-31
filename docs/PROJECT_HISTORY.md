@@ -1294,6 +1294,52 @@ File-backed projection work is not yet worker-owned; canonical records are not y
 included in the fixed 90-day retention or journaled account-disconnect mail-data
 phase. Gmail, OAuth, live sync, AI, and sample-to-live transition remain blocked.
 
+## Gate 2D milestone — File-backed provider-mail projection worker
+
+Date: 2026-08-31
+Checkpoint: use the Git commit whose subject is `feat: isolate provider mail projection work`
+
+Goal: keep file-backed canonical projection work off Electron's main event loop
+without composing a provider, startup sync, renderer command, or live mailbox.
+
+Delivered:
+
+- one packaged worker entry for encrypted checkpoint reads and atomic batch commits,
+- one exact bounded versioned worker protocol that validates database path, key
+  shape, account scope, canonical batch, checkpoint, commit result, and safe errors,
+- a serial adapter with a two-operation queue bound aligned to the coordinator's
+  default cross-account limit, so SQLite projection work has one file-backed owner
+  rather than competing worker writes,
+- temporary transferable key copies, immediate worker-buffer zeroing, retained-key
+  destruction, and refusal of work after teardown,
+- typed cursor-conflict preservation plus generic safe storage mapping that never
+  returns paths, payloads, raw database errors, or private worker output,
+- real file-backed integration coverage for encrypted commit/reload, serialized
+  replay, cursor conflict, malformed output, invalid request, and key teardown.
+
+Important decisions:
+
+- reuse the schema-v9 projection rather than duplicate SQL or replay logic in the
+  worker; the protocol selects operations but never becomes a second repository,
+- serialize projection database operations in the adapter while the application
+  coordinator continues to own bounded provider concurrency,
+- do not terminate a bounded SQLite transaction mid-commit; cancellation remains
+  an application boundary between provider/batch operations,
+- retain the source worker's Node type-transform flags only for direct development
+  tests; packaged Electron builds use the generated JavaScript worker,
+- add no dependency, schema migration, startup composition, provider, credential,
+  IPC/UI surface, external action, personal data, or compatibility path.
+
+Evidence: 43 test files and 286 tests pass. The production build emits
+`mailSyncProjectionWorker.js`; strict typecheck and renderer structure/security
+checks pass. Integration tests inspect the file database to verify encrypted rows
+and cursor persistence without plaintext provider identity or body content.
+
+Limitations: the adapter remains uncomposed and the schema-v9 table remains empty
+in the running product. Canonical provider records still need fixed-window
+retention and journaled account-disconnect deletion before provider activation.
+Gmail, OAuth, AI, live sync, and sample-to-live transition remain blocked.
+
 ## How future entries should be written
 
 For each material milestone, record:

@@ -12,6 +12,9 @@ export default defineConfig({
           retentionMaintenanceWorker: resolve(
             'src/main/infrastructure/sqlite/retentionMaintenanceWorker.ts'
           ),
+          mailSyncProjectionWorker: resolve(
+            'src/main/infrastructure/sqlite/mailSyncProjectionWorker.ts'
+          ),
           sqliteSanitizationWorker: resolve(
             'src/main/infrastructure/sqlite/sqliteSanitizationWorker.ts'
           )

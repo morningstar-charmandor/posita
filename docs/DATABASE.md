@@ -155,9 +155,11 @@ the encrypted schema-v4 sync cursor in one `BEGIN IMMEDIATE` transaction. Cursor
 conflicts and any failed record/checkpoint write roll back the whole batch.
 
 The synchronous adapter is an uncomposed credential-free proof used with bounded
-in-memory databases. File-backed production composition must move its decrypt,
-scan, encryption, and write work behind one bounded worker owner before live sync.
-No startup owner, provider, IPC, UI, or fixture conversion is added by schema v9.
+in-memory databases. A packaged serial worker adapter now owns file-backed
+checkpoint reads and batch commits, transfers a temporary key copy into each
+short-lived worker, validates request/result schemas, maps only safe failures, and
+erases its retained key on teardown. No startup owner, provider, IPC, UI, or
+fixture conversion is added by schema v9.
 
 Retention replacements validate and encrypt the complete next dataset before
 opening a write transaction. Source messages, derived topics, brief items, and

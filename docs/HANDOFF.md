@@ -151,6 +151,9 @@ Implemented:
 - atomic normalized batch plus encrypted cursor commits with account isolation,
   replay/update classification, cursor-conflict protection, tamper rejection,
   transaction rollback, account-scoped deletion, and keyless full deletion,
+- one packaged serial worker adapter for file-backed checkpoint reads and commits,
+  with bounded validated messages, safe typed failures, queue limits, key transfer,
+  malformed-result rejection, and explicit retained-key destruction,
 - an explicit fixture compatibility decision: existing encrypted sample messages
   remain a presentation view and never receive fabricated provider provenance,
 - truthful sample-mode labels that do not describe fixture accounts, briefs, or
@@ -172,8 +175,8 @@ Simulated or deliberately inactive:
 - account-connection persistence is exercised only through deterministic in-memory
   collaborators and is not composed into production startup,
 - canonical provider-mail and sync behavior is exercised only through
-  deterministic fakes and a bounded in-memory encrypted SQLite proof; it is not
-  composed into file-backed workers, startup, or a provider,
+  deterministic fakes, an encrypted SQLite proof, and a file-backed worker adapter;
+  none is composed into startup or a provider,
 - account consistency is not independently exposed; the recovery command uses it
   inside main without mutation or provider action,
 - local account recovery is active only for inconsistent local records and has no
@@ -183,8 +186,7 @@ Simulated or deliberately inactive:
 Not implemented:
 
 - Gmail OAuth, message ingestion, incremental history sync, or user-triggered/live disconnect,
-- file-backed canonical projection worker, provider-mail retention/account-
-  disconnect composition, or production sync composition,
+- provider-mail retention/account-disconnect composition or production sync composition,
 - user-triggered account disconnect or any remote mailbox mutation control,
 - automatic pending-disconnect resume with a live idempotent revocation adapter,
 - a model provider, embeddings, classification, retrieval, or generation,
@@ -219,10 +221,10 @@ confirmed local deletion are complete at their current layers. Continue in this 
 3. Treat automatic retention scheduling and its Settings status as complete at
    the current fixed 90-day boundary. Do not add configurable retention yet.
 4. Continue with the credential-free provider-mail lifecycle integration milestone
-   in `GATE_2D_READINESS.md`: move file-backed projection work behind one bounded
-   worker, apply 90-day retention to canonical records, and compose account-scoped
-   deletion into the journaled disconnect path. Keep sync uncomposed from startup,
-   preload, UI, network, or Google.
+   in `GATE_2D_READINESS.md`: apply 90-day retention to canonical records and
+   compose account-scoped deletion into the journaled disconnect path using the
+   packaged worker lifecycle. Keep sync uncomposed from startup, preload, UI,
+   network, or Google.
 5. Request explicit owner approval before composing a real Google adapter,
    credentials, browser authorization, connection activation, or live account.
 6. Keep real Gmail ingestion disabled until authorization activation is separately
@@ -236,13 +238,15 @@ Milestone change report: canonical provider mail contracts, sync ownership, and
 encrypted atomic persistence are credential-free verified, not activated. New
 storage is schema v9 plus one uncomposed SQLite projection with an injected opaque
 row-ID source; the existing sync-state repository remains the cursor source of
-truth. No dependency, production adapter, startup/IPC/UI composition, external
+truth. One packaged worker/protocol now owns bounded file-backed calls without
+becoming a second projection implementation. No dependency, production adapter,
+startup/IPC/UI composition, external
 action, secret, personal mailbox data, or mutation was added. One intentional
 compatibility distinction remains:
 the legacy `Message` is a deterministic sample-presentation record, while only
 `ProviderMailMessageV1` may enter future provider ingestion. There is no conversion
-path because Posita will not invent provider provenance. The next milestone is an
-worker-owned retention and disconnect integration for the empty projection, not OAuth.
+path because Posita will not invent provider provenance. The next milestone is
+retention and disconnect integration for the empty projection, not OAuth.
 
 ## How to resume
 
@@ -262,7 +266,7 @@ worker-owned retention and disconnect integration for the empty projection, not 
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 42 test files, 281 tests, strict typecheck, structure
+- Current verified baseline: 43 test files, 286 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,

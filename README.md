@@ -117,8 +117,10 @@ SQLite projection that atomically stores canonical messages, threads, and the
 encrypted account cursor; source IDs and content remain ciphertext, while opaque
 local storage IDs enforce account isolation. The existing `Message` remains a
 sample-only view and receives no invented provider identity. The projection is
-empty and uncomposed from startup, IPC, UI, workers, or Google, so all visible
-mail remains deterministic sample data.
+empty and uncomposed from startup, IPC, UI, or Google. A packaged single-flight
+worker adapter now keeps file-backed projection reads, decrypt/scan, encryption,
+and commits off Electron's main event loop, validates a bounded protocol, and
+erases its retained key context. All visible mail remains deterministic sample data.
 
 Read the build boundaries before extending the prototype:
 

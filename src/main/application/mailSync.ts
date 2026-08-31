@@ -1,11 +1,11 @@
-import { isAccountId, type SyncFailureCode } from './accountState'
+import { isAccountId, type SyncFailureCode } from './accountState.ts'
 import {
   isProviderMailMessageV1,
   isProviderMailThreadV1,
   type MailProvider,
   type ProviderMailMessageV1,
   type ProviderMailThreadV1
-} from '../../shared/providerMail'
+} from '../../shared/providerMail.ts'
 
 export const INITIAL_SYNC_DAYS = 90
 export const SYNC_BATCH_SIZE = 100

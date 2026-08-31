@@ -7,12 +7,12 @@ import {
   type AccountStateRepository,
   type ProviderAccountRecordV1,
   type ProviderSyncStateV1
-} from '../../application/accountState'
+} from '../../application/accountState.ts'
 import {
   EncryptedCacheError,
   type CacheRecordContext,
   type CacheRecordProtector
-} from '../../application/encryptedCache'
+} from '../../application/encryptedCache.ts'
 
 type AccountRecordType = 'provider-account' | 'sync-state'
 

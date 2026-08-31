@@ -4,7 +4,7 @@ import type { DatabaseSync } from 'node:sqlite'
 import {
   isAccountId,
   type ProviderSyncStateV1
-} from '../../application/accountState'
+} from '../../application/accountState.ts'
 import {
   MailSyncError,
   isCommitProviderMailBatchV1,
@@ -12,22 +12,22 @@ import {
   type CommitProviderMailBatchV1,
   type MailSyncCheckpointV1,
   type MailSyncProjection
-} from '../../application/mailSync'
+} from '../../application/mailSync.ts'
 import {
   EncryptedCacheError,
   type CacheRecordContext,
   type CacheRecordProtector
-} from '../../application/encryptedCache'
+} from '../../application/encryptedCache.ts'
 import {
   isProviderMailMessageV1,
   isProviderMailThreadV1,
   type ProviderMailMessageV1,
   type ProviderMailThreadV1
-} from '../../../shared/providerMail'
+} from '../../../shared/providerMail.ts'
 import {
   EncryptedSqliteAccountStateRepository,
   saveEncryptedProviderSyncState
-} from './encryptedSqliteAccountStateRepository'
+} from './encryptedSqliteAccountStateRepository.ts'
 
 type ProviderMailRecordType = 'provider-message' | 'provider-thread'
 

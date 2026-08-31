@@ -20,6 +20,12 @@ and uncomposed from startup or providers. Existing sample messages remain fixtur
 compatibility records and are not assigned fabricated provider provenance. No
 personal mailbox data has passed through this path.
 
+File-backed canonical projection operations use a short-lived worker rather than
+Electron main or the renderer. The adapter retains one trusted in-memory key copy,
+transfers a temporary copy into each worker, zeroes worker key buffers, serializes
+bounded operations, validates safe result schemas, and supports explicit teardown.
+It has no startup composition and has processed deterministic records only.
+
 Gate 2B implements one production security primitive: OAuth refresh credentials
 can be stored in a main-process-only vault protected by Electron's asynchronous
 `safeStorage` API. On macOS this uses Keychain, on Windows it uses DPAPI, and on
