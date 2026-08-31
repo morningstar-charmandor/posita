@@ -180,6 +180,14 @@ records while deletion is erasing them. Normal shutdown awaits active work and
 destroys the worker adapter's trusted key copy. That copy is never persisted,
 logged, or sent to the renderer and is also erased by successful full deletion.
 
+The same packaged maintenance operation now preflights fixture retention and then
+applies the fixed cutoff to every encrypted canonical provider-mail account. A
+message exactly at the cutoff remains. Expired messages are removed; an affected
+thread is re-encrypted with its retained message IDs or deleted when none remain.
+All accounts are decrypted and planned before canonical mutation, opaque row IDs
+remain account-scoped even when they collide, sync cursors are unchanged, and a
+pending sanitization marker makes failed compaction resumable on the next pass.
+
 ### Account-removal projection
 
 The Gate 2D account-data removal service operates on one opaque account ID and is
@@ -359,11 +367,11 @@ concurrency, normalized-batch validation, atomic batch-plus-cursor commits,
 account-scoped provider-ID replay handling, one bounded resync after an invalid
 cursor, and cancellation for disconnect, supersession, and shutdown. The
 deterministic provider/projection fakes prove these rules without credentials or
-network access. An uncomposed schema-v9 SQLite projection now proves authenticated
+network access. A schema-v9 SQLite projection now proves authenticated
 canonical message/thread persistence and atomic encrypted-cursor advancement with
-opaque local row IDs. It remains a bounded synchronous in-memory proof; no
-production adapter, startup owner, preload/IPC method, UI status, or polling
-schedule is composed. File-backed reads and commits now have a packaged serial
+opaque local row IDs. Its synchronous calls are limited to bounded in-memory tests
+and worker internals; no sync startup owner, preload/IPC method, UI status, or
+polling schedule is composed. File-backed reads and commits now have a packaged serial
 worker adapter with a bounded validated protocol, transferable in-memory key copy,
 safe errors, and explicit key cleanup. The adapter is verified but uncomposed.
 

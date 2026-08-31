@@ -128,6 +128,13 @@ sample data was already removed, retry resumes the same phase safely and repeats
 both idempotent actions. There is still no live revoker, disconnect UI, credential,
 or provider account.
 
+The existing automatic retention worker now applies the same exact 90-day cutoff
+to canonical provider messages by absolute `receivedAt`. It retains the boundary,
+removes empty provider threads, rewrites partially retained threads as authenticated
+ciphertext, preserves sync cursors, and completes or resumes SQLite sanitization.
+The canonical projection remains empty in the running product, and sync, Gmail,
+OAuth, credentials, preload, and UI activation remain uncomposed.
+
 Read the build boundaries before extending the prototype:
 
 - [Agent contract](AGENTS.md)
@@ -199,4 +206,5 @@ and the renderer receives only a validated application state. Source and
 derived fixture records
 use authenticated encryption with an OS-protected installation key. Neither the
 key nor vault has an IPC surface. Personal-mail ingestion remains blocked until
-account-scoped retention, disconnect, and deletion orchestration are complete.
+the worker-backed sync lifecycle, sample-to-live transition, and separately
+approved provider activation are complete.

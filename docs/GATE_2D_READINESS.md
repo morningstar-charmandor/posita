@@ -1,6 +1,6 @@
 # Gate 2D Lifecycle Readiness Audit
 
-Last reviewed: 2026-08-31
+Last reviewed: 2026-09-01
 Audit baseline: `bf7baf9` (`feat: schedule encrypted retention maintenance`)
 
 ## Verdict
@@ -14,7 +14,8 @@ recovery, and disconnect orchestration contracts.
 deliberate gate, not a failed implementation. The canonical provider-independent
 mail contract, credential-free sync coordinator, empty schema-v9 encrypted
 projection, and packaged file-backed projection worker are now verified. The
-worker remains uncomposed from sync, and no provider-mail retention composition,
+worker remains uncomposed from sync. Canonical provider-mail retention and
+journaled deletion are complete at their credential-free boundaries, but no
 Google adapter, production sync composition, or sample-to-live transition exists.
 Disconnect also has no production revoker or active user command.
 
@@ -36,14 +37,14 @@ SDK, mailbox data, or model provider was used for this audit.
 | Retention | Ready | exact 90-day eviction, daily worker schedule, safe retry/status | Cleanup affects encrypted Posita data only |
 | Full local deletion | Ready | confirmed Settings command, durable recovery, keyless restart, cryptographic erasure | Removes local projection ciphertext; never deletes remote provider mail |
 | Account disconnect | Orchestrator-ready, inactive | journaled idempotent application service and deterministic revoker tests | Needs a real idempotent revoker and separately reviewed user command |
-| Canonical provider mail model | Storage/worker-ready, empty | exact validators, schema-v9 authenticated envelopes, opaque row IDs, packaged serial worker, and journaled account deletion | Needs retention integration before ingestion |
+| Canonical provider mail model | Lifecycle-ready, empty | exact validators, schema-v9 authenticated envelopes, opaque row IDs, packaged serial worker, fixed-window retention, and journaled account deletion | Needs credential-free sync lifecycle integration before provider activation |
 | Sync coordinator | Contract-ready, uncomposed | 90-day initial path, batching, worker-backed atomic cursor ordering, replay, isolation, rollback, bounded recovery/concurrency, and cancellation are tested | Needs lifecycle and production composition |
 | Gmail adapter | **Not implemented** | adapter contract is documented only | Blocks OAuth and mail access |
 | AI provider | Deferred | no model adapter, prompt, embedding, or model output path | Fixture summaries/drafts remain explicitly simulated |
 
 ## Blocking gaps before real mail
 
-### 1. Complete the canonical provider-mail lifecycle
+### 1. Keep the completed canonical provider-mail lifecycle intact
 
 The canonical contract and encrypted persistence proof are complete at their
 credential-free boundary. Schema v9 now persists:
@@ -59,11 +60,13 @@ sample-only view and receives no fabricated provider provenance. The projection
 starts empty. A later reviewed sample-to-live transition must prevent fixture and
 provider records from appearing as one mailbox dataset.
 
-File-backed decrypt/scan/write work now has one packaged bounded serial worker
-owner with validated messages and key cleanup. Before live use, canonical records
-must enter the fixed 90-day retention path. The inactive journaled disconnect now
-removes the selected account's canonical records after fixture removal and retries
-the phase idempotently. Installation-wide deletion removes all schema-v9 ciphertext keylessly.
+File-backed decrypt/scan/write work now has bounded worker ownership with validated
+messages and key cleanup. Canonical records enter the existing automatic 90-day
+maintenance pass: the exact boundary is retained, expired messages are removed,
+affected encrypted threads are repaired or deleted, cursors remain intact, and
+pending sanitization is resumed. The inactive journaled disconnect removes the
+selected account's canonical records after fixture removal and retries the phase
+idempotently. Installation-wide deletion removes all schema-v9 ciphertext keylessly.
 
 ### 2. Compose the resumable sync owner only after persistence
 
@@ -107,15 +110,15 @@ state, screenshots, tests, or portfolio assets.
 
 ## Recommended next milestone
 
-Proceed with a **credential-free provider-mail lifecycle integration milestone**:
+Proceed with a **credential-free worker-backed sync integration milestone**:
 
-1. extend the fixed 90-day policy to canonical provider records using absolute
-   `receivedAt`, without creating a plaintext index,
-2. coordinate retention with the packaged projection worker's bounded
-   lifecycle and key teardown,
+1. exercise the existing `MailSyncCoordinator` against the real file-backed
+   encrypted projection worker and deterministic provider fake,
+2. prove batch/cursor ordering, replay, cancellation, and safe teardown across
+   that actual boundary without composing startup polling,
 3. preserve the empty startup state and sample-only compatibility path,
-4. keep startup sync, preload, UI activation, Google code, credentials, and live
-   data unchanged.
+4. keep preload, UI activation, Google code, credentials, network access, and
+   live data unchanged.
 
 This follows already accepted architecture and does not itself authorize Gmail.
 It is the smallest safe step that makes the new encrypted storage obey Posita's
@@ -142,7 +145,7 @@ already accepted responsiveness, retention, and deletion boundaries.
 - The inactive disconnect service requires account-scoped canonical projection
   deletion in its durable mail-data phase and safely retries after fixture removal
   has already committed.
-- The verified baseline is 43 test files and 287 tests plus strict TypeScript,
+- The verified baseline is 44 test files and 293 tests plus strict TypeScript,
   renderer structure/security checks, and production Electron builds.
 - No dependency, production provider adapter, credential,
   personal mailbox data, network action, renderer surface, or mailbox mutation was

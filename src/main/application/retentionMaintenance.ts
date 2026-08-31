@@ -4,36 +4,22 @@ import { isAbsoluteTimestamp } from '../../shared/validation'
 import type { MutableMailRepository } from './mailRepository'
 import { retainReferencedPeople } from './mailDatasetProjection'
 import type { StorageSanitizer } from './storageSanitizer'
+import {
+  PRIVATE_ALPHA_RETENTION_DAYS,
+  RetentionError,
+  retentionCutoffTime,
+  type RetentionResult
+} from './retentionPolicy'
 
-export const PRIVATE_ALPHA_RETENTION_DAYS = 90
-const DAY_MS = 24 * 60 * 60 * 1000
-
-export interface RetentionResult {
-  cutoffAt: string
-  changed: boolean
-  removed: {
-    messages: number
-    topics: number
-    briefItems: number
-    people: number
-  }
-}
+export {
+  PRIVATE_ALPHA_RETENTION_DAYS,
+  RetentionError,
+  type RetentionResult
+} from './retentionPolicy'
 
 export interface FixtureRetentionCompatibilityResult {
   changed: boolean
   restoredTimestamps: number
-}
-
-export class RetentionError extends Error {
-  readonly code: 'RETENTION_CLOCK_INVALID' | 'RETENTION_TIMESTAMP_MISSING' |
-    'RETENTION_TIMESTAMP_INVALID' | 'RETENTION_FIXTURE_REFERENCE_INVALID' |
-    'RETENTION_COMPATIBILITY_UNRECOGNIZED'
-
-  constructor(code: RetentionError['code'], message: string) {
-    super(message)
-    this.name = 'RetentionError'
-    this.code = code
-  }
 }
 
 const withoutSourceTimestamps = (dataset: MailDataset): MailDataset => ({
@@ -107,11 +93,7 @@ export const applyRetentionPolicy = (
   now: Date,
   retentionDays = PRIVATE_ALPHA_RETENTION_DAYS
 ): { dataset: MailDataset; result: RetentionResult } => {
-  const nowTime = now.getTime()
-  if (!Number.isFinite(nowTime) || !Number.isSafeInteger(retentionDays) || retentionDays < 1) {
-    throw new RetentionError('RETENTION_CLOCK_INVALID', 'Retention clock or window is invalid.')
-  }
-  const cutoffTime = nowTime - retentionDays * DAY_MS
+  const cutoffTime = retentionCutoffTime(now, retentionDays)
   const retainedMessages = dataset.messages.filter((message) =>
     timestampFor(message.receivedAtIso) >= cutoffTime)
   const retainedMessageIds = new Set(retainedMessages.map((message) => message.id))

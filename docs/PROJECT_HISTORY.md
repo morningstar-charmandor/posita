@@ -1384,6 +1384,48 @@ Limitations: provider-mail fixed-window retention remains incomplete. The runnin
 app has no canonical records and disconnect remains inaccessible. Gmail, OAuth,
 AI, live sync, and sample-to-live transition remain blocked.
 
+## Gate 2D milestone — Canonical provider-mail retention
+
+Date: 2026-09-01
+Checkpoint: use the Git commit whose subject is `feat: retain canonical provider mail safely`
+
+Goal: make the empty schema-v9 projection obey Posita's accepted 90-day local
+retention boundary before any provider or credential can be activated.
+
+Delivered:
+
+- one shared deterministic cutoff policy used by fixture and canonical retention,
+- exact-boundary retention based on canonical `receivedAt`,
+- account-wide validation and planning before provider-record mutation,
+- atomic expired-message deletion plus authenticated thread repair or removal,
+- account-scoped deletion even when opaque storage row IDs collide,
+- sync-cursor preservation and a transactionally persisted sanitization-pending marker,
+- composition into the existing startup/24-hour file-backed retention worker,
+- retry behavior that completes sanitization left pending by an interrupted pass,
+- bounded result aggregation without exposing provider content, row IDs, or paths.
+
+Important decisions:
+
+- reuse the existing single retention schedule and worker rather than introduce a
+  second timer or polling owner,
+- preserve the provider cursor because local retention narrows only the cache;
+  the provider remains authoritative for reconciliation,
+- repair a partially retained provider thread and delete it only when no locally
+  retained message IDs remain,
+- keep the canonical projection empty and ingestion uncomposed,
+- add no dependency, schema migration, plaintext index, provider, credential,
+  network action, personal data, IPC/UI surface, or remote mailbox mutation.
+
+Evidence: 44 test files and 293 tests pass. Strict typecheck, renderer
+structure/security checks, and all production Electron builds pass. Tests cover
+the exact cutoff, partial and full thread eviction, tamper-before-mutation,
+idempotence, cursor preservation, sanitization state, and cross-account opaque-ID
+collision handling.
+
+Limitations: this does not run a sync coordinator against the file-backed worker,
+activate startup sync, or define the sample-to-live transition. Gmail, OAuth, AI,
+live accounts, and remote mailbox actions remain blocked.
+
 ## How future entries should be written
 
 For each material milestone, record:

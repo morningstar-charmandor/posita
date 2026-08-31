@@ -12,6 +12,8 @@ exists deeper in the tree.
 - A non-sensitive lifecycle journal and confirmed full local-deletion execution are implemented.
 - Deterministic 90-day retention and exact legacy-fixture compatibility are implemented;
   encrypted file-backed maintenance runs at startup and on a bounded 24-hour cadence.
+- The same worker-owned maintenance pass evicts expired canonical provider messages,
+  repairs or removes affected provider threads, and resumes pending SQLite sanitization.
 - Safe retention running, last-run, next-run, and retry status is visible in Settings.
 - File-backed SQLite sanitization runs in a single-flight worker thread; the
   synchronous adapter remains only for bounded in-memory tests and legacy migration.

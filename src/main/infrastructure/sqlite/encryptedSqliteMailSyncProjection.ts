@@ -19,6 +19,10 @@ import {
   type CacheRecordProtector
 } from '../../application/encryptedCache.ts'
 import {
+  applyProviderMailRetentionPolicy,
+  type ProviderMailRetentionResult
+} from '../../application/providerMailRetention.ts'
+import {
   isProviderMailMessageV1,
   isProviderMailThreadV1,
   type ProviderMailMessageV1,
@@ -198,6 +202,102 @@ export class EncryptedSqliteMailSyncProjection implements MailSyncProjection {
     }
   }
 
+  applyRetention(now: Date): ProviderMailRetentionResult {
+    try {
+      const scopes = this.database.prepare(`
+        SELECT DISTINCT account_scope FROM encrypted_provider_mail_records
+        ORDER BY account_scope
+      `).all() as unknown as { account_scope: string }[]
+      const plans = scopes.map(({ account_scope: accountId }) => {
+        if (!isAccountId(accountId)) throw malformed('The stored account scope is invalid.')
+        const stored = this.loadAccountRecords(accountId)
+        const plan = applyProviderMailRetentionPolicy(
+          stored.messages.map(({ value }) => value),
+          stored.threads.map(({ value }) => value),
+          now
+        )
+        const retainedThreadById = new Map(plan.threads.map((thread) => [thread.id, thread]))
+        return {
+          accountId,
+          stored,
+          plan,
+          updatedThreads: stored.threads.flatMap((record) => {
+            const retained = retainedThreadById.get(record.value.id)
+            if (retained === undefined || isDeepStrictEqual(retained, record.value)) return []
+            const context = contextFor('provider-thread', record.rowId, accountId)
+            return [{
+              accountId,
+              rowId: record.rowId,
+              payload: this.protector.protect(context, JSON.stringify(retained))
+            }]
+          })
+        }
+      })
+      const result: ProviderMailRetentionResult = {
+        cutoffAt: plans[0]?.plan.result.cutoffAt ??
+          applyProviderMailRetentionPolicy([], [], now).result.cutoffAt,
+        changed: plans.some(({ plan }) => plan.result.changed),
+        removedMessages: plans.reduce((total, { plan }) =>
+          total + plan.result.removedMessages, 0),
+        removedThreads: plans.reduce((total, { plan }) =>
+          total + plan.result.removedThreads, 0),
+        updatedThreads: plans.reduce((total, { plan }) =>
+          total + plan.result.updatedThreads, 0)
+      }
+      if (!result.changed) return result
+
+      this.database.exec('BEGIN IMMEDIATE')
+      try {
+        for (const { accountId, stored, plan, updatedThreads } of plans) {
+          const retainedMessageIds = new Set(plan.messages.map((message) => message.id))
+          const retainedThreadIds = new Set(plan.threads.map((thread) => thread.id))
+          for (const record of stored.messages) {
+            if (!retainedMessageIds.has(record.value.id)) {
+              this.deleteStoredRecord('provider-message', record.rowId, accountId)
+            }
+          }
+          for (const record of stored.threads) {
+            if (!retainedThreadIds.has(record.value.id)) {
+              this.deleteStoredRecord('provider-thread', record.rowId, accountId)
+            }
+          }
+          for (const update of updatedThreads) {
+            const updated = this.database.prepare(`
+              UPDATE encrypted_provider_mail_records
+              SET envelope_scheme = ?, payload = ?, updated_at = datetime('now')
+              WHERE record_type = 'provider-thread' AND account_scope = ? AND record_id = ?
+            `).run(
+              this.protector.scheme,
+              Buffer.from(update.payload),
+              update.accountId,
+              update.rowId
+            )
+            if (Number(updated.changes) !== 1) {
+              throw new EncryptedCacheError(
+                'CACHE_STORAGE_FAILED',
+                'The encrypted provider-thread record changed during retention.'
+              )
+            }
+          }
+        }
+        this.database.prepare(`
+          INSERT INTO encrypted_cache_state (id, status, updated_at)
+          VALUES (1, 'sanitization-pending', datetime('now'))
+          ON CONFLICT(id) DO UPDATE SET
+            status = 'sanitization-pending', updated_at = datetime('now')
+        `).run()
+        this.database.exec('COMMIT')
+        return result
+      } catch (error) {
+        if (this.database.isTransaction) this.database.exec('ROLLBACK')
+        throw error
+      }
+    } catch (error) {
+      if (error instanceof MailSyncError) throw error
+      throw storageFailure(error)
+    }
+  }
+
   private loadAccountRecords(accountId: string): {
     messages: StoredRecord<ProviderMailMessageV1>[]
     threads: StoredRecord<ProviderMailThreadV1>[]
@@ -292,6 +392,23 @@ export class EncryptedSqliteMailSyncProjection implements MailSyncProjection {
       throw new EncryptedCacheError(
         'CACHE_STORAGE_FAILED',
         'The encrypted provider-mail record changed during commit.'
+      )
+    }
+  }
+
+  private deleteStoredRecord(
+    recordType: ProviderMailRecordType,
+    rowId: string,
+    accountId: string
+  ): void {
+    const result = this.database.prepare(`
+      DELETE FROM encrypted_provider_mail_records
+      WHERE record_type = ? AND account_scope = ? AND record_id = ?
+    `).run(recordType, accountId, rowId)
+    if (Number(result.changes) !== 1) {
+      throw new EncryptedCacheError(
+        'CACHE_STORAGE_FAILED',
+        'The encrypted provider-mail record changed during retention.'
       )
     }
   }

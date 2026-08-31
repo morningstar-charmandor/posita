@@ -28,6 +28,18 @@ export const completeEncryptedCacheSanitization = (database: DatabaseSync): void
   }
 }
 
+export const isEncryptedCacheSanitizationPending = (database: DatabaseSync): boolean => {
+  try {
+    const state = database.prepare(`
+      SELECT status FROM encrypted_cache_state WHERE id = 1
+    `).get() as { status?: unknown } | undefined
+    return state?.status === 'sanitization-pending'
+  } catch (error) {
+    if (error instanceof RepositoryError) throw error
+    throw sanitizationFailure(error)
+  }
+}
+
 /** Bounded test and legacy-fixture adapter. File-backed production uses a worker. */
 export class InlineSqliteStorageSanitizer implements StorageSanitizer {
   private readonly database: DatabaseSync

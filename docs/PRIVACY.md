@@ -4,10 +4,11 @@
 
 Posita currently contains deterministic sample mail only. Gate 2C stores that
 dataset as independently authenticated encrypted records and migrates existing
-fixture databases away from plaintext. Real mailbox ingestion remains disabled
-until account-scoped retention, disconnect, and deletion orchestration are
-implemented and tested. Gate 2D has started by encrypting and validating the
-future provider-account identity and sync-state records; no real account exists.
+fixture databases away from plaintext. Account-scoped retention, disconnect, and
+full local deletion are now tested at their credential-free boundaries. Real
+mailbox ingestion remains disabled until the worker-backed sync lifecycle,
+sample-to-live transition, and separately approved provider activation are
+complete. No real account exists.
 
 The canonical provider-mail contract validates sensitive normalized source data
 before application use, and the credential-free sync coordinator accepts only
@@ -16,7 +17,8 @@ encrypted message/thread records and advance the encrypted account cursor in the
 same transaction. Provider IDs, canonical IDs, addresses, subjects, bodies,
 labels, and attachment metadata are ciphertext; only opaque local record IDs,
 opaque account scope, and record kind remain queryable. The projection is empty
-and uncomposed from startup or providers. Existing sample messages remain fixture
+and uncomposed from sync or providers; only its retention path runs in automatic
+maintenance. Existing sample messages remain fixture
 compatibility records and are not assigned fabricated provider provenance. No
 personal mailbox data has passed through this path.
 
@@ -96,6 +98,13 @@ cache, the complete load/plan/rewrite/checkpoint/`VACUUM` operation executes in 
 dedicated worker thread. This never modifies Gmail. Settings exposes only bounded
 running, last-run, next-run, and safe retry state; failures retry after one hour.
 Full local deletion suspends and awaits maintenance before deleting private data.
+
+Schema-v9 canonical provider messages now use that same cutoff through the same
+file-backed maintenance worker. Expired messages are removed, affected encrypted
+thread membership is repaired or deleted, account isolation is preserved, and
+the encrypted sync cursor is retained. Cleanup marks SQLite sanitization pending
+inside the write transaction and resumes it after an interrupted compaction. No
+provider request or remote mailbox change is part of retention.
 
 Historical encrypted sample caches receive one narrow startup compatibility
 upgrade. Posita replaces them only when every timestamp is absent and all other

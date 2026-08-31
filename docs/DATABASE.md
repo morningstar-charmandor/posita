@@ -158,8 +158,9 @@ The synchronous adapter is an uncomposed credential-free proof used with bounded
 in-memory databases. A packaged serial worker adapter now owns file-backed
 checkpoint reads and batch commits, transfers a temporary key copy into each
 short-lived worker, validates request/result schemas, maps only safe failures, and
-erases its retained key on teardown. No startup owner, provider, IPC, UI, or
-fixture conversion is added by schema v9.
+erases its retained key on teardown. No sync startup owner, provider, IPC, UI, or
+fixture conversion is added by schema v9; only automatic retention invokes the
+projection inside its existing worker.
 
 Retention replacements validate and encrypt the complete next dataset before
 opening a write transaction. Source messages, derived topics, brief items, and
@@ -173,6 +174,14 @@ adapter is retained only for bounded in-memory tests and legacy migration.
 Scheduled file-backed retention moves the complete dataset load, cutoff planning,
 encrypted replacement, and sanitization into one short-lived worker. It adds no
 table or migration; schedule and safe status are process-memory state.
+
+That same worker now plans schema-v9 retention for every canonical account before
+mutation. It deletes messages older than the shared exact 90-day cutoff, rewrites
+affected threads with retained message IDs or removes empty threads, leaves the
+encrypted account cursor untouched, and marks sanitization pending in the same
+canonical transaction. Opaque row IDs are always paired with account scope, so a
+collision across accounts cannot widen deletion. A later maintenance pass resumes
+sanitization if logical eviction committed before compaction failed.
 
 Account-data removal reuses the same replacement boundary. The application layer
 computes retained accounts, source messages, untouched derived topics/briefs, and

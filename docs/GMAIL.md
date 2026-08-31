@@ -66,7 +66,9 @@ metadata, and immutable source provenance. The coordinator proves one 90-day
 initial path, single-flight account work, bounded cross-account concurrency,
 atomic batch/cursor commits, replay deduplication, one bounded invalid-cursor
 resync, cancellation, and typed failures using deterministic fakes. It has no
-encrypted provider-mail repository or production composition.
+production sync composition. Schema v9, its file-backed worker, fixed 90-day
+retention, and journaled account removal are verified but remain empty and do not
+authorize provider access.
 
 ## Desktop OAuth flow
 
@@ -177,5 +179,6 @@ The fixture-oriented shared `Message` type intentionally remains a sample-only
 compatibility view and is not a provider contract. Posita will not invent Gmail
 IDs or recipient metadata to migrate it. `GATE_2D_READINESS.md` keeps live Gmail
 authorization and ingestion blocked until the new canonical records have an
-encrypted atomic projection, sample-to-live transition behavior is reviewed, and
-the remaining connection/disconnect activation gates pass.
+encrypted atomic projection and complete local lifecycle. The sample-to-live
+transition, worker-backed sync lifecycle, and remaining connection/disconnect
+activation gates still require review.

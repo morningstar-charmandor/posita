@@ -1,6 +1,6 @@
 # Posita Continuity Handoff
 
-Last reviewed: 2026-08-31
+Last reviewed: 2026-09-01
 
 This is the first document to read when Posita work continues in a new AI model,
 thread, chat, or development session. It records current state and the safest
@@ -157,6 +157,11 @@ Implemented:
 - account-scoped canonical projection deletion required by the inactive
   disconnect orchestrator's durable mail-data phase, including safe retry after
   fixture removal has already committed,
+- one shared fixed-window policy for fixture and canonical mail, with exact
+  boundary retention, deterministic provider-message eviction, encrypted thread
+  repair/removal, cursor preservation, and account-scoped opaque-row handling,
+- canonical retention composed into the existing startup/daily file-backed
+  maintenance worker, including resumable sanitization after an interrupted pass,
 - an explicit fixture compatibility decision: existing encrypted sample messages
   remain a presentation view and never receive fabricated provider provenance,
 - truthful sample-mode labels that do not describe fixture accounts, briefs, or
@@ -178,8 +183,9 @@ Simulated or deliberately inactive:
 - account-connection persistence is exercised only through deterministic in-memory
   collaborators and is not composed into production startup,
 - canonical provider-mail and sync behavior is exercised only through
-  deterministic fakes, an encrypted SQLite proof, and a file-backed worker adapter;
-  none is composed into startup or a provider,
+  deterministic fakes, an encrypted SQLite proof, and file-backed workers;
+  only retention is composed into startup maintenance, while ingestion and
+  provider access remain uncomposed,
 - account consistency is not independently exposed; the recovery command uses it
   inside main without mutation or provider action,
 - local account recovery is active only for inconsistent local records and has no
@@ -189,7 +195,7 @@ Simulated or deliberately inactive:
 Not implemented:
 
 - Gmail OAuth, message ingestion, incremental history sync, or user-triggered/live disconnect,
-- provider-mail retention composition or production sync composition,
+- production sync composition,
 - user-triggered account disconnect or any remote mailbox mutation control,
 - automatic pending-disconnect resume with a live idempotent revocation adapter,
 - a model provider, embeddings, classification, retrieval, or generation,
@@ -223,11 +229,11 @@ confirmed local deletion are complete at their current layers. Continue in this 
    automatic startup repair; failed execution must continue to require fresh review.
 3. Treat automatic retention scheduling and its Settings status as complete at
    the current fixed 90-day boundary. Do not add configurable retention yet.
-4. Continue with the credential-free provider-mail lifecycle integration milestone
-   in `GATE_2D_READINESS.md`: apply 90-day retention to canonical records through
-   the packaged worker lifecycle. Treat journaled account-scoped canonical
-   deletion as complete at its inactive interface boundary. Keep sync uncomposed
-   from startup, preload, UI, network, or Google.
+4. Treat canonical fixed-window retention and journaled account removal as
+   complete at their credential-free boundaries. Continue with the next milestone
+   in `GATE_2D_READINESS.md`: exercise the sync coordinator end to end against the
+   real file-backed projection worker and deterministic provider, while keeping
+   startup, preload, UI, network, and Google uncomposed.
 5. Request explicit owner approval before composing a real Google adapter,
    credentials, browser authorization, connection activation, or live account.
 6. Keep real Gmail ingestion disabled until authorization activation is separately
@@ -237,20 +243,19 @@ confirmed local deletion are complete at their current layers. Continue in this 
 Do not solve encrypted search casually. Any index must avoid becoming a second
 plaintext mailbox. Record the selected search tradeoff in `docs/DECISIONS.md`.
 
-Milestone change report: canonical provider mail contracts, sync ownership, and
-encrypted atomic persistence are credential-free verified, not activated. New
-storage is schema v9 plus one uncomposed SQLite projection with an injected opaque
-row-ID source; the existing sync-state repository remains the cursor source of
-truth. One packaged worker/protocol now owns bounded file-backed calls without
-becoming a second projection implementation. The inactive disconnect mail-data
-phase now requires the worker-backed account remover. No dependency, production adapter,
-startup/IPC/UI composition, external
+Milestone change report: canonical provider mail contracts, sync ownership,
+encrypted atomic persistence, fixed-window retention, and disconnect deletion are
+credential-free verified, not activated for ingestion. Schema v9 remains the
+single canonical projection and the existing sync-state repository remains the
+cursor source of truth. The automatic retention worker now performs bounded
+canonical decrypt/plan/delete/thread-rewrite/sanitization work without a plaintext
+index. No dependency, production adapter, sync/IPC/UI composition, external
 action, secret, personal mailbox data, or mutation was added. One intentional
 compatibility distinction remains:
 the legacy `Message` is a deterministic sample-presentation record, while only
 `ProviderMailMessageV1` may enter future provider ingestion. There is no conversion
-path because Posita will not invent provider provenance. The next milestone is
-fixed 90-day retention for the empty projection, not OAuth.
+path because Posita will not invent provider provenance. The next milestone is a
+credential-free coordinator-to-file-worker integration proof, not OAuth.
 
 ## How to resume
 
@@ -270,7 +275,7 @@ fixed 90-day retention for the empty projection, not OAuth.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 43 test files, 287 tests, strict typecheck, structure
+- Current verified baseline: 44 test files, 293 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,

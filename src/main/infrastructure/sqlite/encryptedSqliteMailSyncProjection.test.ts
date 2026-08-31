@@ -250,4 +250,99 @@ describe('EncryptedSqliteMailSyncProjection', () => {
       SELECT DISTINCT account_scope FROM encrypted_provider_mail_records
     `).all()).toEqual([{ account_scope: 'account-personal-1' }])
   })
+
+  it('retains the exact boundary and evicts older messages while repairing threads', async () => {
+    const { database, projection } = createProjection()
+    const old = source('account-work-1', 'old')
+    old.message.sentAt = '2026-06-01T09:59:59.999Z'
+    old.message.receivedAt = '2026-06-01T10:00:00.000Z'
+    const recent = source('account-work-1', 'recent')
+    recent.message.threadId = old.message.threadId
+    recent.message.source.providerThreadId = old.message.source.providerThreadId
+    const boundary = source('account-personal-1', 'boundary')
+    boundary.message.sentAt = '2026-06-02T09:59:59.999Z'
+    boundary.message.receivedAt = '2026-06-02T10:00:00.000Z'
+    await projection.commitBatch({
+      ...commit('account-work-1'),
+      messages: [old.message, recent.message],
+      threads: [{
+        ...old.thread,
+        messageIds: [old.message.id, recent.message.id]
+      }]
+    })
+    await projection.commitBatch({
+      ...commit('account-personal-1'),
+      messages: [boundary.message],
+      threads: [boundary.thread]
+    })
+
+    expect(projection.applyRetention(new Date('2026-08-31T10:00:00.000Z'))).toEqual({
+      cutoffAt: '2026-06-02T10:00:00.000Z',
+      changed: true,
+      removedMessages: 1,
+      removedThreads: 0,
+      updatedThreads: 1
+    })
+    expect(database.prepare(`
+      SELECT record_type, account_scope, COUNT(*) AS count
+      FROM encrypted_provider_mail_records
+      GROUP BY record_type, account_scope ORDER BY account_scope, record_type
+    `).all()).toEqual([
+      { record_type: 'provider-message', account_scope: 'account-personal-1', count: 1 },
+      { record_type: 'provider-thread', account_scope: 'account-personal-1', count: 1 },
+      { record_type: 'provider-message', account_scope: 'account-work-1', count: 1 },
+      { record_type: 'provider-thread', account_scope: 'account-work-1', count: 1 }
+    ])
+    expect(database.prepare(`
+      SELECT status FROM encrypted_cache_state WHERE id = 1
+    `).get()).toEqual({ status: 'sanitization-pending' })
+    expect(projection.applyRetention(new Date('2026-08-31T10:00:00.000Z')))
+      .toMatchObject({ changed: false, removedMessages: 0, updatedThreads: 0 })
+    await expect(projection.loadCheckpoint('account-work-1')).resolves.toMatchObject({
+      cursor: 'cursor-1'
+    })
+  })
+
+  it('fails retention before mutation when any account ciphertext is invalid', async () => {
+    const { database, projection } = createProjection()
+    const old = commit('account-work-1', 'old')
+    old.messages[0]!.receivedAt = '2026-01-01T00:00:00.000Z'
+    await projection.commitBatch(old)
+    await projection.commitBatch(commit('account-personal-1', 'personal'))
+    database.prepare(`
+      UPDATE encrypted_provider_mail_records SET payload = ?
+      WHERE account_scope = 'account-personal-1' AND record_type = 'provider-thread'
+    `).run(Buffer.from('tampered'))
+
+    expect(() => projection.applyRetention(new Date('2026-08-31T10:00:00.000Z')))
+      .toThrowError(expect.objectContaining({ code: 'SYNC_STORAGE_FAILED' }))
+    expect(database.prepare(`
+      SELECT COUNT(*) AS count FROM encrypted_provider_mail_records
+      WHERE account_scope = 'account-work-1' AND record_type = 'provider-message'
+    `).get()).toEqual({ count: 1 })
+  })
+
+  it('keeps another account when opaque storage IDs happen to collide', async () => {
+    const database = openPositaDatabase(':memory:')
+    openDatabases.push(database)
+    applyMigrations(database)
+    const projection = new EncryptedSqliteMailSyncProjection(
+      database,
+      new AesGcmCacheProtector(testKey, nonceSource()),
+      () => 'shared-storage-id'
+    )
+    const expired = commit('account-work-1', 'expired')
+    expired.messages[0]!.receivedAt = '2026-01-01T00:00:00.000Z'
+    const retained = commit('account-personal-1', 'retained')
+    retained.messages[0]!.receivedAt = '2026-08-30T00:00:00.000Z'
+    await projection.commitBatch(expired)
+    await projection.commitBatch(retained)
+
+    expect(projection.applyRetention(new Date('2026-08-31T10:00:00.000Z')))
+      .toMatchObject({ removedMessages: 1, removedThreads: 1 })
+    expect(database.prepare(`
+      SELECT account_scope, COUNT(*) AS count FROM encrypted_provider_mail_records
+      GROUP BY account_scope
+    `).all()).toEqual([{ account_scope: 'account-personal-1', count: 2 }])
+  })
 })

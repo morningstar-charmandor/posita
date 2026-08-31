@@ -1,10 +1,18 @@
 import { parentPort, workerData } from 'node:worker_threads'
 import type { DatabaseSync } from 'node:sqlite'
-import { RetentionMaintenanceService } from '../../application/retentionMaintenance.ts'
+import {
+  applyRetentionPolicy,
+  RetentionMaintenanceService
+} from '../../application/retentionMaintenance.ts'
+import { includeProviderMailRetention } from '../../application/providerMailRetention.ts'
 import { AesGcmCacheProtector } from '../security/aesGcmCacheProtector.ts'
 import { openPositaDatabase } from './database.ts'
 import { EncryptedSqliteMailRepository } from './encryptedSqliteMailRepository.ts'
-import { completeEncryptedCacheSanitization } from './sqliteSanitization.ts'
+import { EncryptedSqliteMailSyncProjection } from './encryptedSqliteMailSyncProjection.ts'
+import {
+  completeEncryptedCacheSanitization,
+  isEncryptedCacheSanitizationPending
+} from './sqliteSanitization.ts'
 
 interface RetentionWorkerRequestV1 {
   version: 1
@@ -42,11 +50,24 @@ if (!isRequest(workerData)) {
     const activeDatabase = openPositaDatabase(workerData.databasePath)
     database = activeDatabase
     const repository = new EncryptedSqliteMailRepository(activeDatabase, protector)
+    const now = new Date(workerData.now)
+    applyRetentionPolicy(repository.loadDataset(), now)
+    const providerResult = new EncryptedSqliteMailSyncProjection(
+      activeDatabase,
+      protector
+    ).applyRetention(now)
     const maintenance = new RetentionMaintenanceService(repository, {
       sanitize: async () => completeEncryptedCacheSanitization(activeDatabase)
     })
-    const result = await maintenance.run(new Date(workerData.now))
-    parentPort.postMessage({ version: 1, ok: true, result })
+    const fixtureResult = await maintenance.run(now)
+    if (isEncryptedCacheSanitizationPending(activeDatabase)) {
+      completeEncryptedCacheSanitization(activeDatabase)
+    }
+    parentPort.postMessage({
+      version: 1,
+      ok: true,
+      result: includeProviderMailRetention(fixtureResult, providerResult)
+    })
   } catch {
     parentPort.postMessage({ version: 1, ok: false, code: 'RETENTION_FAILED' })
   } finally {

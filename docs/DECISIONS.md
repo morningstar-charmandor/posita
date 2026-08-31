@@ -550,3 +550,26 @@
   preload, IPC, UI, Google, and persistent storage. No dependency, schema
   migration, credential, personal data, network action, or mailbox mutation is
   added.
+
+## ADR-032: Apply one fixed retention window to both encrypted mail projections
+
+- Status: accepted for Gate 2D
+- Context: schema v9 could persist canonical provider messages and threads, but
+  the automatic 90-day pass covered only the deterministic fixture projection.
+  A second schedule would create competing lifecycle owners, deleting an expired
+  message without repairing its thread would retain stale membership, and moving
+  the cursor backward would confuse local retention with provider reconciliation.
+- Decision: reuse the existing startup/24-hour retention worker and shared cutoff.
+  Preflight the fixture dataset and every canonical account before canonical
+  mutation. Retain the exact boundary, delete older canonical messages, re-encrypt
+  affected threads with retained IDs, delete empty threads, and preserve the sync
+  cursor. Mark sanitization pending in the canonical write transaction and finish
+  or resume compaction before reporting success. Scope every row mutation by
+  record type, opaque account, and opaque row ID.
+- Consequence: both encrypted projections obey the private-alpha window through
+  one worker-owned maintenance lifecycle without a plaintext index or provider
+  request. A failed pass remains safely retryable, and opaque row-ID collisions
+  cannot cross account boundaries. The canonical table remains empty until a
+  separately approved sync composition. No dependency, schema migration, startup
+  sync, IPC/UI capability, Google adapter, credential, personal data, network
+  action, or remote mailbox mutation is added.
