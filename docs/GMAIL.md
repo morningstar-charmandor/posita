@@ -44,14 +44,18 @@ and its vault presence check does not decrypt the credential. This status blocks
 new authorization when either side is inconsistent but performs no automatic or
 user-triggered repair. Reconnecting Gmail remains impossible in this build.
 
-An application-only recovery service now encodes the approved local policy: after
+The local recovery service now encodes the approved policy: after
 an exact account- and orphan-status-bound confirmation, discard only the orphaned
 credential or encrypted provider/sync state and require a fresh connection. It
 refuses a complete connection and performs no revocation or Google request. The
 dedicated schema-v8 producer atomically consumes an exact unused receipt before
 local deletion, preventing replay; a failed attempt needs fresh confirmation.
-The producer, recovery service, and repository remain outside startup, preload,
-IPC, and UI, so the behavior is deterministic-test-only.
+Separate same-window prepare and execute methods expose this only in Settings.
+Main derives the orphan type from presence-only local inspection; the renderer
+cannot choose it. The current account choices are visibly labeled as samples, and
+normal checks report that no recovery is needed. This composition does not add a
+Google adapter, OAuth client, browser action, provider request, real credential,
+live account, or mailbox mutation.
 
 ## Desktop OAuth flow
 

@@ -68,18 +68,20 @@ The same coordinator now provides a main-process-only, versioned consistency
 inspection for one opaque account. It reports only `absent`, `connected`,
 `credential-only`, or `provider-state-only`. A new vault presence query checks
 for protected credential existence without decrypting or re-protecting it. No
-repair, deletion, startup check, IPC response, or UI status is activated.
+automatic repair or startup mutation is attached to inspection.
 
 The approved local recovery policy and its dedicated durable confirmation producer
-are implemented as trusted, uncomposed services. Schema v8 stores only opaque,
+are now available through a narrow Settings & privacy flow. Schema v8 stores only opaque,
 short-lived account/status-bound recovery receipts; the exact typed challenge text
 is never persisted. A receipt is atomically marked consumed before deletion, so
 it cannot authorize a later orphan with the same account and status. Recovery
 refuses complete or already-absent connections, rechecks for stale state, and
 deletes exactly the orphaned credential or encrypted provider/sync state. Success
 returns the account to `absent` and requires a fresh connection. A failed or
-interrupted deletion requires fresh confirmation. Both services remain outside
-startup, preload, IPC, and UI, so they cannot affect local data in the running build.
+interrupted deletion requires fresh confirmation. Preparation and execution use
+separate validated preload/IPC methods bound to the same trusted window. The UI
+states that current accounts and mail are samples, and recovery never opens a
+browser, contacts Google, reconstructs a connection, or changes a provider mailbox.
 
 Startup now has one cancellable lifecycle-recovery owner. If a full deletion is
 journaled, it resumes through deletion-only SQLite and vault operations without
@@ -159,9 +161,10 @@ never depends on access to an earlier conversation.
 
 The React renderer has no Node.js access. Electron context isolation and process
 sandboxing are enabled, navigation is denied by default, and the preload bridge
-exposes one versioned read-only application-state method and two narrowly scoped
-prepare/execute methods for confirmed local deletion, plus non-sensitive desktop
-metadata. SQLite lives behind main-process repository, sanitization, and
+exposes one versioned read-only application-state method and two narrow pairs of
+prepare/execute methods for confirmed local deletion and confirmed incomplete-
+connection recovery, plus non-sensitive desktop metadata. SQLite lives behind
+main-process repository, sanitization, and
 credential-vault interfaces; file-backed compaction runs in a dedicated worker
 and the renderer receives only a validated application state. Source and
 derived fixture records

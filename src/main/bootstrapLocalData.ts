@@ -5,10 +5,17 @@ import type { AccountStateRepository } from './application/accountState'
 import type { AccountLifecycleRepository } from './application/accountLifecycle'
 import { AccountDataRemovalService } from './application/accountDataRemoval'
 import {
+  inspectAccountConnectionConsistency,
+  type AccountConnectionConsistencyInspector
+} from './application/accountConnection'
+import { AccountConnectionRecoveryCommandService } from './application/accountConnectionRecoveryCommand'
+import { AccountConnectionRecoveryConfirmationService } from './application/accountConnectionRecoveryConfirmation'
+import {
   ComposedDeleteLocalDataActions,
   DeleteLocalDataService
 } from './application/deleteLocalData'
 import { LocalActionConfirmationService } from './application/localActionConfirmation'
+import { AccountConnectionRecoveryService } from './application/recoverAccountConnection'
 import { StartupLifecycleRecoveryOwner } from './application/startupLifecycleRecovery'
 import { RetentionMaintenanceService } from './application/retentionMaintenance'
 import { MailApplicationService, systemClock } from './application/mailApplicationService'
@@ -21,6 +28,7 @@ import type { StringProtector } from './infrastructure/security/stringProtector'
 import { openPositaDatabase } from './infrastructure/sqlite/database'
 import { EncryptedSqliteAccountStateRepository } from './infrastructure/sqlite/encryptedSqliteAccountStateRepository'
 import { SqliteAccountLifecycleRepository } from './infrastructure/sqlite/sqliteAccountLifecycleRepository'
+import { SqliteAccountConnectionRecoveryConfirmationRepository } from './infrastructure/sqlite/sqliteAccountConnectionRecoveryConfirmationRepository'
 import { SqliteDeleteLocalDataRecoveryActions } from './infrastructure/sqlite/sqliteDeleteLocalDataRecoveryActions'
 import { migrateLegacyPlaintextCache } from './infrastructure/sqlite/encryptedCacheMigration'
 import {
@@ -46,6 +54,7 @@ export interface ReadyLocalDataRuntime extends LocalDataRuntimeBase {
   accountStateRepository: AccountStateRepository
   retentionService: RetentionMaintenanceService
   accountDataRemovalService: AccountDataRemovalService
+  accountConnectionRecoveryCommandService: AccountConnectionRecoveryCommandService
   confirmationService: LocalActionConfirmationService
   deleteLocalDataService: DeleteLocalDataService
 }
@@ -136,6 +145,26 @@ export const bootstrapLocalDataWithDependencies = async (
       await retentionService.ensureFixtureCompatibility(fixtures)
     }
     const accountStateRepository = new EncryptedSqliteAccountStateRepository(database, protector)
+    const connections: AccountConnectionConsistencyInspector = {
+      inspect: (accountId) => inspectAccountConnectionConsistency(
+        accountId,
+        secretVault,
+        accountStateRepository
+      )
+    }
+    const accountRecoveryConfirmation = new AccountConnectionRecoveryConfirmationService(
+      connections,
+      new SqliteAccountConnectionRecoveryConfirmationRepository(database),
+      systemClock,
+      dependencies.confirmationIdSource
+    )
+    accountRecoveryConfirmation.cleanupExpired()
+    const accountRecovery = new AccountConnectionRecoveryService(
+      connections,
+      accountRecoveryConfirmation,
+      secretVault,
+      accountStateRepository
+    )
     const activeDeletion = new DeleteLocalDataService(
       accountLifecycleRepository,
       new ComposedDeleteLocalDataActions(
@@ -156,6 +185,11 @@ export const bootstrapLocalDataWithDependencies = async (
       accountLifecycleRepository,
       retentionService,
       accountDataRemovalService: new AccountDataRemovalService(repository),
+      accountConnectionRecoveryCommandService: new AccountConnectionRecoveryCommandService(
+        connections,
+        accountRecoveryConfirmation,
+        accountRecovery
+      ),
       confirmationService: confirmation,
       deleteLocalDataService: activeDeletion
     }

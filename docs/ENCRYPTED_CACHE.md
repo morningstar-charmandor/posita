@@ -212,5 +212,7 @@ connection pair. It never decrypts or reconstructs missing data, never touches a
 different account, and verifies the presence-only result is `absent`. Schema v8
 stores only bounded operational confirmation metadata outside encrypted private
 records. Its exact receipt is atomically consumed before encrypted account-state
-deletion and cannot be replayed. This policy has no production invocation path in
-the current milestone.
+deletion and cannot be replayed. The approved ready-mode Settings composition
+invokes this policy only through same-window, separately validated prepare and
+execute methods. It adds no plaintext mailbox index, provider request, schema,
+dependency, or access to a different account scope.

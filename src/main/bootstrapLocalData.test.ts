@@ -3,7 +3,10 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { DatabaseSync } from 'node:sqlite'
 import { afterEach, describe, expect, it } from 'vitest'
-import { DELETE_LOCAL_DATA_CONFIRMATION_TEXT } from '../shared/contracts'
+import {
+  ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_TEXT,
+  DELETE_LOCAL_DATA_CONFIRMATION_TEXT
+} from '../shared/contracts'
 import { fixtures } from '../shared/fixtures'
 import {
   bootstrapLocalDataWithDependencies,
@@ -63,6 +66,44 @@ afterEach(async () => {
 })
 
 describe('bootstrapLocalData lifecycle recovery', () => {
+  it('composes confirmed local-only recovery for an orphaned credential', async () => {
+    const databasePath = await createDatabasePath()
+    const ids = ['confirmation-recovery-1', 'operation-recovery-1']
+    const runtime = await bootstrapLocalDataWithDependencies(databasePath, {
+      ...dependencies(),
+      confirmationIdSource: () => ids.shift() ?? 'unused-recovery-id'
+    })
+    if (runtime.mode !== 'ready') throw new Error('Expected ready runtime.')
+    await runtime.secretVault.set(
+      'oauth.google.work.refresh-token',
+      'test-only-orphaned-refresh-credential'
+    )
+
+    const prepared = await runtime.accountConnectionRecoveryCommandService.prepare({
+      version: 1,
+      action: 'discard-orphaned-local-connection-state',
+      accountId: 'work'
+    })
+    if (!prepared.ok) throw new Error(prepared.error.message)
+    expect(prepared.value.expectedStatus).toBe('credential-only')
+
+    await expect(runtime.accountConnectionRecoveryCommandService.execute({
+      version: 1,
+      confirmationId: prepared.value.confirmationId,
+      operationId: prepared.value.operationId,
+      action: prepared.value.action,
+      accountId: prepared.value.accountId,
+      expectedStatus: prepared.value.expectedStatus,
+      enteredText: ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_TEXT
+    })).resolves.toMatchObject({
+      ok: true,
+      value: { accountId: 'work', status: 'absent', reconnectRequired: true }
+    })
+    expect(await runtime.secretVault.has('oauth.google.work.refresh-token')).toBe(false)
+    expect(runtime.accountStateRepository.hasProviderAccount('work')).toBe(false)
+    runtime.repository.close()
+  })
+
   it('cleans an expired unlinked confirmation receipt during startup', async () => {
     const databasePath = await createDatabasePath()
     const initial = await bootstrapLocalDataWithDependencies(databasePath, dependencies())

@@ -178,6 +178,14 @@ h1 { font-family: Georgia, 'Times New Roman', serif; font-weight: 500; letter-sp
 .consent-disclosures small { color: var(--muted); font-size: 8.5px; line-height: 1.45; }
 .consent-version { color: var(--muted); font-size: 8.5px; text-align: center; }
 .consent-footnote { color: var(--muted); font-size: 8.5px; line-height: 1.45; text-align: center; }
+.connection-recovery { gap: 16px; }
+.recovery-account-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.recovery-account-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 9px; background: #fafaf7; }
+.recovery-account-list li > span { min-width: 0; display: grid; gap: 3px; }
+.recovery-account-list strong { font-size: 9.5px; }
+.recovery-account-list small { overflow: hidden; color: var(--muted); font-size: 8.5px; text-overflow: ellipsis; white-space: nowrap; }
+.connection-recovery-confirmation > p { color: #5f665f; }
+.recovery-safe-icon { color: #58715f !important; }
 .destructive-warning { border-color: #ead4cb; color: #874e3c; background: #fff8f5; }
 .deletion-confirmation ul { display: grid; gap: 7px; margin: 0; padding-left: 20px; color: #666b64; font-size: 10px; line-height: 1.45; }
 .deletion-confirmation label { margin-top: 2px; color: #4e534d; font-size: 10px; }

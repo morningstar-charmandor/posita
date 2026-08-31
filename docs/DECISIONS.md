@@ -466,3 +466,31 @@
   deletion schema and service remain unchanged. No startup, preload, IPC, UI,
   browser, Google adapter, external action, dependency, compatibility path, real
   secret, or mailbox mutation is added.
+
+## ADR-029: Expose local connection recovery as a same-window confirmed command
+
+- Status: accepted for Gate 2D
+- Context: schema v8 and the discard-only recovery policy were safe but
+  unreachable. Exposing a generic repair method, letting the renderer select the
+  orphan type, or automatically repairing at startup would weaken the account and
+  confirmation boundaries. The current build also contains sample accounts only,
+  so the interface must not imply a live Gmail connection.
+- Decision: compose recovery only in ready mode through separate versioned
+  `prepareAccountConnectionRecovery` and `executeAccountConnectionRecovery`
+  capabilities. Preparation accepts one validated opaque Posita account ID; main
+  independently performs presence-only inspection and refuses `absent` or
+  `connected` state. For a one-sided pair, return the existing five-minute exact-
+  text challenge bound to the diagnosed status. Bind the challenge to the trusted
+  main frame and window that prepared it, release that window authority after one
+  execute attempt, and require fresh preparation after any failure. The renderer
+  presents only known application accounts, labels them as samples, and states
+  that recovery is local-only. Reuse the existing inspector, confirmation
+  producer, recovery policy, vault, and encrypted account-state repository.
+- Consequence: the owner can safely remove an orphaned local credential or
+  encrypted provider/sync record and return the pair to `absent`, after which a
+  fresh connection is required. The renderer never chooses the orphan side and
+  receives no credential, provider identity, database detail, or arbitrary error.
+  Recovery never starts OAuth, opens a browser, contacts Google, revokes access,
+  or changes a mailbox. No dependency, schema migration, compatibility path,
+  provider adapter, real account, secret, personal data, or remote mutation is
+  added. Gmail authorization activation remains a separate approval gate.

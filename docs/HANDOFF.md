@@ -1,6 +1,6 @@
 # Posita Continuity Handoff
 
-Last reviewed: 2026-08-28
+Last reviewed: 2026-08-31
 
 This is the first document to read when Posita work continues in a new AI model,
 thread, chat, or development session. It records current state and the safest
@@ -116,6 +116,16 @@ Implemented:
   diagnosed orphan state and persists only opaque account/status-bound receipt
   metadata in schema v8, atomically consumes an exact receipt before deletion,
   and remains distinct from installation-wide deletion confirmation,
+- a ready-mode local account-recovery command composed from the canonical
+  presence-only inspector, schema-v8 confirmation producer, vault, encrypted
+  account-state repository, and existing discard-only recovery policy,
+- separate validated prepare/execute preload and IPC methods, with the challenge
+  bound to the same trusted main-frame window and released after one attempt,
+- an accessible Settings recovery surface covering sample-account selection,
+  read-only checking, no-recovery-needed, exact typed confirmation, progress,
+  success, safe errors, and fresh-review behavior,
+- main-owned orphan diagnosis: the renderer supplies only a known opaque account
+  ID and cannot choose credential versus encrypted provider-state deletion,
 - truthful sample-mode labels that do not describe fixture accounts, briefs, or
   deterministic drafts as live Gmail or production AI,
 - deterministic credential-free verification through `npm run verify`.
@@ -134,11 +144,10 @@ Simulated or deliberately inactive:
 - authorization-session behavior exists only behind a deterministic test fake,
 - account-connection persistence is exercised only through deterministic in-memory
   collaborators and is not composed into production startup,
-- account consistency is main-process-only diagnostic behavior with no repair,
-  preload, IPC, UI, startup, or provider action,
-- account recovery and its durable confirmation producer are exercised only with
-  deterministic collaborators; a failed attempt requires fresh confirmation and
-  no product invocation path exists,
+- account consistency is not independently exposed; the recovery command uses it
+  inside main without mutation or provider action,
+- local account recovery is active only for inconsistent local records and has no
+  real account to recover; normal sample accounts report that recovery is not needed,
 - sending and every other remote mailbox mutation are disabled.
 
 Not implemented:
@@ -146,7 +155,6 @@ Not implemented:
 - Gmail OAuth, message ingestion, incremental history sync, or user-triggered/live disconnect,
 - runtime sync coordination, provider reconciliation, or deduplication logic,
 - user-triggered account disconnect or any remote mailbox mutation control,
-- any account-recovery preload, IPC, UI, or startup composition,
 - automatic pending-disconnect resume with a live idempotent revocation adapter,
 - automatic retention scheduling and user-visible maintenance status,
 - a model provider, embeddings, classification, retrieval, or generation,
@@ -176,27 +184,30 @@ confirmed local deletion are complete at their current layers. Continue in this 
 
 1. Keep pending disconnect visible but inactive until a real idempotent Google
    revocation adapter can be composed and tested.
-2. Keep the new durable account- and orphan-status-bound confirmation producer
-   uncomposed while reviewing the narrow prepare/execute IPC contract. Its receipt
-   is one-use and remains distinct from `DELETE LOCAL DATA` confirmation.
-3. Request explicit owner approval before composing a recovery IPC/UI, real Google
-   adapter, credentials, browser authorization,
-   startup/IPC/UI activation, or live account.
-4. Keep real Gmail ingestion disabled until authorization activation is separately
+2. Treat the local recovery UI as complete at its current boundary. Do not add
+   automatic startup repair; failed execution must continue to require fresh review.
+3. Review the next safe lifecycle milestone: automatic 90-day retention scheduling
+   with bounded background ownership and user-visible maintenance status. Keep it
+   credential-free and off the renderer/main event loops.
+4. Request explicit owner approval before composing a real Google adapter,
+   credentials, browser authorization, connection activation, or live account.
+5. Keep real Gmail ingestion disabled until authorization activation is separately
    approved and the remaining lifecycle activation
    and consent gates pass.
 
 Do not solve encrypted search casually. Any index must avoid becoming a second
 plaintext mailbox. Record the selected search tradeoff in `docs/DECISIONS.md`.
 
-Milestone change report: schema v8, one dedicated confirmation producer, and one
-SQLite repository now supply the existing `AccountConnectionRecoveryService`
-verifier contract. The receipt is atomically consumed before mutation; failure or
-interruption requires fresh confirmation, preventing replay against newly created
-state without adding a second lifecycle journal. Consistency still reuses the
-existing coordinator and full deletion remains unchanged. There are no new
-dependencies, compatibility paths, production composition paths, external actions,
-real secrets, mailbox mutations, or intentional duplicate implementations.
+Milestone change report: the existing schema-v8 producer and discard policy are
+now composed through one command service, two fixed shared/preload/IPC contracts,
+same-window authorization, and one extracted Settings panel. Preparation takes an
+opaque account ID while main derives the orphan type. The receipt is consumed before
+mutation and any failed attempt requires fresh review. Full deletion remains
+unchanged. There are no new dependencies, schema migrations, compatibility paths,
+provider adapters, external actions, real secrets, mailbox mutations, or intentional
+duplicate implementations. The existing consistency rule was extracted as one pure
+shared application function so connection creation and recovery composition use the
+same source of truth.
 
 ## How to resume
 
@@ -216,8 +227,11 @@ real secrets, mailbox mutations, or intentional duplicate implementations.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 34 test files, 229 tests, strict typecheck, structure
+- Current verified baseline: 36 test files, 245 tests, strict typecheck, structure
   checks, and production Electron build passing.
+- Desktop visual/AX check: Settings exposes the local-only recovery panel with
+  sample-account labels and account-specific accessible controls; the normal Work
+  fixture returns the expected no-recovery-needed state without mutation.
 
 Native verification migrated the development database to schema v3 with 21
 encrypted records, zero legacy account rows, a `ready` cache state, an

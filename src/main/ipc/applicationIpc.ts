@@ -2,6 +2,10 @@ import { BrowserWindow, ipcMain, type IpcMainInvokeEvent } from 'electron'
 import {
   IPC_CHANNELS,
   POSITA_PROTOCOL_VERSION,
+  type AccountConnectionRecoveryErrorCodeV1,
+  type AccountConnectionRecoveryResponseV1,
+  type ExecuteAccountConnectionRecoveryRequestV1,
+  type ExecuteAccountConnectionRecoveryResponseV1,
   type ExecuteLocalDataDeletionRequestV1,
   type ExecuteLocalDataDeletionResponseV1,
   type LoadApplicationStateRequestV1,
@@ -9,17 +13,23 @@ import {
   type LocalDataDeletionErrorCodeV1,
   type LocalDataDeletionResultV1,
   type PrepareLocalDataDeletionRequestV1,
-  type PrepareLocalDataDeletionResponseV1
+  type PrepareLocalDataDeletionResponseV1,
+  type PrepareAccountConnectionRecoveryRequestV1,
+  type PrepareAccountConnectionRecoveryResponseV1
 } from '../../shared/contracts'
 import {
   isExecuteLocalDataDeletionRequest,
   isExecuteLocalDataDeletionResponse,
+  isExecuteAccountConnectionRecoveryRequest,
+  isExecuteAccountConnectionRecoveryResponse,
   isLoadApplicationStateRequest,
   isLoadApplicationStateResponse,
-  isPrepareLocalDataDeletionResponse
+  isPrepareLocalDataDeletionResponse,
+  isPrepareAccountConnectionRecoveryResponse
 } from '../../shared/validation'
 import type { ApplicationStateService } from '../application/applicationStateService'
 import type { LocalDataDeletionCommandService } from '../application/localDataDeletionCommand'
+import type { AccountConnectionRecoveryCommandService } from '../application/accountConnectionRecoveryCommand'
 
 type TrustPredicate = (event: IpcMainInvokeEvent) => boolean
 
@@ -49,7 +59,10 @@ export class LocalDataDeletionIpcAuthorization {
     })
   }
 
-  authorize(event: IpcMainInvokeEvent, request: ExecuteLocalDataDeletionRequestV1): boolean {
+  authorize(event: IpcMainInvokeEvent, request: {
+    confirmationId: string
+    operationId: string
+  }): boolean {
     this.prune()
     const challenge = this.challenges.get(request.confirmationId)
     if (!challenge || challenge.senderId !== event.sender.id ||
@@ -179,6 +192,71 @@ export const createExecuteLocalDataDeletionHandler = (
   return response
 }
 
+const recoveryErrorResponse = (
+  code: AccountConnectionRecoveryErrorCodeV1,
+  message: string
+): AccountConnectionRecoveryResponseV1<never> => ({
+  ok: false,
+  error: {
+    version: POSITA_PROTOCOL_VERSION,
+    code,
+    message,
+    retryable: false
+  }
+})
+
+export const createPrepareAccountConnectionRecoveryHandler = (
+  service: Pick<AccountConnectionRecoveryCommandService, 'prepare'>,
+  isTrusted: TrustPredicate,
+  authorization: LocalDataDeletionIpcAuthorization
+) => async (
+  event: IpcMainInvokeEvent,
+  request: unknown
+): Promise<PrepareAccountConnectionRecoveryResponseV1> => {
+  if (!isTrusted(event)) {
+    return recoveryErrorResponse(
+      'UNTRUSTED_SENDER',
+      'This window is not allowed to prepare local connection recovery.'
+    )
+  }
+  const response = await service.prepare(request)
+  if (!isPrepareAccountConnectionRecoveryResponse(response)) {
+    return recoveryErrorResponse('PROTOCOL_ERROR', 'Posita returned an invalid recovery response.')
+  }
+  if (response.ok) authorization.record(event, response.value)
+  return response
+}
+
+export const createExecuteAccountConnectionRecoveryHandler = (
+  service: Pick<AccountConnectionRecoveryCommandService, 'execute'>,
+  isTrusted: TrustPredicate,
+  authorization: LocalDataDeletionIpcAuthorization
+) => async (
+  event: IpcMainInvokeEvent,
+  request: unknown
+): Promise<ExecuteAccountConnectionRecoveryResponseV1> => {
+  if (!isTrusted(event)) {
+    return recoveryErrorResponse(
+      'UNTRUSTED_SENDER',
+      'This window is not allowed to recover local connection data.'
+    )
+  }
+  if (!isExecuteAccountConnectionRecoveryRequest(request)) {
+    return recoveryErrorResponse('INVALID_REQUEST', 'The local connection recovery request was invalid.')
+  }
+  if (!authorization.authorize(event, request)) {
+    return recoveryErrorResponse(
+      'CONFIRMATION_NOT_FOUND',
+      'The recovery confirmation is not available to this window.'
+    )
+  }
+  authorization.release(request.confirmationId)
+  const response = await service.execute(request)
+  return isExecuteAccountConnectionRecoveryResponse(response)
+    ? response
+    : recoveryErrorResponse('PROTOCOL_ERROR', 'Posita returned an invalid recovery response.')
+}
+
 export interface ApplicationIpcRegistration {
   allowWindow(window: BrowserWindow): void
   dispose(): void
@@ -187,6 +265,7 @@ export interface ApplicationIpcRegistration {
 export interface ApplicationIpcServices {
   applicationState: ApplicationStateService
   localDataDeletion: LocalDataDeletionCommandService
+  accountConnectionRecovery: AccountConnectionRecoveryCommandService
 }
 
 export const registerApplicationIpc = (services: ApplicationIpcServices): ApplicationIpcRegistration => {
@@ -207,6 +286,17 @@ export const registerApplicationIpc = (services: ApplicationIpcServices): Applic
     isTrusted,
     deletionAuthorization
   )
+  const recoveryAuthorization = new LocalDataDeletionIpcAuthorization()
+  const prepareRecovery = createPrepareAccountConnectionRecoveryHandler(
+    services.accountConnectionRecovery,
+    isTrusted,
+    recoveryAuthorization
+  )
+  const executeRecovery = createExecuteAccountConnectionRecoveryHandler(
+    services.accountConnectionRecovery,
+    isTrusted,
+    recoveryAuthorization
+  )
   ipcMain.handle(
     IPC_CHANNELS.loadApplicationState,
     (event, request: LoadApplicationStateRequestV1) => handler(event, request)
@@ -219,6 +309,16 @@ export const registerApplicationIpc = (services: ApplicationIpcServices): Applic
     IPC_CHANNELS.executeLocalDataDeletion,
     (event, request: ExecuteLocalDataDeletionRequestV1) => executeDeletion(event, request)
   )
+  ipcMain.handle(
+    IPC_CHANNELS.prepareAccountConnectionRecovery,
+    (event, request: PrepareAccountConnectionRecoveryRequestV1) =>
+      prepareRecovery(event, request)
+  )
+  ipcMain.handle(
+    IPC_CHANNELS.executeAccountConnectionRecovery,
+    (event, request: ExecuteAccountConnectionRecoveryRequestV1) =>
+      executeRecovery(event, request)
+  )
 
   return {
     allowWindow(window) {
@@ -227,14 +327,18 @@ export const registerApplicationIpc = (services: ApplicationIpcServices): Applic
       window.once('closed', () => {
         trustedWebContents.delete(id)
         deletionAuthorization.revokeSender(id)
+        recoveryAuthorization.revokeSender(id)
       })
     },
     dispose() {
       ipcMain.removeHandler(IPC_CHANNELS.loadApplicationState)
       ipcMain.removeHandler(IPC_CHANNELS.prepareLocalDataDeletion)
       ipcMain.removeHandler(IPC_CHANNELS.executeLocalDataDeletion)
+      ipcMain.removeHandler(IPC_CHANNELS.prepareAccountConnectionRecovery)
+      ipcMain.removeHandler(IPC_CHANNELS.executeAccountConnectionRecovery)
       trustedWebContents.clear()
       deletionAuthorization.clear()
+      recoveryAuthorization.clear()
     }
   }
 }

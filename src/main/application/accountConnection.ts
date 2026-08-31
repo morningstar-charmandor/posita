@@ -54,6 +54,10 @@ export interface AccountConnectionConsistencyV1 {
   status: AccountConnectionConsistencyStatus
 }
 
+export interface AccountConnectionConsistencyInspector {
+  inspect(accountId: string): Promise<AccountConnectionConsistencyV1>
+}
+
 export const isAccountConnectionConsistencyV1 = (
   value: unknown
 ): value is AccountConnectionConsistencyV1 => {
@@ -64,6 +68,37 @@ export const isAccountConnectionConsistencyV1 = (
     result.version === 1 && isAccountId(result.accountId) &&
     (result.status === 'absent' || result.status === 'connected' ||
       result.status === 'credential-only' || result.status === 'provider-state-only')
+}
+
+export const inspectAccountConnectionConsistency = async (
+  accountId: string,
+  vault: SecretVault,
+  accountState: AccountStateRepository
+): Promise<AccountConnectionConsistencyV1> => {
+  if (!isAccountId(accountId)) {
+    throw new AccountConnectionError(
+      'INVALID_ACCOUNT_CONNECTION_REQUEST',
+      'The account connection request is invalid.',
+      false
+    )
+  }
+  let hasProviderState: boolean
+  let hasCredential: boolean
+  try {
+    hasProviderState = accountState.hasProviderAccount(accountId)
+    hasCredential = await vault.has(googleRefreshTokenName(accountId))
+  } catch (error) {
+    throw new AccountConnectionError(
+      'ACCOUNT_CONNECTION_RECOVERY_REQUIRED',
+      'Existing account connection state could not be verified.',
+      false,
+      { cause: error }
+    )
+  }
+  const status: AccountConnectionConsistencyStatus = hasProviderState
+    ? (hasCredential ? 'connected' : 'provider-state-only')
+    : (hasCredential ? 'credential-only' : 'absent')
+  return { version: 1, accountId, status }
 }
 
 /**
@@ -200,30 +235,7 @@ export class AccountConnectionService {
   }
 
   async inspect(accountId: string): Promise<AccountConnectionConsistencyV1> {
-    if (!isAccountId(accountId)) {
-      throw new AccountConnectionError(
-        'INVALID_ACCOUNT_CONNECTION_REQUEST',
-        'The account connection request is invalid.',
-        false
-      )
-    }
-    let hasProviderState: boolean
-    let hasCredential: boolean
-    try {
-      hasProviderState = this.accountState.hasProviderAccount(accountId)
-      hasCredential = await this.vault.has(googleRefreshTokenName(accountId))
-    } catch (error) {
-      throw new AccountConnectionError(
-        'ACCOUNT_CONNECTION_RECOVERY_REQUIRED',
-        'Existing account connection state could not be verified.',
-        false,
-        { cause: error }
-      )
-    }
-    const status: AccountConnectionConsistencyStatus = hasProviderState
-      ? (hasCredential ? 'connected' : 'provider-state-only')
-      : (hasCredential ? 'credential-only' : 'absent')
-    return { version: 1, accountId, status }
+    return inspectAccountConnectionConsistency(accountId, this.vault, this.accountState)
   }
 
   private async assertAccountIsAvailable(accountId: string): Promise<void> {

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { ACCOUNT_CONNECTION_RECOVERY_CONSEQUENCES } from '../../shared/contracts'
 import type { AccountAuthorizationAdapter } from './accountAuthorization'
 import { AccountConnectionService } from './accountConnection'
 import type { AccountStateRepository, ProviderAccountRecordV1, ProviderSyncStateV1 } from './accountState'
@@ -92,8 +93,7 @@ const createHarness = () => {
 const prepareRequest = {
   version: 1 as const,
   action: 'discard-orphaned-local-connection-state' as const,
-  accountId,
-  expectedStatus: 'credential-only' as const
+  accountId
 }
 
 describe('AccountConnectionRecoveryConfirmationService', () => {
@@ -105,6 +105,7 @@ describe('AccountConnectionRecoveryConfirmationService', () => {
       confirmationId: 'confirmation-recovery-1',
       operationId: 'operation-recovery-1',
       requiredText: ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_TEXT,
+      consequences: ACCOUNT_CONNECTION_RECOVERY_CONSEQUENCES,
       accountId,
       expectedStatus: 'credential-only'
     })
@@ -138,7 +139,7 @@ describe('AccountConnectionRecoveryConfirmationService', () => {
     }))
   })
 
-  it('refuses absent, connected, and mismatched orphan states before creating a challenge', async () => {
+  it('refuses absent and connected state while deriving either orphan status in main', async () => {
     const absent = createHarness()
     await expect(absent.service.prepare(prepareRequest)).rejects.toMatchObject({
       code: 'ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_STATE_CHANGED'
@@ -151,8 +152,9 @@ describe('AccountConnectionRecoveryConfirmationService', () => {
     })
     const otherSide = createHarness()
     otherSide.state.provider = true
-    await expect(otherSide.service.prepare(prepareRequest)).rejects.toMatchObject({
-      code: 'ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_STATE_CHANGED'
+    await expect(otherSide.service.prepare(prepareRequest)).resolves.toMatchObject({
+      accountId,
+      expectedStatus: 'provider-state-only'
     })
   })
 

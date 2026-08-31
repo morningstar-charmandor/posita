@@ -1,7 +1,7 @@
 # Posita Portfolio Case Study
 
 Status: evolving working draft  
-Last reviewed: 2026-08-28
+Last reviewed: 2026-08-31
 
 This document turns verified project history into a portfolio-ready narrative.
 It should remain honest about what is implemented, simulated, measured, and
@@ -23,7 +23,9 @@ full deletion now has a Settings & privacy flow, keyless startup recovery, and a
 operation-bound typed-confirmation gate. A separate read-only application-state
 boundary renders lifecycle and deleted outcomes. A provider-independent
 authorization-session contract and deterministic fake exist only in the trusted
-backend; OAuth activation and credential persistence remain unavailable.
+backend. A same-window Settings flow can now inspect and discard one-sided local
+connection state for sample accounts, while OAuth activation and real credential
+persistence remain unavailable.
 
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
 
@@ -186,8 +188,11 @@ Posita classifies an account's local pair as absent, connected, credential-only,
 or provider-state-only. The vault answers only whether a protected record exists,
 without decrypting or rotating it. The approved recovery policy then requires a
 receipt bound to the exact account and orphan type, discards only that local side,
-and requires reconnect. It remains application-only until a durable confirmation
-producer and product surface are separately approved.
+and requires reconnect. That policy is now composed through two narrow
+prepare/execute commands and a same-window Settings flow. Main derives the orphan
+type rather than trusting the renderer, confirmation is single-use, and the UI
+states clearly that this local cleanup does not contact Gmail or change provider
+mail. The deterministic sample accounts normally have no inconsistency to repair.
 
 ### Choosing bounded context
 
@@ -237,8 +242,10 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - a confirmed discard-only recovery policy that refuses complete/absent/stale
   state, removes one orphaned local side, verifies absence, and requires reconnect,
 - a separate five-minute typed recovery confirmation with durable opaque
-  account/status binding, atomic one-use consumption, replay refusal, and no
-  production IPC or UI composition,
+  account/status binding, atomic one-use consumption, replay refusal, and a
+  same-window prepare/execute Settings surface,
+- main-owned local connection diagnosis that refuses absent or complete pairs,
+  never accepts a renderer-selected deletion side, and never contacts a provider,
 - explicit sample-mode labels across account, brief, search, and draft surfaces,
 - keyless pre-bootstrap recovery, shutdown cancellation between phases, and a
   durable deleted mode that remains empty across repeated restarts,
@@ -249,7 +256,9 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - future sync ownership and account-isolation contracts without premature
   provider implementation,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 34 automated test files containing 229 passing tests,
+- 36 automated test files containing 245 passing tests,
+- a desktop visual and accessibility-tree check of the local-only Settings entry,
+  sample-account controls, and normal no-recovery-needed outcome,
 - passing strict TypeScript, structural security checks, and production builds.
 
 These are engineering outcomes, not evidence of customer adoption or AI quality.
@@ -257,12 +266,12 @@ No real mailbox, OAuth credential, or model provider has been used.
 
 ## What comes next
 
-The discard-only recovery policy now has a dedicated durable, short-lived
-account/status-bound confirmation producer and schema without weakening the
-installation-wide deletion confirmation. The next Gate 2D decision is the narrow
-prepare/execute IPC contract and accessible recovery surface. Real Google OAuth,
-browser activation, credentials, recovery IPC/UI enablement, and sync remain
-blocked behind explicit owner approval and lifecycle gates.
+The discard-only local recovery flow is now complete for Gate 2D. The next safe
+milestone is to review how deterministic 90-day retention maintenance should be
+scheduled and surfaced without blocking startup or the desktop event loop. Real
+Google OAuth, browser activation, credentials, live account connection, and sync
+remain separate decisions blocked behind explicit owner approval and lifecycle
+gates.
 
 Later evidence should include measured sync reliability, duplicate prevention,
 citation correctness, draft usefulness, correction rate, and time to attention.

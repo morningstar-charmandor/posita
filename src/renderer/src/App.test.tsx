@@ -4,6 +4,8 @@ import React from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fixtures } from '@shared/fixtures'
 import {
+  ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_TEXT,
+  ACCOUNT_CONNECTION_RECOVERY_CONSEQUENCES,
   DELETE_LOCAL_DATA_CONFIRMATION_TEXT,
   GOOGLE_CONNECT_CONSENT,
   LOCAL_DATA_DELETION_CONSEQUENCES
@@ -288,5 +290,102 @@ describe('Posita vertical slice', () => {
     expect(alert).toHaveTextContent('Posita could not prepare deletion safely.')
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
     await waitFor(() => expect(prepare).toHaveBeenCalledTimes(2))
+  })
+
+  it('recovers only confirmed incomplete local connection data without implying Gmail access', async () => {
+    const prepareRecovery = vi.fn().mockResolvedValue({
+      ok: true,
+      value: {
+        version: 1,
+        confirmationId: 'confirmation-recovery-1',
+        operationId: 'operation-recovery-1',
+        action: 'discard-orphaned-local-connection-state',
+        accountId: 'work',
+        expectedStatus: 'credential-only',
+        requiredText: ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_TEXT,
+        expiresAt: '2026-08-30T12:05:00.000Z',
+        consequences: ACCOUNT_CONNECTION_RECOVERY_CONSEQUENCES
+      }
+    })
+    const executeRecovery = vi.fn().mockResolvedValue({
+      ok: true,
+      value: {
+        version: 1,
+        operationId: 'operation-recovery-1',
+        accountId: 'work',
+        status: 'absent',
+        removed: 'credential',
+        reconnectRequired: true
+      }
+    })
+    render(<App
+      dataSource={dataSource}
+      recoveryDataSource={{ prepare: prepareRecovery, execute: executeRecovery }}
+    />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Settings & privacy' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Review local connection recovery…' }))
+
+    const dialog = screen.getByRole('dialog', { name: 'Recover local connection' })
+    expect(dialog).toHaveTextContent('Gmail is not contacted')
+    expect(dialog).toHaveTextContent('This sample build has no live Gmail account')
+    fireEvent.click(screen.getByRole('button', { name: 'Check Work local connection state' }))
+
+    const input = await screen.findByLabelText(/Type DISCARD LOCAL CONNECTION to continue/i)
+    const discard = screen.getByRole('button', {
+      name: 'Discard incomplete local connection'
+    })
+    expect(discard).toBeDisabled()
+    expect(screen.getByText('Does not contact Google or delete or change mail in Gmail.'))
+      .toBeInTheDocument()
+    fireEvent.change(input, {
+      target: { value: ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_TEXT }
+    })
+    expect(discard).toBeEnabled()
+    fireEvent.click(discard)
+
+    expect(await screen.findByText('Local connection data was recovered')).toBeInTheDocument()
+    expect(screen.getByText('A fresh Gmail connection will be required later. Gmail was not changed.'))
+      .toBeInTheDocument()
+    expect(prepareRecovery).toHaveBeenCalledExactlyOnceWith({
+      version: 1,
+      action: 'discard-orphaned-local-connection-state',
+      accountId: 'work'
+    })
+    expect(executeRecovery).toHaveBeenCalledExactlyOnceWith({
+      version: 1,
+      confirmationId: 'confirmation-recovery-1',
+      operationId: 'operation-recovery-1',
+      action: 'discard-orphaned-local-connection-state',
+      accountId: 'work',
+      expectedStatus: 'credential-only',
+      enteredText: ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_TEXT
+    })
+  })
+
+  it('reports when sample account connection recovery is not needed without changing data', async () => {
+    const prepareRecovery = vi.fn().mockResolvedValue({
+      ok: false,
+      error: {
+        version: 1,
+        code: 'RECOVERY_NOT_NEEDED',
+        message: 'No incomplete local connection data was found for this account.',
+        retryable: false
+      }
+    })
+    const executeRecovery = vi.fn()
+    render(<App
+      dataSource={dataSource}
+      recoveryDataSource={{ prepare: prepareRecovery, execute: executeRecovery }}
+    />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Settings & privacy' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Review local connection recovery…' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Check Work local connection state' }))
+
+    const status = await screen.findByRole('status')
+    expect(status).toHaveTextContent('No recovery is needed for Work')
+    expect(status).toHaveTextContent('Gmail remains unconnected in this sample build')
+    expect(executeRecovery).not.toHaveBeenCalled()
   })
 })

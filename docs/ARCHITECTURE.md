@@ -310,9 +310,17 @@ rechecks before consumption, atomically consumes the exact unused receipt, reche
 again, deletes only the orphaned credential or the account's encrypted provider/
 sync state, and verifies `absent` before reporting success. Consumption is durable
 and occurs before mutation, preventing replay against newly recreated state; a
-failed or interrupted deletion requires fresh confirmation. The dedicated schema-v8
-producer and repository are implemented but uncomposed. The service does not revoke,
-reconnect, reconstruct, or contact a provider, so the running app cannot invoke it.
+failed or interrupted deletion requires fresh confirmation.
+
+The approved product composition adds one narrow command service and separate
+prepare/execute IPC methods. Preparation accepts only a known opaque Posita account
+ID; main independently derives the current orphan type and returns a five-minute
+challenge. Execution is accepted only from the same trusted main frame and window,
+confirms the exact phrase, persists the receipt, and then invokes the existing
+discard policy. Complete and absent pairs are refused before a challenge exists.
+The Settings surface labels every current account as sample data and covers checking,
+not-needed, confirmation, progress, success, and safe failure states. The service
+does not revoke, reconnect, reconstruct, open a browser, or contact a provider.
 
 ## Gmail synchronization
 

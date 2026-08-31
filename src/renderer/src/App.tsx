@@ -6,6 +6,10 @@ import {
   type ApplicationStateDataSource
 } from './application/mailDataSource'
 import {
+  desktopAccountConnectionRecoveryDataSource,
+  type AccountConnectionRecoveryDataSource
+} from './application/accountConnectionRecoveryDataSource'
+import {
   desktopLocalDataDeletionDataSource,
   type LocalDataDeletionDataSource
 } from './application/localDataDeletionDataSource'
@@ -20,11 +24,13 @@ type LoadState =
 export interface AppProps {
   dataSource?: ApplicationStateDataSource
   deletionDataSource?: LocalDataDeletionDataSource
+  recoveryDataSource?: AccountConnectionRecoveryDataSource
 }
 
 export function App({
   dataSource = desktopApplicationStateDataSource,
-  deletionDataSource = desktopLocalDataDeletionDataSource
+  deletionDataSource = desktopLocalDataDeletionDataSource,
+  recoveryDataSource = desktopAccountConnectionRecoveryDataSource
 }: AppProps): React.JSX.Element {
   const [attempt, setAttempt] = useState(0)
   const [state, setState] = useState<LoadState>({ status: 'loading' })
@@ -111,6 +117,7 @@ export function App({
         dataset={state.application.snapshot.dataset}
         connectConsent={state.application.connectConsent}
         deletionDataSource={deletionDataSource}
+        recoveryDataSource={recoveryDataSource}
         onLocalDataDeleted={() => setState({
           status: 'loaded',
           application: { version: POSITA_PROTOCOL_VERSION, mode: 'local-data-deleted' }

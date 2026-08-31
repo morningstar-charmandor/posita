@@ -2,6 +2,10 @@ import type {
   AppErrorCodeV1,
   AppErrorV1,
   AppSnapshotV1,
+  AccountConnectionRecoveryChallengeV1,
+  AccountConnectionRecoveryErrorCodeV1,
+  AccountConnectionRecoveryErrorV1,
+  AccountConnectionRecoveryResultV1,
   ApplicationStateV1,
   GoogleConnectConsentV1,
   LifecycleOperationStatusV1,
@@ -9,6 +13,8 @@ import type {
   ExecuteLocalDataDeletionRequestV1,
   ExecuteLocalDataDeletionResponseV1,
   ExecuteLocalDataDeletionResultV1,
+  ExecuteAccountConnectionRecoveryRequestV1,
+  ExecuteAccountConnectionRecoveryResponseV1,
   LocalDataDeletionChallengeV1,
   LocalDataDeletionErrorCodeV1,
   LocalDataDeletionErrorV1,
@@ -16,9 +22,13 @@ import type {
   LoadApplicationStateResponseV1,
   LoadSnapshotResponseV1,
   PrepareLocalDataDeletionRequestV1,
-  PrepareLocalDataDeletionResponseV1
+  PrepareLocalDataDeletionResponseV1,
+  PrepareAccountConnectionRecoveryRequestV1,
+  PrepareAccountConnectionRecoveryResponseV1
 } from './contracts'
 import {
+  ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_TEXT,
+  ACCOUNT_CONNECTION_RECOVERY_CONSEQUENCES,
   DELETE_LOCAL_DATA_CONFIRMATION_TEXT,
   GOOGLE_CONNECT_CONSENT,
   LOCAL_DATA_DELETION_CONSEQUENCES,
@@ -394,4 +404,99 @@ export const isExecuteLocalDataDeletionResponse = (
   return value.ok
     ? hasOnlyKeys(value, ['ok', 'value']) && isExecuteLocalDataDeletionResult(value.value)
     : hasOnlyKeys(value, ['ok', 'error']) && isLocalDataDeletionError(value.error)
+}
+
+const accountIdPattern = /^[A-Za-z0-9_-]{1,128}$/
+const isAccountId = (value: unknown): value is string =>
+  isString(value) && accountIdPattern.test(value)
+const isRecoverableAccountConnectionStatus = (
+  value: unknown
+): value is AccountConnectionRecoveryChallengeV1['expectedStatus'] =>
+  isOneOf(value, ['credential-only', 'provider-state-only'])
+
+export const isPrepareAccountConnectionRecoveryRequest = (
+  value: unknown
+): value is PrepareAccountConnectionRecoveryRequestV1 =>
+  isRecord(value) && hasOnlyKeys(value, ['version', 'action', 'accountId']) &&
+  value.version === POSITA_PROTOCOL_VERSION &&
+  value.action === 'discard-orphaned-local-connection-state' &&
+  isAccountId(value.accountId)
+
+export const isExecuteAccountConnectionRecoveryRequest = (
+  value: unknown
+): value is ExecuteAccountConnectionRecoveryRequestV1 =>
+  isRecord(value) && hasOnlyKeys(value, [
+    'version', 'confirmationId', 'operationId', 'action', 'accountId',
+    'expectedStatus', 'enteredText'
+  ]) && value.version === POSITA_PROTOCOL_VERSION &&
+  isOperationId(value.confirmationId) && isOperationId(value.operationId) &&
+  value.confirmationId !== value.operationId &&
+  value.action === 'discard-orphaned-local-connection-state' &&
+  isAccountId(value.accountId) &&
+  isRecoverableAccountConnectionStatus(value.expectedStatus) &&
+  isString(value.enteredText) && value.enteredText.length <= 64
+
+const recoveryErrorCodes: readonly AccountConnectionRecoveryErrorCodeV1[] = [
+  'INVALID_REQUEST', 'UNTRUSTED_SENDER', 'RECOVERY_UNAVAILABLE',
+  'RECOVERY_NOT_NEEDED', 'RECOVERY_REFUSED', 'CONNECTION_STATE_CHANGED',
+  'CONFIRMATION_NOT_FOUND', 'CONFIRMATION_EXPIRED', 'CONFIRMATION_TEXT_MISMATCH',
+  'CONFIRMATION_LIMIT_REACHED', 'STORAGE_UNAVAILABLE', 'RECOVERY_FAILED',
+  'PROTOCOL_ERROR'
+]
+
+export const isAccountConnectionRecoveryError = (
+  value: unknown
+): value is AccountConnectionRecoveryErrorV1 =>
+  isRecord(value) && hasOnlyKeys(value, ['version', 'code', 'message', 'retryable']) &&
+  value.version === POSITA_PROTOCOL_VERSION &&
+  isOneOf(value.code, recoveryErrorCodes) &&
+  isBoundedString(value.message, 240) && isBoolean(value.retryable)
+
+const isAccountConnectionRecoveryChallenge = (
+  value: unknown
+): value is AccountConnectionRecoveryChallengeV1 =>
+  isRecord(value) && hasOnlyKeys(value, [
+    'version', 'confirmationId', 'operationId', 'action', 'accountId',
+    'expectedStatus', 'requiredText', 'expiresAt', 'consequences'
+  ]) && value.version === POSITA_PROTOCOL_VERSION &&
+  isOperationId(value.confirmationId) && isOperationId(value.operationId) &&
+  value.confirmationId !== value.operationId &&
+  value.action === 'discard-orphaned-local-connection-state' &&
+  isAccountId(value.accountId) &&
+  isRecoverableAccountConnectionStatus(value.expectedStatus) &&
+  value.requiredText === ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_TEXT &&
+  isAbsoluteTimestamp(value.expiresAt) && Array.isArray(value.consequences) &&
+  value.consequences.length === ACCOUNT_CONNECTION_RECOVERY_CONSEQUENCES.length &&
+  value.consequences.every((consequence, index) =>
+    consequence === ACCOUNT_CONNECTION_RECOVERY_CONSEQUENCES[index])
+
+const isAccountConnectionRecoveryResult = (
+  value: unknown
+): value is AccountConnectionRecoveryResultV1 =>
+  isRecord(value) && hasOnlyKeys(value, [
+    'version', 'operationId', 'accountId', 'status', 'removed', 'reconnectRequired'
+  ]) && value.version === POSITA_PROTOCOL_VERSION &&
+  isOperationId(value.operationId) && isAccountId(value.accountId) &&
+  value.status === 'absent' && isOneOf(value.removed, ['credential', 'provider-state']) &&
+  value.reconnectRequired === true
+
+export const isPrepareAccountConnectionRecoveryResponse = (
+  value: unknown
+): value is PrepareAccountConnectionRecoveryResponseV1 => {
+  if (!isRecord(value) || typeof value.ok !== 'boolean') return false
+  return value.ok
+    ? hasOnlyKeys(value, ['ok', 'value']) &&
+      isAccountConnectionRecoveryChallenge(value.value)
+    : hasOnlyKeys(value, ['ok', 'error']) &&
+      isAccountConnectionRecoveryError(value.error)
+}
+
+export const isExecuteAccountConnectionRecoveryResponse = (
+  value: unknown
+): value is ExecuteAccountConnectionRecoveryResponseV1 => {
+  if (!isRecord(value) || typeof value.ok !== 'boolean') return false
+  return value.ok
+    ? hasOnlyKeys(value, ['ok', 'value']) && isAccountConnectionRecoveryResult(value.value)
+    : hasOnlyKeys(value, ['ok', 'error']) &&
+      isAccountConnectionRecoveryError(value.error)
 }

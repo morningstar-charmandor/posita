@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-  AlertTriangle, Database, LoaderCircle, MailPlus,
+  AlertTriangle, Database, KeyRound, LoaderCircle, MailPlus,
   ShieldCheck, Trash2, X
 } from 'lucide-react'
 import {
@@ -10,12 +10,18 @@ import {
   type GoogleConnectConsentV1,
   type LocalDataDeletionChallengeV1
 } from '@shared/contracts'
+import type { Account } from '@shared/domain'
+import type {
+  AccountConnectionRecoveryDataSource
+} from '../../application/accountConnectionRecoveryDataSource'
 import type { LocalDataDeletionDataSource } from '../../application/localDataDeletionDataSource'
+import { AccountConnectionRecoveryPanel } from './AccountConnectionRecoveryPanel'
 import { GmailConnectConsentPanel } from './GmailConnectConsentPanel'
 
 type DialogState =
   | { kind: 'overview' }
   | { kind: 'connect-consent' }
+  | { kind: 'connection-recovery' }
   | { kind: 'preparing' }
   | { kind: 'challenge'; challenge: LocalDataDeletionChallengeV1; enteredText: string }
   | { kind: 'deleting'; request: ExecuteLocalDataDeletionRequestV1 }
@@ -29,18 +35,23 @@ type DialogState =
 
 export interface LocalDataSettingsDialogProps {
   connectConsent: GoogleConnectConsentV1
+  accounts: Account[]
   dataSource: LocalDataDeletionDataSource
+  recoveryDataSource: AccountConnectionRecoveryDataSource
   onClose(): void
   onDeleted(): void
 }
 
 export function LocalDataSettingsDialog({
   connectConsent,
+  accounts,
   dataSource,
+  recoveryDataSource,
   onClose,
   onDeleted
 }: LocalDataSettingsDialogProps): React.JSX.Element {
   const [state, setState] = useState<DialogState>({ kind: 'overview' })
+  const [recoveryBusy, setRecoveryBusy] = useState(false)
   const mounted = useRef(true)
   useEffect(() => {
     mounted.current = true
@@ -100,10 +111,13 @@ export function LocalDataSettingsDialog({
     }
   }
 
-  const canClose = state.kind !== 'deleting'
+  const updateRecoveryBusy = useCallback((busy: boolean) => setRecoveryBusy(busy), [])
+  const canClose = state.kind !== 'deleting' && !recoveryBusy
   const title = state.kind === 'overview'
     ? 'Settings & privacy'
-    : state.kind === 'connect-consent' ? 'Connect Gmail' : 'Delete local data'
+    : state.kind === 'connect-consent'
+      ? 'Connect Gmail'
+      : state.kind === 'connection-recovery' ? 'Recover local connection' : 'Delete local data'
 
   return (
     <div
@@ -150,6 +164,19 @@ export function LocalDataSettingsDialog({
               >
                 Review Gmail connection…
               </button>
+              <div className="settings-summary">
+                <KeyRound size={19} />
+                <span>
+                  <strong>Local connection recovery</strong>
+                  <small>Check for incomplete local connection records without contacting Google</small>
+                </span>
+              </div>
+              <button
+                className="secondary-button settings-full-button"
+                onClick={() => setState({ kind: 'connection-recovery' })}
+              >
+                Review local connection recovery…
+              </button>
             </section>
             <section className="settings-section" aria-labelledby="local-data-title">
               <h2 id="local-data-title">Local data</h2>
@@ -173,6 +200,15 @@ export function LocalDataSettingsDialog({
           <GmailConnectConsentPanel
             consent={connectConsent}
             onBack={() => setState({ kind: 'overview' })}
+          />
+        )}
+
+        {state.kind === 'connection-recovery' && (
+          <AccountConnectionRecoveryPanel
+            accounts={accounts}
+            dataSource={recoveryDataSource}
+            onBack={() => setState({ kind: 'overview' })}
+            onBusyChange={updateRecoveryBusy}
           />
         )}
 

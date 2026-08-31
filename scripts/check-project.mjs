@@ -133,6 +133,16 @@ const accountConnectionRecoveryConfirmation = await readText(
 const accountConnectionRecoveryConfirmationRepository = await readText(
   'src/main/infrastructure/sqlite/sqliteAccountConnectionRecoveryConfirmationRepository.ts'
 )
+const accountConnectionRecoveryCommand = await readText(
+  'src/main/application/accountConnectionRecoveryCommand.ts'
+)
+const applicationIpc = await readText('src/main/ipc/applicationIpc.ts')
+const accountConnectionRecoveryClient = await readText(
+  'src/preload/accountConnectionRecoveryClient.ts'
+)
+const accountConnectionRecoveryPanel = await readText(
+  'src/renderer/src/features/settings/AccountConnectionRecoveryPanel.tsx'
+)
 const gmailConsentPanel = await readText(
   'src/renderer/src/features/settings/GmailConnectConsentPanel.tsx'
 )
@@ -149,13 +159,13 @@ if (!gmailConsentPanel.includes('Connect Gmail unavailable in this build') ||
 }
 if (!secretVaultContract.includes('has(name: SecretName): Promise<boolean>') ||
     !accountStateContract.includes('hasProviderAccount(accountId: string): boolean') ||
-    !accountConnectionService.includes('this.accountState.hasProviderAccount(accountId)') ||
-    !accountConnectionService.includes('this.vault.has(googleRefreshTokenName(accountId))') ||
+    !accountConnectionService.includes('accountState.hasProviderAccount(accountId)') ||
+    !accountConnectionService.includes('vault.has(googleRefreshTokenName(accountId))') ||
     !accountConnectionService.includes("| 'credential-only'") ||
     !accountConnectionService.includes("| 'provider-state-only'")) {
   fail('account connection consistency must remain presence-only and fail-closed')
 }
-if (!accountConnectionRecovery.includes("action: 'discard-orphaned-local-connection-state'") ||
+if (!sharedContracts.includes("action: 'discard-orphaned-local-connection-state'") ||
     !accountConnectionRecovery.includes('reconnectRequired: true') ||
     !accountConnectionRecovery.includes('AccountConnectionRecoveryConfirmationVerifier') ||
     !accountConnectionRecovery.includes("current === 'connected'") ||
@@ -163,9 +173,7 @@ if (!accountConnectionRecovery.includes("action: 'discard-orphaned-local-connect
   fail('account connection recovery must stay confirmed, discard-only, and fail-closed')
 }
 if (!accountConnectionRecovery.includes('this.confirmations.consume(recoveryRequest)') ||
-    !accountConnectionRecoveryConfirmation.includes(
-      "ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_TEXT = 'DISCARD LOCAL CONNECTION'"
-    ) ||
+    !sharedContracts.includes("'DISCARD LOCAL CONNECTION' as const") ||
     !accountConnectionRecoveryConfirmationRepository.includes('SET consumed_at = ?') ||
     !accountConnectionRecoveryConfirmationRepository.includes('consumed_at IS NULL')) {
   fail('account recovery confirmation must remain exact, one-use, and atomically consumed')
@@ -212,13 +220,20 @@ if (localDataBootstrap.includes('AccountConnectionService') ||
     mainIndex.includes('AccountConnectionService')) {
   fail('account connection must remain outside production composition before approval')
 }
-if (localDataBootstrap.includes('AccountConnectionRecoveryService') ||
-    mainIndex.includes('AccountConnectionRecoveryService') ||
-    preload.includes('recoverAccountConnection') ||
-    localDataBootstrap.includes('AccountConnectionRecoveryConfirmationService') ||
-    mainIndex.includes('AccountConnectionRecoveryConfirmationService') ||
-    preload.includes('prepareAccountConnectionRecovery')) {
-  fail('account connection recovery must remain outside startup and IPC before approval')
+if (!localDataBootstrap.includes('new AccountConnectionRecoveryService(') ||
+    !localDataBootstrap.includes('new AccountConnectionRecoveryConfirmationService(') ||
+    !localDataBootstrap.includes('new SqliteAccountConnectionRecoveryConfirmationRepository(') ||
+    !mainIndex.includes('runtime.accountConnectionRecoveryCommandService') ||
+    !preload.includes('prepareAccountConnectionRecovery') ||
+    !preload.includes('executeAccountConnectionRecovery') ||
+    !accountConnectionRecoveryClient.includes('isPrepareAccountConnectionRecoveryRequest') ||
+    !accountConnectionRecoveryClient.includes('isExecuteAccountConnectionRecoveryRequest') ||
+    !applicationIpc.includes('recoveryAuthorization.revokeSender(id)') ||
+    !accountConnectionRecoveryCommand.includes("consistency.status === 'connected'") ||
+    !accountConnectionRecoveryCommand.includes("consistency.status === 'absent'") ||
+    !accountConnectionRecoveryPanel.includes('Gmail is not contacted') ||
+    !accountConnectionRecoveryPanel.includes('This sample build has no live Gmail account')) {
+  fail('approved account recovery must remain local-only, confirmed, window-bound, and truthful')
 }
 
 const gitignore = await readText('.gitignore')

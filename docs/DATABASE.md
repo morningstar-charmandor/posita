@@ -140,7 +140,7 @@ text and any credential or provider identity are never persisted. Unique operati
 binding and exact record validation prevent rebinding. One conditional update binds
 every request field, the validity window, and `consumed_at IS NULL`, so exactly one
 recovery attempt can consume a receipt. Expired receipts are removed through a
-strict timestamp boundary; the uncomposed recovery service rechecks live consistency
+strict timestamp boundary; the recovery service rechecks live consistency
 on both sides of consumption before deleting exactly one orphaned local side.
 
 Retention replacements validate and encrypt the complete next dataset before
@@ -225,6 +225,22 @@ five-minute challenge. Execution is bound to the trusted window that received th
 challenge and persists the non-private receipt before creating deletion work. The
 entered phrase is never persisted. Neither method can target Gmail messages or any
 provider mailbox mutation.
+
+The approved local account-recovery capability is separate from full deletion:
+
+```text
+prepareAccountConnectionRecovery({ version: 1, action, opaque accountId })
+  -> Result<AccountConnectionRecoveryChallengeV1, AccountConnectionRecoveryErrorV1>
+
+executeAccountConnectionRecovery({ version: 1, opaque binding, exact enteredText })
+  -> Result<AccountConnectionRecoveryResultV1, AccountConnectionRecoveryErrorV1>
+```
+
+Main derives the one-sided status; the renderer cannot request credential deletion
+or encrypted-state deletion directly. Preparation and execution are bound to the
+same trusted window, and the authority is released after one attempt. The methods
+return no credential, provider identity, SQL detail, or path and perform no Google
+or remote mailbox action.
 
 Errors use stable codes and safe messages. Database paths, SQL, stack traces, and
 raw provider content never cross the bridge.

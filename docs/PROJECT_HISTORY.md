@@ -1035,6 +1035,61 @@ Limitations: no recovery startup composition, preload/IPC method, renderer UI,
 Google adapter, live account, browser, network call, or credential exists. The
 running application cannot invoke this destructive policy.
 
+## Gate 2D milestone — Confirmed local connection recovery interface
+
+Date: 2026-08-31
+Checkpoint: use the Git commit whose subject is `feat: activate local connection recovery`
+
+Goal: make the approved one-sided local recovery policy usable without activating
+Gmail, exposing secrets, or allowing the renderer to choose destructive behavior.
+
+Delivered:
+
+- one ready-mode command service that maps the existing consistency inspector,
+  schema-v8 confirmation producer, discard policy, vault, and encrypted account-
+  state repository into bounded safe results,
+- separate versioned prepare and execute contracts with runtime validation in
+  preload and main,
+- main-owned diagnosis of `credential-only` versus `provider-state-only`; the
+  renderer supplies only a known opaque Posita account ID,
+- same-main-frame and same-window challenge ownership, revoked when the window
+  closes and released after one execute attempt,
+- an extracted accessible Settings panel covering account selection, checking,
+  not-needed, typed confirmation, progress, success, and retry/review states,
+- explicit sample labels and repeated copy that Gmail is not connected, contacted,
+  deleted, or changed,
+- production composition coverage using a deterministic orphaned test credential,
+  plus shared-contract, command, IPC, preload, UI, failure-path, and structural tests,
+- ADR-029 and aligned agent, README, architecture, database, privacy, Gmail,
+  encrypted-cache, handoff, project-map, and portfolio documentation.
+
+Important decisions:
+
+- do not expose consistency as a generic renderer query or allow presentation code
+  to select which local store is deleted,
+- refuse absent and complete pairs before a challenge is created,
+- keep the exact phrase and entered text ephemeral while persisting only bounded
+  account/status/operation metadata,
+- release window authority after any execution result; a failed or interrupted
+  deletion requires fresh review and confirmation,
+- reuse the existing consistency rule through one exported application function
+  rather than compose the inactive authorization adapter or duplicate state logic,
+- add no dependency, schema migration, compatibility path, Google adapter, browser
+  action, external request, real account, personal data, or remote mailbox mutation.
+
+Evidence: 36 test files and 245 tests pass, including a file-backed bootstrap path
+that creates a deterministic orphaned credential, prepares and confirms recovery,
+removes only that credential, and verifies the pair is absent. Strict typecheck,
+renderer structure/security checks, and production Electron builds pass. These are
+engineering measurements, not external-user outcome metrics. A desktop visual and
+accessibility-tree check also verified the Settings entry, local-only warning,
+sample labels, account-specific controls, and normal no-recovery-needed result.
+
+Limitations: the running build contains sample accounts and normally reports that
+no recovery is needed. Gmail authorization, account connection, revocation, sync,
+AI providers, and remote mailbox actions remain unavailable. The interface does
+not automatically repair startup state or reconstruct missing connection data.
+
 ## How future entries should be written
 
 For each material milestone, record:

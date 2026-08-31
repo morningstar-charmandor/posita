@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { fixtures } from './fixtures'
 import {
+  ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_TEXT,
+  ACCOUNT_CONNECTION_RECOVERY_CONSEQUENCES,
   DELETE_LOCAL_DATA_CONFIRMATION_TEXT,
   GOOGLE_CONNECT_CONSENT,
   LOCAL_DATA_DELETION_CONSEQUENCES
 } from './contracts'
 import {
+  isExecuteAccountConnectionRecoveryRequest,
+  isExecuteAccountConnectionRecoveryResponse,
   isAppSnapshot,
   isExecuteLocalDataDeletionRequest,
   isExecuteLocalDataDeletionResponse,
@@ -15,7 +19,9 @@ import {
   isLoadSnapshotResponse,
   isMailDataset,
   isPrepareLocalDataDeletionRequest,
-  isPrepareLocalDataDeletionResponse
+  isPrepareLocalDataDeletionResponse,
+  isPrepareAccountConnectionRecoveryRequest,
+  isPrepareAccountConnectionRecoveryResponse
 } from './validation'
 
 describe('shared contract validation', () => {
@@ -185,5 +191,63 @@ describe('shared contract validation', () => {
         consequences: ['Deletes Gmail mail.', ...LOCAL_DATA_DELETION_CONSEQUENCES.slice(1)]
       }
     })).toBe(false)
+  })
+
+  it('validates exact account-bound recovery requests and safe responses', () => {
+    const prepare = {
+      version: 1,
+      action: 'discard-orphaned-local-connection-state',
+      accountId: 'account-work-1'
+    }
+    expect(isPrepareAccountConnectionRecoveryRequest(prepare)).toBe(true)
+    expect(isPrepareAccountConnectionRecoveryRequest({
+      ...prepare,
+      expectedStatus: 'credential-only'
+    })).toBe(false)
+
+    const execute = {
+      version: 1,
+      confirmationId: 'confirmation-recovery-1',
+      operationId: 'operation-recovery-1',
+      action: prepare.action,
+      accountId: prepare.accountId,
+      expectedStatus: 'credential-only',
+      enteredText: ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_TEXT
+    }
+    expect(isExecuteAccountConnectionRecoveryRequest(execute)).toBe(true)
+    expect(isExecuteAccountConnectionRecoveryRequest({
+      ...execute,
+      expectedStatus: 'connected'
+    })).toBe(false)
+    expect(isExecuteAccountConnectionRecoveryRequest({
+      ...execute,
+      refreshToken: 'must-not-cross-ipc'
+    })).toBe(false)
+
+    expect(isPrepareAccountConnectionRecoveryResponse({
+      ok: true,
+      value: {
+        version: 1,
+        confirmationId: execute.confirmationId,
+        operationId: execute.operationId,
+        action: execute.action,
+        accountId: execute.accountId,
+        expectedStatus: execute.expectedStatus,
+        requiredText: ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_TEXT,
+        expiresAt: '2026-08-30T12:05:00.000Z',
+        consequences: ACCOUNT_CONNECTION_RECOVERY_CONSEQUENCES
+      }
+    })).toBe(true)
+    expect(isExecuteAccountConnectionRecoveryResponse({
+      ok: true,
+      value: {
+        version: 1,
+        operationId: execute.operationId,
+        accountId: execute.accountId,
+        status: 'absent',
+        removed: 'credential',
+        reconnectRequired: true
+      }
+    })).toBe(true)
   })
 })

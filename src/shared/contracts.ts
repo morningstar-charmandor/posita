@@ -7,6 +7,13 @@ export const LOCAL_DATA_DELETION_CONSEQUENCES = Object.freeze([
   'Removes Google refresh credentials stored by Posita.',
   'Does not delete or change mail in Gmail.'
 ] as const)
+export const ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_TEXT =
+  'DISCARD LOCAL CONNECTION' as const
+export const ACCOUNT_CONNECTION_RECOVERY_CONSEQUENCES = Object.freeze([
+  'Removes only incomplete Posita connection data stored on this Mac.',
+  'Requires a fresh Gmail connection before Posita can use that account.',
+  'Does not contact Google or delete or change mail in Gmail.'
+] as const)
 export const GOOGLE_CONNECT_CONSENT = Object.freeze({
   version: POSITA_PROTOCOL_VERSION,
   consentVersion: 'google-gmail-readonly-v1',
@@ -49,7 +56,9 @@ export type GoogleConnectConsentV1 = typeof GOOGLE_CONNECT_CONSENT
 export const IPC_CHANNELS = Object.freeze({
   loadApplicationState: 'posita:application:load-state:v1',
   prepareLocalDataDeletion: 'posita:local-data:prepare-deletion:v1',
-  executeLocalDataDeletion: 'posita:local-data:execute-deletion:v1'
+  executeLocalDataDeletion: 'posita:local-data:execute-deletion:v1',
+  prepareAccountConnectionRecovery: 'posita:account-connection:prepare-recovery:v1',
+  executeAccountConnectionRecovery: 'posita:account-connection:execute-recovery:v1'
 })
 
 export interface LoadApplicationStateRequestV1 {
@@ -194,6 +203,78 @@ export type PrepareLocalDataDeletionResponseV1 =
 export type ExecuteLocalDataDeletionResponseV1 =
   LocalDataDeletionResultV1<ExecuteLocalDataDeletionResultV1>
 
+export type RecoverableAccountConnectionStatusV1 =
+  | 'credential-only'
+  | 'provider-state-only'
+
+export interface PrepareAccountConnectionRecoveryRequestV1 {
+  version: typeof POSITA_PROTOCOL_VERSION
+  action: 'discard-orphaned-local-connection-state'
+  accountId: string
+}
+
+export interface AccountConnectionRecoveryChallengeV1 {
+  version: typeof POSITA_PROTOCOL_VERSION
+  confirmationId: string
+  operationId: string
+  action: 'discard-orphaned-local-connection-state'
+  accountId: string
+  expectedStatus: RecoverableAccountConnectionStatusV1
+  requiredText: typeof ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_TEXT
+  expiresAt: string
+  consequences: typeof ACCOUNT_CONNECTION_RECOVERY_CONSEQUENCES
+}
+
+export interface ExecuteAccountConnectionRecoveryRequestV1 {
+  version: typeof POSITA_PROTOCOL_VERSION
+  confirmationId: string
+  operationId: string
+  action: 'discard-orphaned-local-connection-state'
+  accountId: string
+  expectedStatus: RecoverableAccountConnectionStatusV1
+  enteredText: string
+}
+
+export interface AccountConnectionRecoveryResultV1 {
+  version: typeof POSITA_PROTOCOL_VERSION
+  operationId: string
+  accountId: string
+  status: 'absent'
+  removed: 'credential' | 'provider-state'
+  reconnectRequired: true
+}
+
+export type AccountConnectionRecoveryErrorCodeV1 =
+  | 'INVALID_REQUEST'
+  | 'UNTRUSTED_SENDER'
+  | 'RECOVERY_UNAVAILABLE'
+  | 'RECOVERY_NOT_NEEDED'
+  | 'RECOVERY_REFUSED'
+  | 'CONNECTION_STATE_CHANGED'
+  | 'CONFIRMATION_NOT_FOUND'
+  | 'CONFIRMATION_EXPIRED'
+  | 'CONFIRMATION_TEXT_MISMATCH'
+  | 'CONFIRMATION_LIMIT_REACHED'
+  | 'STORAGE_UNAVAILABLE'
+  | 'RECOVERY_FAILED'
+  | 'PROTOCOL_ERROR'
+
+export interface AccountConnectionRecoveryErrorV1 {
+  version: typeof POSITA_PROTOCOL_VERSION
+  code: AccountConnectionRecoveryErrorCodeV1
+  message: string
+  retryable: boolean
+}
+
+export type AccountConnectionRecoveryResponseV1<T> =
+  | { ok: true; value: T }
+  | { ok: false; error: AccountConnectionRecoveryErrorV1 }
+
+export type PrepareAccountConnectionRecoveryResponseV1 =
+  AccountConnectionRecoveryResponseV1<AccountConnectionRecoveryChallengeV1>
+export type ExecuteAccountConnectionRecoveryResponseV1 =
+  AccountConnectionRecoveryResponseV1<AccountConnectionRecoveryResultV1>
+
 export interface PositaDesktopApi {
   platform: string
   prototypeMode: true
@@ -202,4 +283,10 @@ export interface PositaDesktopApi {
   executeLocalDataDeletion(
     request: ExecuteLocalDataDeletionRequestV1
   ): Promise<ExecuteLocalDataDeletionResponseV1>
+  prepareAccountConnectionRecovery(
+    request: PrepareAccountConnectionRecoveryRequestV1
+  ): Promise<PrepareAccountConnectionRecoveryResponseV1>
+  executeAccountConnectionRecovery(
+    request: ExecuteAccountConnectionRecoveryRequestV1
+  ): Promise<ExecuteAccountConnectionRecoveryResponseV1>
 }

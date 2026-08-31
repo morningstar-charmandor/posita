@@ -205,6 +205,13 @@ receipt is atomically marked consumed before deletion and cannot be replayed; a
 failed or interrupted attempt requires fresh confirmation. Only then may the
 trusted recovery service discard the one orphaned local side and require
 reconnection. Complete and absent accounts are refused, state is checked before
-and after consumption, and no provider mailbox is contacted or changed. Because
-neither producer nor recovery command has IPC, UI, or startup composition, this
-policy cannot currently delete data in the running application.
+and after consumption, and no provider mailbox is contacted or changed.
+
+The approved Settings recovery surface now composes this policy only in ready
+mode. The renderer supplies a known opaque Posita account ID but never selects the
+orphan type; main derives that through presence-only checks. Separate validated
+prepare and execute methods bind the challenge to the same trusted window. After
+one execute attempt, including a failed deletion, a fresh review and confirmation
+are required. The UI labels current accounts as samples and explicitly states that
+Gmail is not connected or contacted. No browser, OAuth flow, provider request,
+revocation, mailbox mutation, new dependency, or personal account data is involved.

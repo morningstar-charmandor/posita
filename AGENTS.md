@@ -32,10 +32,10 @@ exists deeper in the tree.
 - A credential-free account-connection coordinator proves authorization-to-vault-
   to-encrypted-state ordering and rollback, but it has no production composition.
 - Read-only account-connection consistency inspection distinguishes absent,
-  connected, credential-only, and provider-state-only states without repair.
+  connected, credential-only, and provider-state-only states without automatic repair.
 - A confirmed discard-only policy and one-use durable confirmation producer for
-  one-sided local connection state are tested but have no startup, preload, IPC,
-  or UI composition.
+  one-sided local connection state are composed through a narrow, same-window
+  Settings recovery flow. It is local-only and refuses complete or absent state.
 - Gmail, lifecycle scheduling, retention scheduling, and model providers are not connected.
 - Sending mail is intentionally disabled.
 - Product promise: **Your inboxes, understood as one.**

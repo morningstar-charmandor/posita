@@ -1,32 +1,24 @@
 import {
   type AccountConnectionConsistencyStatus,
-  type AccountConnectionService
+  type AccountConnectionConsistencyInspector
 } from './accountConnection'
+import type {
+  AccountConnectionRecoveryResultV1 as SharedAccountConnectionRecoveryResultV1,
+  ExecuteAccountConnectionRecoveryRequestV1,
+  RecoverableAccountConnectionStatusV1
+} from '../../shared/contracts'
 import { isAccountId, type AccountStateRepository } from './accountState'
 import { isOperationId } from './accountLifecycle'
 import { googleRefreshTokenName, type SecretVault } from './secretVault'
 
-export type RecoverableAccountConnectionStatus =
-  | 'credential-only'
-  | 'provider-state-only'
+export type RecoverableAccountConnectionStatus = RecoverableAccountConnectionStatusV1
 
-export interface RecoverAccountConnectionRequestV1 {
-  version: 1
-  confirmationId: string
-  operationId: string
-  action: 'discard-orphaned-local-connection-state'
-  accountId: string
-  expectedStatus: RecoverableAccountConnectionStatus
-}
+export type RecoverAccountConnectionRequestV1 = Omit<
+  ExecuteAccountConnectionRecoveryRequestV1,
+  'enteredText'
+>
 
-export interface AccountConnectionRecoveryResultV1 {
-  version: 1
-  operationId: string
-  accountId: string
-  status: 'absent'
-  removed: 'credential' | 'provider-state'
-  reconnectRequired: true
-}
+export type AccountConnectionRecoveryResultV1 = SharedAccountConnectionRecoveryResultV1
 
 /**
  * A producer of this verifier must persist an auditable, short-lived receipt
@@ -79,13 +71,12 @@ export const isRecoverAccountConnectionRequestV1 = (
 
 /**
  * Main-process-only recovery policy. It never contacts a provider, reconstructs
- * missing data, or repairs a complete account. Production composition remains
- * blocked until the approved confirmation producer is composed into a reviewed
- * product command.
+ * missing data, or repairs a complete account. Product composition must keep it
+ * behind a separately confirmed, account-bound command.
  */
 export class AccountConnectionRecoveryService {
   constructor(
-    private readonly connections: AccountConnectionService,
+    private readonly connections: AccountConnectionConsistencyInspector,
     private readonly confirmations: AccountConnectionRecoveryConfirmationVerifier,
     private readonly vault: SecretVault,
     private readonly accountState: AccountStateRepository

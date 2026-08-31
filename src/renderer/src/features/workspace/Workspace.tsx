@@ -9,6 +9,9 @@ import type { GoogleConnectConsentV1 } from '@shared/contracts'
 import type { LocalDataDeletionDataSource } from '../../application/localDataDeletionDataSource'
 import { buildDailyBrief, createGroundedDraft, getMessage, getTopic, getTopicMessages } from '../../domain/mailService'
 import { LocalDataSettingsDialog } from '../settings/LocalDataSettingsDialog'
+import type {
+  AccountConnectionRecoveryDataSource
+} from '../../application/accountConnectionRecoveryDataSource'
 
 type CenterView = { kind: 'home' } | { kind: 'topic'; topicId: string } | { kind: 'classic' }
 
@@ -163,10 +166,12 @@ function DraftPanel({ topic, onClose }: { topic: Topic; onClose: () => void }): 
 function WorkspaceContent({
   connectConsent,
   deletionDataSource,
+  recoveryDataSource,
   onLocalDataDeleted
 }: {
   connectConsent: GoogleConnectConsentV1
   deletionDataSource: LocalDataDeletionDataSource
+  recoveryDataSource: AccountConnectionRecoveryDataSource
   onLocalDataDeleted: () => void
 }): React.JSX.Element {
   const dataset = useMailDataset()
@@ -194,7 +199,9 @@ function WorkspaceContent({
       {settingsOpen && (
         <LocalDataSettingsDialog
           connectConsent={connectConsent}
+          accounts={dataset.accounts}
           dataSource={deletionDataSource}
+          recoveryDataSource={recoveryDataSource}
           onClose={() => setSettingsOpen(false)}
           onDeleted={onLocalDataDeleted}
         />
@@ -207,11 +214,13 @@ export function Workspace({
   dataset,
   connectConsent,
   deletionDataSource,
+  recoveryDataSource,
   onLocalDataDeleted
 }: {
   dataset: MailDataset
   connectConsent: GoogleConnectConsentV1
   deletionDataSource: LocalDataDeletionDataSource
+  recoveryDataSource: AccountConnectionRecoveryDataSource
   onLocalDataDeleted: () => void
 }): React.JSX.Element {
   return (
@@ -219,6 +228,7 @@ export function Workspace({
       <WorkspaceContent
         connectConsent={connectConsent}
         deletionDataSource={deletionDataSource}
+        recoveryDataSource={recoveryDataSource}
         onLocalDataDeleted={onLocalDataDeleted}
       />
     </MailDatasetContext.Provider>

@@ -1,13 +1,19 @@
-import { type AccountConnectionService } from './accountConnection'
+import type { AccountConnectionConsistencyInspector } from './accountConnection'
+import {
+  ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_TEXT,
+  ACCOUNT_CONNECTION_RECOVERY_CONSEQUENCES,
+  type AccountConnectionRecoveryChallengeV1,
+  type ExecuteAccountConnectionRecoveryRequestV1,
+  type RecoverableAccountConnectionStatusV1
+} from '../../shared/contracts'
+export { ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_TEXT } from '../../shared/contracts'
 import { isAccountId } from './accountState'
 import { isOperationId } from './accountLifecycle'
 import {
   type AccountConnectionRecoveryConfirmationVerifier,
-  type RecoverableAccountConnectionStatus,
   type RecoverAccountConnectionRequestV1
 } from './recoverAccountConnection'
 
-export const ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_TEXT = 'DISCARD LOCAL CONNECTION'
 export const ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_TTL_MS = 5 * 60 * 1000
 export const MAX_PENDING_ACCOUNT_CONNECTION_RECOVERY_CONFIRMATIONS = 16
 
@@ -21,7 +27,7 @@ export interface AccountConnectionRecoveryConfirmationRecordV1 {
   operationId: string
   action: 'discard-orphaned-local-connection-state'
   accountId: string
-  expectedStatus: RecoverableAccountConnectionStatus
+  expectedStatus: RecoverableAccountConnectionStatusV1
   confirmedAt: string
   expiresAt: string
   consumedAt?: string
@@ -32,31 +38,6 @@ export interface AccountConnectionRecoveryConfirmationRepository {
   load(confirmationId: string): AccountConnectionRecoveryConfirmationRecordV1 | undefined
   consume(request: RecoverAccountConnectionRequestV1, consumedAt: string): boolean
   deleteExpired(expiresBefore: string): number
-}
-
-export interface PrepareAccountConnectionRecoveryRequestV1 {
-  version: 1
-  action: 'discard-orphaned-local-connection-state'
-  accountId: string
-  expectedStatus: RecoverableAccountConnectionStatus
-}
-
-export interface AccountConnectionRecoveryConfirmationChallengeV1 {
-  version: 1
-  confirmationId: string
-  operationId: string
-  action: 'discard-orphaned-local-connection-state'
-  accountId: string
-  expectedStatus: RecoverableAccountConnectionStatus
-  requiredText: typeof ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_TEXT
-  expiresAt: string
-}
-
-export interface ConfirmAccountConnectionRecoveryRequestV1
-  extends PrepareAccountConnectionRecoveryRequestV1 {
-  confirmationId: string
-  operationId: string
-  enteredText: string
 }
 
 export type AccountConnectionRecoveryConfirmationErrorCode =
@@ -84,7 +65,7 @@ export class AccountConnectionRecoveryConfirmationError extends Error {
 interface PendingChallenge {
   operationId: string
   accountId: string
-  expectedStatus: RecoverableAccountConnectionStatus
+  expectedStatus: RecoverableAccountConnectionStatusV1
   expiresAtMs: number
 }
 
@@ -92,7 +73,7 @@ const isExactObject = (value: unknown, keys: readonly string[]): value is Record
   typeof value === 'object' && value !== null && !Array.isArray(value) &&
   Object.keys(value).length === keys.length && Object.keys(value).every((key) => keys.includes(key))
 
-const isRecoverableStatus = (value: unknown): value is RecoverableAccountConnectionStatus =>
+const isRecoverableStatus = (value: unknown): value is RecoverableAccountConnectionStatusV1 =>
   value === 'credential-only' || value === 'provider-state-only'
 
 const isTimestamp = (value: unknown): value is string => {
@@ -127,16 +108,16 @@ implements AccountConnectionRecoveryConfirmationVerifier {
   private readonly pending = new Map<string, PendingChallenge>()
 
   constructor(
-    private readonly connections: AccountConnectionService,
+    private readonly connections: AccountConnectionConsistencyInspector,
     private readonly repository: AccountConnectionRecoveryConfirmationRepository,
     private readonly clock: AccountConnectionRecoveryConfirmationClock,
     private readonly idSource: () => string
   ) {}
 
-  async prepare(request: unknown): Promise<AccountConnectionRecoveryConfirmationChallengeV1> {
-    if (!isExactObject(request, ['version', 'action', 'accountId', 'expectedStatus']) ||
+  async prepare(request: unknown): Promise<AccountConnectionRecoveryChallengeV1> {
+    if (!isExactObject(request, ['version', 'action', 'accountId']) ||
         request.version !== 1 || request.action !== 'discard-orphaned-local-connection-state' ||
-        !isAccountId(request.accountId) || !isRecoverableStatus(request.expectedStatus)) {
+        !isAccountId(request.accountId)) {
       throw this.invalidRequest()
     }
     let consistency
@@ -145,7 +126,7 @@ implements AccountConnectionRecoveryConfirmationVerifier {
     } catch (error) {
       throw this.storageError(error)
     }
-    if (consistency.status !== request.expectedStatus) {
+    if (!isRecoverableStatus(consistency.status)) {
       throw new AccountConnectionRecoveryConfirmationError(
         'ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_STATE_CHANGED',
         'The account connection state is not eligible for the requested recovery.',
@@ -171,7 +152,7 @@ implements AccountConnectionRecoveryConfirmationVerifier {
     this.pending.set(confirmationId, {
       operationId,
       accountId: request.accountId,
-      expectedStatus: request.expectedStatus,
+      expectedStatus: consistency.status,
       expiresAtMs
     })
     return {
@@ -180,9 +161,10 @@ implements AccountConnectionRecoveryConfirmationVerifier {
       operationId,
       action: request.action,
       accountId: request.accountId,
-      expectedStatus: request.expectedStatus,
+      expectedStatus: consistency.status,
       requiredText: ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_TEXT,
-      expiresAt: new Date(expiresAtMs).toISOString()
+      expiresAt: new Date(expiresAtMs).toISOString(),
+      consequences: ACCOUNT_CONNECTION_RECOVERY_CONSEQUENCES
     }
   }
 
@@ -202,7 +184,7 @@ implements AccountConnectionRecoveryConfirmationVerifier {
         false
       )
     }
-    const confirmedRequest: ConfirmAccountConnectionRecoveryRequestV1 = {
+    const confirmedRequest: ExecuteAccountConnectionRecoveryRequestV1 = {
       version: 1,
       confirmationId: request.confirmationId,
       operationId: request.operationId,
