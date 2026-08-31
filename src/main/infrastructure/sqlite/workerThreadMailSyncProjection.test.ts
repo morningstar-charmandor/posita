@@ -108,6 +108,11 @@ describe('WorkerThreadMailSyncProjection', () => {
     ])))
     expect(stored.includes(Buffer.from('provider-message-worker-1'))).toBe(false)
     expect(stored.includes(Buffer.from('Worker encrypted body.'))).toBe(false)
+    await expect(projection.deleteAccountRecords('account-work-1')).resolves.toBe(true)
+    await expect(projection.deleteAccountRecords('account-work-1')).resolves.toBe(false)
+    expect(database.prepare(`
+      SELECT COUNT(*) AS count FROM encrypted_provider_mail_records
+    `).get()).toEqual({ count: 0 })
   })
 
   it('serializes replay after commit and returns a typed cursor conflict', async () => {

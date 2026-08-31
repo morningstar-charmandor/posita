@@ -15,7 +15,8 @@ exists deeper in the tree.
 - Safe retention running, last-run, next-run, and retry status is visible in Settings.
 - File-backed SQLite sanitization runs in a single-flight worker thread; the
   synchronous adapter remains only for bounded in-memory tests and legacy migration.
-- Account-data removal projection is implemented and used by the inactive disconnect orchestrator.
+- Fixture and canonical provider-mail account removal are implemented in the
+  inactive disconnect orchestrator's journaled mail-data phase.
 - Disconnect orchestration is implemented against interfaces/fakes but has no live revoker or UI trigger.
 - Full local-data deletion is composed at startup and available through a narrow
   confirmed Settings & privacy flow; it affects Posita data only.

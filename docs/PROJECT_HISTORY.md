@@ -1340,6 +1340,50 @@ in the running product. Canonical provider records still need fixed-window
 retention and journaled account-disconnect deletion before provider activation.
 Gmail, OAuth, AI, live sync, and sample-to-live transition remain blocked.
 
+## Gate 2D milestone — Journaled canonical account removal
+
+Date: 2026-08-31
+Checkpoint: use the Git commit whose subject is `feat: remove provider mail during disconnect`
+
+Goal: ensure the existing local disconnect transaction sequence cannot leave an
+account's schema-v9 canonical records behind, without activating disconnect or
+contacting a provider.
+
+Delivered:
+
+- one explicit async `ProviderMailAccountDataRemover` application interface,
+- a required canonical deletion collaborator in `DisconnectAccountService`,
+- account-scoped worker protocol and adapter support that reuses the schema-v9
+  projection's validated idempotent deletion primitive,
+- durable ordering that removes fixture account data, then canonical account
+  records, then advances to compaction,
+- failure/retry coverage proving canonical deletion can fail after fixture
+  replacement and then complete on retry without repeating the fixture write,
+- real file-backed worker coverage proving first deletion reports a change and a
+  repeated deletion is a safe no-op.
+
+Important decisions:
+
+- keep both local data removals in the existing `mail-data-delete-pending` journal
+  phase instead of adding a new phase or migration,
+- accept phase-level idempotent retry instead of pretending fixture and provider
+  tables share one cross-repository application transaction,
+- require the collaborator rather than make canonical cleanup optional in future
+  disconnect construction,
+- leave the disconnect service inactive because no live revoker, credential,
+  startup resumer, preload/IPC method, or UI trigger exists,
+- add no dependency, schema migration, provider call, credential, external action,
+  personal data, remote mailbox mutation, or compatibility path.
+
+Evidence: 43 test files and 287 tests pass. Strict typecheck, renderer
+structure/security checks, and all production Electron builds pass. New tests
+cover partial local failure, journal retry, worker account deletion, and repeated
+no-op deletion.
+
+Limitations: provider-mail fixed-window retention remains incomplete. The running
+app has no canonical records and disconnect remains inaccessible. Gmail, OAuth,
+AI, live sync, and sample-to-live transition remain blocked.
+
 ## How future entries should be written
 
 For each material milestone, record:

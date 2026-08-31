@@ -367,6 +367,12 @@ schedule is composed. File-backed reads and commits now have a packaged serial
 worker adapter with a bounded validated protocol, transferable in-memory key copy,
 safe errors, and explicit key cleanup. The adapter is verified but uncomposed.
 
+The inactive disconnect orchestrator's existing `mail-data-delete-pending` phase
+now runs both fixture account removal and worker-backed canonical projection
+removal before advancing its journal. Both actions are idempotent: if the second
+fails after the first commits, retry safely repeats the fixture plan and then the
+account-scoped canonical delete. This adds no provider or remote action.
+
 Sync work uses bounded per-account batches and cross-account concurrency,
 cancellation, explicit timeouts, and bounded backoff. Production sync, parsing,
 indexing, and AI work run outside renderer and Electron main event loops.

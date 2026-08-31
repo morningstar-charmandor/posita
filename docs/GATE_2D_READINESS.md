@@ -14,7 +14,7 @@ recovery, and disconnect orchestration contracts.
 deliberate gate, not a failed implementation. The canonical provider-independent
 mail contract, credential-free sync coordinator, empty schema-v9 encrypted
 projection, and packaged file-backed projection worker are now verified. The
-worker remains uncomposed, and no provider-mail retention/disconnect composition,
+worker remains uncomposed from sync, and no provider-mail retention composition,
 Google adapter, production sync composition, or sample-to-live transition exists.
 Disconnect also has no production revoker or active user command.
 
@@ -36,7 +36,7 @@ SDK, mailbox data, or model provider was used for this audit.
 | Retention | Ready | exact 90-day eviction, daily worker schedule, safe retry/status | Cleanup affects encrypted Posita data only |
 | Full local deletion | Ready | confirmed Settings command, durable recovery, keyless restart, cryptographic erasure | Removes local projection ciphertext; never deletes remote provider mail |
 | Account disconnect | Orchestrator-ready, inactive | journaled idempotent application service and deterministic revoker tests | Needs a real idempotent revoker and separately reviewed user command |
-| Canonical provider mail model | Storage/worker-ready, empty | exact validators, schema-v9 authenticated envelopes, opaque row IDs, and packaged serial worker | Needs retention/disconnect integration before ingestion |
+| Canonical provider mail model | Storage/worker-ready, empty | exact validators, schema-v9 authenticated envelopes, opaque row IDs, packaged serial worker, and journaled account deletion | Needs retention integration before ingestion |
 | Sync coordinator | Contract-ready, uncomposed | 90-day initial path, batching, worker-backed atomic cursor ordering, replay, isolation, rollback, bounded recovery/concurrency, and cancellation are tested | Needs lifecycle and production composition |
 | Gmail adapter | **Not implemented** | adapter contract is documented only | Blocks OAuth and mail access |
 | AI provider | Deferred | no model adapter, prompt, embedding, or model output path | Fixture summaries/drafts remain explicitly simulated |
@@ -61,8 +61,9 @@ provider records from appearing as one mailbox dataset.
 
 File-backed decrypt/scan/write work now has one packaged bounded serial worker
 owner with validated messages and key cleanup. Before live use, canonical records
-must enter the fixed 90-day retention and account-disconnect removal paths.
-Installation-wide deletion already removes the schema-v9 ciphertext keylessly.
+must enter the fixed 90-day retention path. The inactive journaled disconnect now
+removes the selected account's canonical records after fixture removal and retries
+the phase idempotently. Installation-wide deletion removes all schema-v9 ciphertext keylessly.
 
 ### 2. Compose the resumable sync owner only after persistence
 
@@ -110,12 +111,10 @@ Proceed with a **credential-free provider-mail lifecycle integration milestone**
 
 1. extend the fixed 90-day policy to canonical provider records using absolute
    `receivedAt`, without creating a plaintext index,
-2. compose account-scoped canonical record removal into the existing journaled
-   disconnect mail-data phase and prove retry/idempotency,
-3. coordinate retention/removal with the packaged projection worker's bounded
+2. coordinate retention with the packaged projection worker's bounded
    lifecycle and key teardown,
-4. preserve the empty startup state and sample-only compatibility path,
-5. keep startup sync, preload, UI activation, Google code, credentials, and live
+3. preserve the empty startup state and sample-only compatibility path,
+4. keep startup sync, preload, UI activation, Google code, credentials, and live
    data unchanged.
 
 This follows already accepted architecture and does not itself authorize Gmail.
@@ -140,7 +139,10 @@ already accepted responsiveness, retention, and deletion boundaries.
 - `WorkerThreadMailSyncProjection` packages serialized file-backed reads/commits,
   exact request/result validation, typed conflict mapping, bounded queueing,
   malformed-output refusal, transferable key copies, and explicit key destruction.
-- The verified baseline is 43 test files and 286 tests plus strict TypeScript,
+- The inactive disconnect service requires account-scoped canonical projection
+  deletion in its durable mail-data phase and safely retries after fixture removal
+  has already committed.
+- The verified baseline is 43 test files and 287 tests plus strict TypeScript,
   renderer structure/security checks, and production Electron builds.
 - No dependency, production provider adapter, credential,
   personal mailbox data, network action, renderer surface, or mailbox mutation was

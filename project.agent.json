@@ -175,6 +175,7 @@
     "canonical-provider-mail-and-sync-cursors-commit-atomically-as-authenticated-ciphertext",
     "provider-mail-source-identity-and-content-never-enter-queryable-projection-metadata",
     "file-backed-provider-mail-projection-is-serialized-worker-owned-and-key-erasing",
+    "disconnect-mail-data-phase-removes-fixture-and-canonical-account-records-idempotently",
     "live-gmail-ingestion-is-blocked-until-canonical-mail-has-worker-owned-retention-and-disconnect-integration",
     "provider-mail-is-authoritative-and-cache-reconciliation-is-explicit",
     "deduplication-and-threading-are-central-and-idempotent",

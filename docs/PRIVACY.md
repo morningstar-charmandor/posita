@@ -26,6 +26,11 @@ transfers a temporary copy into each worker, zeroes worker key buffers, serializ
 bounded operations, validates safe result schemas, and supports explicit teardown.
 It has no startup composition and has processed deterministic records only.
 
+The inactive disconnect flow now deletes local canonical projection records for
+the selected opaque account in the same journaled mail-data phase as fixture
+account removal. Retrying after a partial local failure is idempotent. This local
+deletion does not revoke authorization or change remote Gmail.
+
 Gate 2B implements one production security primitive: OAuth refresh credentials
 can be stored in a main-process-only vault protected by Electron's asynchronous
 `safeStorage` API. On macOS this uses Keychain, on Windows it uses DPAPI, and on

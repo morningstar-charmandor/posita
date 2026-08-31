@@ -122,6 +122,12 @@ worker adapter now keeps file-backed projection reads, decrypt/scan, encryption,
 and commits off Electron's main event loop, validates a bounded protocol, and
 erases its retained key context. All visible mail remains deterministic sample data.
 
+The inactive journaled disconnect service now requires that worker-backed
+projection remover in its local mail-data phase. If canonical deletion fails after
+sample data was already removed, retry resumes the same phase safely and repeats
+both idempotent actions. There is still no live revoker, disconnect UI, credential,
+or provider account.
+
 Read the build boundaries before extending the prototype:
 
 - [Agent contract](AGENTS.md)

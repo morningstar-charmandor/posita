@@ -8,6 +8,7 @@ import {
   type MailSyncCheckpointV1,
   type MailSyncProjection
 } from '../../application/mailSync'
+import type { ProviderMailAccountDataRemover } from '../../application/disconnectAccount'
 import {
   isMailSyncProjectionWorkerResponseV1,
   type MailSyncProjectionWorkerOperationV1,
@@ -37,7 +38,8 @@ const invalidRequest = (): MailSyncError => new MailSyncError(
 )
 
 /** Serializes file-backed projection work outside Electron's main event loop. */
-export class WorkerThreadMailSyncProjection implements MailSyncProjection {
+export class WorkerThreadMailSyncProjection implements
+  MailSyncProjection, ProviderMailAccountDataRemover {
   private readonly key: Buffer
   private tail: Promise<void> = Promise.resolve()
   private pending = 0
@@ -72,6 +74,15 @@ export class WorkerThreadMailSyncProjection implements MailSyncProjection {
     if (response.result.accountId !== batch.accountId ||
         response.result.nextCursor !== batch.nextCursor) throw unavailable()
     return response.result
+  }
+
+  async deleteAccountRecords(accountId: string): Promise<boolean> {
+    if (!isAccountId(accountId)) throw invalidRequest()
+    const response = await this.enqueue({ kind: 'delete-account-records', accountId })
+    if (response.operation !== 'delete-account-records' || response.accountId !== accountId) {
+      throw unavailable()
+    }
+    return response.changed
   }
 
   destroyEncryptionContext(): void {

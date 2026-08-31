@@ -179,6 +179,12 @@ computes retained accounts, source messages, untouched derived topics/briefs, an
 referenced people before the repository encrypts anything. No account-removal SQL
 path exists outside this repository transaction.
 
+The inactive disconnect `mail-data-delete-pending` phase also invokes the packaged
+provider-mail worker's account-scoped deletion. That worker executes one bounded
+`DELETE` against schema-v9 records after fixture replacement. A failure leaves the
+journal in the same phase; retry sees fixture removal as unchanged and repeats the
+idempotent canonical delete before compaction.
+
 Installation-wide deletion uses narrower idempotent repository primitives. It
 deletes every encrypted account-state row, deletes all fixture and canonical
 provider-mail encrypted records while

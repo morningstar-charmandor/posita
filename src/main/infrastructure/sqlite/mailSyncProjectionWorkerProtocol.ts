@@ -11,6 +11,7 @@ import {
 export type MailSyncProjectionWorkerOperationV1 =
   | { kind: 'load-checkpoint'; accountId: string }
   | { kind: 'commit-batch'; batch: CommitProviderMailBatchV1 }
+  | { kind: 'delete-account-records'; accountId: string }
 
 export interface MailSyncProjectionWorkerRequestV1 {
   version: 1
@@ -31,6 +32,13 @@ export type MailSyncProjectionWorkerSuccessV1 =
     ok: true
     operation: 'commit-batch'
     result: CommitProviderMailBatchResultV1
+  }
+  | {
+    version: 1
+    ok: true
+    operation: 'delete-account-records'
+    accountId: string
+    changed: boolean
   }
 
 export type MailSyncProjectionWorkerErrorCode =
@@ -70,6 +78,9 @@ export const isMailSyncProjectionWorkerRequestV1 = (
   if (operation.kind === 'load-checkpoint') {
     return hasOnlyKeys(operation, ['kind', 'accountId']) && isAccountId(operation.accountId)
   }
+  if (operation.kind === 'delete-account-records') {
+    return hasOnlyKeys(operation, ['kind', 'accountId']) && isAccountId(operation.accountId)
+  }
   return operation.kind === 'commit-batch' && hasOnlyKeys(operation, ['kind', 'batch']) &&
     isCommitProviderMailBatchV1(operation.batch)
 }
@@ -87,6 +98,11 @@ export const isMailSyncProjectionWorkerResponseV1 = (
     const checkpointKey = value.checkpoint === undefined ? [] : ['checkpoint']
     return hasOnlyKeys(value, ['version', 'ok', 'operation', ...checkpointKey]) &&
       (value.checkpoint === undefined || isMailSyncCheckpointV1(value.checkpoint))
+  }
+  if (value.operation === 'delete-account-records') {
+    return hasOnlyKeys(value, [
+      'version', 'ok', 'operation', 'accountId', 'changed'
+    ]) && isAccountId(value.accountId) && typeof value.changed === 'boolean'
   }
   return value.operation === 'commit-batch' &&
     hasOnlyKeys(value, ['version', 'ok', 'operation', 'result']) &&

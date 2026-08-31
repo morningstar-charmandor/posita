@@ -15,12 +15,19 @@ import type {
 import { AccountDataRemovalService } from './accountDataRemoval'
 import {
   DisconnectAccountService,
-  type AccountAuthorizationRevoker
+  type AccountAuthorizationRevoker,
+  type ProviderMailAccountDataRemover
 } from './disconnectAccount'
 import type { MutableMailRepository } from './mailRepository'
 import type { SecretName, SecretVault } from './secretVault'
 
-type FailureStep = 'revoke' | 'credential' | 'account-state' | 'mail-data' | 'compaction'
+type FailureStep =
+  | 'revoke'
+  | 'credential'
+  | 'account-state'
+  | 'mail-data'
+  | 'provider-mail'
+  | 'compaction'
 
 class MemoryLifecycleRepository implements AccountLifecycleRepository {
   readonly operations = new Map<string, LifecycleOperationV1>()
@@ -123,6 +130,21 @@ class FakeAccountState implements AccountStateRepository {
   deleteAllAccountState(): boolean { return false }
 }
 
+class FakeProviderMailRemover implements ProviderMailAccountDataRemover {
+  private failed = false
+
+  constructor(private readonly actions: string[], private readonly failure?: FailureStep) {}
+
+  async deleteAccountRecords(): Promise<boolean> {
+    this.actions.push('delete-provider-mail')
+    if (this.failure === 'provider-mail' && !this.failed) {
+      this.failed = true
+      throw new Error('provider mail failed')
+    }
+    return true
+  }
+}
+
 const operation = (phase: DisconnectPhase): DisconnectAccountOperationV1 => ({
   version: 1,
   operationId: 'disconnect-work-1',
@@ -149,6 +171,7 @@ const createHarness = (failure?: FailureStep) => {
     new FakeVault(actions, failure),
     new FakeAccountState(actions, failure),
     new AccountDataRemovalService(mailRepository),
+    new FakeProviderMailRemover(actions, failure),
     { sanitize: async () => mailRepository.sanitizeStorage() }
   )
   return { actions, lifecycle, mailRepository, service }
@@ -172,6 +195,7 @@ describe('DisconnectAccountService', () => {
       'delete-account-state',
       'load-mail',
       'replace-mail',
+      'delete-provider-mail',
       'sanitize'
     ])
     expect(harness.lifecycle.load(request.operationId)).toEqual(operation('completed'))
@@ -201,6 +225,19 @@ describe('DisconnectAccountService', () => {
 
     await expect(harness.service.disconnect(request)).resolves.toMatchObject({ status: 'completed' })
     expect(harness.lifecycle.load(request.operationId)).toEqual(operation('completed'))
+  })
+
+  it('retries canonical deletion after fixture removal already committed', async () => {
+    const harness = createHarness('provider-mail')
+    harness.lifecycle.save(operation('mail-data-delete-pending'))
+
+    await expect(harness.service.disconnect(request)).rejects.toMatchObject({
+      code: 'MAIL_DATA_DELETE_FAILED',
+      retryable: true
+    })
+    await expect(harness.service.disconnect(request)).resolves.toMatchObject({ status: 'completed' })
+    expect(harness.actions.filter((action) => action === 'replace-mail')).toHaveLength(1)
+    expect(harness.actions.filter((action) => action === 'delete-provider-mail')).toHaveLength(2)
   })
 
   it.each([
@@ -252,6 +289,7 @@ describe('DisconnectAccountService', () => {
       new FakeVault(harness.actions),
       new FakeAccountState(harness.actions),
       new AccountDataRemovalService(harness.mailRepository),
+      new FakeProviderMailRemover(harness.actions),
       { sanitize: async () => harness.mailRepository.sanitizeStorage() }
     )
 

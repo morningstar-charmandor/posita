@@ -201,8 +201,9 @@ It remains empty and uncomposed, preserving the sample dataset until an explicit
 sample-to-live transition is reviewed. The synchronous SQLite proof is limited to
 bounded in-memory use. A packaged serial worker adapter now owns file-backed
 checkpoint reads and batch commits through validated bounded messages, transfers
-only an in-memory key copy, and supports explicit key destruction. Canonical
-provider-mail retention/account-removal integration remains required. This is an
+only an in-memory key copy, and supports explicit key destruction. Its account-
+scoped deletion is now required by the inactive journaled disconnect mail-data
+phase. Canonical provider-mail retention remains required. This is an
 intentional bounded compatibility period, not a second provider model or permission
 to ingest Gmail.
 

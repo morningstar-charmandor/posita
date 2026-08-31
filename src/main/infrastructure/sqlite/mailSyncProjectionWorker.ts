@@ -33,9 +33,18 @@ if (!isMailSyncProjectionWorkerRequestV1(workerData)) {
         operation: 'load-checkpoint',
         ...(checkpoint === undefined ? {} : { checkpoint })
       })
-    } else {
+    } else if (workerData.operation.kind === 'commit-batch') {
       const result = await projection.commitBatch(workerData.operation.batch)
       parentPort.postMessage({ version: 1, ok: true, operation: 'commit-batch', result })
+    } else {
+      const changed = projection.deleteAccountRecords(workerData.operation.accountId)
+      parentPort.postMessage({
+        version: 1,
+        ok: true,
+        operation: 'delete-account-records',
+        accountId: workerData.operation.accountId,
+        changed
+      })
     }
   } catch (error) {
     const code: MailSyncProjectionWorkerErrorCode = error instanceof MailSyncError &&

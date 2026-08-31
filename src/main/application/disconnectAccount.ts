@@ -16,6 +16,11 @@ export interface AccountAuthorizationRevoker {
   revoke(accountId: string): Promise<void>
 }
 
+export interface ProviderMailAccountDataRemover {
+  /** Must be idempotent and remove only the selected account's local projection. */
+  deleteAccountRecords(accountId: string): Promise<boolean>
+}
+
 export interface DisconnectAccountRequestV1 {
   version: 1
   operationId: string
@@ -78,6 +83,7 @@ export class DisconnectAccountService {
     private readonly vault: SecretVault,
     private readonly accountState: AccountStateRepository,
     private readonly accountData: AccountDataRemovalService,
+    private readonly providerMail: ProviderMailAccountDataRemover,
     private readonly storageSanitizer: StorageSanitizer
   ) {}
 
@@ -184,7 +190,10 @@ export class DisconnectAccountService {
       case 'credential-delete-pending':
         await this.vault.delete(googleRefreshTokenName(accountId)); return
       case 'account-state-delete-pending': this.accountState.deleteAccountState(accountId); return
-      case 'mail-data-delete-pending': this.accountData.run(accountId); return
+      case 'mail-data-delete-pending':
+        this.accountData.run(accountId)
+        await this.providerMail.deleteAccountRecords(accountId)
+        return
       case 'compaction-pending': await this.storageSanitizer.sanitize(); return
     }
   }

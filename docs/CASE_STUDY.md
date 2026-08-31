@@ -34,8 +34,7 @@ fakes. An empty schema-v9 authenticated projection now proves atomic canonical
 message/thread and cursor persistence without exposing provider identity in
 queryable metadata. A packaged serial worker now proves that file-backed projection
 work stays off Electron main. Live Gmail remains correctly blocked by missing
-canonical retention/disconnect integration, sample-to-live transition, and
-production adapters.
+canonical retention integration, sample-to-live transition, and production adapters.
 
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
 
@@ -293,10 +292,12 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - a packaged serial provider-mail projection worker with bounded validated
   messages, real file-backed encrypted commit/reload evidence, safe failures, and
   explicit retained-key teardown,
+- journaled local disconnect ordering that requires account-scoped canonical
+  projection deletion and safely retries after fixture removal already committed,
 - an explicit compatibility boundary that keeps fixture `Message` records sample-
   only rather than fabricating provider identity,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 43 automated test files containing 286 passing tests,
+- 43 automated test files containing 287 passing tests,
 - a desktop visual and accessibility-tree check of the local-only Settings entry,
   sample-account controls, normal no-recovery-needed outcome, and automatic
   retention card with readable next/last status and Gmail non-mutation copy,
@@ -312,7 +313,8 @@ canonical provider-mail contract, and credential-free sync coordinator are compl
 at their current Gate 2D boundaries. The empty encrypted canonical-mail projection
 and atomic cursor store are now complete at their bounded in-memory boundary. The
 packaged worker now proves the file-backed boundary. The next milestone integrates
-canonical records with fixed retention and journaled account removal. Real OAuth,
+canonical records with fixed retention; journaled account removal is complete at
+its inactive interface boundary. Real OAuth,
 browser activation, credentials, live account connection, and production sync
 remain separate actions blocked behind explicit owner approval.
 
@@ -354,4 +356,4 @@ protected installation key. It now also validates one canonical provider-mail
 shape and coordinates credential-free synchronization through deterministic
 interfaces, with an empty authenticated SQLite projection proving atomic canonical
 records and cursor persistence. Real mail remains blocked until worker-owned
-retention/account-removal integration and the remaining provider activation gates pass.
+retention integration and the remaining provider activation gates pass.
