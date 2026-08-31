@@ -82,6 +82,7 @@
     "canonicalProviderMailContract": "src/shared/providerMail.ts",
     "mailSyncContract": "src/main/application/mailSync.ts",
     "mailSyncCoordinator": "src/main/application/mailSyncCoordinator.ts",
+    "encryptedProviderMailProjection": "src/main/infrastructure/sqlite/encryptedSqliteMailSyncProjection.ts",
     "deterministicMailSyncFakes": "src/main/infrastructure/providers/deterministicFakeMailSync.ts",
     "fixtures": "src/shared/fixtures.ts"
   },
@@ -168,7 +169,9 @@
     "one-sync-coordinator-owns-all-provider-io",
     "provider-ingestion-accepts-only-the-versioned-canonical-mail-contract",
     "fixture-messages-never-receive-fabricated-provider-provenance",
-    "live-gmail-ingestion-is-blocked-until-canonical-mail-has-an-encrypted-atomic-projection",
+    "canonical-provider-mail-and-sync-cursors-commit-atomically-as-authenticated-ciphertext",
+    "provider-mail-source-identity-and-content-never-enter-queryable-projection-metadata",
+    "live-gmail-ingestion-is-blocked-until-canonical-mail-has-worker-owned-retention-and-disconnect-integration",
     "provider-mail-is-authoritative-and-cache-reconciliation-is-explicit",
     "deduplication-and-threading-are-central-and-idempotent",
     "background-work-is-bounded-cancellable-and-off-ui-event-loops",

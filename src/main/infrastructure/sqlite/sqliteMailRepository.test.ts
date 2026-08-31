@@ -36,6 +36,7 @@ describe('SQLite migrations', () => {
       { name: 'audit_events' },
       { name: 'protected_secrets' },
       { name: 'encrypted_account_records' },
+      { name: 'encrypted_provider_mail_records' },
       { name: 'account_lifecycle_operations' },
       { name: 'local_action_confirmations' },
       { name: 'account_connection_recovery_confirmations' }
@@ -86,6 +87,35 @@ describe('SQLite migrations', () => {
       SELECT name FROM sqlite_master
       WHERE type = 'table' AND name = 'encrypted_account_records'
     `).get()).toEqual({ name: 'encrypted_account_records' })
+  })
+
+  it('adds an empty provider-mail projection without changing schema v8 account state', () => {
+    const database = openPositaDatabase(':memory:')
+    const repository = new SqliteMailRepository(database)
+    openRepositories.push(repository)
+    getSchemaVersion(database)
+    const recordMigration = database.prepare(`
+      INSERT INTO schema_migrations (version, name, applied_at)
+      VALUES (?, ?, datetime('now'))
+    `)
+    for (const migration of migrations.filter((entry) => entry.version <= 8)) {
+      database.exec(migration.sql)
+      recordMigration.run(migration.version, migration.name)
+    }
+    database.prepare(`
+      INSERT INTO encrypted_account_records (
+        record_type, account_scope, envelope_scheme, payload, created_at, updated_at
+      ) VALUES ('sync-state', 'work', 'aes-256-gcm-v1', ?, datetime('now'), datetime('now'))
+    `).run(Buffer.from([4, 5, 6]))
+
+    applyMigrations(database)
+
+    expect(getSchemaVersion(database)).toBe(CURRENT_SCHEMA_VERSION)
+    expect(database.prepare('SELECT COUNT(*) AS count FROM encrypted_account_records').get())
+      .toEqual({ count: 1 })
+    expect(database.prepare(`
+      SELECT COUNT(*) AS count FROM encrypted_provider_mail_records
+    `).get()).toEqual({ count: 0 })
   })
 })
 

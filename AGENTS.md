@@ -38,11 +38,15 @@ exists deeper in the tree.
   one-sided local connection state are composed through a narrow, same-window
   Settings recovery flow. It is local-only and refuses complete or absent state.
 - A versioned canonical provider-independent source-message/thread contract and
-  one credential-free sync coordinator are verified but not persisted or composed.
+  one credential-free sync coordinator are verified.
+- Schema v9 and an uncomposed credential-free SQLite projection persist canonical
+  provider messages/threads with their encrypted account cursor atomically.
+- Provider-mail payloads and source identities are authenticated ciphertext;
+  only opaque local storage IDs, opaque account scope, and record kind are queryable.
 - The deterministic fixture `Message` remains a sample-presentation compatibility
   record and is never accepted as provider-ingestion data.
-- Gmail, provider-mail projection persistence, pending-disconnect scheduling,
-  and model providers are not connected.
+- Gmail, production provider-mail projection composition, pending-disconnect
+  scheduling, and model providers are not connected.
 - Sending mail is intentionally disabled.
 - Product promise: **Your inboxes, understood as one.**
 

@@ -1246,6 +1246,54 @@ existing deterministic fixture dataset. No Google client, OAuth flow, provider
 request, credential, live account, production sync owner, UI status, or mailbox
 mutation exists.
 
+## Gate 2D milestone — Encrypted canonical provider-mail projection
+
+Date: 2026-08-31
+Checkpoint: use the Git commit whose subject is `feat: persist encrypted provider mail projection`
+
+Goal: implement the coordinator's atomic projection contract without connecting
+Google, creating credentials, altering the visible sample experience, or exposing
+mail identity as queryable database metadata.
+
+Delivered:
+
+- schema v9 with an initially empty strict `encrypted_provider_mail_records` table,
+- independently authenticated encrypted canonical message/thread payloads using
+  the existing installation key and envelope format,
+- generated opaque local row IDs so provider IDs, canonical IDs, addresses,
+  subjects, bodies, labels, and attachment metadata remain ciphertext,
+- account-scoped decrypt-and-validate replay identity using
+  `(accountId, providerMessageId)` with update and exact-replay classification,
+- one `BEGIN IMMEDIATE` transaction for changed normalized records plus the
+  encrypted account sync cursor, with typed cursor-conflict and storage failures,
+- keyless installation-wide deletion of schema-v9 records and an idempotent
+  account-scoped projection deletion primitive,
+- schema-upgrade preservation, empty-state, ciphertext, tamper, account-isolation,
+  replay, update, conflict, rollback, and deletion tests.
+
+Important decisions:
+
+- reuse the cache protector and schema-v4 sync-state record rather than add a key,
+  cursor store, plaintext source index, or dependency,
+- decrypt only the target account projection to centralize replay identity; a
+  keyed search index remains forbidden without a separate threat-model review,
+- inject local storage IDs and keep canonical/source identity inside envelopes,
+- retain the deterministic fixture `Message` path unchanged and empty provider
+  projection; no conversion can manufacture provenance,
+- keep the synchronous SQLite adapter uncomposed and limited to bounded in-memory
+  proof. File-backed work requires one worker lifecycle before production use.
+
+Evidence: 42 test files and 281 tests pass. Strict typecheck, renderer
+structure/security checks, and all production Electron builds pass. Full deletion
+coverage proves schema-v9 ciphertext is removed even without loading an encryption
+key. No credential, network request, provider payload, personal mailbox data,
+renderer surface, or mailbox mutation was used.
+
+Limitations: canonical records are not loaded by startup, renderer, or any provider.
+File-backed projection work is not yet worker-owned; canonical records are not yet
+included in the fixed 90-day retention or journaled account-disconnect mail-data
+phase. Gmail, OAuth, live sync, AI, and sample-to-live transition remain blocked.
+
 ## How future entries should be written
 
 For each material milestone, record:

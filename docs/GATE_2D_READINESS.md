@@ -12,8 +12,9 @@ recovery, and disconnect orchestration contracts.
 
 **Live Gmail authorization and ingestion are not ready to activate.** This is a
 deliberate gate, not a failed implementation. The canonical provider-independent
-mail contract and credential-free sync coordinator are now verified, but no
-encrypted canonical-mail projection, Google adapter, production composition, or
+mail contract, credential-free sync coordinator, and empty schema-v9 encrypted
+projection are now verified, but no file-backed projection worker, provider-mail
+retention/disconnect composition, Google adapter, production sync composition, or
 sample-to-live transition exists. Disconnect also has no production revoker or
 active user command.
 
@@ -35,28 +36,33 @@ SDK, mailbox data, or model provider was used for this audit.
 | Retention | Ready | exact 90-day eviction, daily worker schedule, safe retry/status | Cleanup affects encrypted Posita data only |
 | Full local deletion | Ready | confirmed Settings command, durable recovery, keyless restart, cryptographic erasure | Never deletes provider mail |
 | Account disconnect | Orchestrator-ready, inactive | journaled idempotent application service and deterministic revoker tests | Needs a real idempotent revoker and separately reviewed user command |
-| Canonical provider mail model | Contract-ready | exact versioned source/thread validators require provenance, recipients, bodies, labels, and attachments | Needs encrypted projection before ingestion |
-| Sync coordinator | Contract-ready, fake only | 90-day initial path, batching, atomic cursor ordering, replay, isolation, bounded recovery/concurrency, and cancellation are deterministic-tested | Needs encrypted projection and production composition |
+| Canonical provider mail model | Storage-ready, empty | exact validators plus schema-v9 authenticated message/thread envelopes with opaque local row IDs | Needs worker-owned lifecycle integration before ingestion |
+| Sync coordinator | Contract-ready, uncomposed | 90-day initial path, batching, encrypted atomic cursor ordering, replay, isolation, rollback, bounded recovery/concurrency, and cancellation are deterministic-tested | Needs worker-owned projection and production composition |
 | Gmail adapter | **Not implemented** | adapter contract is documented only | Blocks OAuth and mail access |
 | AI provider | Deferred | no model adapter, prompt, embedding, or model output path | Fixture summaries/drafts remain explicitly simulated |
 
 ## Blocking gaps before real mail
 
-### 1. Encrypted canonical provider-mail projection
+### 1. Complete the canonical provider-mail lifecycle
 
-The canonical contract is complete at its credential-free boundary. Before a
-Gmail payload may enter application state, one encrypted projection must persist:
+The canonical contract and encrypted persistence proof are complete at their
+credential-free boundary. Schema v9 now persists:
 
 - canonical source messages and threads under one opaque Posita account,
 - account-scoped provider source identity for central replay deduplication,
 - a bounded normalized batch and its next sync cursor in one atomic commit,
 - authenticated metadata and record-size limits consistent with the cache threat model,
-- deterministic rollback/retry behavior for storage and cursor conflicts.
+- deterministic tamper rejection, deletion, rollback/retry, and cursor conflicts.
 
 ADR-031 settles fixture compatibility: the current encrypted `Message` stays a
 sample-only view and receives no fabricated provider provenance. The projection
 starts empty. A later reviewed sample-to-live transition must prevent fixture and
 provider records from appearing as one mailbox dataset.
+
+Before file-backed or live use, the projection's synchronous decrypt/scan/write
+work must move behind one bounded worker owner. Its records must also enter the
+fixed 90-day retention and account-disconnect removal paths. Installation-wide
+deletion already removes the schema-v9 ciphertext keylessly.
 
 ### 2. Compose the resumable sync owner only after persistence
 
@@ -100,21 +106,21 @@ state, screenshots, tests, or portfolio assets.
 
 ## Recommended next milestone
 
-Proceed with a **credential-free encrypted provider-mail projection milestone**:
+Proceed with a **credential-free provider-mail lifecycle integration milestone**:
 
-1. add versioned encrypted record kinds for canonical source messages and threads,
-2. implement the coordinator's atomic projection interface so normalized records
-   and the account cursor commit together,
-3. prove tamper rejection, account isolation, replay updates, cursor conflicts,
-   crash/failure rollback, deletion, and empty startup state,
-4. keep deterministic sample records in their existing compatibility path and
-   document the future sample-to-live transition without fabricating provenance,
-5. keep startup sync ownership, preload, UI activation, Google code, credentials,
-   and live data unchanged.
+1. place file-backed canonical projection commits behind one bounded single-flight
+   worker owner with validated messages, cancellation, cleanup, and safe errors,
+2. extend the fixed 90-day policy to canonical provider records using absolute
+   `receivedAt`, without creating a plaintext index,
+3. compose account-scoped canonical record removal into the existing journaled
+   disconnect mail-data phase and prove retry/idempotency,
+4. preserve the empty startup state and sample-only compatibility path,
+5. keep startup sync, preload, UI activation, Google code, credentials, and live
+   data unchanged.
 
 This follows already accepted architecture and does not itself authorize Gmail.
-It is the smallest safe step that connects the verified contracts to the existing
-encrypted-storage boundary without external access.
+It is the smallest safe step that makes the new encrypted storage obey Posita's
+already accepted responsiveness, retention, and deletion boundaries.
 
 ## Completed credential-free contract evidence
 
@@ -127,9 +133,13 @@ encrypted-storage boundary without external access.
   bounded cross-account work, replay deduplication, batch/cursor ordering, commit
   failure rollback, one invalid-cursor resync without source erasure, cancellation,
   supersession, and safe provider failures.
-- The verified baseline is 41 test files and 272 tests plus strict TypeScript,
+- Schema v9 plus `EncryptedSqliteMailSyncProjection` prove ciphertext-only source
+  identity/content, opaque row IDs, empty migration state, account isolation,
+  replay/update classification, cursor conflicts, tamper rejection, transaction
+  rollback, account deletion, and keyless installation deletion.
+- The verified baseline is 42 test files and 281 tests plus strict TypeScript,
   renderer structure/security checks, and production Electron builds.
-- No dependency, schema migration, production provider adapter, credential,
+- No dependency, production provider adapter, credential,
   personal mailbox data, network action, renderer surface, or mailbox mutation was
   added.
 

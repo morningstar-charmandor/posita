@@ -30,8 +30,10 @@ and on a bounded daily cadence in a worker, with truthful status in Settings.
 The Gate 2D readiness audit confirms that this local lifecycle foundation is ready
 at its current boundary. Canonical provider-independent message/thread contracts
 and one credential-free sync coordinator are now verified with deterministic
-fakes, while live Gmail remains correctly blocked by the missing encrypted
-provider-mail projection, sample-to-live transition, and production adapters.
+fakes. An empty schema-v9 authenticated projection now proves atomic canonical
+message/thread and cursor persistence without exposing provider identity in
+queryable metadata. Live Gmail remains correctly blocked by missing worker-owned
+retention/disconnect integration, sample-to-live transition, and production adapters.
 
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
 
@@ -113,6 +115,9 @@ Future mailbox work now has one exact account-scoped normalized source model and
 one tested sync owner so UI and AI features cannot quietly become alternate
 provider clients. The coordinator remains credential-free and uncomposed; this is
 verified contract behavior, not a claim that live sync has been implemented.
+Its schema-v9 projection also remains empty and uncomposed. Opaque local row IDs,
+authenticated ciphertext, and atomic cursor advancement prove the storage boundary
+without presenting fixture behavior as provider mail.
 
 ## Key challenges and tradeoffs
 
@@ -278,10 +283,13 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - one credential-free sync coordinator proving a 90-day initial path, single-
   flight account work, bounded cross-account concurrency, replay deduplication,
   atomic batch/cursor ordering, bounded cursor recovery, and cancellation,
+- an empty schema-v9 encrypted provider-mail projection proving opaque local row
+  identity, account-scoped replay/update handling, atomic encrypted cursor commits,
+  tamper rejection, cursor conflicts, rollback, and deletion,
 - an explicit compatibility boundary that keeps fixture `Message` records sample-
   only rather than fabricating provider identity,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 41 automated test files containing 272 passing tests,
+- 42 automated test files containing 281 passing tests,
 - a desktop visual and accessibility-tree check of the local-only Settings entry,
   sample-account controls, normal no-recovery-needed outcome, and automatic
   retention card with readable next/last status and Gmail non-mutation copy,
@@ -294,11 +302,12 @@ No real mailbox, OAuth credential, or model provider has been used.
 
 The discard-only local recovery flow, automatic fixed-window retention lifecycle,
 canonical provider-mail contract, and credential-free sync coordinator are complete
-at their current Gate 2D boundaries. The next milestone is an encrypted canonical-
-mail projection that atomically stores normalized records with the account cursor
-while remaining empty and uncomposed from Google. Real OAuth, browser activation,
-credentials, live account connection, and production sync remain separate actions
-blocked behind explicit owner approval.
+at their current Gate 2D boundaries. The empty encrypted canonical-mail projection
+and atomic cursor store are now complete at their bounded in-memory boundary. The
+next milestone moves file-backed projection work into one worker and integrates
+canonical records with fixed retention and journaled account removal. Real OAuth,
+browser activation, credentials, live account connection, and production sync
+remain separate actions blocked behind explicit owner approval.
 
 Later evidence should include measured sync reliability, duplicate prevention,
 citation correctness, draft usefulness, correction rate, and time to attention.
@@ -336,5 +345,6 @@ moved that experience onto a versioned SQLite and IPC foundation, added fail-clo
 OS-protected credential storage, and encrypted private cache records with a
 protected installation key. It now also validates one canonical provider-mail
 shape and coordinates credential-free synchronization through deterministic
-interfaces. Real mail remains blocked until that shape has an encrypted atomic
-projection and the remaining provider activation gates pass.
+interfaces, with an empty authenticated SQLite projection proving atomic canonical
+records and cursor persistence. Real mail remains blocked until worker-owned
+lifecycle integration and the remaining provider activation gates pass.

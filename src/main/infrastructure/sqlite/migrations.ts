@@ -288,6 +288,27 @@ export const migrations: readonly Migration[] = [
       CREATE INDEX account_connection_recovery_confirmations_expiry_idx
         ON account_connection_recovery_confirmations(expires_at);
     `
+  },
+  {
+    version: 9,
+    name: 'encrypted_provider_mail_projection',
+    sql: `
+      CREATE TABLE encrypted_provider_mail_records (
+        record_type TEXT NOT NULL CHECK (
+          record_type IN ('provider-message', 'provider-thread')
+        ),
+        record_id TEXT NOT NULL,
+        account_scope TEXT NOT NULL,
+        envelope_scheme TEXT NOT NULL,
+        payload BLOB NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (record_type, account_scope, record_id)
+      ) STRICT;
+
+      CREATE INDEX encrypted_provider_mail_records_scope_idx
+        ON encrypted_provider_mail_records(account_scope, record_type);
+    `
   }
 ]
 

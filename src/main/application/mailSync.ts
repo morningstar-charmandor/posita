@@ -197,6 +197,28 @@ export const isProviderMailBatchV1 = (value: unknown): value is ProviderMailBatc
     thread.messageIds.includes(message.id)))
 }
 
+export const isCommitProviderMailBatchV1 = (
+  value: unknown
+): value is CommitProviderMailBatchV1 => {
+  if (!isRecord(value)) return false
+  const expectedCursorKey = value.expectedCursor === undefined ? [] : ['expectedCursor']
+  if (!hasOnlyKeys(value, [
+    'version', 'accountId', 'provider', ...expectedCursorKey, 'nextCursor',
+    'reconciliation', 'messages', 'threads'
+  ]) || (value.reconciliation !== 'incremental' &&
+      value.reconciliation !== 'bounded-resync')) return false
+
+  return isProviderMailBatchV1({
+    version: value.version,
+    accountId: value.accountId,
+    provider: value.provider,
+    messages: value.messages,
+    threads: value.threads,
+    nextCursor: value.nextCursor,
+    complete: true
+  }) && (value.expectedCursor === undefined || isCursor(value.expectedCursor))
+}
+
 export const isCommitProviderMailBatchResultV1 = (
   value: unknown
 ): value is CommitProviderMailBatchResultV1 => {

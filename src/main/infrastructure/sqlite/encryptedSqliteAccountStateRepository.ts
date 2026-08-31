@@ -33,6 +33,32 @@ const contextFor = (recordType: AccountRecordType, accountId: string): CacheReco
 const storageFailure = (message: string, cause: unknown): AccountStateError =>
   new AccountStateError('ACCOUNT_STATE_STORAGE_FAILED', message, { cause })
 
+export const saveEncryptedProviderSyncState = (
+  database: DatabaseSync,
+  protector: CacheRecordProtector,
+  state: ProviderSyncStateV1
+): void => {
+  if (!isProviderSyncStateV1(state)) {
+    throw new AccountStateError('INVALID_ACCOUNT_STATE', 'Provider sync state is invalid.')
+  }
+  const context = contextFor('sync-state', state.accountId)
+  try {
+    const payload = protector.protect(context, JSON.stringify(state))
+    database.prepare(`
+      INSERT INTO encrypted_account_records (
+        record_type, account_scope, envelope_scheme, payload, created_at, updated_at
+      ) VALUES ('sync-state', ?, ?, ?, datetime('now'), datetime('now'))
+      ON CONFLICT(record_type, account_scope) DO UPDATE SET
+        envelope_scheme = excluded.envelope_scheme,
+        payload = excluded.payload,
+        updated_at = datetime('now')
+    `).run(state.accountId, protector.scheme, Buffer.from(payload))
+  } catch (error) {
+    if (error instanceof AccountStateError) throw error
+    throw storageFailure('Failed to save encrypted account state.', error)
+  }
+}
+
 export const deleteAllEncryptedAccountState = (database: DatabaseSync): boolean => {
   try {
     return Number(database.prepare('DELETE FROM encrypted_account_records').run().changes) > 0
@@ -76,10 +102,7 @@ export class EncryptedSqliteAccountStateRepository implements AccountStateReposi
   }
 
   saveSyncState(state: ProviderSyncStateV1): void {
-    if (!isProviderSyncStateV1(state)) {
-      throw new AccountStateError('INVALID_ACCOUNT_STATE', 'Provider sync state is invalid.')
-    }
-    this.save('sync-state', state.accountId, state)
+    saveEncryptedProviderSyncState(this.database, this.protector, state)
   }
 
   loadSyncState(accountId: string): ProviderSyncStateV1 | undefined {

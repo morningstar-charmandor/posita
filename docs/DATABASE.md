@@ -143,6 +143,22 @@ recovery attempt can consume a receipt. Expired receipts are removed through a
 strict timestamp boundary; the recovery service rechecks live consistency
 on both sides of consumption before deleting exactly one orphaned local side.
 
+Schema version 9 adds `encrypted_provider_mail_records`, an initially empty
+projection for canonical `ProviderMailMessageV1` and `ProviderMailThreadV1`
+payloads. Each payload is independently protected with the existing installation
+key and authenticated record type, opaque local storage ID, and opaque account
+scope. Provider message/thread IDs, canonical IDs, subjects, addresses, bodies,
+labels, and attachment metadata remain inside ciphertext. A batch commit validates
+the exact canonical contract, decrypts the target account projection to enforce
+`(accountId, providerMessageId)` replay identity, and writes changed records plus
+the encrypted schema-v4 sync cursor in one `BEGIN IMMEDIATE` transaction. Cursor
+conflicts and any failed record/checkpoint write roll back the whole batch.
+
+The synchronous adapter is an uncomposed credential-free proof used with bounded
+in-memory databases. File-backed production composition must move its decrypt,
+scan, encryption, and write work behind one bounded worker owner before live sync.
+No startup owner, provider, IPC, UI, or fixture conversion is added by schema v9.
+
 Retention replacements validate and encrypt the complete next dataset before
 opening a write transaction. Source messages, derived topics, brief items, and
 unreferenced people are replaced atomically. The transaction records
@@ -162,7 +178,8 @@ referenced people before the repository encrypts anything. No account-removal SQ
 path exists outside this repository transaction.
 
 Installation-wide deletion uses narrower idempotent repository primitives. It
-deletes every encrypted account-state row, deletes all encrypted mail records while
+deletes every encrypted account-state row, deletes all fixture and canonical
+provider-mail encrypted records while
 marking sanitization pending, and advances the lifecycle journal before running
 compaction. Only after SQLite reaches `ready` does it delete the OS-protected data
 key and destroy the shared in-memory encryption context. The non-sensitive journal

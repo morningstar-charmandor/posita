@@ -112,10 +112,13 @@ A versioned canonical provider-independent source-message/thread contract and on
 credential-free sync coordinator now prove strict normalization, 90-day initial
 import, account isolation, replay deduplication, atomic batch/cursor ordering,
 bounded invalid-cursor recovery, concurrency, cancellation, and safe failures
-through deterministic fakes. The existing `Message` remains a sample-only view;
-Posita does not invent provider identity for fixtures. None of this is composed
-into startup, IPC, UI, encrypted provider-mail persistence, or Google, so all
-visible mail remains deterministic sample data.
+through deterministic fakes. Schema v9 adds a credential-free authenticated
+SQLite projection that atomically stores canonical messages, threads, and the
+encrypted account cursor; source IDs and content remain ciphertext, while opaque
+local storage IDs enforce account isolation. The existing `Message` remains a
+sample-only view and receives no invented provider identity. The projection is
+empty and uncomposed from startup, IPC, UI, workers, or Google, so all visible
+mail remains deterministic sample data.
 
 Read the build boundaries before extending the prototype:
 

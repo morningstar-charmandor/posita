@@ -9,12 +9,16 @@ until account-scoped retention, disconnect, and deletion orchestration are
 implemented and tested. Gate 2D has started by encrypting and validating the
 future provider-account identity and sync-state records; no real account exists.
 
-The canonical provider-mail contract now validates sensitive normalized source
-data before application use, and the credential-free sync coordinator accepts
-only that exact bounded shape. Neither is composed into persistent storage or a
-provider. Existing sample messages remain fixture compatibility records and are
-not assigned fabricated provider provenance. No personal mailbox data has passed
-through the contract or its deterministic fakes.
+The canonical provider-mail contract validates sensitive normalized source data
+before application use, and the credential-free sync coordinator accepts only
+that exact bounded shape. Schema v9 can persist it as independently authenticated
+encrypted message/thread records and advance the encrypted account cursor in the
+same transaction. Provider IDs, canonical IDs, addresses, subjects, bodies,
+labels, and attachment metadata are ciphertext; only opaque local record IDs,
+opaque account scope, and record kind remain queryable. The projection is empty
+and uncomposed from startup or providers. Existing sample messages remain fixture
+compatibility records and are not assigned fabricated provider provenance. No
+personal mailbox data has passed through this path.
 
 Gate 2B implements one production security primitive: OAuth refresh credentials
 can be stored in a main-process-only vault protected by Electron's asynchronous

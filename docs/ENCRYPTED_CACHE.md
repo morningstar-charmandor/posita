@@ -183,18 +183,25 @@ update before implementation.
 ## Canonical provider-mail compatibility decision
 
 `ProviderMailMessageV1` and `ProviderMailThreadV1` are the canonical validated
-provider-ingestion contracts, but schema v8 has no repository for them. Existing
+provider-ingestion contracts. Schema v9 adds an initially empty authenticated
+projection for them. Existing
 encrypted `message` records retain the deterministic sample-view shape so current
 installations remain behavior-compatible. Posita will not manufacture provider
 IDs, recipients, labels, HTML review state, or attachment metadata for fixtures
 merely to make them resemble live mail.
 
-The next credential-free storage milestone must add an encrypted projection that
-atomically commits canonical source/thread records with the account sync cursor.
-It must start empty, preserve the sample dataset until an explicit sample-to-live
-transition is reviewed, and never mix fixture source identity with provider
-identity. This is an intentional bounded compatibility period, not a second
-provider model or permission to ingest Gmail.
+The projection atomically commits a bounded canonical source/thread batch with its
+encrypted account cursor. Provider identities and canonical mail IDs stay inside
+ciphertext; queryable row identity is generated opaque local metadata. Replay is
+resolved by decrypting only the target account projection and comparing the
+account-scoped provider identity. Tampering, duplicate stored source identity,
+cursor conflict, or checkpoint-write failure rejects or rolls back the batch.
+
+It remains empty and uncomposed, preserving the sample dataset until an explicit
+sample-to-live transition is reviewed. The synchronous SQLite proof is limited to
+bounded in-memory use; file-backed sync requires a worker lifecycle and canonical
+provider-mail retention/account-removal integration first. This is an intentional
+bounded compatibility period, not a second provider model or permission to ingest Gmail.
 
 ## Deletion boundary
 

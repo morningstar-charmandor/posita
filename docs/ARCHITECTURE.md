@@ -359,8 +359,11 @@ concurrency, normalized-batch validation, atomic batch-plus-cursor commits,
 account-scoped provider-ID replay handling, one bounded resync after an invalid
 cursor, and cancellation for disconnect, supersession, and shutdown. The
 deterministic provider/projection fakes prove these rules without credentials or
-network access. No production adapter, encrypted projection repository, startup
-owner, preload/IPC method, UI status, or polling schedule is composed.
+network access. An uncomposed schema-v9 SQLite projection now proves authenticated
+canonical message/thread persistence and atomic encrypted-cursor advancement with
+opaque local row IDs. It remains a bounded synchronous in-memory proof; no
+file-backed worker owner, production adapter, startup owner, preload/IPC method,
+UI status, or polling schedule is composed.
 
 Sync work uses bounded per-account batches and cross-account concurrency,
 cancellation, explicit timeouts, and bounded backoff. Production sync, parsing,

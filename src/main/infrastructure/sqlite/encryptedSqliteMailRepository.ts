@@ -15,6 +15,7 @@ import {
 } from '../../application/encryptedCache'
 import { RepositoryError, type MutableMailRepository } from '../../application/mailRepository'
 import { applyMigrations } from './migrations'
+import { deleteAllEncryptedProviderMailRecords } from './encryptedSqliteMailSyncProjection'
 
 export type EncryptedRecordType = 'account' | 'person' | 'message' | 'topic' | 'brief-item'
 
@@ -245,6 +246,7 @@ export const deleteAllEncryptedMailRecords = (database: DatabaseSync): void => {
     database.exec('BEGIN IMMEDIATE')
     try {
       database.exec('DELETE FROM encrypted_records')
+      deleteAllEncryptedProviderMailRecords(database)
       database.prepare(`
         INSERT INTO encrypted_cache_state (id, status, updated_at)
         VALUES (1, 'sanitization-pending', datetime('now'))

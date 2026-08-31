@@ -103,11 +103,20 @@ describe('EncryptedSqliteMailRepository', () => {
   it('purges all encrypted records and remains an empty valid cache', async () => {
     const { database, repository } = createInMemoryRepository()
     repository.seedIfEmpty(fixtures)
+    database.prepare(`
+      INSERT INTO encrypted_provider_mail_records (
+        record_type, record_id, account_scope, envelope_scheme, payload, created_at, updated_at
+      ) VALUES ('provider-message', 'message-1', 'work', 'aes-256-gcm-v1', ?,
+        datetime('now'), datetime('now'))
+    `).run(Buffer.from('opaque-provider-mail'))
 
     repository.deleteAllRecords()
     await new InlineSqliteStorageSanitizer(database).sanitize()
 
     expect(countEncryptedRecords(database)).toBe(0)
+    expect(database.prepare(`
+      SELECT COUNT(*) AS count FROM encrypted_provider_mail_records
+    `).get()).toEqual({ count: 0 })
     expect(repository.loadDataset()).toEqual({
       accounts: [], people: [], messages: [], topics: [], briefItems: []
     })

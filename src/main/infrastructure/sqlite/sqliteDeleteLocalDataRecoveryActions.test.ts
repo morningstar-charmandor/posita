@@ -48,6 +48,12 @@ describe('SqliteDeleteLocalDataRecoveryActions', () => {
       ) VALUES ('message', 'message-1', 'work', 0, 'aes-256-gcm-v1', ?,
         datetime('now'), datetime('now'))
     `).run(Buffer.from('opaque-mail'))
+    database.prepare(`
+      INSERT INTO encrypted_provider_mail_records (
+        record_type, record_id, account_scope, envelope_scheme, payload, created_at, updated_at
+      ) VALUES ('provider-message', 'message-2', 'work', 'aes-256-gcm-v1', ?,
+        datetime('now'), datetime('now'))
+    `).run(Buffer.from('opaque-provider-mail'))
     const vault = new MemoryVault()
     vault.values.set('oauth.google.work.refresh-token', 'refresh')
     vault.values.set('cache.installation.data-key-v1', 'key')
@@ -73,6 +79,8 @@ describe('SqliteDeleteLocalDataRecoveryActions', () => {
     expect(database.prepare('SELECT COUNT(*) AS count FROM encrypted_account_records').get())
       .toEqual({ count: 0 })
     expect(database.prepare('SELECT COUNT(*) AS count FROM encrypted_records').get())
+      .toEqual({ count: 0 })
+    expect(database.prepare('SELECT COUNT(*) AS count FROM encrypted_provider_mail_records').get())
       .toEqual({ count: 0 })
     expect(database.prepare('SELECT status FROM encrypted_cache_state WHERE id = 1').get())
       .toEqual({ status: 'ready' })
