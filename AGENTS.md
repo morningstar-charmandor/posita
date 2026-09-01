@@ -55,11 +55,12 @@ exists deeper in the tree.
 - Versioned encrypted provider-account state now separates the hidden provider
   subject from a verified mailbox address and optional user-defined display label;
   the status renderer shows this human identity without exposing the opaque scope.
-- The renderer stays status-only until bounded source-detail UI is reviewed.
+- The renderer exposes bounded encrypted-local source inspection but keeps live
+  summary content hidden until the external original-source path is reviewed.
 - A versioned canonical source-detail contract and worker-backed query are
-  implemented with exact found/missing state, a 128 KiB plain-text limit,
-  recipients, safe attachment metadata, and no provider IDs or HTML; preload,
-  IPC, and renderer source-detail composition remain unimplemented.
+  composed through one fixed validated preload/IPC/UI path with exact found/missing
+  state, a 128 KiB plain-text limit, recipients, safe attachment metadata, loading,
+  safe error/retry, stale-result suppression, and no provider IDs or HTML.
 - Credential-free integration verifies the sync coordinator against that real
   file-backed worker with deterministic provider data; product startup remains uncomposed.
 - Provider-mail payloads and source identities are authenticated ciphertext;

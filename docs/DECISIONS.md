@@ -710,3 +710,25 @@
   graph reuse the same account-identity validator rather than duplicating it.
   No dependency, schema migration, compatibility path, provider adapter, credential,
   personal data, network request, external action, AI path, or mailbox mutation is added.
+
+## ADR-038: Compose source inspection without activating external mail
+
+- Status: accepted for Gate 2D
+- Context: the worker query was safe but unreachable, while displaying live summary
+  content before source inspection and external-source behavior were reviewed would
+  weaken provenance. A generic IPC method or provider fallback would widen privilege.
+- Decision: expose one fixed version-1 source-detail query through a main-owned
+  application service, trusted-main-frame IPC handler, validating preload client,
+  and renderer data source. The status surface exposes only generic retained-source
+  selectors, keeps summary subject/preview hidden, and renders bounded plain text,
+  account identity, recipients, and safe attachment metadata after explicit
+  selection. It covers loading, exact missing, safe retryable/non-retryable errors,
+  retry, unmount/supersession suppression, and explicit external-Gmail unavailability.
+  Compose the source only when the durable installation mode is `live`; sample
+  mode receives the stable unavailable result even if malformed local state left a row.
+- Consequence: deterministic encrypted source records can now be inspected through
+  the production security boundary without provider access or external navigation.
+  Open-original review and live summary rendering remain separate milestones. No
+  dependency, schema migration, compatibility path, credential, provider adapter,
+  network request, personal mailbox data, external action, AI path, or mailbox
+  mutation is added.

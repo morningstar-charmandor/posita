@@ -9,6 +9,7 @@ import {
 import { AccountLifecycleStatusService } from '../application/accountLifecycleStatus'
 import type { AccountLifecycleRepository } from '../application/accountLifecycle'
 import { ApplicationStateService } from '../application/applicationStateService'
+import { LiveMailMessageDetailService } from '../application/liveMailMessageDetailService'
 import { LocalDataDeletionCommandService } from '../application/localDataDeletionCommand'
 import { AccountConnectionRecoveryCommandService } from '../application/accountConnectionRecoveryCommand'
 import { MailApplicationService } from '../application/mailApplicationService'
@@ -17,6 +18,7 @@ import {
   createExecuteLocalDataDeletionHandler,
   createExecuteAccountConnectionRecoveryHandler,
   createLoadApplicationStateHandler,
+  createLoadLiveMailMessageDetailHandler,
   createPrepareLocalDataDeletionHandler,
   createPrepareAccountConnectionRecoveryHandler,
   LocalDataDeletionIpcAuthorization
@@ -252,6 +254,35 @@ describe('load application-state IPC handler', () => {
         },
         connectConsent: GOOGLE_CONNECT_CONSENT
       }
+    })
+  })
+})
+
+describe('load live-mail source-detail IPC handler', () => {
+  const detailService = new LiveMailMessageDetailService({
+    loadMessageDetail: async (request) => ({
+      version: 1,
+      status: 'missing',
+      accountId: request.accountId,
+      messageId: request.messageId
+    })
+  })
+
+  it('rejects untrusted and malformed requests before reading source mail', async () => {
+    await expect(createLoadLiveMailMessageDetailHandler(detailService, () => false)(event, {
+      version: 1, accountId: 'account-1', messageId: 'message-1'
+    })).resolves.toMatchObject({ ok: false, error: { code: 'UNTRUSTED_SENDER' } })
+    await expect(createLoadLiveMailMessageDetailHandler(detailService, () => true)(event, {
+      version: 1, accountId: '../private', messageId: 'message-1'
+    })).resolves.toMatchObject({ ok: false, error: { code: 'INVALID_REQUEST' } })
+  })
+
+  it('returns an account-and-message-bound result to a trusted main frame', async () => {
+    await expect(createLoadLiveMailMessageDetailHandler(detailService, () => true)(event, {
+      version: 1, accountId: 'account-1', messageId: 'message-1'
+    })).resolves.toEqual({
+      ok: true,
+      value: { version: 1, status: 'missing', accountId: 'account-1', messageId: 'message-1' }
     })
   })
 })

@@ -415,8 +415,9 @@ unchanged. The application-state method is asynchronous so file-backed decryptio
 never blocks Electron main.
 
 The renderer distinguishes live-empty, recorded-syncing, offline, attention, and
-cached-data states. It intentionally does not render the summary content yet:
-source-detail UI and the separately reviewed open-original
+cached-data states. It intentionally does not render summary content yet. A user
+may select a generic bounded local locator to inspect its encrypted plain-text
+source through a separate fixed query, while the separately reviewed open-original
 path must be complete before the live workspace is enabled. Its reload button
 re-queries local state only and never starts provider sync.
 
@@ -428,7 +429,9 @@ identity, visible encrypted account identity, sender/recipients, timestamps,
 subject, read state, safe attachment metadata, and at most 128 KiB of plain text
 with an explicit truncation flag. It excludes provider message/thread/attachment
 IDs, provider HTML, content IDs, labels, paths, keys, and raw failures. This source
-is not yet composed through preload, IPC, or renderer UI.
+is composed through one application service, trusted-main-frame IPC handler,
+validating preload client, and renderer data source. The UI covers loading, exact
+missing, safe error, retry, and stale-result suppression without external navigation.
 
 `ProviderMailLifecycleOwner` now defines the credential-free composition order
 above the existing sync coordinator, mail-mode service, retention owner,

@@ -1694,6 +1694,41 @@ Limitations: only deterministic encrypted records exercise the query. It is not
 reachable from the renderer and therefore does not yet provide loading, stale,
 error, or retry UX. That credential-free composition is the next milestone.
 
+## Gate 2D milestone — Composed encrypted-local source inspection
+
+Date: 2026-09-01
+Checkpoint: use the Git commit whose subject is `feat: compose safe source inspection`
+
+Goal: make the verified canonical source query usable through the production
+desktop boundary without activating Gmail, external navigation, or live summaries.
+
+Delivered:
+
+- one live-mode-only main-owned source-detail service and trusted-main-frame IPC handler,
+- one validating preload client and renderer data source with no generic IPC access,
+- explicitly selected encrypted-local source inspection that keeps summary content hidden,
+- accessible loading, exact missing, safe error, retry, and stale-result suppression,
+- bounded plain text, visible account provenance, recipients, and safe attachment metadata,
+- explicit copy that opening Gmail remains unavailable and no remote action occurred.
+
+Important decisions:
+
+- reuse the existing worker/projection source instead of adding a repository or index,
+- expose generic source selectors until the external original-source path is reviewed,
+- keep provider IDs, HTML, paths, keys, raw errors, provider calls, and mutations outside IPC,
+- add no dependency, schema migration, compatibility path, credential, provider adapter,
+  network request, personal mailbox data, external action, AI path, or mailbox mutation.
+
+Evidence: 55 test files and 350 tests pass. Strict typecheck, renderer security
+checks, and the production Electron build pass through `npm run verify`. New tests
+cover service failure mapping, preload input/output rejection, trusted-window IPC,
+loading, found, missing, safe retry, content withholding, and source request binding.
+
+Limitations: the running product still contains no canonical live message and no
+real account. Live summaries remain hidden, Gmail cannot be opened, and provider
+activation remains blocked. The next milestone is the open-original security and
+product review before any external action or summary rendering.
+
 ## How future entries should be written
 
 For each material milestone, record:

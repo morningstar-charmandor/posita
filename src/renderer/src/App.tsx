@@ -15,6 +15,10 @@ import {
 } from './application/localDataDeletionDataSource'
 import { LifecycleNotice } from './features/lifecycle/LifecycleNotice'
 import { LiveMailStatus } from './features/live-mail/LiveMailStatus'
+import {
+  desktopLiveMailMessageDetailDataSource,
+  type LiveMailMessageDetailDataSource
+} from './application/liveMailMessageDetailDataSource'
 import { Workspace } from './features/workspace/Workspace'
 
 type LoadState =
@@ -26,12 +30,14 @@ export interface AppProps {
   dataSource?: ApplicationStateDataSource
   deletionDataSource?: LocalDataDeletionDataSource
   recoveryDataSource?: AccountConnectionRecoveryDataSource
+  liveMailMessageDetailDataSource?: LiveMailMessageDetailDataSource
 }
 
 export function App({
   dataSource = desktopApplicationStateDataSource,
   deletionDataSource = desktopLocalDataDeletionDataSource,
-  recoveryDataSource = desktopAccountConnectionRecoveryDataSource
+  recoveryDataSource = desktopAccountConnectionRecoveryDataSource,
+  liveMailMessageDetailDataSource = desktopLiveMailMessageDetailDataSource
 }: AppProps): React.JSX.Element {
   const [attempt, setAttempt] = useState(0)
   const [state, setState] = useState<LoadState>({ status: 'loading' })
@@ -132,7 +138,11 @@ export function App({
   if (state.application.snapshot.dataMode === 'live-canonical') {
     return (
       <div className="application-ready-state">
-        <LiveMailStatus snapshot={state.application.snapshot} onReload={retry} />
+        <LiveMailStatus
+          snapshot={state.application.snapshot}
+          onReload={retry}
+          detailDataSource={liveMailMessageDetailDataSource}
+        />
         <LifecycleNotice
           lifecycle={state.application.lifecycle}
           accounts={state.application.snapshot.accounts.map((account) => ({

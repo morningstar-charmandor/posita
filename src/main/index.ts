@@ -5,6 +5,7 @@ import { AccountLifecycleStatusService } from './application/accountLifecycleSta
 import { AccountConnectionRecoveryCommandService } from './application/accountConnectionRecoveryCommand'
 import { ApplicationStateService } from './application/applicationStateService'
 import { LocalDataDeletionCommandService } from './application/localDataDeletionCommand'
+import { LiveMailMessageDetailService } from './application/liveMailMessageDetailService'
 import { systemClock } from './application/mailApplicationService'
 import type { MailRepository } from './application/mailRepository'
 import { RetentionMaintenanceOwner } from './application/retentionMaintenanceOwner'
@@ -91,6 +92,7 @@ app.whenReady().then(async () => {
   let service = new ApplicationStateService('recovery-required')
   let localDataDeletion = new LocalDataDeletionCommandService()
   let accountConnectionRecovery = new AccountConnectionRecoveryCommandService()
+  let liveMailMessageDetail = new LiveMailMessageDetailService()
 
   try {
     const runtime = await bootstrapLocalData(
@@ -122,6 +124,9 @@ app.whenReady().then(async () => {
         retentionMaintenance
       )
       accountConnectionRecovery = runtime.accountConnectionRecoveryCommandService
+      liveMailMessageDetail = new LiveMailMessageDetailService(
+        runtime.providerMailSourceDetailSource
+      )
     } else {
       service = new ApplicationStateService('local-data-deleted')
     }
@@ -131,6 +136,7 @@ app.whenReady().then(async () => {
 
   applicationIpc = registerApplicationIpc({
     applicationState: service,
+    liveMailMessageDetail,
     localDataDeletion,
     accountConnectionRecovery
   })

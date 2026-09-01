@@ -1,5 +1,9 @@
 import type { MailDataset } from './domain'
 import type { LiveMailSnapshotV2 } from './liveMail'
+import type {
+  LiveMailMessageDetailRequestV1,
+  LiveMailMessageDetailResultV1
+} from './liveMailDetail'
 
 export const POSITA_PROTOCOL_VERSION = 1 as const
 export const DELETE_LOCAL_DATA_CONFIRMATION_TEXT = 'DELETE LOCAL DATA' as const
@@ -56,6 +60,7 @@ export type GoogleConnectConsentV1 = typeof GOOGLE_CONNECT_CONSENT
 
 export const IPC_CHANNELS = Object.freeze({
   loadApplicationState: 'posita:application:load-state:v1',
+  loadLiveMailMessageDetail: 'posita:live-mail:load-message-detail:v1',
   applicationStateChanged: 'posita:application:state-changed:v1',
   prepareLocalDataDeletion: 'posita:local-data:prepare-deletion:v1',
   executeLocalDataDeletion: 'posita:local-data:execute-deletion:v1',
@@ -191,6 +196,7 @@ export type ApplicationStateV1 =
     }
 
 export type LoadApplicationStateResponseV1 = AppResultV1<ApplicationStateV1>
+export type LoadLiveMailMessageDetailResponseV1 = AppResultV1<LiveMailMessageDetailResultV1>
 
 export interface PrepareLocalDataDeletionRequestV1 {
   version: typeof POSITA_PROTOCOL_VERSION
@@ -326,6 +332,9 @@ export interface PositaDesktopApi {
   platform: string
   prototypeMode: true
   loadApplicationState(): Promise<LoadApplicationStateResponseV1>
+  loadLiveMailMessageDetail(
+    request: LiveMailMessageDetailRequestV1
+  ): Promise<LoadLiveMailMessageDetailResponseV1>
   onApplicationStateChanged(
     listener: (event: ApplicationStateChangedEventV1) => void
   ): () => void

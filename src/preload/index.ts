@@ -10,6 +10,7 @@ import {
   createExecuteAccountConnectionRecoveryClient,
   createPrepareAccountConnectionRecoveryClient
 } from './accountConnectionRecoveryClient'
+import { createLoadLiveMailMessageDetailClient } from './liveMailMessageDetailClient'
 
 const loadApplicationState = createLoadApplicationStateClient((request) =>
   ipcRenderer.invoke(IPC_CHANNELS.loadApplicationState, request))
@@ -26,11 +27,14 @@ const prepareAccountConnectionRecovery = createPrepareAccountConnectionRecoveryC
   ipcRenderer.invoke(IPC_CHANNELS.prepareAccountConnectionRecovery, request))
 const executeAccountConnectionRecovery = createExecuteAccountConnectionRecoveryClient((request) =>
   ipcRenderer.invoke(IPC_CHANNELS.executeAccountConnectionRecovery, request))
+const loadLiveMailMessageDetail = createLoadLiveMailMessageDetailClient((request) =>
+  ipcRenderer.invoke(IPC_CHANNELS.loadLiveMailMessageDetail, request))
 
 const api: PositaDesktopApi = Object.freeze({
   platform: process.platform,
   prototypeMode: true,
   loadApplicationState,
+  loadLiveMailMessageDetail,
   onApplicationStateChanged,
   prepareLocalDataDeletion,
   executeLocalDataDeletion,

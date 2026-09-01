@@ -191,9 +191,15 @@ Implemented:
   a 128 KiB plain-text cap with explicit truncation,
 - source-detail exclusion of provider account/message/thread/attachment IDs,
   content IDs, provider HTML, labels, paths, keys, and raw worker failures,
+- one fixed trusted-main-frame source-detail IPC/preload capability and renderer
+  data source with request/output validation at every process boundary, composed
+  only when the durable installation mode is live,
+- explicit encrypted-local source selection with loading, exact missing, safe
+  error, retry, unmount/supersession suppression, recipients, safe attachment
+  metadata, bounded plain text, and external-Gmail unavailability,
 - truthful live-empty, recorded-syncing, offline, attention-required, and cached-
-  data renderer states with local-status reload; canonical summary content remains
-  hidden until source-detail UI and open-original review,
+  data renderer states with local-status reload and bounded local source inspection;
+  canonical summary content remains hidden until open-original review,
 - read-worker key inclusion in confirmed full deletion and graceful normal shutdown
   that settles accepted reads before key erasure,
 - an explicit fixture compatibility decision: existing encrypted sample messages
@@ -219,8 +225,8 @@ Simulated or deliberately inactive:
 - canonical provider-mail and sync behavior is exercised only through
   deterministic fakes, an encrypted SQLite proof, and file-backed workers;
   retention and the bounded read-only live-state query are composed at startup,
-  while source-detail is worker-verified but has no preload, IPC, or renderer
-  caller, and ingestion/provider access remain uncomposed,
+  while source-detail is composed for bounded encrypted-local inspection and
+  ingestion/provider access remain uncomposed,
 - the schema-v10 sample-to-live service is trusted-main-only and unexposed; it
   has been verified with deterministic connected state but has no production
   connection, sync-start, preload, IPC, or UI caller,
@@ -236,7 +242,7 @@ Simulated or deliberately inactive:
 Not implemented:
 
 - Gmail OAuth, message ingestion, incremental history sync, or user-triggered/live disconnect,
-- canonical source-detail preload/IPC/UI composition and a reviewed open-original path,
+- a reviewed open-original path and live-summary rendering,
 - production activation of the approved provider-mail lifecycle,
 - user-triggered account disconnect or any remote mailbox mutation control,
 - automatic pending-disconnect resume with a live idempotent revocation adapter,
@@ -277,8 +283,8 @@ confirmed local deletion are complete at their current layers. Continue in this 
    Encrypted user-readable account identity is complete at its credential-free
    storage and status boundary. The bounded canonical source-detail query is also
    complete at its contract, encrypted projection, and native-worker boundary.
-   Next compose its loading, missing/stale, safe-error, and retry UI before
-   rendering live summaries.
+   Its loading, missing/stale, safe-error, and retry UI is now composed. Next
+   review the trusted external original-source path before rendering live summaries.
 5. Request explicit owner approval before composing a real Google adapter,
    credentials, browser authorization, connection activation, or live account.
 6. Keep real Gmail ingestion disabled until authorization activation is separately
@@ -301,7 +307,7 @@ single canonical projection and the existing sync-state repository remains the
 cursor source of truth. The automatic retention worker now performs bounded
 canonical decrypt/plan/delete/thread-rewrite/sanitization work without a plaintext
 index. Production composition now includes only the mode-aware worker read, the
-existing application-state IPC path, and a status-only live renderer. No dependency,
+existing application-state IPC path, and a bounded local-inspection live renderer. No dependency,
 provider adapter, sync start, external action, secret, personal mailbox data, or
 mutation was added. One intentional compatibility distinction remains:
 the legacy `Message` is a deterministic sample-presentation record, while only
@@ -313,9 +319,9 @@ external action, secret, personal mailbox data, or mutation was added. Provider-
 account record v2 and live snapshot v2 now project the verified encrypted mailbox
 address plus optional label while keeping the provider subject hidden; label
 editing remains unexposed. The canonical source-detail query now returns bounded
-plain text and safe metadata through the existing worker without provider IDs or
-HTML. Its preload/IPC/UI composition remains unimplemented. The next milestone is
-that credential-free source-detail surface, not OAuth or external Gmail navigation.
+plain text and safe metadata through the existing worker and a fixed validated
+trusted-main-frame preload/IPC/UI path without provider IDs or HTML. The next
+milestone is the open-original security/product review, not OAuth activation.
 The new abstractions are the shared `LiveMailMessageDetailV1` contract and the
 trusted `ProviderMailSourceDetailSource`; the existing projection and worker remain
 the single storage/read owner. No dependency, schema migration, compatibility
@@ -342,7 +348,7 @@ graph and directly executed worker graph.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 52 test files, 341 tests, strict typecheck, structure
+- Current verified baseline: 55 test files, 350 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,

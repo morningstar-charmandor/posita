@@ -170,18 +170,21 @@ Provider-account record v2 stores a provider-verified mailbox address and option
 user-defined display label in authenticated ciphertext, separate from the hidden
 provider subject. Live status shows that identity instead of the opaque account
 scope, with an explicit unavailable state for incomplete local records. The live
-renderer remains status-only until source-detail UI and open-original behavior are
+renderer now offers explicitly selected, bounded encrypted-local source inspection
+while keeping summary content hidden until open-original behavior is separately
 reviewed. Reloading checks local
 state; it does not contact Gmail or retry sync. No provider, credential, network
 request, AI service, or mailbox mutation was activated.
 
-A credential-free canonical source-detail query is now implemented at the shared,
-encrypted SQLite, and packaged worker layers. It accepts only an opaque Posita
+A credential-free canonical source-detail query is now implemented and composed
+through the shared, encrypted SQLite, packaged worker, fixed IPC/preload, and
+renderer layers. It accepts only an opaque Posita
 account/message pair and returns exact found/missing state, canonical provenance,
 visible encrypted account identity, sender/recipients, timestamps, subject, safe
 attachment metadata, and at most 128 KiB of plain text with explicit truncation.
-Provider IDs, HTML, paths, keys, and raw errors are excluded. This query is not yet
-exposed through preload, IPC, or the renderer, so live summary content remains hidden.
+Provider IDs, HTML, paths, keys, and raw errors are excluded. The renderer covers
+loading, exact missing, safe error, retry, and superseded-result behavior, states
+that Gmail opening is unavailable, and still keeps live summary content hidden.
 
 Read the build boundaries before extending the prototype:
 
@@ -245,7 +248,8 @@ never depends on access to an earlier conversation.
 
 The React renderer has no Node.js access. Electron context isolation and process
 sandboxing are enabled, navigation is denied by default, and the preload bridge
-exposes one versioned read-only application-state method and two narrow pairs of
+exposes versioned read-only application-state and one-message source-detail
+methods plus two narrow pairs of
 prepare/execute methods for confirmed local deletion and confirmed incomplete-
 connection recovery, plus non-sensitive desktop metadata. SQLite lives behind
 main-process repository, sanitization, and

@@ -312,15 +312,16 @@ At the current Gate 2D foundation checkpoint, Posita has:
   key material, paths, and raw failures excluded,
 - encrypted provider-account display identity that keeps the Google subject hidden
   while projecting a verified mailbox address and optional label to safe status UI,
-- a bounded canonical source-detail worker query with exact found/missing state,
-  canonical provenance, recipients, safe attachment metadata, and explicitly
-  truncated plain text while excluding provider IDs and HTML,
-- truthful status-only live-empty, recorded-syncing, offline, attention, and cached-
-  data UI that never falls back to samples or claims Gmail or AI is active,
+- a bounded canonical source-detail worker query composed through fixed validated
+  IPC/preload and explicit encrypted-local inspection, with exact found/missing,
+  safe retry, stale-result suppression, canonical provenance, recipients, safe
+  attachment metadata, and truncated plain text while excluding provider IDs and HTML,
+- truthful bounded local-inspection live-empty, recorded-syncing, offline, attention,
+  and cached-data UI that never falls back to samples or claims Gmail or AI is active,
 - an explicit compatibility boundary that keeps fixture `Message` records sample-
   only rather than fabricating provider identity,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 52 automated test files containing 341 passing tests,
+- 55 automated test files containing 350 passing tests,
 - a desktop visual and accessibility-tree check of the local-only Settings entry,
   sample-account controls, normal no-recovery-needed outcome, and automatic
   retention card with readable next/last status and Gmail non-mutation copy,
@@ -344,9 +345,10 @@ still unexposed. A new credential-free lifecycle owner now proves startup,
 offline, retention, disconnect, deletion, shutdown, and key-teardown ordering.
 The live application read-model boundary is now verified at a status-only layer,
 and its account provenance is a human-readable encrypted address/optional label
-rather than an opaque scope. A bounded canonical source-detail query is now verified
-through the real encrypted worker but remains unexposed. The next milestone is its
-loading, missing/stale, safe-error, and retry UI before live summaries are displayed. Real OAuth,
+rather than an opaque scope. A bounded canonical source-detail query is now composed
+through fixed validated desktop boundaries with loading, missing/stale, safe-error,
+retry, and explicit encrypted-local inspection. The next milestone is the external
+original-source security/product review before live summaries are displayed. Real OAuth,
 browser activation, credentials, live account
 connection, and production sync remain separate actions blocked behind explicit
 owner approval.
@@ -396,6 +398,6 @@ has one deterministic application owner, and the running product can distinguish
 sample from live-empty, offline, or cached canonical state through a bounded worker
 read without displaying private live summaries. Its status-only account provenance
 now uses encrypted human-readable identity while keeping provider subjects hidden.
-The worker-backed canonical detail boundary is also verified with deterministic
-data only. Real mail remains blocked until source-detail UI, production sync, and the remaining provider
-activation gates pass.
+The worker-backed canonical detail boundary is also composed with deterministic
+data only. Real mail remains blocked until open-original review, production sync,
+and the remaining provider activation gates pass.

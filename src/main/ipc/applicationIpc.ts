@@ -10,6 +10,7 @@ import {
   type ExecuteLocalDataDeletionResponseV1,
   type LoadApplicationStateRequestV1,
   type LoadApplicationStateResponseV1,
+  type LoadLiveMailMessageDetailResponseV1,
   type LocalDataDeletionErrorCodeV1,
   type LocalDataDeletionResultV1,
   type PrepareLocalDataDeletionRequestV1,
@@ -17,6 +18,11 @@ import {
   type PrepareAccountConnectionRecoveryRequestV1,
   type PrepareAccountConnectionRecoveryResponseV1
 } from '../../shared/contracts'
+import {
+  isLiveMailMessageDetailRequestV1,
+  isLiveMailMessageDetailResultV1,
+  type LiveMailMessageDetailRequestV1
+} from '../../shared/liveMailDetail'
 import {
   isExecuteLocalDataDeletionRequest,
   isExecuteLocalDataDeletionResponse,
@@ -30,6 +36,7 @@ import {
 import type { ApplicationStateService } from '../application/applicationStateService'
 import type { LocalDataDeletionCommandService } from '../application/localDataDeletionCommand'
 import type { AccountConnectionRecoveryCommandService } from '../application/accountConnectionRecoveryCommand'
+import type { LiveMailMessageDetailService } from '../application/liveMailMessageDetailService'
 
 type TrustPredicate = (event: IpcMainInvokeEvent) => boolean
 
@@ -127,6 +134,31 @@ export const createLoadApplicationStateHandler = (
   return isLoadApplicationStateResponse(response)
     ? response
     : errorResponse('PROTOCOL_ERROR', 'Posita returned an invalid application-state response.')
+}
+
+export const createLoadLiveMailMessageDetailHandler = (
+  service: LiveMailMessageDetailService,
+  isTrusted: TrustPredicate
+) => async (
+  event: IpcMainInvokeEvent,
+  request: unknown
+): Promise<LoadLiveMailMessageDetailResponseV1> => {
+  const fail = (
+    code: 'INVALID_REQUEST' | 'UNTRUSTED_SENDER' | 'PROTOCOL_ERROR',
+    message: string
+  ): LoadLiveMailMessageDetailResponseV1 => ({
+    ok: false,
+    error: { version: POSITA_PROTOCOL_VERSION, code, message, retryable: false }
+  })
+  if (!isTrusted(event)) {
+    return fail('UNTRUSTED_SENDER', 'This window is not allowed to inspect source mail.')
+  }
+  if (!isLiveMailMessageDetailRequestV1(request)) {
+    return fail('INVALID_REQUEST', 'The source-mail request was invalid or unsupported.')
+  }
+  const response = await service.load(request)
+  if (response.ok ? isLiveMailMessageDetailResultV1(response.value) : true) return response
+  return fail('PROTOCOL_ERROR', 'Posita returned an invalid source-mail response.')
 }
 
 const deletionErrorResponse = (
@@ -268,6 +300,7 @@ export interface ApplicationIpcRegistration {
 
 export interface ApplicationIpcServices {
   applicationState: ApplicationStateService
+  liveMailMessageDetail: LiveMailMessageDetailService
   localDataDeletion: LocalDataDeletionCommandService
   accountConnectionRecovery: AccountConnectionRecoveryCommandService
 }
@@ -279,6 +312,10 @@ export const registerApplicationIpc = (services: ApplicationIpcServices): Applic
     event.senderFrame === event.sender.mainFrame
 
   const handler = createLoadApplicationStateHandler(services.applicationState, isTrusted)
+  const loadMessageDetail = createLoadLiveMailMessageDetailHandler(
+    services.liveMailMessageDetail,
+    isTrusted
+  )
   const deletionAuthorization = new LocalDataDeletionIpcAuthorization()
   const prepareDeletion = createPrepareLocalDataDeletionHandler(
     services.localDataDeletion,
@@ -304,6 +341,10 @@ export const registerApplicationIpc = (services: ApplicationIpcServices): Applic
   ipcMain.handle(
     IPC_CHANNELS.loadApplicationState,
     (event, request: LoadApplicationStateRequestV1) => handler(event, request)
+  )
+  ipcMain.handle(
+    IPC_CHANNELS.loadLiveMailMessageDetail,
+    (event, request: LiveMailMessageDetailRequestV1) => loadMessageDetail(event, request)
   )
   ipcMain.handle(
     IPC_CHANNELS.prepareLocalDataDeletion,
@@ -347,6 +388,7 @@ export const registerApplicationIpc = (services: ApplicationIpcServices): Applic
     },
     dispose() {
       ipcMain.removeHandler(IPC_CHANNELS.loadApplicationState)
+      ipcMain.removeHandler(IPC_CHANNELS.loadLiveMailMessageDetail)
       ipcMain.removeHandler(IPC_CHANNELS.prepareLocalDataDeletion)
       ipcMain.removeHandler(IPC_CHANNELS.executeLocalDataDeletion)
       ipcMain.removeHandler(IPC_CHANNELS.prepareAccountConnectionRecovery)

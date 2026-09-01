@@ -253,7 +253,7 @@ describe('Posita vertical slice', () => {
 
     expect(await screen.findByRole('heading', { name: 'Encrypted live-mail data is available' }))
       .toBeInTheDocument()
-    expect(screen.getByText(/live workspace remains disabled/i)).toBeInTheDocument()
+    expect(screen.getByText(/full live workspace stays disabled/i)).toBeInTheDocument()
     expect(screen.queryByText('Private canonical subject')).not.toBeInTheDocument()
     expect(screen.queryByText('Private canonical preview.')).not.toBeInTheDocument()
   })
