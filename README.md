@@ -135,6 +135,12 @@ ciphertext, preserves sync cursors, and completes or resumes SQLite sanitization
 The canonical projection remains empty in the running product, and sync, Gmail,
 OAuth, credentials, preload, and UI activation remain uncomposed.
 
+The credential-free sync coordinator is now also verified end to end against the
+real file-backed encrypted projection worker and deterministic provider. The
+integration covers multi-page initial sync, encrypted-cursor resume, replay,
+cursor conflicts, cancellation, and key teardown. This is test composition only:
+startup sync, polling, Gmail, credentials, preload, and UI remain inactive.
+
 Read the build boundaries before extending the prototype:
 
 - [Agent contract](AGENTS.md)
@@ -206,5 +212,5 @@ and the renderer receives only a validated application state. Source and
 derived fixture records
 use authenticated encryption with an OS-protected installation key. Neither the
 key nor vault has an IPC surface. Personal-mail ingestion remains blocked until
-the worker-backed sync lifecycle, sample-to-live transition, and separately
-approved provider activation are complete.
+the sample-to-live transition, production sync lifecycle, and separately approved
+provider activation are complete.

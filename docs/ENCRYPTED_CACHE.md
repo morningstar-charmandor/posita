@@ -209,6 +209,13 @@ preserves account cursors, and resumes pending sanitization. This is an
 intentional bounded compatibility period, not a second provider model or permission
 to ingest Gmail.
 
+The credential-free coordinator is now integration-tested against this actual
+file-backed worker. The proof covers consecutive atomic pages, encrypted cursor
+resume, replay without duplicate source rows, a real checkpoint conflict that
+preserves the externally committed cursor, cancellation before provider output,
+and key teardown. The database contains only deterministic test ciphertext and is
+temporary; no production composition or provider access is created.
+
 ## Deletion boundary
 
 The repository separates logical encrypted-record deletion from SQLite

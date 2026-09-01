@@ -70,6 +70,12 @@ production sync composition. Schema v9, its file-backed worker, fixed 90-day
 retention, and journaled account removal are verified but remain empty and do not
 authorize provider access.
 
+The coordinator and file-backed worker are now exercised together using only the
+deterministic provider. Multi-page initial sync, incremental replay, encrypted
+cursor resume, conflict refusal, cancellation, and key teardown are verified.
+This is a credential-free test boundary, not a Gmail adapter, polling owner,
+startup composition, connection command, or live-account path.
+
 ## Desktop OAuth flow
 
 Posita will use Google's installed-desktop application flow with Authorization
@@ -180,5 +186,5 @@ compatibility view and is not a provider contract. Posita will not invent Gmail
 IDs or recipient metadata to migrate it. `GATE_2D_READINESS.md` keeps live Gmail
 authorization and ingestion blocked until the new canonical records have an
 encrypted atomic projection and complete local lifecycle. The sample-to-live
-transition, worker-backed sync lifecycle, and remaining connection/disconnect
+transition, production sync lifecycle, and remaining connection/disconnect
 activation gates still require review.

@@ -162,6 +162,12 @@ erases its retained key on teardown. No sync startup owner, provider, IPC, UI, o
 fixture conversion is added by schema v9; only automatic retention invokes the
 projection inside its existing worker.
 
+A credential-free integration now drives this worker through the real sync
+coordinator and deterministic provider. It verifies consecutive batch/cursor
+commits, encrypted resume, replay without duplicate source rows, a stale-cursor
+race that preserves the winning transaction, cancellation, and key teardown on a
+temporary file database. It is test composition only and creates no product data.
+
 Retention replacements validate and encrypt the complete next dataset before
 opening a write transaction. Source messages, derived topics, brief items, and
 unreferenced people are replaced atomically. The transaction records

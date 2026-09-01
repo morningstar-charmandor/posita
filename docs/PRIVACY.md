@@ -6,8 +6,8 @@ Posita currently contains deterministic sample mail only. Gate 2C stores that
 dataset as independently authenticated encrypted records and migrates existing
 fixture databases away from plaintext. Account-scoped retention, disconnect, and
 full local deletion are now tested at their credential-free boundaries. Real
-mailbox ingestion remains disabled until the worker-backed sync lifecycle,
-sample-to-live transition, and separately approved provider activation are
+mailbox ingestion remains disabled until the sample-to-live transition,
+production sync lifecycle, and separately approved provider activation are
 complete. No real account exists.
 
 The canonical provider-mail contract validates sensitive normalized source data

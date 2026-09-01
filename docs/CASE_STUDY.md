@@ -34,9 +34,10 @@ fakes. An empty schema-v9 authenticated projection now proves atomic canonical
 message/thread and cursor persistence without exposing provider identity in
 queryable metadata. A packaged serial worker now proves that file-backed projection
 work stays off Electron main, while the automatic retention worker applies the
-fixed 90-day window to canonical ciphertext and repairs affected threads. Live
-Gmail remains correctly blocked by the worker-backed sync lifecycle,
-sample-to-live transition, and production adapters.
+fixed 90-day window to canonical ciphertext and repairs affected threads. The
+coordinator-to-worker path is now verified end to end with the deterministic
+provider. Live Gmail remains correctly blocked by the sample-to-live transition,
+production lifecycle composition, and provider adapters.
 
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
 
@@ -299,10 +300,13 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - worker-owned canonical retention that keeps the exact 90-day boundary, removes
   expired messages, repairs or removes encrypted threads, preserves cursors, and
   resumes pending sanitization without a plaintext index,
+- credential-free end-to-end integration from deterministic provider through the
+  sync coordinator to the real file-backed encrypted worker, including replay,
+  cursor-conflict preservation, cancellation, and key teardown,
 - an explicit compatibility boundary that keeps fixture `Message` records sample-
   only rather than fabricating provider identity,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 44 automated test files containing 293 passing tests,
+- 45 automated test files containing 296 passing tests,
 - a desktop visual and accessibility-tree check of the local-only Settings entry,
   sample-account controls, normal no-recovery-needed outcome, and automatic
   retention card with readable next/last status and Gmail non-mutation copy,
@@ -317,9 +321,9 @@ The discard-only local recovery flow, automatic fixed-window retention lifecycle
 canonical provider-mail contract, and credential-free sync coordinator are complete
 at their current Gate 2D boundaries. The empty encrypted canonical-mail projection,
 atomic cursor store, journaled account removal, and worker-owned 90-day canonical
-retention are now verified. The next milestone connects the deterministic sync
-coordinator to the real file-backed projection worker without activating startup
-sync. Real OAuth,
+retention are now verified. The deterministic sync coordinator also passes real
+file-backed worker integration without activating startup sync. The next milestone
+is an owner-reviewed sample-to-live transition and lifecycle decision. Real OAuth,
 browser activation, credentials, live account connection, and production sync
 remain separate actions blocked behind explicit owner approval.
 
@@ -361,5 +365,6 @@ protected installation key. It now also validates one canonical provider-mail
 shape and coordinates credential-free synchronization through deterministic
 interfaces, with an empty authenticated SQLite projection proving atomic canonical
 records, cursor persistence, journaled removal, and worker-owned 90-day retention.
-Real mail remains blocked until the worker-backed sync lifecycle and remaining
-provider activation gates pass.
+The coordinator-to-worker path is also verified with deterministic file-backed
+integration. Real mail remains blocked until the sample-to-live and production
+lifecycle decisions plus remaining provider activation gates pass.

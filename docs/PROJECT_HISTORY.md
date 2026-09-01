@@ -1426,6 +1426,50 @@ Limitations: this does not run a sync coordinator against the file-backed worker
 activate startup sync, or define the sample-to-live transition. Gmail, OAuth, AI,
 live accounts, and remote mailbox actions remain blocked.
 
+## Gate 2D milestone — Credential-free worker-backed sync integration
+
+Date: 2026-09-01
+Checkpoint: use the Git commit whose subject is `test: verify worker-backed mail sync`
+
+Goal: prove the existing sync coordinator and real file-backed encrypted
+projection operate as one boundary before introducing any production lifecycle,
+provider, credential, or visible live-mail state.
+
+Delivered:
+
+- a real temporary file-database integration from deterministic provider through
+  `MailSyncCoordinator` and `WorkerThreadMailSyncProjection`,
+- consecutive initial pages with atomic record/cursor commits,
+- a second sync that resumes from the encrypted cursor and classifies replay
+  without creating duplicate canonical rows,
+- a real stale-cursor race where an external worker commit remains authoritative
+  and the coordinator receives the typed checkpoint conflict,
+- cancellation of blocked provider work before worker-key teardown,
+- refusal of later projection work after the retained key context is destroyed,
+- ciphertext assertions proving provider identity and body fixtures do not appear
+  in queryable rows or stored payload bytes.
+
+Important decisions:
+
+- add integration evidence without introducing a second coordinator, projection,
+  lifecycle owner, or production composition,
+- keep bounded SQLite transactions non-interruptible; cancellation is observed at
+  the provider/application boundary and teardown follows settled work,
+- preserve an externally advanced cursor rather than retry or overwrite it inside
+  the integration boundary,
+- add no dependency, schema migration, startup owner, polling, IPC/UI surface,
+  provider SDK, credential, network action, personal data, or mailbox mutation.
+
+Evidence: 45 test files and 296 tests pass. Strict typecheck, renderer
+structure/security checks, and all production Electron builds pass. The new tests
+exercise actual worker threads and temporary file-backed SQLite using conspicuous
+credential-free fixtures only.
+
+Limitations: the running product still creates no canonical records and starts no
+sync. The sample-to-live transition and production lifecycle ownership require an
+explicit owner-reviewed decision before composition. Gmail, OAuth, AI, live
+accounts, and remote mailbox actions remain blocked.
+
 ## How future entries should be written
 
 For each material milestone, record:

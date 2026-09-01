@@ -162,6 +162,10 @@ Implemented:
   repair/removal, cursor preservation, and account-scoped opaque-row handling,
 - canonical retention composed into the existing startup/daily file-backed
   maintenance worker, including resumable sanitization after an interrupted pass,
+- credential-free end-to-end sync integration through the deterministic provider,
+  application coordinator, and real file-backed encrypted projection worker,
+  covering multi-page commits, encrypted-cursor resume, replay, real conflicts,
+  cancellation, and retained-key teardown,
 - an explicit fixture compatibility decision: existing encrypted sample messages
   remain a presentation view and never receive fabricated provider provenance,
 - truthful sample-mode labels that do not describe fixture accounts, briefs, or
@@ -195,7 +199,7 @@ Simulated or deliberately inactive:
 Not implemented:
 
 - Gmail OAuth, message ingestion, incremental history sync, or user-triggered/live disconnect,
-- production sync composition,
+- sample-to-live transition policy and production sync lifecycle composition,
 - user-triggered account disconnect or any remote mailbox mutation control,
 - automatic pending-disconnect resume with a live idempotent revocation adapter,
 - a model provider, embeddings, classification, retrieval, or generation,
@@ -229,11 +233,10 @@ confirmed local deletion are complete at their current layers. Continue in this 
    automatic startup repair; failed execution must continue to require fresh review.
 3. Treat automatic retention scheduling and its Settings status as complete at
    the current fixed 90-day boundary. Do not add configurable retention yet.
-4. Treat canonical fixed-window retention and journaled account removal as
-   complete at their credential-free boundaries. Continue with the next milestone
-   in `GATE_2D_READINESS.md`: exercise the sync coordinator end to end against the
-   real file-backed projection worker and deterministic provider, while keeping
-   startup, preload, UI, network, and Google uncomposed.
+4. Treat canonical fixed-window retention, journaled account removal, and the
+   coordinator-to-file-worker integration as complete at their credential-free
+   boundaries. Before production composition, obtain an explicit owner decision
+   on the sample-to-live transition and document its fail-closed lifecycle rules.
 5. Request explicit owner approval before composing a real Google adapter,
    credentials, browser authorization, connection activation, or live account.
 6. Keep real Gmail ingestion disabled until authorization activation is separately
@@ -244,8 +247,9 @@ Do not solve encrypted search casually. Any index must avoid becoming a second
 plaintext mailbox. Record the selected search tradeoff in `docs/DECISIONS.md`.
 
 Milestone change report: canonical provider mail contracts, sync ownership,
-encrypted atomic persistence, fixed-window retention, and disconnect deletion are
-credential-free verified, not activated for ingestion. Schema v9 remains the
+encrypted atomic persistence, fixed-window retention, disconnect deletion, and
+coordinator-to-worker operation are credential-free verified, not activated for
+ingestion. Schema v9 remains the
 single canonical projection and the existing sync-state repository remains the
 cursor source of truth. The automatic retention worker now performs bounded
 canonical decrypt/plan/delete/thread-rewrite/sanitization work without a plaintext
@@ -254,8 +258,8 @@ action, secret, personal mailbox data, or mutation was added. One intentional
 compatibility distinction remains:
 the legacy `Message` is a deterministic sample-presentation record, while only
 `ProviderMailMessageV1` may enter future provider ingestion. There is no conversion
-path because Posita will not invent provider provenance. The next milestone is a
-credential-free coordinator-to-file-worker integration proof, not OAuth.
+path because Posita will not invent provider provenance. The next milestone is an
+owner-reviewed sample-to-live transition decision, not OAuth.
 
 ## How to resume
 
@@ -275,7 +279,7 @@ credential-free coordinator-to-file-worker integration proof, not OAuth.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 44 test files, 293 tests, strict typecheck, structure
+- Current verified baseline: 45 test files, 296 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,

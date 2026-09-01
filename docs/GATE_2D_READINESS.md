@@ -14,8 +14,9 @@ recovery, and disconnect orchestration contracts.
 deliberate gate, not a failed implementation. The canonical provider-independent
 mail contract, credential-free sync coordinator, empty schema-v9 encrypted
 projection, and packaged file-backed projection worker are now verified. The
-worker remains uncomposed from sync. Canonical provider-mail retention and
-journaled deletion are complete at their credential-free boundaries, but no
+coordinator-to-worker boundary is now integration-tested with the deterministic
+provider but remains uncomposed from the running product. Canonical provider-mail
+retention and journaled deletion are complete at their credential-free boundaries, but no
 Google adapter, production sync composition, or sample-to-live transition exists.
 Disconnect also has no production revoker or active user command.
 
@@ -38,7 +39,7 @@ SDK, mailbox data, or model provider was used for this audit.
 | Full local deletion | Ready | confirmed Settings command, durable recovery, keyless restart, cryptographic erasure | Removes local projection ciphertext; never deletes remote provider mail |
 | Account disconnect | Orchestrator-ready, inactive | journaled idempotent application service and deterministic revoker tests | Needs a real idempotent revoker and separately reviewed user command |
 | Canonical provider mail model | Lifecycle-ready, empty | exact validators, schema-v9 authenticated envelopes, opaque row IDs, packaged serial worker, fixed-window retention, and journaled account deletion | Needs credential-free sync lifecycle integration before provider activation |
-| Sync coordinator | Contract-ready, uncomposed | 90-day initial path, batching, worker-backed atomic cursor ordering, replay, isolation, rollback, bounded recovery/concurrency, and cancellation are tested | Needs lifecycle and production composition |
+| Sync coordinator | Worker-integrated, uncomposed | 90-day initial path, real file-worker batching/cursor ordering, replay, conflict preservation, bounded recovery/concurrency, cancellation, and key teardown are tested | Needs sample-to-live and production lifecycle decisions |
 | Gmail adapter | **Not implemented** | adapter contract is documented only | Blocks OAuth and mail access |
 | AI provider | Deferred | no model adapter, prompt, embedding, or model output path | Fixture summaries/drafts remain explicitly simulated |
 
@@ -68,7 +69,7 @@ pending sanitization is resumed. The inactive journaled disconnect removes the
 selected account's canonical records after fixture removal and retries the phase
 idempotently. Installation-wide deletion removes all schema-v9 ciphertext keylessly.
 
-### 2. Compose the resumable sync owner only after persistence
+### 2. Keep the worker-integrated sync owner inactive until transition review
 
 One trusted coordinator now owns the provider boundary and proves, with a
 deterministic fake:
@@ -85,6 +86,13 @@ deterministic fake:
 
 UI and AI features may request this coordinator; neither may become another Gmail
 client or polling owner.
+
+The coordinator now runs against the real file-backed encrypted projection in
+credential-free integration tests. Consecutive pages and incremental replay use
+the persisted cursor; an externally advanced cursor wins a real conflict; blocked
+provider work cancels before teardown; and the retained worker key is explicitly
+destroyed. No application startup, polling, UI, network, or provider composition
+was added.
 
 ### 3. Disconnect activation paired with connection activation
 
@@ -110,15 +118,16 @@ state, screenshots, tests, or portfolio assets.
 
 ## Recommended next milestone
 
-Proceed with a **credential-free worker-backed sync integration milestone**:
+Proceed with a **sample-to-live transition decision milestone** before composing
+production sync:
 
-1. exercise the existing `MailSyncCoordinator` against the real file-backed
-   encrypted projection worker and deterministic provider fake,
-2. prove batch/cursor ordering, replay, cancellation, and safe teardown across
-   that actual boundary without composing startup polling,
-3. preserve the empty startup state and sample-only compatibility path,
-4. keep preload, UI activation, Google code, credentials, network access, and
-   live data unchanged.
+1. decide exactly when deterministic samples stop being the visible data source,
+2. define fail-closed startup and recovery behavior so sample and provider records
+   can never appear as one mailbox dataset,
+3. specify lifecycle ownership for sync start, cancellation, disconnect, retention,
+   full deletion, and key teardown before adding composition,
+4. keep preload, UI activation, Google code, credentials, network access, and live
+   data unchanged until that decision is accepted.
 
 This follows already accepted architecture and does not itself authorize Gmail.
 It is the smallest safe step that makes the new encrypted storage obey Posita's
@@ -142,10 +151,13 @@ already accepted responsiveness, retention, and deletion boundaries.
 - `WorkerThreadMailSyncProjection` packages serialized file-backed reads/commits,
   exact request/result validation, typed conflict mapping, bounded queueing,
   malformed-output refusal, transferable key copies, and explicit key destruction.
+- The coordinator-to-worker integration proves multi-page initial sync,
+  incremental encrypted-cursor resume, replay classification, real checkpoint
+  conflict preservation, cancellation, and key teardown with the deterministic provider.
 - The inactive disconnect service requires account-scoped canonical projection
   deletion in its durable mail-data phase and safely retries after fixture removal
   has already committed.
-- The verified baseline is 44 test files and 293 tests plus strict TypeScript,
+- The verified baseline is 45 test files and 296 tests plus strict TypeScript,
   renderer structure/security checks, and production Electron builds.
 - No dependency, production provider adapter, credential,
   personal mailbox data, network action, renderer surface, or mailbox mutation was

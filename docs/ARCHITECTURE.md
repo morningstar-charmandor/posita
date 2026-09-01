@@ -375,6 +375,13 @@ polling schedule is composed. File-backed reads and commits now have a packaged 
 worker adapter with a bounded validated protocol, transferable in-memory key copy,
 safe errors, and explicit key cleanup. The adapter is verified but uncomposed.
 
+A credential-free integration test now wires that coordinator to the packaged
+file-backed projection worker and deterministic provider. It proves multi-page
+initial commit, encrypted-cursor resume, replay classification, preservation of
+an externally advanced cursor on conflict, provider cancellation, and teardown
+of the worker's retained key. This test composition is not a startup owner,
+polling schedule, provider adapter, renderer capability, or live mailbox path.
+
 The inactive disconnect orchestrator's existing `mail-data-delete-pending` phase
 now runs both fixture account removal and worker-backed canonical projection
 removal before advancing its journal. Both actions are idempotent: if the second
