@@ -206,10 +206,10 @@ const applicationState = new ApplicationStateService(
 )
 
 describe('load application-state IPC handler', () => {
-  it('rejects untrusted senders before inspecting the request', () => {
+  it('rejects untrusted senders before inspecting the request', async () => {
     const handler = createLoadApplicationStateHandler(applicationState, () => false)
 
-    expect(handler(event, { version: 1 })).toEqual({
+    expect(await handler(event, { version: 1 })).toEqual({
       ok: false,
       error: {
         version: 1,
@@ -220,19 +220,19 @@ describe('load application-state IPC handler', () => {
     })
   })
 
-  it('rejects unknown protocol versions and additional capabilities', () => {
+  it('rejects unknown protocol versions and additional capabilities', async () => {
     const handler = createLoadApplicationStateHandler(applicationState, () => true)
 
-    expect(handler(event, { version: 2, channel: 'send-mail' })).toMatchObject({
+    expect(await handler(event, { version: 2, channel: 'send-mail' })).toMatchObject({
       ok: false,
       error: { code: 'INVALID_REQUEST', retryable: false }
     })
   })
 
-  it('returns the validated application snapshot for an allowed request', () => {
+  it('returns the validated application snapshot for an allowed request', async () => {
     const handler = createLoadApplicationStateHandler(applicationState, () => true)
 
-    expect(handler(event, { version: 1 })).toEqual({
+    expect(await handler(event, { version: 1 })).toEqual({
       ok: true,
       value: {
         version: 1,

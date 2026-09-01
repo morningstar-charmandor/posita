@@ -4,10 +4,12 @@ import type {
   CommitProviderMailBatchV1
 } from '../../application/mailSync'
 import type { ProviderMailMessageV1, ProviderMailThreadV1 } from '../../../shared/providerMail'
+import { GOOGLE_CONNECT_CONSENT } from '../../../shared/contracts'
 import { AesGcmCacheProtector } from '../security/aesGcmCacheProtector'
 import { openPositaDatabase } from './database'
 import { EncryptedSqliteMailSyncProjection } from './encryptedSqliteMailSyncProjection'
 import { applyMigrations } from './migrations'
+import { EncryptedSqliteAccountStateRepository } from './encryptedSqliteAccountStateRepository'
 
 const testKey = Uint8Array.from({ length: 32 }, (_, index) => index * 7 + 3)
 const openDatabases: DatabaseSync[] = []
@@ -85,6 +87,7 @@ const createProjection = () => {
   let storageId = 0
   return {
     database,
+    accountState: new EncryptedSqliteAccountStateRepository(database, protector),
     projection: new EncryptedSqliteMailSyncProjection(
       database,
       protector,
@@ -100,6 +103,104 @@ afterEach(() => {
 })
 
 describe('EncryptedSqliteMailSyncProjection', () => {
+  it('projects a bounded newest-first live read model without bodies or provider IDs', async () => {
+    const { accountState, projection } = createProjection()
+    accountState.saveProviderAccount({
+      version: 1,
+      accountId: 'account-work-1',
+      provider: 'google',
+      providerAccountId: 'provider-subject-test-1',
+      consentVersion: GOOGLE_CONNECT_CONSENT.consentVersion,
+      connectedAt: '2026-08-30T09:00:00.000Z'
+    })
+    const first = commit('account-work-1', 'older', undefined, 'cursor-1')
+    first.messages[0]!.receivedAt = '2026-08-30T10:00:00.000Z'
+    first.messages[0]!.body.plain = '  A private body\nwith   normalized spacing.  '
+    await projection.commitBatch(first)
+    await projection.commitBatch(commit(
+      'account-work-1', 'newer', 'cursor-1', 'cursor-2'
+    ))
+
+    const readModel = await projection.loadReadModel('2026-09-01T05:00:00.000Z')
+    expect(readModel).toMatchObject({
+      dataMode: 'live-canonical',
+      status: 'ready',
+      accounts: [{ accountId: 'account-work-1', provider: 'google', status: 'ready' }],
+      messages: [
+        { id: 'message-newer', accountId: 'account-work-1' },
+        { id: 'message-older', preview: 'A private body with normalized spacing.' }
+      ],
+      hasMore: false
+    })
+    const serialized = JSON.stringify(readModel)
+    expect(serialized).not.toContain('provider-message-newer')
+    expect(serialized).not.toContain('provider-subject-test-1')
+    expect(serialized).not.toContain('recipients')
+    expect(readModel.messages.every((message) => !Object.hasOwn(message, 'body'))).toBe(true)
+  })
+
+  it('distinguishes live-empty and safe offline state', async () => {
+    const empty = createProjection()
+    await expect(empty.projection.loadReadModel('2026-09-01T05:00:00.000Z'))
+      .resolves.toMatchObject({ status: 'empty', accounts: [], messages: [] })
+
+    const offline = createProjection()
+    offline.accountState.saveProviderAccount({
+      version: 1,
+      accountId: 'account-work-1',
+      provider: 'google',
+      providerAccountId: 'provider-subject-test-1',
+      consentVersion: GOOGLE_CONNECT_CONSENT.consentVersion,
+      connectedAt: '2026-08-30T09:00:00.000Z'
+    })
+    offline.accountState.saveSyncState({
+      version: 1,
+      accountId: 'account-work-1',
+      provider: 'google',
+      status: 'error',
+      lastErrorCode: 'OFFLINE'
+    })
+    await expect(offline.projection.loadReadModel('2026-09-01T05:00:00.000Z'))
+      .resolves.toMatchObject({
+        status: 'offline',
+        accounts: [{ accountId: 'account-work-1', status: 'offline' }]
+      })
+  })
+
+  it('caps live output at the fixed newest-summary boundary', async () => {
+    const { accountState, projection } = createProjection()
+    accountState.saveProviderAccount({
+      version: 1,
+      accountId: 'account-work-1',
+      provider: 'google',
+      providerAccountId: 'provider-subject-test-1',
+      consentVersion: GOOGLE_CONNECT_CONSENT.consentVersion,
+      connectedAt: '2026-08-30T09:00:00.000Z'
+    })
+    const records = Array.from({ length: 51 }, (_, index) => {
+      const record = source('account-work-1', `bounded-${index + 1}`)
+      record.message.receivedAt = new Date(
+        Date.parse('2026-08-30T10:00:00.000Z') + index * 1_000
+      ).toISOString()
+      return record
+    })
+    await projection.commitBatch({
+      version: 1,
+      accountId: 'account-work-1',
+      provider: 'google',
+      nextCursor: 'cursor-bounded-1',
+      reconciliation: 'incremental',
+      messages: records.map(({ message }) => message),
+      threads: records.map(({ thread }) => thread)
+    })
+
+    const readModel = await projection.loadReadModel('2026-09-01T05:00:00.000Z')
+    expect(readModel.messages).toHaveLength(50)
+    expect(readModel.hasMore).toBe(true)
+    expect(readModel.messages[0]?.id).toBe('message-bounded-51')
+    expect(readModel.messages.at(-1)?.id).toBe('message-bounded-2')
+  })
+
   it('starts empty and atomically persists canonical records with its checkpoint', async () => {
     const { database, projection } = createProjection()
     expect(await projection.loadCheckpoint('account-work-1')).toBeUndefined()

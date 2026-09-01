@@ -59,6 +59,7 @@ const lifecycleRecoveryAbort = new AbortController()
 let repository: MailRepository | undefined
 let applicationIpc: ApplicationIpcRegistration | undefined
 let retentionMaintenance: RetentionMaintenanceOwner | undefined
+let shutdownProviderMailRead: (() => Promise<void>) | undefined
 let shutdownStarted = false
 
 app.on('before-quit', (event) => {
@@ -67,12 +68,19 @@ app.on('before-quit', (event) => {
   if (!retentionMaintenance) {
     shutdownStarted = true
     applicationIpc?.dispose()
-    repository?.close()
+    if (shutdownProviderMailRead) {
+      void shutdownProviderMailRead().finally(() => repository?.close())
+    } else {
+      repository?.close()
+    }
     return
   }
   event.preventDefault()
   shutdownStarted = true
-  void retentionMaintenance.stop().finally(() => {
+  void retentionMaintenance.stop().then(
+    () => shutdownProviderMailRead?.(),
+    () => shutdownProviderMailRead?.()
+  ).finally(() => {
     applicationIpc?.dispose()
     repository?.close()
     app.quit()
@@ -97,6 +105,10 @@ app.whenReady().then(async () => {
         undefined,
         () => applicationIpc?.notifyApplicationStateChanged()
       )
+      const providerMailReadWorker = runtime.providerMailReadWorker
+      shutdownProviderMailRead = providerMailReadWorker === undefined
+        ? undefined
+        : () => providerMailReadWorker.shutdown()
       service = new ApplicationStateService(
         'ready',
         runtime.service,

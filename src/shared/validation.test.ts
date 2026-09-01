@@ -98,6 +98,33 @@ describe('shared contract validation', () => {
     })).toBe(false)
   })
 
+  it('accepts a live-empty application state without a fixture dataset', () => {
+    expect(isLoadApplicationStateResponse({
+      ok: true,
+      value: {
+        version: 1,
+        mode: 'ready',
+        snapshot: {
+          version: 1,
+          dataMode: 'live-canonical',
+          loadedAt: '2026-09-01T05:00:00.000Z',
+          status: 'empty',
+          accounts: [],
+          messages: [],
+          hasMore: false
+        },
+        lifecycle: { version: 1, state: 'idle', operations: [] },
+        retention: {
+          version: 1,
+          retentionDays: 90,
+          status: 'scheduled',
+          nextRunAt: '2026-09-02T05:00:00.000Z'
+        },
+        connectConsent: GOOGLE_CONNECT_CONSENT
+      }
+    })).toBe(true)
+  })
+
   it('accepts exact retention states and rejects unbounded or private details', () => {
     expect(isRetentionMaintenanceStatus({
       version: 1,

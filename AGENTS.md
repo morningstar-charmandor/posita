@@ -48,8 +48,11 @@ exists deeper in the tree.
 - Schema v9 and an uncomposed credential-free SQLite projection persist canonical
   provider messages/threads with their encrypted account cursor atomically.
 - A bounded serial worker-thread adapter owns file-backed canonical projection
-  reads/commits and key cleanup, but remains uncomposed from product startup or
-  production sync.
+  reads/commits and key cleanup. Its bounded read-only live-state operation is
+  composed at product startup; commit and production sync remain uncomposed.
+- The application-state query selects exact sample or live snapshot contracts
+  from durable mode. Live output is capped at 50 summaries and 32 opaque account
+  scopes, and the renderer stays status-only until source detail is reviewed.
 - Credential-free integration verifies the sync coordinator against that real
   file-backed worker with deterministic provider data; product startup remains uncomposed.
 - Provider-mail payloads and source identities are authenticated ciphertext;

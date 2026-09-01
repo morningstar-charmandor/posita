@@ -12,7 +12,8 @@ import { AccountConnectionRecoveryCommandService } from './application/accountCo
 import { AccountConnectionRecoveryConfirmationService } from './application/accountConnectionRecoveryConfirmation'
 import {
   ComposedDeleteLocalDataActions,
-  DeleteLocalDataService
+  DeleteLocalDataService,
+  type EncryptionContextDestroyer
 } from './application/deleteLocalData'
 import { LocalActionConfirmationService } from './application/localActionConfirmation'
 import { AccountConnectionRecoveryService } from './application/recoverAccountConnection'
@@ -20,6 +21,12 @@ import { StartupLifecycleRecoveryOwner } from './application/startupLifecycleRec
 import { RetentionMaintenanceService } from './application/retentionMaintenance'
 import type { RetentionMaintenanceRunner } from './application/retentionMaintenanceOwner'
 import { MailApplicationService, systemClock } from './application/mailApplicationService'
+import {
+  ProviderMailReadModelService,
+  ModeAwareMailStateService,
+  type ApplicationMailStateLoader,
+  type ProviderMailReadModelSource
+} from './application/providerMailReadModel'
 import type { MailRepository } from './application/mailRepository'
 import { MailDataModeService } from './application/mailDataMode'
 import type { SecretVault } from './application/secretVault'
@@ -44,11 +51,13 @@ import { SqliteMailDataModeRepository } from './infrastructure/sqlite/sqliteMail
 import { InlineSqliteStorageSanitizer } from './infrastructure/sqlite/sqliteSanitization'
 import { WorkerThreadSqliteStorageSanitizer } from './infrastructure/sqlite/workerThreadSqliteStorageSanitizer'
 import { WorkerThreadRetentionMaintenance } from './infrastructure/sqlite/workerThreadRetentionMaintenance'
+import { EncryptedSqliteMailSyncProjection } from './infrastructure/sqlite/encryptedSqliteMailSyncProjection'
+import { WorkerThreadMailSyncProjection } from './infrastructure/sqlite/workerThreadMailSyncProjection'
 
 interface LocalDataRuntimeBase {
   mode: 'ready' | 'local-data-deleted'
   repository: MailRepository
-  service: MailApplicationService
+  service: ApplicationMailStateLoader
   accountLifecycleRepository: AccountLifecycleRepository
 }
 
@@ -62,6 +71,7 @@ export interface ReadyLocalDataRuntime extends LocalDataRuntimeBase {
   confirmationService: LocalActionConfirmationService
   deleteLocalDataService: DeleteLocalDataService
   mailDataModeService: MailDataModeService
+  providerMailReadWorker?: EncryptionContextDestroyer & { shutdown(): Promise<void> }
 }
 
 export interface DeletedLocalDataRuntime extends LocalDataRuntimeBase {
@@ -107,7 +117,9 @@ export const bootstrapLocalDataWithDependencies = async (
   const database = openPositaDatabase(databasePath)
   let repository: EncryptedSqliteMailRepository | undefined
   let retentionWorkerKey: Uint8Array | undefined
+  let providerMailReadWorkerKey: Uint8Array | undefined
   let scheduledRetentionService: RetentionMaintenanceRunner | undefined
+  let providerMailReadWorker: WorkerThreadMailSyncProjection | undefined
   try {
     applyMigrations(database)
     const secretVault = new SqliteSecretVault(database, dependencies.credentialProtector)
@@ -145,6 +157,7 @@ export const bootstrapLocalDataWithDependencies = async (
       ? await keyManager.loadExisting()
       : await keyManager.loadOrCreate(countEncryptedRecords(database) > 0)
     if (databasePath !== ':memory:') retentionWorkerKey = Uint8Array.from(key)
+    if (databasePath !== ':memory:') providerMailReadWorkerKey = Uint8Array.from(key)
     const protector = new AesGcmCacheProtector(key)
     key.fill(0)
     repository = new EncryptedSqliteMailRepository(database, protector)
@@ -166,6 +179,28 @@ export const bootstrapLocalDataWithDependencies = async (
     const retentionEncryptionContext = scheduledRetentionService instanceof
       WorkerThreadRetentionMaintenance ? scheduledRetentionService : undefined
     const accountStateRepository = new EncryptedSqliteAccountStateRepository(database, protector)
+    const sampleMailService = new MailApplicationService(
+      repository,
+      systemClock
+    )
+    let source: ProviderMailReadModelSource
+    if (providerMailReadWorkerKey === undefined) {
+      source = new EncryptedSqliteMailSyncProjection(database, protector)
+    } else {
+      const workerProjection = new WorkerThreadMailSyncProjection(
+        databasePath,
+        providerMailReadWorkerKey
+      )
+      providerMailReadWorkerKey.fill(0)
+      providerMailReadWorkerKey = undefined
+      source = workerProjection
+      providerMailReadWorker = workerProjection
+    }
+    const applicationMailService: ApplicationMailStateLoader = new ModeAwareMailStateService(
+      mailDataModeRepository,
+      sampleMailService,
+      new ProviderMailReadModelService(source, systemClock)
+    )
     const connections: AccountConnectionConsistencyInspector = {
       inspect: (accountId) => inspectAccountConnectionConsistency(
         accountId,
@@ -199,14 +234,16 @@ export const bootstrapLocalDataWithDependencies = async (
         repository,
         keyManager,
         storageSanitizer,
-        retentionEncryptionContext
+        [retentionEncryptionContext, providerMailReadWorker].filter(
+          (context): context is NonNullable<typeof context> => context !== undefined
+        )
       ),
       confirmation
     )
     return {
       mode: 'ready',
       repository,
-      service: new MailApplicationService(repository, systemClock),
+      service: applicationMailService,
       secretVault,
       accountStateRepository,
       accountLifecycleRepository,
@@ -219,11 +256,14 @@ export const bootstrapLocalDataWithDependencies = async (
       ),
       confirmationService: confirmation,
       deleteLocalDataService: activeDeletion,
-      mailDataModeService
+      mailDataModeService,
+      ...(providerMailReadWorker === undefined ? {} : { providerMailReadWorker })
     }
   } catch (error) {
     retentionWorkerKey?.fill(0)
+    providerMailReadWorkerKey?.fill(0)
     scheduledRetentionService?.destroyEncryptionContext?.()
+    providerMailReadWorker?.destroyEncryptionContext()
     if (repository) repository.close()
     else if (database.isOpen) database.close()
     throw error

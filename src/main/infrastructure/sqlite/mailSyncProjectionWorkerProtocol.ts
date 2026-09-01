@@ -7,9 +7,11 @@ import {
   type CommitProviderMailBatchV1,
   type MailSyncCheckpointV1
 } from '../../application/mailSync.ts'
+import { isLiveMailSnapshotV1, type LiveMailSnapshotV1 } from '../../../shared/liveMail.ts'
 
 export type MailSyncProjectionWorkerOperationV1 =
   | { kind: 'load-checkpoint'; accountId: string }
+  | { kind: 'load-read-model'; loadedAt: string }
   | { kind: 'commit-batch'; batch: CommitProviderMailBatchV1 }
   | { kind: 'delete-account-records'; accountId: string }
 
@@ -26,6 +28,12 @@ export type MailSyncProjectionWorkerSuccessV1 =
     ok: true
     operation: 'load-checkpoint'
     checkpoint?: MailSyncCheckpointV1
+  }
+  | {
+    version: 1
+    ok: true
+    operation: 'load-read-model'
+    snapshot: LiveMailSnapshotV1
   }
   | {
     version: 1
@@ -78,6 +86,11 @@ export const isMailSyncProjectionWorkerRequestV1 = (
   if (operation.kind === 'load-checkpoint') {
     return hasOnlyKeys(operation, ['kind', 'accountId']) && isAccountId(operation.accountId)
   }
+  if (operation.kind === 'load-read-model') {
+    return hasOnlyKeys(operation, ['kind', 'loadedAt']) &&
+      typeof operation.loadedAt === 'string' && operation.loadedAt.length <= 64 &&
+      Number.isFinite(Date.parse(operation.loadedAt))
+  }
   if (operation.kind === 'delete-account-records') {
     return hasOnlyKeys(operation, ['kind', 'accountId']) && isAccountId(operation.accountId)
   }
@@ -98,6 +111,10 @@ export const isMailSyncProjectionWorkerResponseV1 = (
     const checkpointKey = value.checkpoint === undefined ? [] : ['checkpoint']
     return hasOnlyKeys(value, ['version', 'ok', 'operation', ...checkpointKey]) &&
       (value.checkpoint === undefined || isMailSyncCheckpointV1(value.checkpoint))
+  }
+  if (value.operation === 'load-read-model') {
+    return hasOnlyKeys(value, ['version', 'ok', 'operation', 'snapshot']) &&
+      isLiveMailSnapshotV1(value.snapshot)
   }
   if (value.operation === 'delete-account-records') {
     return hasOnlyKeys(value, [

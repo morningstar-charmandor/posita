@@ -1,4 +1,5 @@
 import type { MailDataset } from './domain'
+import type { LiveMailSnapshotV1 } from './liveMail'
 
 export const POSITA_PROTOCOL_VERSION = 1 as const
 export const DELETE_LOCAL_DATA_CONFIRMATION_TEXT = 'DELETE LOCAL DATA' as const
@@ -78,6 +79,8 @@ export interface AppSnapshotV1 {
   dataset: MailDataset
 }
 
+export type ApplicationMailSnapshotV1 = AppSnapshotV1 | LiveMailSnapshotV1
+
 export type AppErrorCodeV1 =
   | 'INVALID_REQUEST'
   | 'UNTRUSTED_SENDER'
@@ -95,7 +98,7 @@ export type AppResultV1<T> =
   | { ok: true; value: T }
   | { ok: false; error: AppErrorV1 }
 
-export type LoadSnapshotResponseV1 = AppResultV1<AppSnapshotV1>
+export type LoadSnapshotResponseV1 = AppResultV1<ApplicationMailSnapshotV1>
 
 export type LifecyclePublicStageV1 =
   | 'revoking-access'
@@ -173,7 +176,7 @@ export type ApplicationStateV1 =
   | {
       version: typeof POSITA_PROTOCOL_VERSION
       mode: 'ready'
-      snapshot: AppSnapshotV1
+      snapshot: ApplicationMailSnapshotV1
       lifecycle: LifecycleStatusSnapshotV1
       retention: RetentionMaintenanceStatusV1
       connectConsent: GoogleConnectConsentV1

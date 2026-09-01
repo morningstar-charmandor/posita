@@ -5,6 +5,7 @@ import {
   isAccountId,
   type ProviderSyncStateV1
 } from '../../application/accountState.ts'
+import type { ProviderMailReadModelSource } from '../../application/providerMailReadModel.ts'
 import {
   MailSyncError,
   isCommitProviderMailBatchV1,
@@ -28,6 +29,11 @@ import {
   type ProviderMailMessageV1,
   type ProviderMailThreadV1
 } from '../../../shared/providerMail.ts'
+import {
+  LIVE_MAIL_READ_LIMIT,
+  type LiveMailAccountStatusV1,
+  type LiveMailSnapshotV1
+} from '../../../shared/liveMail.ts'
 import {
   EncryptedSqliteAccountStateRepository,
   saveEncryptedProviderSyncState
@@ -86,7 +92,8 @@ export const deleteAllEncryptedProviderMailRecords = (database: DatabaseSync): b
  * Credential-free encrypted projection proof. It is deliberately uncomposed;
  * file-backed production use must place this synchronous work behind one worker owner.
  */
-export class EncryptedSqliteMailSyncProjection implements MailSyncProjection {
+export class EncryptedSqliteMailSyncProjection implements
+  MailSyncProjection, ProviderMailReadModelSource {
   private readonly accountState: EncryptedSqliteAccountStateRepository
 
   constructor(
@@ -108,6 +115,70 @@ export class EncryptedSqliteMailSyncProjection implements MailSyncProjection {
         cursor: state.cursor
       }
     } catch (error) {
+      throw storageFailure(error)
+    }
+  }
+
+  async loadReadModel(loadedAt: string): Promise<LiveMailSnapshotV1> {
+    if (!Number.isFinite(Date.parse(loadedAt))) {
+      throw malformed('The live-mail read timestamp is invalid.')
+    }
+    try {
+      const rows = this.database.prepare(`
+        SELECT account_scope FROM encrypted_account_records
+        WHERE record_type IN ('provider-account', 'sync-state')
+        UNION
+        SELECT account_scope FROM encrypted_provider_mail_records
+        ORDER BY account_scope
+      `).all() as unknown as { account_scope: string }[]
+      if (rows.length > 32) throw malformed('The live-mail account result is too large.')
+
+      const accounts: LiveMailSnapshotV1['accounts'] = []
+      const allMessages: LiveMailSnapshotV1['messages'] = []
+      for (const { account_scope: accountId } of rows) {
+        if (!isAccountId(accountId)) throw malformed('The stored account scope is invalid.')
+        const providerAccount = this.accountState.loadProviderAccount(accountId)
+        const syncState = this.accountState.loadSyncState(accountId)
+        const status = this.readStatus(providerAccount !== undefined, syncState)
+        accounts.push({
+          accountId,
+          provider: 'google',
+          status,
+          ...(syncState?.lastSuccessAt === undefined
+            ? {}
+            : { lastSuccessAt: syncState.lastSuccessAt })
+        })
+        const stored = this.loadAccountRecords(accountId)
+        allMessages.push(...stored.messages.map(({ value }) => ({
+          id: value.id,
+          threadId: value.threadId,
+          accountId: value.accountId,
+          provider: value.source.provider,
+          sender: value.sender,
+          receivedAt: value.receivedAt,
+          subject: value.subject,
+          preview: this.preview(value.body.plain),
+          isRead: value.isRead,
+          attachmentCount: value.attachments.length
+        })))
+      }
+
+      allMessages.sort((left, right) =>
+        Date.parse(right.receivedAt) - Date.parse(left.receivedAt) ||
+        left.accountId.localeCompare(right.accountId) ||
+        left.id.localeCompare(right.id))
+      const messages = allMessages.slice(0, LIVE_MAIL_READ_LIMIT)
+      return {
+        version: 1,
+        dataMode: 'live-canonical',
+        loadedAt,
+        status: this.snapshotStatus(accounts, messages.length),
+        accounts,
+        messages,
+        hasMore: allMessages.length > LIVE_MAIL_READ_LIMIT
+      }
+    } catch (error) {
+      if (error instanceof MailSyncError) throw error
       throw storageFailure(error)
     }
   }
@@ -363,6 +434,37 @@ export class EncryptedSqliteMailSyncProjection implements MailSyncProjection {
       }
     }
     return { messages, threads }
+  }
+
+  private readStatus(
+    hasProviderAccount: boolean,
+    syncState: ProviderSyncStateV1 | undefined
+  ): LiveMailAccountStatusV1 {
+    if (!hasProviderAccount) return 'attention-required'
+    if (syncState === undefined) return 'not-synced'
+    if (syncState.status === 'syncing') return 'syncing'
+    if (syncState.status === 'disabled') return 'disabled'
+    if (syncState.status === 'error') {
+      return syncState.lastErrorCode === 'OFFLINE' ? 'offline' : 'attention-required'
+    }
+    return 'ready'
+  }
+
+  private snapshotStatus(
+    accounts: readonly { status: LiveMailAccountStatusV1 }[],
+    messageCount: number
+  ): LiveMailSnapshotV1['status'] {
+    if (accounts.some((account) => account.status === 'attention-required')) {
+      return 'attention-required'
+    }
+    if (accounts.some((account) => account.status === 'offline')) return 'offline'
+    if (accounts.some((account) => account.status === 'syncing')) return 'syncing'
+    return messageCount > 0 ? 'ready' : 'empty'
+  }
+
+  private preview(body: string): string {
+    const normalized = body.replace(/\s+/g, ' ').trim()
+    return normalized.length <= 240 ? normalized : `${normalized.slice(0, 239)}…`
   }
 
   private saveRecord(

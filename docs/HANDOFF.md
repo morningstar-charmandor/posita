@@ -172,6 +172,18 @@ Implemented:
   confirmed-deletion suspension, shutdown, and projection-worker key teardown,
 - bounded startup outcomes for connected/live, interrupted sample activation,
   disconnected live-empty, and offline retry-required states without reseeding,
+- a mode-aware application-state query that preserves the exact fixture snapshot
+  in sample mode and selects a separate canonical live snapshot immediately after
+  the durable schema-v10 transition,
+- a production-composed read-only projection-worker operation capped at 50 newest
+  summaries and 32 opaque account scopes, with canonical source locators and
+  account provenance but no bodies, recipients, remote provider IDs, provider
+  subjects, cursors, paths, keys, or raw errors,
+- truthful live-empty, recorded-syncing, offline, attention-required, and cached-
+  data renderer states with local-status reload; canonical summary content remains
+  hidden until source-detail and open-original review,
+- read-worker key inclusion in confirmed full deletion and graceful normal shutdown
+  that settles accepted reads before key erasure,
 - an explicit fixture compatibility decision: existing encrypted sample messages
   remain a presentation view and never receive fabricated provider provenance,
 - truthful sample-mode labels that do not describe fixture accounts, briefs, or
@@ -194,8 +206,8 @@ Simulated or deliberately inactive:
   collaborators and is not composed into production startup,
 - canonical provider-mail and sync behavior is exercised only through
   deterministic fakes, an encrypted SQLite proof, and file-backed workers;
-  only retention is composed into startup maintenance, while ingestion and
-  provider access remain uncomposed,
+  retention and the bounded read-only live-state query are composed at startup,
+  while ingestion and provider access remain uncomposed,
 - the schema-v10 sample-to-live service is trusted-main-only and unexposed; it
   has been verified with deterministic connected state but has no production
   connection, sync-start, preload, IPC, or UI caller,
@@ -211,8 +223,9 @@ Simulated or deliberately inactive:
 Not implemented:
 
 - Gmail OAuth, message ingestion, incremental history sync, or user-triggered/live disconnect,
-- a credential-free live application read model and production activation of the
-  approved provider-mail lifecycle,
+- a user-readable live account identity, canonical message-detail query, and
+  reviewed open-original path,
+- production activation of the approved provider-mail lifecycle,
 - user-triggered account disconnect or any remote mailbox mutation control,
 - automatic pending-disconnect resume with a live idempotent revocation adapter,
 - a model provider, embeddings, classification, retrieval, or generation,
@@ -247,10 +260,10 @@ confirmed local deletion are complete at their current layers. Continue in this 
 3. Treat automatic retention scheduling and its Settings status as complete at
    the current fixed 90-day boundary. Do not add configurable retention yet.
 4. Treat canonical fixed-window retention, journaled account removal, worker
-   integration, schema-v10 mode, and provider-mail lifecycle ordering as complete
-   at their credential-free layers. Next define a live application read model
-   that truthfully distinguishes live-empty and canonical provider mail from the
-   fixture-only renderer snapshot.
+   integration, schema-v10 mode, provider-mail lifecycle ordering, and the status-
+   only live application read model as complete at their credential-free layers.
+   Next settle encrypted user-readable account identity and a bounded canonical
+   source-detail query before rendering live summaries.
 5. Request explicit owner approval before composing a real Google adapter,
    credentials, browser authorization, connection activation, or live account.
 6. Keep real Gmail ingestion disabled until authorization activation is separately
@@ -272,13 +285,18 @@ Schema v9 remains the
 single canonical projection and the existing sync-state repository remains the
 cursor source of truth. The automatic retention worker now performs bounded
 canonical decrypt/plan/delete/thread-rewrite/sanitization work without a plaintext
-index. No dependency, production adapter, sync/IPC/UI composition, external
-action, secret, personal mailbox data, or mutation was added. One intentional
-compatibility distinction remains:
+index. Production composition now includes only the mode-aware worker read, the
+existing application-state IPC path, and a status-only live renderer. No dependency,
+provider adapter, sync start, external action, secret, personal mailbox data, or
+mutation was added. One intentional compatibility distinction remains:
 the legacy `Message` is a deterministic sample-presentation record, while only
 `ProviderMailMessageV1` may enter future provider ingestion. There is no conversion
-path because Posita will not invent provider provenance. The next milestone is a
-credential-free live application read-model boundary, not OAuth.
+path because Posita will not invent provider provenance. The new live read model
+returns only a bounded summary projection and the renderer keeps its content
+hidden. No dependency, schema, provider adapter, credential, network request,
+external action, secret, personal mailbox data, or mutation was added. The next
+milestone is a credential-free user-readable account and canonical source-detail
+boundary, not OAuth or external Gmail navigation.
 
 ## How to resume
 
@@ -298,7 +316,7 @@ credential-free live application read-model boundary, not OAuth.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 48 test files, 317 tests, strict typecheck, structure
+- Current verified baseline: 51 test files, 332 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,

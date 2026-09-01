@@ -373,7 +373,8 @@ opaque local row IDs. Its synchronous calls are limited to bounded in-memory tes
 and worker internals; no sync startup owner, preload/IPC method, UI status, or
 polling schedule is composed. File-backed reads and commits now have a packaged serial
 worker adapter with a bounded validated protocol, transferable in-memory key copy,
-safe errors, and explicit key cleanup. The adapter is verified but uncomposed.
+safe errors, and explicit key cleanup. Its read-only operation is now composed for
+live-mode application state; commit, delete, and sync ownership remain inactive.
 
 A credential-free integration test now wires that coordinator to the packaged
 file-backed projection worker and deterministic provider. It proves multi-page
@@ -389,8 +390,26 @@ allowed only after the canonical connection inspector reports a complete local
 credential/provider-state pair. Sample deletion, sanitization-pending state, and
 the mode update share one transaction; physical compaction may retry afterward.
 The mode has no ordinary reverse transition, so removing every account produces
-live-empty rather than demo content. The service is trusted-main-only and has no
-preload, IPC, renderer, provider, or sync-start caller yet.
+live-empty rather than demo content. The transition service remains trusted-main-
+only with no provider or renderer command, while the existing application-state
+query now reads the durable mode on every load.
+
+Live mode uses a separate exact read-model contract rather than converting
+canonical records into the fixture dataset. One short-lived serial projection
+worker decrypts and validates canonical account/message/thread records and returns
+at most 50 newest summaries across at most 32 opaque account scopes. The response
+contains canonical source locators, visible account provenance, sender, timestamp,
+subject, bounded plain-text preview, read state, and attachment count. It excludes
+full bodies, recipients, remote provider IDs, provider-account subjects, cursors,
+database paths, key material, and raw failures. Sample mode stays synchronous and
+unchanged. The application-state method is asynchronous so file-backed decryption
+never blocks Electron main.
+
+The renderer distinguishes live-empty, recorded-syncing, offline, attention, and
+cached-data states. It intentionally does not render the summary content yet:
+account display identity, source detail, and the separately reviewed open-original
+path must be complete before the live workspace is enabled. Its reload button
+re-queries local state only and never starts provider sync.
 
 `ProviderMailLifecycleOwner` now defines the credential-free composition order
 above the existing sync coordinator, mail-mode service, retention owner,

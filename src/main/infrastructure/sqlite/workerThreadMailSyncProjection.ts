@@ -9,6 +9,8 @@ import {
   type MailSyncProjection
 } from '../../application/mailSync'
 import type { ProviderMailAccountDataRemover } from '../../application/disconnectAccount'
+import type { ProviderMailReadModelSource } from '../../application/providerMailReadModel'
+import type { LiveMailSnapshotV1 } from '../../../shared/liveMail'
 import {
   isMailSyncProjectionWorkerResponseV1,
   type MailSyncProjectionWorkerOperationV1,
@@ -39,7 +41,7 @@ const invalidRequest = (): MailSyncError => new MailSyncError(
 
 /** Serializes file-backed projection work outside Electron's main event loop. */
 export class WorkerThreadMailSyncProjection implements
-  MailSyncProjection, ProviderMailAccountDataRemover {
+  MailSyncProjection, ProviderMailAccountDataRemover, ProviderMailReadModelSource {
   private readonly key: Buffer
   private tail: Promise<void> = Promise.resolve()
   private pending = 0
@@ -63,6 +65,15 @@ export class WorkerThreadMailSyncProjection implements
       throw unavailable()
     }
     return response.checkpoint
+  }
+
+  async loadReadModel(loadedAt: string): Promise<LiveMailSnapshotV1> {
+    if (loadedAt.length > 64 || !Number.isFinite(Date.parse(loadedAt))) throw invalidRequest()
+    const response = await this.enqueue({ kind: 'load-read-model', loadedAt })
+    if (response.operation !== 'load-read-model' || response.snapshot.loadedAt !== loadedAt) {
+      throw unavailable()
+    }
+    return response.snapshot
   }
 
   async commitBatch(
@@ -89,6 +100,12 @@ export class WorkerThreadMailSyncProjection implements
     if (this.pending > 0) throw unavailable()
     this.key.fill(0)
     this.destroyed = true
+  }
+
+  async shutdown(): Promise<void> {
+    this.destroyed = true
+    await this.tail
+    this.key.fill(0)
   }
 
   private enqueue(

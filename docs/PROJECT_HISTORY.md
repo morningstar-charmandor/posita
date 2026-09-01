@@ -1563,6 +1563,60 @@ only fixture-backed mail. The next milestone is a credential-free live applicati
 read-model boundary so schema-v10 mode and canonical records can be represented
 truthfully before provider activation.
 
+## Gate 2D milestone — Worker-backed live application read model
+
+Date: 2026-09-01
+Checkpoint: use the Git commit whose subject is `feat: project live mail safely`
+
+Goal: make the existing application-state boundary represent durable sample and
+live installations truthfully without converting provider mail into fixture
+records or prematurely enabling Gmail.
+
+Delivered:
+
+- one exact live snapshot contract with at most 50 newest canonical summaries and
+  32 opaque account scopes,
+- a worker-owned encrypted query that retains canonical local source identity and
+  account provenance while omitting bodies, recipients, remote provider IDs,
+  provider subjects, cursors, paths, keys, and raw failures,
+- mode-aware state loading that switches immediately after the durable schema-v10
+  transition and preserves live-empty across restart and final-account removal,
+- safe account status projection for not-synced, recorded-syncing, ready, offline,
+  attention-required, and disabled local states,
+- asynchronous application-state and IPC loading so file-backed decryption stays
+  off Electron main,
+- status-only renderer states and local-status reload without exposing cached
+  summary content or claiming a provider retry,
+- read-worker key teardown in full local deletion and graceful shutdown that
+  settles accepted read operations first.
+
+Important decisions:
+
+- keep the fixture dataset and canonical live projection as an exact discriminated
+  union; do not add a conversion or fabricate provider provenance,
+- use canonical Posita message/thread IDs plus opaque account scope as the future
+  source locator; keep remote Google IDs in trusted encrypted storage,
+- withhold live summary content until user-readable account identity, source detail,
+  and open-original behavior have passed separate review,
+- retain the existing encrypted projection scan rather than introduce a second
+  repository or plaintext index; the 517-line adapter was reviewed as one shared
+  authenticated record owner, and the new pure/output contracts remain separate,
+- add no dependency, schema migration, provider adapter, credential, network
+  request, AI path, external action, personal mailbox data, or mailbox mutation.
+
+Evidence: 51 test files and 332 tests pass. Strict typecheck, renderer
+structure/security checks, and production Electron builds pass. Tests cover exact
+contract validation, bounded output, newest-first ordering, live-empty, offline,
+safe malformed/failure mapping, native worker protocol, immediate post-transition
+mode selection, renderer status semantics, content withholding, and graceful key
+teardown.
+
+Limitations: the status screen uses opaque account scope because a user-readable
+encrypted account identity is not yet settled. Canonical summary content and full
+source detail are not rendered; opening Gmail externally, sync retry, connection,
+provider access, and AI remain unavailable. The next milestone is the credential-
+free account-display and canonical source-detail boundary.
+
 ## How future entries should be written
 
 For each material milestone, record:

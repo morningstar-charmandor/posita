@@ -111,7 +111,10 @@ const errorResponse = (
 export const createLoadApplicationStateHandler = (
   service: ApplicationStateService,
   isTrusted: TrustPredicate
-) => (event: IpcMainInvokeEvent, request: unknown): LoadApplicationStateResponseV1 => {
+) => async (
+  event: IpcMainInvokeEvent,
+  request: unknown
+): Promise<LoadApplicationStateResponseV1> => {
   if (!isTrusted(event)) {
     return errorResponse('UNTRUSTED_SENDER', 'This window is not allowed to access local mail data.')
   }
@@ -120,7 +123,7 @@ export const createLoadApplicationStateHandler = (
     return errorResponse('INVALID_REQUEST', 'The application-state request was invalid or unsupported.')
   }
 
-  const response = service.load()
+  const response = await service.load()
   return isLoadApplicationStateResponse(response)
     ? response
     : errorResponse('PROTOCOL_ERROR', 'Posita returned an invalid application-state response.')

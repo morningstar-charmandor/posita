@@ -41,7 +41,8 @@ SDK, mailbox data, or model provider was used for this audit.
 | Account disconnect | Orchestrator-ready, inactive | journaled idempotent application service and deterministic revoker tests | Needs a real idempotent revoker and separately reviewed user command |
 | Canonical provider mail model | Lifecycle-ready, empty | exact validators, schema-v9 authenticated envelopes, opaque row IDs, packaged serial worker, fixed-window retention, and journaled account deletion | Needs credential-free sync lifecycle integration before provider activation |
 | Sample/live boundary | Ready, unexposed | schema-v10 one-way mode, connected-pair gate, atomic sample removal, restart/no-reseed and retry tests | Must be invoked only by reviewed connection/sync composition |
-| Sync coordinator | Lifecycle-owned, uncomposed | 90-day path, real worker integration, bounded concurrency, cancellation, retention exclusion, disconnect/deletion quiescence, and key teardown are tested | Needs trusted account inventory, live read model, retry/status policy, and provider composition |
+| Live application read model | Ready, status-only | durable mode-aware query, bounded canonical summaries, worker ownership, live-empty/offline/error validation, and renderer status states | Needs user-readable account identity and source-detail/open-original review before displaying live mail |
+| Sync coordinator | Lifecycle-owned, uncomposed | 90-day path, real worker integration, bounded concurrency, cancellation, retention exclusion, disconnect/deletion quiescence, and key teardown are tested | Needs trusted account inventory, retry command/status policy, and provider composition |
 | Gmail adapter | **Not implemented** | adapter contract is documented only | Blocks OAuth and mail access |
 | AI provider | Deferred | no model adapter, prompt, embedding, or model output path | Fixture summaries/drafts remain explicitly simulated |
 
@@ -130,19 +131,24 @@ state, screenshots, tests, or portfolio assets.
 
 ## Recommended next milestone
 
-Proceed with a **credential-free live application read-model boundary**:
+Treat the **credential-free live application read-model boundary as complete at
+its status-only layer**. Next define the source-inspection boundary required before
+live summaries can be displayed:
 
-1. project schema-v10 `sample` versus `live` truthfully through main without
-   presenting canonical records as fixture `Message` objects,
-2. define a bounded worker-backed canonical query for live-empty and provider-mail
-   states with account provenance and original-source identity,
-3. add loading, empty, offline, safe-error, and retry semantics before any live
-   renderer surface is enabled,
-4. keep Google code, credentials, connection activation, network access, polling,
-   and real mailbox data unchanged until the read model is verified.
+1. settle a user-readable, encrypted account-display identity without exposing
+   the Google provider subject or weakening account scope,
+2. define a bounded worker-backed canonical message-detail query keyed by opaque
+   Posita account and canonical message ID,
+3. render plain-text source detail with recipient and attachment metadata, loading,
+   missing, stale, safe-error, and retry behavior; do not render provider HTML,
+4. keep opening Gmail externally disabled until its target derivation, trusted
+   main-process command, and explicit external-action review are complete,
+5. keep Google code, credentials, connection activation, network access, polling,
+   AI, and real mailbox data unchanged.
 
-This is the smallest next step because the lifecycle can now safely create a live
-projection, but the current renderer query is still fixture-only.
+This is the smallest next step because live mode is now truthful and worker-owned,
+but Posita must not show a mail summary without a safe path to its source and a
+human-readable originating account.
 
 ## Completed credential-free contract evidence
 
@@ -169,10 +175,17 @@ projection, but the current renderer query is still fixture-only.
   offline retry outcomes, concurrent startup sync, retention exclusion,
   disconnect preemption, full-deletion suspension, shutdown, and projection-key
   teardown through credential-free collaborators.
+- The production application-state query reads durable mode on every request and
+  selects either the exact fixture snapshot or the bounded worker-backed canonical
+  live snapshot. Live output preserves opaque account/source provenance while
+  excluding bodies, recipients, remote IDs, cursors, paths, keys, and raw errors.
+- The status-only renderer covers live-empty, recorded-syncing, offline,
+  attention-required, cached-data, and local reload behavior without displaying
+  canonical content or claiming provider work.
 - The inactive disconnect service requires account-scoped canonical projection
   deletion in its durable mail-data phase and safely retries after fixture removal
   has already committed.
-- The verified baseline is 48 test files and 317 tests plus strict TypeScript,
+- The verified baseline is 51 test files and 332 tests plus strict TypeScript,
   renderer structure/security checks, and production Electron builds.
 - No dependency, production provider adapter, credential,
   personal mailbox data, network action, renderer surface, or mailbox mutation was

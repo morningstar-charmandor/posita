@@ -97,6 +97,16 @@ describe('WorkerThreadMailSyncProjection', () => {
     await expect(projection.loadCheckpoint('account-work-1')).resolves.toMatchObject({
       cursor: 'cursor-worker-1'
     })
+    await expect(projection.loadReadModel('2026-09-01T05:00:00.000Z')).resolves.toMatchObject({
+      dataMode: 'live-canonical',
+      status: 'attention-required',
+      accounts: [{ accountId: 'account-work-1', status: 'attention-required' }],
+      messages: [{
+        id: 'message-worker-1',
+        accountId: 'account-work-1',
+        preview: 'Worker encrypted body.'
+      }]
+    })
     expect(database.prepare(`
       SELECT COUNT(*) AS count FROM encrypted_provider_mail_records
     `).get()).toEqual({ count: 2 })
@@ -188,5 +198,38 @@ describe('WorkerThreadMailSyncProjection', () => {
     await expect(projection.loadCheckpoint('account-work-1')).rejects.toMatchObject({
       code: 'SYNC_STORAGE_FAILED'
     })
+  })
+
+  it('settles accepted read work before shutdown and refuses new work', async () => {
+    const { databasePath } = await createFileDatabase()
+    const projection = new WorkerThreadMailSyncProjection(
+      databasePath,
+      key,
+      workerUrl(`
+        import { parentPort } from 'node:worker_threads'
+        setTimeout(() => parentPort.postMessage({
+          version: 1,
+          ok: true,
+          operation: 'load-read-model',
+          snapshot: {
+            version: 1,
+            dataMode: 'live-canonical',
+            loadedAt: '2026-09-01T05:00:00.000Z',
+            status: 'empty',
+            accounts: [],
+            messages: [],
+            hasMore: false
+          }
+        }), 5)
+      `)
+    )
+    const accepted = projection.loadReadModel('2026-09-01T05:00:00.000Z')
+    const shutdown = projection.shutdown()
+
+    await expect(projection.loadReadModel('2026-09-01T05:00:00.000Z')).rejects.toMatchObject({
+      code: 'SYNC_STORAGE_FAILED'
+    })
+    await expect(accepted).resolves.toMatchObject({ status: 'empty' })
+    await expect(shutdown).resolves.toBeUndefined()
   })
 })

@@ -33,6 +33,11 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:fo
 .startup-icon.startup-error { color: #985842; background: #f4e7e1; }
 .startup-icon.startup-error svg { animation: none; }
 .startup-retry { margin-top: 20px; height: 34px; display: flex; align-items: center; gap: 7px; border: 1px solid #405b48; border-radius: 8px; padding: 0 13px; color: white; background: #486451; cursor: pointer; }
+.live-mail-status .eyebrow { margin-top: 14px; color: #486451; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.live-mail-account-list { width: min(440px, 100%); margin: 22px 0 0; padding: 0; list-style: none; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); text-align: left; }
+.live-mail-account-list li { display: flex; justify-content: space-between; gap: 18px; padding: 11px 13px; color: var(--muted); font-size: 11px; }
+.live-mail-account-list li + li { border-top: 1px solid var(--line); }
+.live-mail-account-list strong { color: var(--ink); font-weight: 650; }
 @keyframes startup-pulse { 0%, 100% { opacity: .55; transform: scale(.96); } 50% { opacity: 1; transform: scale(1); } }
 
 .application-ready-state { width: 100%; height: 100%; }

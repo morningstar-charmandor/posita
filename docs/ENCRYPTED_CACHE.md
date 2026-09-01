@@ -172,8 +172,10 @@ mail plaintext to SQLite.
 
 ## Query and search boundary
 
-Gate 2C decrypts the small bounded snapshot in the trusted main process and then
-validates the reconstructed domain dataset. It creates no plaintext search index.
+Sample mode decrypts the small bounded fixture snapshot in the trusted main process
+and validates the reconstructed domain dataset. Live mode uses the separate worker-
+owned summary projection described below. Neither path creates a plaintext search
+index.
 
 Production-scale search is unresolved. A future design must explicitly evaluate
 decrypt-and-scan in a worker, keyed blind indexes with leakage tradeoffs, and
@@ -211,6 +213,16 @@ cutoff to canonical messages, repairs or removes affected encrypted threads,
 preserves account cursors, and resumes pending sanitization. This is an
 intentional bounded compatibility period, not a second provider model or permission
 to ingest Gmail.
+
+The same worker protocol now has one production-composed read-only operation for
+live-mode application state. It decrypts canonical records inside the worker and
+returns a strictly validated maximum of 50 newest presentation summaries across a
+maximum of 32 opaque account scopes. Full bodies, recipients, remote provider IDs,
+provider-account subjects, cursors, paths, and key material do not cross the worker
+or renderer boundary. Canonical message/thread IDs plus opaque account scope remain
+the local source locator for a future detail query. Sample snapshots use the legacy
+fixture projection only; the two shapes are never merged. This does not compose
+sync, a provider, or an account connection.
 
 The credential-free coordinator is now integration-tested against this actual
 file-backed worker. The proof covers consecutive atomic pages, encrypted cursor

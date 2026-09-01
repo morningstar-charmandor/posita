@@ -14,6 +14,7 @@ import {
   type LocalDataDeletionDataSource
 } from './application/localDataDeletionDataSource'
 import { LifecycleNotice } from './features/lifecycle/LifecycleNotice'
+import { LiveMailStatus } from './features/live-mail/LiveMailStatus'
 import { Workspace } from './features/workspace/Workspace'
 
 type LoadState =
@@ -125,6 +126,21 @@ export function App({
         <p>Posita stopped before opening private mail data because startup could not finish safely.</p>
         <p>Quit and reopen Posita to retry. No remote mailbox action is performed.</p>
       </main>
+    )
+  }
+
+  if (state.application.snapshot.dataMode === 'live-canonical') {
+    return (
+      <div className="application-ready-state">
+        <LiveMailStatus snapshot={state.application.snapshot} onReload={retry} />
+        <LifecycleNotice
+          lifecycle={state.application.lifecycle}
+          accounts={state.application.snapshot.accounts.map((account) => ({
+            id: account.accountId,
+            label: `Google · ${account.accountId}`
+          }))}
+        />
+      </div>
     )
   }
 

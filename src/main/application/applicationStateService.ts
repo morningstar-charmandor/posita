@@ -4,7 +4,7 @@ import {
   type LoadApplicationStateResponseV1
 } from '../../shared/contracts'
 import { AccountLifecycleStatusService } from './accountLifecycleStatus'
-import type { MailApplicationService } from './mailApplicationService'
+import type { ApplicationMailStateLoader } from './providerMailReadModel'
 import type { RetentionMaintenanceOwner } from './retentionMaintenanceOwner'
 
 export type ApplicationRuntimeMode =
@@ -15,7 +15,7 @@ export type ApplicationRuntimeMode =
 export class ApplicationStateService {
   constructor(
     private mode: ApplicationRuntimeMode,
-    private readonly mail?: MailApplicationService,
+    private readonly mail?: ApplicationMailStateLoader,
     private readonly lifecycle?: AccountLifecycleStatusService,
     private readonly retention?: Pick<RetentionMaintenanceOwner, 'status'>
   ) {}
@@ -24,7 +24,7 @@ export class ApplicationStateService {
     this.mode = 'local-data-deleted'
   }
 
-  load(): LoadApplicationStateResponseV1 {
+  async load(): Promise<LoadApplicationStateResponseV1> {
     if (this.mode !== 'ready') {
       return {
         ok: true,
@@ -34,7 +34,7 @@ export class ApplicationStateService {
     if (!this.mail || !this.lifecycle || !this.retention) return this.unavailable()
 
     try {
-      const snapshot = this.mail.loadSnapshot()
+      const snapshot = await this.mail.loadSnapshot()
       if (!snapshot.ok) return snapshot
       return {
         ok: true,

@@ -38,6 +38,7 @@ import {
   POSITA_PROTOCOL_VERSION,
   RETENTION_MAINTENANCE_FAILURE_MESSAGE
 } from './contracts'
+import { isLiveMailSnapshotV1, type LiveMailSnapshotV1 } from './liveMail'
 import type {
   Account,
   BriefItem,
@@ -213,7 +214,7 @@ export const isAppError = (value: unknown): value is AppErrorV1 =>
   isString(value.message) &&
   isBoolean(value.retryable)
 
-export const isAppSnapshot = (value: unknown): value is AppSnapshotV1 =>
+const isFixtureAppSnapshot = (value: unknown): value is AppSnapshotV1 =>
   isRecord(value) &&
   hasOnlyKeys(value, ['version', 'dataMode', 'loadedAt', 'dataset']) &&
   value.version === POSITA_PROTOCOL_VERSION &&
@@ -221,6 +222,13 @@ export const isAppSnapshot = (value: unknown): value is AppSnapshotV1 =>
   isString(value.loadedAt) &&
   Number.isFinite(Date.parse(value.loadedAt)) &&
   isMailDataset(value.dataset)
+
+export const isLiveMailSnapshot = isLiveMailSnapshotV1
+
+export const isAppSnapshot = (
+  value: unknown
+): value is AppSnapshotV1 | LiveMailSnapshotV1 =>
+  isFixtureAppSnapshot(value) || isLiveMailSnapshot(value)
 
 export const isLoadSnapshotResponse = (value: unknown): value is LoadSnapshotResponseV1 => {
   if (!isRecord(value) || typeof value.ok !== 'boolean') return false

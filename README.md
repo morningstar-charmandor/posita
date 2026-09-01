@@ -160,6 +160,17 @@ worker's retained key. Offline startup returns a safe retry-required outcome and
 never restores samples. The owner remains outside Electron startup, IPC, UI, and
 Google composition.
 
+The existing application-state query is now mode-aware. Sample installations keep
+the deterministic fixture workspace; live installations use a fixed worker-backed
+canonical summary query and can truthfully show live-empty, recorded-syncing,
+offline, attention-required, or cached-data status. The projection is capped at
+50 summaries and 32 opaque account scopes and excludes bodies, recipients, remote
+provider IDs, provider-account subjects, cursors, paths, keys, and raw failures.
+The live renderer is deliberately status-only until source detail, user-readable
+account identity, and open-original behavior are reviewed. Reloading checks local
+state; it does not contact Gmail or retry sync. No provider, credential, network
+request, AI service, or mailbox mutation was activated.
+
 Read the build boundaries before extending the prototype:
 
 - [Agent contract](AGENTS.md)

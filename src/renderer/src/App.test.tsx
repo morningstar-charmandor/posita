@@ -148,6 +148,102 @@ describe('Posita vertical slice', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 
+  it('renders durable live-empty state without restoring or implying samples', async () => {
+    render(<App dataSource={{
+      loadApplicationState: async () => ({
+        ok: true,
+        value: {
+          ...successResponse.value,
+          snapshot: {
+            version: 1,
+            dataMode: 'live-canonical',
+            loadedAt: '2026-09-01T05:00:00.000Z',
+            status: 'empty',
+            accounts: [],
+            messages: [],
+            hasMore: false
+          }
+        }
+      })
+    }} />)
+
+    expect(await screen.findByRole('heading', { name: 'No live mail is cached' }))
+      .toBeInTheDocument()
+    expect(screen.getByText(/will not restore deterministic samples/i)).toBeInTheDocument()
+    expect(screen.getByText(/Gmail connection, provider sync retry, AI generation/i))
+      .toBeInTheDocument()
+    expect(screen.queryByText('Confirm Pulse scope with Rahul')).not.toBeInTheDocument()
+  })
+
+  it('shows bounded offline provenance and reloads local status without claiming sync retry', async () => {
+    const loadApplicationState = vi.fn(async () => ({
+      ok: true as const,
+      value: {
+        ...successResponse.value,
+        snapshot: {
+          version: 1 as const,
+          dataMode: 'live-canonical' as const,
+          loadedAt: '2026-09-01T05:00:00.000Z',
+          status: 'offline' as const,
+          accounts: [{
+            accountId: 'account-work-1',
+            provider: 'google' as const,
+            status: 'offline' as const,
+            lastSuccessAt: '2026-08-31T05:00:00.000Z'
+          }],
+          messages: [],
+          hasMore: false
+        }
+      }
+    }))
+    render(<App dataSource={{ loadApplicationState }} />)
+
+    expect(await screen.findByRole('heading', {
+      name: 'The last recorded sync state is offline'
+    })).toBeInTheDocument()
+    expect(screen.getByRole('list', { name: 'Live mail account provenance' }))
+      .toHaveTextContent('Google · account-work-1')
+    fireEvent.click(screen.getByRole('button', { name: 'Reload local status' }))
+    await waitFor(() => expect(loadApplicationState).toHaveBeenCalledTimes(2))
+  })
+
+  it('does not render canonical summary content before source-detail review is complete', async () => {
+    render(<App dataSource={{
+      loadApplicationState: async () => ({
+        ok: true,
+        value: {
+          ...successResponse.value,
+          snapshot: {
+            version: 1,
+            dataMode: 'live-canonical',
+            loadedAt: '2026-09-01T05:00:00.000Z',
+            status: 'ready',
+            accounts: [{ accountId: 'account-work-1', provider: 'google', status: 'ready' }],
+            messages: [{
+              id: 'message-live-1',
+              threadId: 'thread-live-1',
+              accountId: 'account-work-1',
+              provider: 'google',
+              sender: { address: 'sender@example.test' },
+              receivedAt: '2026-09-01T04:00:00.000Z',
+              subject: 'Private canonical subject',
+              preview: 'Private canonical preview.',
+              isRead: false,
+              attachmentCount: 0
+            }],
+            hasMore: false
+          }
+        }
+      })
+    }} />)
+
+    expect(await screen.findByRole('heading', { name: 'Encrypted live-mail data is available' }))
+      .toBeInTheDocument()
+    expect(screen.getByText(/live workspace remains disabled/i)).toBeInTheDocument()
+    expect(screen.queryByText('Private canonical subject')).not.toBeInTheDocument()
+    expect(screen.queryByText('Private canonical preview.')).not.toBeInTheDocument()
+  })
+
   it('shows safe pending lifecycle progress with account provenance', async () => {
     render(<App dataSource={{
       loadApplicationState: async () => ({

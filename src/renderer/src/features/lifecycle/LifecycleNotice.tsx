@@ -1,5 +1,4 @@
 import { AlertTriangle, LoaderCircle } from 'lucide-react'
-import type { Account } from '@shared/domain'
 import type {
   LifecycleOperationStatusV1,
   LifecycleStatusSnapshotV1
@@ -16,16 +15,18 @@ const stageLabels: Record<LifecycleOperationStatusV1['stage'], string> = {
 
 export interface LifecycleNoticeProps {
   lifecycle: LifecycleStatusSnapshotV1
-  accounts: readonly Account[]
+  accounts: readonly { id: string; label: string; address?: string }[]
 }
 
 const accountName = (
   operation: LifecycleOperationStatusV1,
-  accounts: readonly Account[]
+  accounts: readonly { id: string; label: string; address?: string }[]
 ): string | undefined => {
   if (!operation.accountId) return undefined
   const account = accounts.find((candidate) => candidate.id === operation.accountId)
-  return account ? `${account.label} · ${account.address}` : 'A local account'
+  return account
+    ? account.address ? `${account.label} · ${account.address}` : account.label
+    : 'A local account'
 }
 
 export function LifecycleNotice({

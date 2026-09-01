@@ -11,7 +11,8 @@ import {
 import { fixtures } from '../shared/fixtures'
 import {
   bootstrapLocalDataWithDependencies,
-  type LocalDataBootstrapDependencies
+  type LocalDataBootstrapDependencies,
+  type LocalDataRuntime
 } from './bootstrapLocalData'
 import { CACHE_DATA_KEY_NAME } from './application/secretVault'
 import { googleRefreshTokenName } from './application/secretVault'
@@ -58,6 +59,14 @@ const inspect = (path: string) => {
   }
 }
 
+const closeRuntime = (runtime: LocalDataRuntime): void => {
+  if (runtime.mode === 'ready') {
+    runtime.providerMailReadWorker?.destroyEncryptionContext()
+    runtime.retentionService.destroyEncryptionContext?.()
+  }
+  runtime.repository.close()
+}
+
 afterEach(async () => {
   for (const database of openDatabases.splice(0)) {
     if (database.isOpen) database.close()
@@ -87,16 +96,24 @@ describe('bootstrapLocalData lifecycle recovery', () => {
 
     await expect(initial.mailDataModeService.activateLive({ version: 1, accountId: 'work' }))
       .resolves.toEqual({ version: 1, mode: 'live', changed: true })
+    await expect(initial.service.loadSnapshot()).resolves.toMatchObject({
+      ok: true,
+      value: { dataMode: 'live-canonical', status: 'empty', messages: [] }
+    })
     expect(initial.repository.loadDataset()).toMatchObject({ accounts: [], messages: [] })
     initial.accountStateRepository.deleteAccountState('work')
     await initial.secretVault.delete(googleRefreshTokenName('work'))
-    initial.repository.close()
+    closeRuntime(initial)
 
     const restarted = await bootstrapLocalDataWithDependencies(databasePath, dependencies())
     if (restarted.mode !== 'ready') throw new Error('Expected ready runtime.')
     expect(restarted.mailDataModeService.load()).toEqual({ version: 1, mode: 'live' })
     expect(restarted.repository.loadDataset()).toMatchObject({ accounts: [], messages: [] })
-    restarted.repository.close()
+    await expect(restarted.service.loadSnapshot()).resolves.toMatchObject({
+      ok: true,
+      value: { dataMode: 'live-canonical', status: 'empty', accounts: [], messages: [] }
+    })
+    closeRuntime(restarted)
   })
 
   it('composes confirmed local-only recovery for an orphaned credential', async () => {
@@ -134,13 +151,13 @@ describe('bootstrapLocalData lifecycle recovery', () => {
     })
     expect(await runtime.secretVault.has('oauth.google.work.refresh-token')).toBe(false)
     expect(runtime.accountStateRepository.hasProviderAccount('work')).toBe(false)
-    runtime.repository.close()
+    closeRuntime(runtime)
   })
 
   it('cleans an expired unlinked confirmation receipt during startup', async () => {
     const databasePath = await createDatabasePath()
     const initial = await bootstrapLocalDataWithDependencies(databasePath, dependencies())
-    initial.repository.close()
+    closeRuntime(initial)
     const setup = inspect(databasePath)
     setup.confirmations.save({
       version: 1,
@@ -154,7 +171,7 @@ describe('bootstrapLocalData lifecycle recovery', () => {
 
     const restarted = await bootstrapLocalDataWithDependencies(databasePath, dependencies())
     expect(restarted.mode).toBe('ready')
-    restarted.repository.close()
+    closeRuntime(restarted)
     const afterRestart = inspect(databasePath)
     expect(afterRestart.confirmations.load('confirm-expired-1')).toBeUndefined()
   })
@@ -172,7 +189,7 @@ describe('bootstrapLocalData lifecycle recovery', () => {
     const restarted = await bootstrapLocalDataWithDependencies(databasePath, dependencies())
     expect(restarted.mode).toBe('ready')
     expect(restarted.repository.loadDataset()).toEqual(fixtures)
-    restarted.repository.close()
+    closeRuntime(restarted)
   })
 
   it('executes confirmed active deletion and remains deleted after restart', async () => {
@@ -206,11 +223,11 @@ describe('bootstrapLocalData lifecycle recovery', () => {
       ok: true,
       value: { status: 'local-data-deleted' }
     })
-    expect(applicationState.load()).toEqual({
+    expect(await applicationState.load()).toEqual({
       ok: true,
       value: { version: 1, mode: 'local-data-deleted' }
     })
-    runtime.repository.close()
+    closeRuntime(runtime)
 
     const deleted = inspect(databasePath)
     expect(countEncryptedRecords(deleted.database)).toBe(0)
@@ -223,14 +240,14 @@ describe('bootstrapLocalData lifecycle recovery', () => {
 
     const restarted = await bootstrapLocalDataWithDependencies(databasePath, dependencies())
     expect(restarted.mode).toBe('local-data-deleted')
-    restarted.repository.close()
+    closeRuntime(restarted)
   })
 
   it('recovers full deletion without a key and never reseeds on later restarts', async () => {
     const databasePath = await createDatabasePath()
     const initial = await bootstrapLocalDataWithDependencies(databasePath, dependencies())
     expect(initial.mode).toBe('ready')
-    initial.repository.close()
+    closeRuntime(initial)
 
     const setup = inspect(databasePath)
     expect(await setup.vault.delete(CACHE_DATA_KEY_NAME)).toBe(true)
@@ -248,7 +265,7 @@ describe('bootstrapLocalData lifecycle recovery', () => {
       ok: false,
       error: { code: 'DATABASE_UNAVAILABLE' }
     })
-    recovered.repository.close()
+    closeRuntime(recovered)
 
     const afterRecovery = inspect(databasePath)
     expect(countEncryptedRecords(afterRecovery.database)).toBe(0)
@@ -263,7 +280,7 @@ describe('bootstrapLocalData lifecycle recovery', () => {
 
     const laterRestart = await bootstrapLocalDataWithDependencies(databasePath, dependencies())
     expect(laterRestart.mode).toBe('local-data-deleted')
-    laterRestart.repository.close()
+    closeRuntime(laterRestart)
     const finalState = inspect(databasePath)
     expect(countEncryptedRecords(finalState.database)).toBe(0)
     expect(finalState.database.prepare('SELECT COUNT(*) AS count FROM protected_secrets').get())
@@ -273,7 +290,7 @@ describe('bootstrapLocalData lifecycle recovery', () => {
   it('finishes key-erasure-pending without creating a replacement key', async () => {
     const databasePath = await createDatabasePath()
     const initial = await bootstrapLocalDataWithDependencies(databasePath, dependencies())
-    initial.repository.close()
+    closeRuntime(initial)
     const setup = inspect(databasePath)
     setup.database.exec('DELETE FROM encrypted_account_records')
     setup.database.exec('DELETE FROM encrypted_records')
@@ -293,7 +310,7 @@ describe('bootstrapLocalData lifecycle recovery', () => {
 
     const recovered = await bootstrapLocalDataWithDependencies(databasePath, dependencies())
     expect(recovered.mode).toBe('local-data-deleted')
-    recovered.repository.close()
+    closeRuntime(recovered)
     const afterRecovery = inspect(databasePath)
     expect(await afterRecovery.vault.get(CACHE_DATA_KEY_NAME)).toBeUndefined()
     expect(afterRecovery.lifecycle.load('delete-local-key-1')).toMatchObject({ phase: 'completed' })
@@ -302,7 +319,7 @@ describe('bootstrapLocalData lifecycle recovery', () => {
   it('fails closed when full deletion conflicts with another pending operation', async () => {
     const databasePath = await createDatabasePath()
     const initial = await bootstrapLocalDataWithDependencies(databasePath, dependencies())
-    initial.repository.close()
+    closeRuntime(initial)
     const setup = inspect(databasePath)
     setup.lifecycle.save({
       version: 1,
@@ -329,7 +346,7 @@ describe('bootstrapLocalData lifecycle recovery', () => {
   it('leaves the current phase unchanged when startup recovery is cancelled', async () => {
     const databasePath = await createDatabasePath()
     const initial = await bootstrapLocalDataWithDependencies(databasePath, dependencies())
-    initial.repository.close()
+    closeRuntime(initial)
     const setup = inspect(databasePath)
     setup.lifecycle.save({
       version: 1,
@@ -355,7 +372,7 @@ describe('bootstrapLocalData lifecycle recovery', () => {
   it('never reseeds or creates a key while account disconnect is pending', async () => {
     const databasePath = await createDatabasePath()
     const initial = await bootstrapLocalDataWithDependencies(databasePath, dependencies())
-    initial.repository.close()
+    closeRuntime(initial)
     const setup = inspect(databasePath)
     setup.database.exec('DELETE FROM encrypted_records')
     setup.lifecycle.save({
@@ -373,7 +390,7 @@ describe('bootstrapLocalData lifecycle recovery', () => {
       ok: true,
       value: { dataset: { accounts: [], messages: [] } }
     })
-    pending.repository.close()
+    closeRuntime(pending)
     const withoutKey = inspect(databasePath)
     expect(countEncryptedRecords(withoutKey.database)).toBe(0)
     expect(await withoutKey.vault.delete(CACHE_DATA_KEY_NAME)).toBe(true)

@@ -29,7 +29,7 @@ const retention = {
 }
 
 describe('ApplicationStateService', () => {
-  it('composes mail and lifecycle reads into one ready state', () => {
+  it('composes mail and lifecycle reads into one ready state', async () => {
     const service = new ApplicationStateService(
       'ready',
       new MailApplicationService(mailRepository, {
@@ -39,7 +39,7 @@ describe('ApplicationStateService', () => {
       retention
     )
 
-    expect(service.load()).toMatchObject({
+    expect(await service.load()).toMatchObject({
       ok: true,
       value: {
         version: 1,
@@ -64,22 +64,22 @@ describe('ApplicationStateService', () => {
 
   it.each(['local-data-deleted', 'recovery-required'] as const)(
     'reports %s without attempting to read private mail',
-    (mode) => {
-      expect(new ApplicationStateService(mode).load()).toEqual({
+    async (mode) => {
+      expect(await new ApplicationStateService(mode).load()).toEqual({
         ok: true,
         value: { version: 1, mode }
       })
     }
   )
 
-  it('fails closed when a ready service is incomplete', () => {
-    expect(new ApplicationStateService('ready').load()).toMatchObject({
+  it('fails closed when a ready service is incomplete', async () => {
+    expect(await new ApplicationStateService('ready').load()).toMatchObject({
       ok: false,
       error: { code: 'DATABASE_UNAVAILABLE', retryable: true }
     })
   })
 
-  it('transitions to deleted mode without reading destroyed private data', () => {
+  it('transitions to deleted mode without reading destroyed private data', async () => {
     const service = new ApplicationStateService(
       'ready',
       new MailApplicationService(mailRepository, { now: () => new Date() }),
@@ -89,7 +89,7 @@ describe('ApplicationStateService', () => {
 
     service.markLocalDataDeleted()
 
-    expect(service.load()).toEqual({
+    expect(await service.load()).toEqual({
       ok: true,
       value: { version: 1, mode: 'local-data-deleted' }
     })

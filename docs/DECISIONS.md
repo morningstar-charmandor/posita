@@ -621,7 +621,39 @@
 - Consequence: lifecycle ordering has one deterministic, testable source of truth;
   live-empty and offline restart never restore fixtures, destructive local work
   cannot overlap provider projection writes, and key teardown is explicit. The
-  owner remains uncomposed until a trusted account inventory, live read model,
-  retry/status policy, and real provider are separately reviewed. No dependency,
+  owner remains uncomposed until a trusted account inventory, retry/status policy,
+  and real provider are separately reviewed; ADR-035 separately composes only the
+  read model. No dependency,
   schema migration, credential, personal data, network request, IPC/UI capability,
   external action, or mailbox mutation is added.
+
+## ADR-035: Project live mail through a bounded worker-owned read model
+
+- Status: accepted for Gate 2D
+- Context: schema v10 could durably select live mode, but the only application
+  snapshot still described every ready installation as fixture-seeded. Reusing the
+  fixture `Message` dataset would invent provider provenance, while returning full
+  canonical messages would move bodies, recipients, remote IDs, and unbounded data
+  through IPC before the live source-detail experience is reviewed.
+- Decision: make the existing application-state query asynchronous and mode-aware.
+  Sample mode continues to return the exact fixture dataset. Live mode invokes one
+  fixed worker operation over the existing encrypted canonical projection and
+  returns at most 50 newest summaries plus at most 32 opaque account scopes. The
+  summary retains canonical message/thread IDs, provider and account scope, sender,
+  timestamp, subject, bounded plain-text preview, read state, and attachment count,
+  but omits bodies, recipients, provider message/thread IDs, provider-account
+  subjects, cursors, paths, keys, and raw failures. File-backed reads use the same
+  serial projection worker and tracked in-memory key lifecycle. The renderer shows
+  truthful live-empty, recorded-syncing, offline, attention, and cached-data states,
+  but does not render summary content until a source-detail and original-source path
+  is verified.
+- Consequence: a committed sample-to-live transition is visible immediately and can
+  never fall through to the sample workspace. Offline state remains a recorded local
+  projection, not a claim that a provider retry is running. Full deletion includes
+  the read worker's key context, and normal shutdown settles accepted reads before
+  erasure. The synchronous projection remains only for bounded in-memory tests. One
+  intentional compatibility union remains at the version-1 application-state
+  boundary: exact fixture snapshots and exact live snapshots are discriminated by
+  `dataMode`. No schema, dependency, Gmail adapter, credential, network request,
+  provider retry command, message-detail surface, external browser action, AI path,
+  or mailbox mutation is added.

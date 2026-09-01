@@ -33,7 +33,19 @@ File-backed canonical projection operations use a short-lived worker rather than
 Electron main or the renderer. The adapter retains one trusted in-memory key copy,
 transfers a temporary copy into each worker, zeroes worker key buffers, serializes
 bounded operations, validates safe result schemas, and supports explicit teardown.
-It has no startup composition and has processed deterministic records only.
+Its read-only live-state operation is now composed at startup; provider commit,
+delete, and sync activation remain uncomposed, and it has processed deterministic
+records only.
+
+The live application-state response is intentionally smaller than a canonical
+message. It is limited to 50 newest summaries and 32 opaque account scopes. It may
+contain the sender, subject, timestamp, bounded plain-text preview, read state, and
+attachment count needed for a future list, but never a full body, recipient list,
+remote provider message/thread ID, provider-account subject, sync cursor, path,
+credential, key, or raw error. Canonical local IDs plus opaque account scope retain
+source provenance without exposing remote identifiers. The current renderer shows
+only safe status and counts; it does not render those summaries until source-detail
+and original-source behavior pass a separate review.
 
 The credential-free provider-mail lifecycle owner now suspends retention around
 sync batches and prevents new sync while disconnect or full local deletion is

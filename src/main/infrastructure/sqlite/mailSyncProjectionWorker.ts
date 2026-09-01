@@ -33,6 +33,14 @@ if (!isMailSyncProjectionWorkerRequestV1(workerData)) {
         operation: 'load-checkpoint',
         ...(checkpoint === undefined ? {} : { checkpoint })
       })
+    } else if (workerData.operation.kind === 'load-read-model') {
+      const snapshot = await projection.loadReadModel(workerData.operation.loadedAt)
+      parentPort.postMessage({
+        version: 1,
+        ok: true,
+        operation: 'load-read-model',
+        snapshot
+      })
     } else if (workerData.operation.kind === 'commit-batch') {
       const result = await projection.commitBatch(workerData.operation.batch)
       parentPort.postMessage({ version: 1, ok: true, operation: 'commit-batch', result })

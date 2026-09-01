@@ -307,10 +307,15 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - one credential-free lifecycle owner that activates live mode before sync,
   excludes retention during provider writes, settles work before disconnect or
   deletion, preserves live-empty/offline truth, and tears down worker keys,
+- a mode-aware worker-backed live snapshot capped at 50 canonical summaries and
+  32 opaque account scopes, with bodies, recipients, remote provider IDs, cursors,
+  key material, paths, and raw failures excluded,
+- truthful status-only live-empty, recorded-syncing, offline, attention, and cached-
+  data UI that never falls back to samples or claims Gmail or AI is active,
 - an explicit compatibility boundary that keeps fixture `Message` records sample-
   only rather than fabricating provider identity,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 48 automated test files containing 317 passing tests,
+- 51 automated test files containing 332 passing tests,
 - a desktop visual and accessibility-tree check of the local-only Settings entry,
   sample-account controls, normal no-recovery-needed outcome, and automatic
   retention card with readable next/last status and Gmail non-mutation copy,
@@ -332,7 +337,9 @@ will atomically remove samples, startup will never reseed them in live mode, and
 removing the last account leaves a truthful empty live state. The transition is
 still unexposed. A new credential-free lifecycle owner now proves startup,
 offline, retention, disconnect, deletion, shutdown, and key-teardown ordering.
-The next milestone is a truthful live application read-model boundary. Real OAuth,
+The live application read-model boundary is now verified at a status-only layer.
+The next milestone is a user-readable encrypted account identity plus a bounded
+canonical source-detail query before live summaries are displayed. Real OAuth,
 browser activation, credentials, live account
 connection, and production sync remain separate actions blocked behind explicit
 owner approval.
@@ -378,6 +385,8 @@ records, cursor persistence, journaled removal, and worker-owned 90-day retentio
 The coordinator-to-worker path is also verified with deterministic file-backed
 integration. A durable schema-v10 mode now proves samples can be removed once and
 never silently restored after disconnect or restart. The provider lifecycle now
-has one deterministic application owner, but real mail remains blocked until a
-live read model, production composition, and the remaining provider activation
-gates pass.
+has one deterministic application owner, and the running product can distinguish
+sample from live-empty, offline, or cached canonical state through a bounded worker
+read without displaying private live summaries. Real mail remains blocked until
+account identity, source detail, production sync, and the remaining provider
+activation gates pass.
