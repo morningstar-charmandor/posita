@@ -2,7 +2,7 @@ import type { DatabaseSync } from 'node:sqlite'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   AccountStateError,
-  type ProviderAccountRecordV1,
+  type ProviderAccountRecordV2,
   type ProviderSyncStateV1
 } from '../../application/accountState'
 import { AesGcmCacheProtector } from '../security/aesGcmCacheProtector'
@@ -21,11 +21,15 @@ const nonceSource = () => {
   }
 }
 
-const providerAccount = (accountId: string): ProviderAccountRecordV1 => ({
-  version: 1,
+const providerAccount = (accountId: string): ProviderAccountRecordV2 => ({
+  version: 2,
   accountId,
   provider: 'google',
   providerAccountId: `google-sub-${accountId}`,
+  displayIdentity: {
+    mailboxAddress: `${accountId}@example.test`,
+    displayLabel: accountId === 'work' ? 'Work' : 'Personal'
+  },
   consentVersion: 'google-gmail-readonly-v1',
   connectedAt: '2026-08-24T10:00:00.000Z'
 })
@@ -72,6 +76,8 @@ describe('EncryptedSqliteAccountStateRepository', () => {
     `).all() as unknown as { payload: Uint8Array }[]
     const ciphertext = Buffer.concat(payloads.map((row) => Buffer.from(row.payload)))
     expect(ciphertext.includes(Buffer.from(account.providerAccountId))).toBe(false)
+    expect(ciphertext.includes(Buffer.from(account.displayIdentity.mailboxAddress))).toBe(false)
+    expect(ciphertext.includes(Buffer.from(account.displayIdentity.displayLabel!))).toBe(false)
     expect(ciphertext.includes(Buffer.from(state.cursor!))).toBe(false)
   })
 
@@ -178,9 +184,37 @@ describe('EncryptedSqliteAccountStateRepository', () => {
     const invalidAccount = {
       ...providerAccount('work'),
       consentVersion: 1
-    } as unknown as ProviderAccountRecordV1
+    } as unknown as ProviderAccountRecordV2
 
     expect(() => repository.saveProviderAccount(invalidAccount)).toThrowError(
+      expect.objectContaining<Partial<AccountStateError>>({ code: 'INVALID_ACCOUNT_STATE' })
+    )
+    expect(database.prepare('SELECT COUNT(*) AS count FROM encrypted_account_records').get())
+      .toEqual({ count: 0 })
+  })
+
+  it('rejects legacy and malformed display identities before persistence', () => {
+    const { database, repository } = createRepository()
+    const legacy = {
+      version: 1,
+      accountId: 'work',
+      provider: 'google',
+      providerAccountId: 'google-sub-work',
+      consentVersion: 'google-gmail-readonly-v1',
+      connectedAt: '2026-08-24T10:00:00.000Z'
+    } as unknown as ProviderAccountRecordV2
+    const paddedLabel = {
+      ...providerAccount('work'),
+      displayIdentity: {
+        mailboxAddress: 'work@example.test',
+        displayLabel: ' Work '
+      }
+    }
+
+    expect(() => repository.saveProviderAccount(legacy)).toThrowError(
+      expect.objectContaining<Partial<AccountStateError>>({ code: 'INVALID_ACCOUNT_STATE' })
+    )
+    expect(() => repository.saveProviderAccount(paddedLabel)).toThrowError(
       expect.objectContaining<Partial<AccountStateError>>({ code: 'INVALID_ACCOUNT_STATE' })
     )
     expect(database.prepare('SELECT COUNT(*) AS count FROM encrypted_account_records').get())

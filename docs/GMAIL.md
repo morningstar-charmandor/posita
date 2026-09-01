@@ -9,8 +9,8 @@ authorize live mailbox access.
 Posita can now project its durable `live` installation mode through a bounded
 worker-backed application snapshot. That local read model is not Gmail access: it
 starts no sync, uses no credential, and exposes no remote provider IDs or cursor.
-Its renderer remains status-only until account display identity, source detail,
-and open-original behavior are separately reviewed.
+Its renderer remains status-only until source detail and open-original behavior
+are separately reviewed.
 
 Settings now renders a credential-free consent preview identified as
 `google-gmail-readonly-v1`. The exact projection is carried through the existing
@@ -23,8 +23,9 @@ interface and a deterministic fake. The boundary accepts only the reviewed
 `google-gmail-readonly-v1` consent and `gmail.readonly`, requires an HTTPS
 authorization target and an explicit-port loopback callback, permits one pending
 session, and models exact expiry, cancellation, callback rejection, and safe
-provider failure. A validated successful result contains the provider subject and
-refresh credential only inside the trusted main-process contract so a future
+provider failure. A validated successful version-2 result contains the provider
+subject, verified mailbox address, and refresh credential only inside the trusted
+main-process contract so a future
 coordinator can move it directly into encrypted account state and `SecretVault`.
 
 The fake uses conspicuous test-only values, performs no network or browser action,
@@ -63,6 +64,12 @@ cannot choose it. The current account choices are visibly labeled as samples, an
 normal checks report that no recovery is needed. This composition does not add a
 Google adapter, OAuth client, browser action, provider request, real credential,
 live account, or mailbox mutation.
+
+The credential-free connection path now persists provider-account record v2. Its
+opaque provider subject remains hidden; its verified mailbox address and optional
+bounded user label are encrypted in the same account-scoped payload. The live
+status projection exposes only the address/label and uses an explicit unavailable
+identity for incomplete local state. No renderer command can set a label yet.
 
 Gate 2D now also defines the canonical provider-independent message/thread
 contract and one credential-free `MailSyncCoordinator`. Exact validators require

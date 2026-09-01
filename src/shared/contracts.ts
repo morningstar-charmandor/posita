@@ -1,5 +1,5 @@
 import type { MailDataset } from './domain'
-import type { LiveMailSnapshotV1 } from './liveMail'
+import type { LiveMailSnapshotV2 } from './liveMail'
 
 export const POSITA_PROTOCOL_VERSION = 1 as const
 export const DELETE_LOCAL_DATA_CONFIRMATION_TEXT = 'DELETE LOCAL DATA' as const
@@ -79,7 +79,7 @@ export interface AppSnapshotV1 {
   dataset: MailDataset
 }
 
-export type ApplicationMailSnapshotV1 = AppSnapshotV1 | LiveMailSnapshotV1
+export type ApplicationMailSnapshotV1 = AppSnapshotV1 | LiveMailSnapshotV2
 
 export type AppErrorCodeV1 =
   | 'INVALID_REQUEST'

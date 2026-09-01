@@ -82,10 +82,11 @@ describe('bootstrapLocalData lifecycle recovery', () => {
     const initial = await bootstrapLocalDataWithDependencies(databasePath, dependencies())
     if (initial.mode !== 'ready') throw new Error('Expected ready runtime.')
     initial.accountStateRepository.saveProviderAccount({
-      version: 1,
+      version: 2,
       accountId: 'work',
       provider: 'google',
       providerAccountId: 'provider-subject-test-1',
+      displayIdentity: { mailboxAddress: 'work@example.test' },
       consentVersion: GOOGLE_CONNECT_CONSENT.consentVersion,
       connectedAt: '2026-08-31T12:00:00.000Z'
     })

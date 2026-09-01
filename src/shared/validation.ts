@@ -38,7 +38,7 @@ import {
   POSITA_PROTOCOL_VERSION,
   RETENTION_MAINTENANCE_FAILURE_MESSAGE
 } from './contracts'
-import { isLiveMailSnapshotV1, type LiveMailSnapshotV1 } from './liveMail'
+import { isLiveMailSnapshotV2, type LiveMailSnapshotV2 } from './liveMail'
 import type {
   Account,
   BriefItem,
@@ -223,11 +223,11 @@ const isFixtureAppSnapshot = (value: unknown): value is AppSnapshotV1 =>
   Number.isFinite(Date.parse(value.loadedAt)) &&
   isMailDataset(value.dataset)
 
-export const isLiveMailSnapshot = isLiveMailSnapshotV1
+export const isLiveMailSnapshot = isLiveMailSnapshotV2
 
 export const isAppSnapshot = (
   value: unknown
-): value is AppSnapshotV1 | LiveMailSnapshotV1 =>
+): value is AppSnapshotV1 | LiveMailSnapshotV2 =>
   isFixtureAppSnapshot(value) || isLiveMailSnapshot(value)
 
 export const isLoadSnapshotResponse = (value: unknown): value is LoadSnapshotResponseV1 => {

@@ -1,12 +1,21 @@
 import { describe, expect, it } from 'vitest'
-import { isLiveMailSnapshotV1, type LiveMailSnapshotV1 } from './liveMail'
+import { isLiveMailSnapshotV2, type LiveMailSnapshotV2 } from './liveMail'
 
-const snapshot = (): LiveMailSnapshotV1 => ({
-  version: 1,
+const snapshot = (): LiveMailSnapshotV2 => ({
+  version: 2,
   dataMode: 'live-canonical',
   loadedAt: '2026-09-01T05:00:00.000Z',
   status: 'ready',
-  accounts: [{ accountId: 'account-work-1', provider: 'google', status: 'ready' }],
+  accounts: [{
+    accountId: 'account-work-1',
+    provider: 'google',
+    displayIdentity: {
+      status: 'available',
+      mailboxAddress: 'owner.work@example.test',
+      displayLabel: 'Work'
+    },
+    status: 'ready'
+  }],
   messages: [{
     id: 'message-1',
     threadId: 'thread-1',
@@ -24,22 +33,53 @@ const snapshot = (): LiveMailSnapshotV1 => ({
 
 describe('live-mail presentation contract', () => {
   it('accepts one exact bounded canonical summary without private provider fields', () => {
-    expect(isLiveMailSnapshotV1(snapshot())).toBe(true)
+    expect(isLiveMailSnapshotV2(snapshot())).toBe(true)
     expect(JSON.stringify(snapshot())).not.toContain('providerMessageId')
     expect(JSON.stringify(snapshot())).not.toContain('recipients')
     expect(JSON.stringify(snapshot())).not.toContain('body')
   })
 
   it('rejects unknown fields, orphaned account provenance, and incoherent status', () => {
-    expect(isLiveMailSnapshotV1({ ...snapshot(), cursor: 'private-cursor' })).toBe(false)
-    expect(isLiveMailSnapshotV1({
+    expect(isLiveMailSnapshotV2({ ...snapshot(), cursor: 'private-cursor' })).toBe(false)
+    expect(isLiveMailSnapshotV2({
       ...snapshot(),
       accounts: []
     })).toBe(false)
-    expect(isLiveMailSnapshotV1({
+    expect(isLiveMailSnapshotV2({
       ...snapshot(),
       status: 'offline'
     })).toBe(false)
+    expect(isLiveMailSnapshotV2({
+      ...snapshot(),
+      accounts: [{
+        accountId: 'account-work-1',
+        provider: 'google',
+        status: 'ready'
+      }]
+    })).toBe(false)
+    expect(isLiveMailSnapshotV2({
+      ...snapshot(),
+      accounts: [{
+        ...snapshot().accounts[0],
+        displayIdentity: {
+          status: 'available',
+          mailboxAddress: 'owner.work@example.test',
+          displayLabel: ' Work '
+        }
+      }]
+    })).toBe(false)
+  })
+
+  it('allows a bounded unavailable identity only as an explicit safe state', () => {
+    expect(isLiveMailSnapshotV2({
+      ...snapshot(),
+      status: 'attention-required',
+      accounts: [{
+        ...snapshot().accounts[0],
+        displayIdentity: { status: 'unavailable' },
+        status: 'attention-required'
+      }]
+    })).toBe(true)
   })
 
   it('requires newest-first summaries and enforces the fixed output limit', () => {
@@ -48,11 +88,11 @@ describe('live-mail presentation contract', () => {
       id: 'message-older',
       receivedAt: '2026-08-31T04:00:00.000Z'
     }
-    expect(isLiveMailSnapshotV1({
+    expect(isLiveMailSnapshotV2({
       ...snapshot(),
       messages: [older, snapshot().messages[0]!]
     })).toBe(false)
-    expect(isLiveMailSnapshotV1({
+    expect(isLiveMailSnapshotV2({
       ...snapshot(),
       messages: Array.from({ length: 51 }, (_, index) => ({
         ...snapshot().messages[0]!,

@@ -2,12 +2,12 @@ import {
   AccountAuthorizationError,
   type AccountAuthorizationAdapter,
   type AccountAuthorizationLaunchV1,
-  type AuthorizedAccountGrantV1,
+  type AuthorizedAccountGrantV2,
   type BeginAccountAuthorizationRequestV1,
   type CompleteAccountAuthorizationRequestV1,
   isAccountAuthorizationLaunchV1,
   isAuthorizationSessionId,
-  isAuthorizedAccountGrantV1,
+  isAuthorizedAccountGrantV2,
   isBeginAccountAuthorizationRequestV1,
   isCompleteAccountAuthorizationRequestV1
 } from '../../application/accountAuthorization'
@@ -16,6 +16,7 @@ export interface DeterministicAuthorizationFixture {
   authorizationUrl: string
   callbackUrl: string
   providerAccountId: string
+  mailboxAddress: string
   refreshToken: string
   sessionLifetimeMs: number
 }
@@ -91,7 +92,7 @@ implements AccountAuthorizationAdapter {
 
   async complete(
     request: CompleteAccountAuthorizationRequestV1
-  ): Promise<AuthorizedAccountGrantV1> {
+  ): Promise<AuthorizedAccountGrantV2> {
     if (!isCompleteAccountAuthorizationRequestV1(request)) throw invalidRequest()
     if (this.active === undefined || this.active.launch.sessionId !== request.sessionId) {
       throw new AccountAuthorizationError(
@@ -117,17 +118,18 @@ implements AccountAuthorizationAdapter {
         false
       )
     }
-    const grant: AuthorizedAccountGrantV1 = {
-      version: 1,
+    const grant: AuthorizedAccountGrantV2 = {
+      version: 2,
       sessionId: this.active.launch.sessionId,
       accountId: this.active.launch.accountId,
       provider: this.active.launch.provider,
       providerAccountId: this.fixture.providerAccountId,
+      mailboxAddress: this.fixture.mailboxAddress,
       consentVersion: this.active.launch.consentVersion,
       connectedAt: now.toISOString(),
       refreshToken: this.fixture.refreshToken
     }
-    if (!isAuthorizedAccountGrantV1(grant)) throw invalidRequest()
+    if (!isAuthorizedAccountGrantV2(grant)) throw invalidRequest()
     this.active = undefined
     return grant
   }

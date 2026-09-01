@@ -51,8 +51,11 @@ exists deeper in the tree.
   reads/commits and key cleanup. Its bounded read-only live-state operation is
   composed at product startup; commit and production sync remain uncomposed.
 - The application-state query selects exact sample or live snapshot contracts
-  from durable mode. Live output is capped at 50 summaries and 32 opaque account
-  scopes, and the renderer stays status-only until source detail is reviewed.
+  from durable mode. Live output is capped at 50 summaries and 32 account scopes.
+- Versioned encrypted provider-account state now separates the hidden provider
+  subject from a verified mailbox address and optional user-defined display label;
+  the status renderer shows this human identity without exposing the opaque scope.
+- The renderer stays status-only until bounded source detail is reviewed.
 - Credential-free integration verifies the sync coordinator against that real
   file-backed worker with deterministic provider data; product startup remains uncomposed.
 - Provider-mail payloads and source identities are authenticated ciphertext;

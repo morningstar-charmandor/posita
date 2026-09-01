@@ -127,6 +127,14 @@ cursors remain encrypted. Only the record kind and opaque Posita account scope
 are queryable, and both are authenticated. The repository is composed in the
 trusted main process and has no preload or renderer surface.
 
+Provider-account record v2 separates the provider's opaque subject from its
+human-facing identity. The provider-verified mailbox address and optional bounded
+user label share the existing authenticated encrypted payload; neither becomes
+queryable SQLite metadata. The live status projection may expose only the address
+and label for presentation, while the provider subject remains trusted-main-only.
+Legacy simulated v1 provider-account payloads are rejected because no truthful
+mailbox address can be inferred from an opaque subject.
+
 Gate 2D schema v5 adds the operational lifecycle journal from ADR-012. It stays
 outside the deletable key boundary and stores no private content, allowing a
 future disconnect or delete-local-data workflow to resume after interruption or
@@ -397,8 +405,9 @@ query now reads the durable mode on every load.
 Live mode uses a separate exact read-model contract rather than converting
 canonical records into the fixture dataset. One short-lived serial projection
 worker decrypts and validates canonical account/message/thread records and returns
-at most 50 newest summaries across at most 32 opaque account scopes. The response
-contains canonical source locators, visible account provenance, sender, timestamp,
+at most 50 newest summaries across at most 32 account scopes. The version-2 response
+contains canonical source locators, encrypted-account-derived visible address/label
+provenance, sender, timestamp,
 subject, bounded plain-text preview, read state, and attachment count. It excludes
 full bodies, recipients, remote provider IDs, provider-account subjects, cursors,
 database paths, key material, and raw failures. Sample mode stays synchronous and
@@ -407,7 +416,7 @@ never blocks Electron main.
 
 The renderer distinguishes live-empty, recorded-syncing, offline, attention, and
 cached-data states. It intentionally does not render the summary content yet:
-account display identity, source detail, and the separately reviewed open-original
+source detail and the separately reviewed open-original
 path must be complete before the live workspace is enabled. Its reload button
 re-queries local state only and never starts provider sync.
 

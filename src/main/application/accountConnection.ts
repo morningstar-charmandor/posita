@@ -1,7 +1,7 @@
 import {
   AccountAuthorizationError,
   isAccountAuthorizationLaunchV1,
-  isAuthorizedAccountGrantV1,
+  isAuthorizedAccountGrantV2,
   isBeginAccountAuthorizationRequestV1,
   type AccountAuthorizationAdapter,
   type AccountAuthorizationLaunchV1,
@@ -10,9 +10,9 @@ import {
 } from './accountAuthorization'
 import {
   isAccountId,
-  isProviderAccountRecordV1,
+  isProviderAccountRecordV2,
   type AccountStateRepository,
-  type ProviderAccountRecordV1
+  type ProviderAccountRecordV2
 } from './accountState'
 import { googleRefreshTokenName, type SecretVault } from './secretVault'
 
@@ -152,7 +152,7 @@ export class AccountConnectionService {
 
   async complete(
     request: CompleteAccountAuthorizationRequestV1
-  ): Promise<ProviderAccountRecordV1> {
+  ): Promise<ProviderAccountRecordV2> {
     const pending = this.pending
     if (pending === undefined || pending.sessionId !== request.sessionId) {
       throw new AccountAuthorizationError(
@@ -175,7 +175,7 @@ export class AccountConnectionService {
     }
 
     this.pending = undefined
-    if (!isAuthorizedAccountGrantV1(grant) ||
+    if (!isAuthorizedAccountGrantV2(grant) ||
         grant.sessionId !== pending.sessionId ||
         grant.accountId !== pending.accountId) {
       throw this.invalidAuthorizationResult()
@@ -195,15 +195,16 @@ export class AccountConnectionService {
       )
     }
 
-    const account: ProviderAccountRecordV1 = {
-      version: 1,
+    const account: ProviderAccountRecordV2 = {
+      version: 2,
       accountId: grant.accountId,
       provider: grant.provider,
       providerAccountId: grant.providerAccountId,
+      displayIdentity: { mailboxAddress: grant.mailboxAddress },
       consentVersion: grant.consentVersion,
       connectedAt: grant.connectedAt
     }
-    if (!isProviderAccountRecordV1(account)) {
+    if (!isProviderAccountRecordV2(account)) {
       await this.rollbackAfterAccountStateFailure(secretName, grant.accountId)
       throw this.invalidAuthorizationResult()
     }

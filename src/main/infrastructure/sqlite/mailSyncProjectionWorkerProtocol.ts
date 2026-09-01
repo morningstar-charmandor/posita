@@ -7,7 +7,7 @@ import {
   type CommitProviderMailBatchV1,
   type MailSyncCheckpointV1
 } from '../../application/mailSync.ts'
-import { isLiveMailSnapshotV1, type LiveMailSnapshotV1 } from '../../../shared/liveMail.ts'
+import { isLiveMailSnapshotV2, type LiveMailSnapshotV2 } from '../../../shared/liveMail.ts'
 
 export type MailSyncProjectionWorkerOperationV1 =
   | { kind: 'load-checkpoint'; accountId: string }
@@ -33,7 +33,7 @@ export type MailSyncProjectionWorkerSuccessV1 =
     version: 1
     ok: true
     operation: 'load-read-model'
-    snapshot: LiveMailSnapshotV1
+    snapshot: LiveMailSnapshotV2
   }
   | {
     version: 1
@@ -114,7 +114,7 @@ export const isMailSyncProjectionWorkerResponseV1 = (
   }
   if (value.operation === 'load-read-model') {
     return hasOnlyKeys(value, ['version', 'ok', 'operation', 'snapshot']) &&
-      isLiveMailSnapshotV1(value.snapshot)
+      isLiveMailSnapshotV2(value.snapshot)
   }
   if (value.operation === 'delete-account-records') {
     return hasOnlyKeys(value, [

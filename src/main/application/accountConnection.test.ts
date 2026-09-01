@@ -3,7 +3,7 @@ import { GOOGLE_CONNECT_CONSENT } from '../../shared/contracts'
 import {
   GOOGLE_READONLY_SCOPES,
   type AccountAuthorizationAdapter,
-  type AuthorizedAccountGrantV1,
+  type AuthorizedAccountGrantV2,
   type BeginAccountAuthorizationRequestV1
 } from './accountAuthorization'
 import {
@@ -13,7 +13,7 @@ import {
 } from './accountConnection'
 import type {
   AccountStateRepository,
-  ProviderAccountRecordV1,
+  ProviderAccountRecordV2,
   ProviderSyncStateV1
 } from './accountState'
 import type { SecretName, SecretVault } from './secretVault'
@@ -62,12 +62,12 @@ class MemoryVault implements SecretVault {
 }
 
 class MemoryAccountState implements AccountStateRepository {
-  readonly accounts = new Map<string, ProviderAccountRecordV1>()
+  readonly accounts = new Map<string, ProviderAccountRecordV2>()
   failSaveAfterWrite = false
 
   constructor(readonly events: string[] = []) {}
 
-  saveProviderAccount(record: ProviderAccountRecordV1): void {
+  saveProviderAccount(record: ProviderAccountRecordV2): void {
     this.events.push('state:save')
     this.accounts.set(record.accountId, record)
     if (this.failSaveAfterWrite) throw new Error('unsafe test-only state failure')
@@ -78,7 +78,7 @@ class MemoryAccountState implements AccountStateRepository {
     return this.accounts.has(accountId)
   }
 
-  loadProviderAccount(accountId: string): ProviderAccountRecordV1 | undefined {
+  loadProviderAccount(accountId: string): ProviderAccountRecordV2 | undefined {
     this.events.push('state:load')
     return this.accounts.get(accountId)
   }
@@ -104,6 +104,7 @@ const createAuthorization = (): DeterministicFakeAccountAuthorizationAdapter =>
       authorizationUrl: 'https://accounts.example.invalid/authorize?fixture=readonly',
       callbackUrl: 'http://127.0.0.1:49152/callback?code=fixture&state=verified',
       providerAccountId: 'provider-subject-fixture-1',
+      mailboxAddress: 'owner.work@example.test',
       refreshToken: 'deterministic-test-refresh-credential',
       sessionLifetimeMs: 5 * 60 * 1000
     },
@@ -150,10 +151,11 @@ describe('AccountConnectionService', () => {
 
     const providerStateOnly = createHarness()
     providerStateOnly.state.accounts.set(request.accountId, {
-      version: 1,
+      version: 2,
       accountId: request.accountId,
       provider: 'google',
       providerAccountId: 'provider-subject-fixture-1',
+      displayIdentity: { mailboxAddress: 'owner.work@example.test' },
       consentVersion: GOOGLE_CONNECT_CONSENT.consentVersion,
       connectedAt: '2026-08-28T07:00:00.000Z'
     })
@@ -206,10 +208,11 @@ describe('AccountConnectionService', () => {
     await service.begin(request)
 
     await expect(service.complete(completeRequest)).resolves.toEqual({
-      version: 1,
+      version: 2,
       accountId: request.accountId,
       provider: 'google',
       providerAccountId: 'provider-subject-fixture-1',
+      displayIdentity: { mailboxAddress: 'owner.work@example.test' },
       consentVersion: GOOGLE_CONNECT_CONSENT.consentVersion,
       connectedAt: '2026-08-28T07:00:00.000Z'
     })
@@ -224,10 +227,11 @@ describe('AccountConnectionService', () => {
   it('refuses an already connected or inconsistent account before authorization', async () => {
     const connected = createHarness()
     connected.state.accounts.set(request.accountId, {
-      version: 1,
+      version: 2,
       accountId: request.accountId,
       provider: 'google',
       providerAccountId: 'existing-provider-subject',
+      displayIdentity: { mailboxAddress: 'owner.work@example.test' },
       consentVersion: GOOGLE_CONNECT_CONSENT.consentVersion,
       connectedAt: '2026-08-27T07:00:00.000Z'
     })
@@ -323,7 +327,7 @@ describe('AccountConnectionService', () => {
     const authorization: AccountAuthorizationAdapter = {
       begin: (value) => real.begin(value),
       cancel: (sessionId) => real.cancel(sessionId),
-      complete: async (value): Promise<AuthorizedAccountGrantV1> => ({
+      complete: async (value): Promise<AuthorizedAccountGrantV2> => ({
         ...await real.complete(value),
         accountId: 'account-attacker-1'
       })

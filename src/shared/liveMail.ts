@@ -8,14 +8,23 @@ export type LiveMailAccountStatusV1 =
   | 'attention-required'
   | 'disabled'
 
-export interface LiveMailAccountV1 {
+export type LiveMailAccountDisplayIdentityV1 =
+  | {
+      status: 'available'
+      mailboxAddress: string
+      displayLabel?: string
+    }
+  | { status: 'unavailable' }
+
+export interface LiveMailAccountV2 {
   accountId: string
   provider: 'google'
+  displayIdentity: LiveMailAccountDisplayIdentityV1
   status: LiveMailAccountStatusV1
   lastSuccessAt?: string
 }
 
-export interface LiveMailMessageSummaryV1 {
+export interface LiveMailMessageSummaryV2 {
   id: string
   threadId: string
   accountId: string
@@ -42,13 +51,13 @@ export type LiveMailSnapshotStatusV1 =
  * Bounded presentation projection for canonical provider mail. It deliberately
  * omits message bodies, recipients, provider IDs, account subjects, and sync cursors.
  */
-export interface LiveMailSnapshotV1 {
-  version: 1
+export interface LiveMailSnapshotV2 {
+  version: 2
   dataMode: 'live-canonical'
   loadedAt: string
   status: LiveMailSnapshotStatusV1
-  accounts: LiveMailAccountV1[]
-  messages: LiveMailMessageSummaryV1[]
+  accounts: LiveMailAccountV2[]
+  messages: LiveMailMessageSummaryV2[]
   hasMore: boolean
 }
 
@@ -72,17 +81,33 @@ const statuses: readonly LiveMailAccountStatusV1[] = [
   'not-synced', 'syncing', 'ready', 'offline', 'attention-required', 'disabled'
 ]
 
-const isAccount = (value: unknown): value is LiveMailAccountV1 => {
+const isDisplayIdentity = (value: unknown): value is LiveMailAccountDisplayIdentityV1 => {
+  if (!isRecord(value) || typeof value.status !== 'string') return false
+  if (value.status === 'unavailable') return hasOnlyKeys(value, ['status'])
+  if (value.status !== 'available') return false
+  const label = value.displayLabel === undefined ? [] : ['displayLabel']
+  return hasOnlyKeys(value, ['status', 'mailboxAddress', ...label]) &&
+    typeof value.mailboxAddress === 'string' && value.mailboxAddress.length <= 320 &&
+    mailboxPattern.test(value.mailboxAddress) &&
+    (value.displayLabel === undefined ||
+      (typeof value.displayLabel === 'string' && value.displayLabel.length > 0 &&
+        value.displayLabel.length <= 80 && value.displayLabel.trim() === value.displayLabel))
+}
+
+const isAccount = (value: unknown): value is LiveMailAccountV2 => {
   if (!isRecord(value)) return false
   const success = value.lastSuccessAt === undefined ? [] : ['lastSuccessAt']
-  return hasOnlyKeys(value, ['accountId', 'provider', 'status', ...success]) &&
+  return hasOnlyKeys(value, [
+    'accountId', 'provider', 'displayIdentity', 'status', ...success
+  ]) &&
     typeof value.accountId === 'string' && idPattern.test(value.accountId) &&
     value.provider === 'google' && typeof value.status === 'string' &&
     statuses.includes(value.status as LiveMailAccountStatusV1) &&
+    isDisplayIdentity(value.displayIdentity) &&
     (value.lastSuccessAt === undefined || isTimestamp(value.lastSuccessAt))
 }
 
-const isMessage = (value: unknown): value is LiveMailMessageSummaryV1 => {
+const isMessage = (value: unknown): value is LiveMailMessageSummaryV2 => {
   if (!isRecord(value) || !hasOnlyKeys(value, [
     'id', 'threadId', 'accountId', 'provider', 'sender', 'receivedAt', 'subject',
     'preview', 'isRead', 'attachmentCount'
@@ -105,7 +130,7 @@ const isMessage = (value: unknown): value is LiveMailMessageSummaryV1 => {
 }
 
 const expectedStatus = (
-  accounts: readonly LiveMailAccountV1[],
+  accounts: readonly LiveMailAccountV2[],
   messageCount: number
 ): LiveMailSnapshotStatusV1 => {
   if (accounts.some((account) => account.status === 'attention-required')) {
@@ -116,17 +141,17 @@ const expectedStatus = (
   return messageCount > 0 ? 'ready' : 'empty'
 }
 
-export const isLiveMailSnapshotV1 = (value: unknown): value is LiveMailSnapshotV1 => {
+export const isLiveMailSnapshotV2 = (value: unknown): value is LiveMailSnapshotV2 => {
   if (!isRecord(value) || !hasOnlyKeys(value, [
     'version', 'dataMode', 'loadedAt', 'status', 'accounts', 'messages', 'hasMore'
-  ]) || value.version !== 1 || value.dataMode !== 'live-canonical' ||
+  ]) || value.version !== 2 || value.dataMode !== 'live-canonical' ||
       !isTimestamp(value.loadedAt) || !Array.isArray(value.accounts) ||
       value.accounts.length > 32 || !value.accounts.every(isAccount) ||
       !Array.isArray(value.messages) || value.messages.length > LIVE_MAIL_READ_LIMIT ||
       !value.messages.every(isMessage) || typeof value.hasMore !== 'boolean') return false
 
-  const accounts = value.accounts as LiveMailAccountV1[]
-  const messages = value.messages as LiveMailMessageSummaryV1[]
+  const accounts = value.accounts as LiveMailAccountV2[]
+  const messages = value.messages as LiveMailMessageSummaryV2[]
   const accountIds = accounts.map((account) => account.accountId)
   const messageIds = messages.map((message) => `${message.accountId}\u0000${message.id}`)
   if (new Set(accountIds).size !== accountIds.length ||

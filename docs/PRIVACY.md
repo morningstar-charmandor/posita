@@ -38,12 +38,15 @@ delete, and sync activation remain uncomposed, and it has processed deterministi
 records only.
 
 The live application-state response is intentionally smaller than a canonical
-message. It is limited to 50 newest summaries and 32 opaque account scopes. It may
+message. It is limited to 50 newest summaries and 32 account scopes. It may
 contain the sender, subject, timestamp, bounded plain-text preview, read state, and
 attachment count needed for a future list, but never a full body, recipient list,
 remote provider message/thread ID, provider-account subject, sync cursor, path,
 credential, key, or raw error. Canonical local IDs plus opaque account scope retain
-source provenance without exposing remote identifiers. The current renderer shows
+source provenance without exposing remote identifiers. Provider-account record v2
+adds a verified mailbox address and optional user label inside authenticated
+ciphertext. Only that human-facing identity—not the hidden provider subject—is
+included in the bounded status projection. The current renderer shows
 only safe status and counts; it does not render those summaries until source-detail
 and original-source behavior pass a separate review.
 

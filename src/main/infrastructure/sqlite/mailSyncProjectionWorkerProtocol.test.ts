@@ -32,7 +32,7 @@ describe('mail-sync projection worker read protocol', () => {
       ok: true,
       operation: 'load-read-model',
       snapshot: {
-        version: 1,
+        version: 2,
         dataMode: 'live-canonical',
         loadedAt: '2026-09-01T05:00:00.000Z',
         status: 'empty',

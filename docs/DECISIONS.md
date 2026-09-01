@@ -657,3 +657,29 @@
   `dataMode`. No schema, dependency, Gmail adapter, credential, network request,
   provider retry command, message-detail surface, external browser action, AI path,
   or mailbox mutation is added.
+
+## ADR-036: Separate encrypted account display identity from provider subject
+
+- Status: accepted for Gate 2D
+- Context: opaque Posita account scopes and Google provider subjects are not safe
+  human-facing provenance. A live message cannot be shown truthfully unless its
+  originating mailbox is recognizable, but making an address queryable SQLite
+  metadata or deriving it from an opaque subject would weaken the privacy model.
+- Decision: replace the inactive provider-account payload with exact record v2.
+  It keeps the provider subject trusted-main-only and adds a provider-verified
+  mailbox address plus an optional trimmed user label of at most 80 characters in
+  the same authenticated encrypted record. The successful authorization grant is
+  separately versioned as v2 and must provide the verified address. The bounded
+  live snapshot advances to v2 and exposes only an exact `available` address/label
+  projection or `unavailable` for inconsistent local state; the status UI never
+  renders the opaque account scope as identity. No label-editing command is exposed
+  yet. Legacy simulated provider-account v1 payloads fail closed because a truthful
+  address cannot be inferred from their provider subject.
+- Consequence: account provenance is human-readable without revealing provider
+  subjects or creating a plaintext account index. No SQLite schema migration is
+  required because the version is inside the already encrypted payload, and the
+  running product has no real or production-created provider-account record to
+  migrate. The next credential-free gate is bounded canonical source detail.
+  No dependency, Google adapter, credential, browser action, network request,
+  personal mailbox data, live-summary rendering, AI path, external action, or
+  mailbox mutation is added.

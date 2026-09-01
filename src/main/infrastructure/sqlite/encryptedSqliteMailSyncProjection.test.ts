@@ -106,10 +106,14 @@ describe('EncryptedSqliteMailSyncProjection', () => {
   it('projects a bounded newest-first live read model without bodies or provider IDs', async () => {
     const { accountState, projection } = createProjection()
     accountState.saveProviderAccount({
-      version: 1,
+      version: 2,
       accountId: 'account-work-1',
       provider: 'google',
       providerAccountId: 'provider-subject-test-1',
+      displayIdentity: {
+        mailboxAddress: 'owner.work@example.test',
+        displayLabel: 'Work'
+      },
       consentVersion: GOOGLE_CONNECT_CONSENT.consentVersion,
       connectedAt: '2026-08-30T09:00:00.000Z'
     })
@@ -125,7 +129,16 @@ describe('EncryptedSqliteMailSyncProjection', () => {
     expect(readModel).toMatchObject({
       dataMode: 'live-canonical',
       status: 'ready',
-      accounts: [{ accountId: 'account-work-1', provider: 'google', status: 'ready' }],
+      accounts: [{
+        accountId: 'account-work-1',
+        provider: 'google',
+        displayIdentity: {
+          status: 'available',
+          mailboxAddress: 'owner.work@example.test',
+          displayLabel: 'Work'
+        },
+        status: 'ready'
+      }],
       messages: [
         { id: 'message-newer', accountId: 'account-work-1' },
         { id: 'message-older', preview: 'A private body with normalized spacing.' }
@@ -146,10 +159,11 @@ describe('EncryptedSqliteMailSyncProjection', () => {
 
     const offline = createProjection()
     offline.accountState.saveProviderAccount({
-      version: 1,
+      version: 2,
       accountId: 'account-work-1',
       provider: 'google',
       providerAccountId: 'provider-subject-test-1',
+      displayIdentity: { mailboxAddress: 'owner.work@example.test' },
       consentVersion: GOOGLE_CONNECT_CONSENT.consentVersion,
       connectedAt: '2026-08-30T09:00:00.000Z'
     })
@@ -163,17 +177,25 @@ describe('EncryptedSqliteMailSyncProjection', () => {
     await expect(offline.projection.loadReadModel('2026-09-01T05:00:00.000Z'))
       .resolves.toMatchObject({
         status: 'offline',
-        accounts: [{ accountId: 'account-work-1', status: 'offline' }]
+        accounts: [{
+          accountId: 'account-work-1',
+          displayIdentity: {
+            status: 'available',
+            mailboxAddress: 'owner.work@example.test'
+          },
+          status: 'offline'
+        }]
       })
   })
 
   it('caps live output at the fixed newest-summary boundary', async () => {
     const { accountState, projection } = createProjection()
     accountState.saveProviderAccount({
-      version: 1,
+      version: 2,
       accountId: 'account-work-1',
       provider: 'google',
       providerAccountId: 'provider-subject-test-1',
+      displayIdentity: { mailboxAddress: 'owner.work@example.test' },
       consentVersion: GOOGLE_CONNECT_CONSENT.consentVersion,
       connectedAt: '2026-08-30T09:00:00.000Z'
     })

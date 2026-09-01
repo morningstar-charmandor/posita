@@ -4,7 +4,7 @@ import {
   AccountAuthorizationError,
   GOOGLE_READONLY_SCOPES,
   isAccountAuthorizationLaunchV1,
-  isAuthorizedAccountGrantV1,
+  isAuthorizedAccountGrantV2,
   isCompleteAccountAuthorizationRequestV1,
   type BeginAccountAuthorizationRequestV1
 } from '../../application/accountAuthorization'
@@ -25,6 +25,7 @@ const createHarness = () => {
       authorizationUrl: 'https://accounts.example.invalid/authorize?fixture=readonly',
       callbackUrl: 'http://127.0.0.1:49152/callback?code=fixture&state=verified',
       providerAccountId: 'provider-subject-fixture-1',
+      mailboxAddress: 'owner.work@example.test',
       refreshToken: 'deterministic-test-refresh-credential',
       sessionLifetimeMs: 5 * 60 * 1000
     },
@@ -56,12 +57,17 @@ describe('DeterministicFakeAccountAuthorizationAdapter', () => {
       callbackUrl: 'http://127.0.0.1:49152/callback?code=fixture&state=verified'
     })
 
-    expect(isAuthorizedAccountGrantV1(grant)).toBe(true)
+    expect(isAuthorizedAccountGrantV2(grant)).toBe(true)
     expect(grant).toMatchObject({
       accountId: request.accountId,
       providerAccountId: 'provider-subject-fixture-1',
+      mailboxAddress: 'owner.work@example.test',
       consentVersion: GOOGLE_CONNECT_CONSENT.consentVersion
     })
+    expect(isAuthorizedAccountGrantV2({
+      ...grant,
+      mailboxAddress: 'not-a-mailbox'
+    })).toBe(false)
   })
 
   it('rejects scope widening and unknown request fields before creating a session', async () => {

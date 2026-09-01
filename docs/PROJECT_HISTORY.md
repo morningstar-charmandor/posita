@@ -1617,6 +1617,42 @@ source detail are not rendered; opening Gmail externally, sync retry, connection
 provider access, and AI remain unavailable. The next milestone is the credential-
 free account-display and canonical source-detail boundary.
 
+## Gate 2D milestone — Encrypted human-readable account identity
+
+Date: 2026-09-01
+Checkpoint: use the Git commit whose subject is `feat: identify live accounts safely`
+
+Goal: replace opaque account-scope presentation with truthful human-readable
+provenance without exposing Google subjects or creating plaintext account metadata.
+
+Delivered:
+
+- exact provider-account record v2 with a required verified mailbox address and
+  optional bounded user label inside the existing authenticated ciphertext,
+- authorization grant v2 so the trusted provider boundary—not the renderer or an
+  inferred subject—supplies the mailbox address,
+- live snapshot v2 with exact available/unavailable identity states,
+- status UI that shows label plus address, falls back safely when identity is
+  unavailable, and never displays opaque account scope as human identity,
+- rejection tests for legacy records, malformed addresses, padded labels, unknown
+  fields, ciphertext disclosure, inconsistent state, and renderer behavior.
+
+Important decisions:
+
+- keep the hidden provider subject and visible account identity as separate fields
+  in one encrypted source of truth,
+- reject simulated record v1 rather than invent a mailbox address,
+- defer the label-editing command and all Gmail/browser activation,
+- add no schema table, dependency, credential, network request, real account,
+  personal mail, summary-content rendering, or remote mutation.
+
+Evidence: 51 test files and 334 tests pass. Strict typecheck, renderer security
+checks, and production Electron build pass through `npm run verify`.
+
+Limitations: address and optional label are exercised only with deterministic
+values. No real provider account exists, and users cannot edit labels yet. The
+next milestone is the bounded worker-backed canonical source-detail query.
+
 ## How future entries should be written
 
 For each material milestone, record:

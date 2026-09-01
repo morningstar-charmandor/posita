@@ -2,10 +2,10 @@ import type { DatabaseSync } from 'node:sqlite'
 import {
   AccountStateError,
   isAccountId,
-  isProviderAccountRecordV1,
+  isProviderAccountRecordV2,
   isProviderSyncStateV1,
   type AccountStateRepository,
-  type ProviderAccountRecordV1,
+  type ProviderAccountRecordV2,
   type ProviderSyncStateV1
 } from '../../application/accountState.ts'
 import {
@@ -73,8 +73,8 @@ export class EncryptedSqliteAccountStateRepository implements AccountStateReposi
     private readonly protector: CacheRecordProtector
   ) {}
 
-  saveProviderAccount(record: ProviderAccountRecordV1): void {
-    if (!isProviderAccountRecordV1(record)) {
+  saveProviderAccount(record: ProviderAccountRecordV2): void {
+    if (!isProviderAccountRecordV2(record)) {
       throw new AccountStateError('INVALID_ACCOUNT_STATE', 'Provider account state is invalid.')
     }
     this.save('provider-account', record.accountId, record)
@@ -92,10 +92,10 @@ export class EncryptedSqliteAccountStateRepository implements AccountStateReposi
     }
   }
 
-  loadProviderAccount(accountId: string): ProviderAccountRecordV1 | undefined {
+  loadProviderAccount(accountId: string): ProviderAccountRecordV2 | undefined {
     const value = this.load('provider-account', accountId)
     if (value === undefined) return undefined
-    if (!isProviderAccountRecordV1(value) || value.accountId !== accountId) {
+    if (!isProviderAccountRecordV2(value) || value.accountId !== accountId) {
       throw new AccountStateError('INVALID_ACCOUNT_STATE', 'Provider account state is invalid.')
     }
     return value

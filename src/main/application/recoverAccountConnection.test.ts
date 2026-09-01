@@ -3,7 +3,7 @@ import { GOOGLE_CONNECT_CONSENT } from '../../shared/contracts'
 import { AccountConnectionService } from './accountConnection'
 import type {
   AccountStateRepository,
-  ProviderAccountRecordV1,
+  ProviderAccountRecordV2,
   ProviderSyncStateV1
 } from './accountState'
 import type { AccountAuthorizationAdapter } from './accountAuthorization'
@@ -51,16 +51,16 @@ class MemoryVault implements SecretVault {
 }
 
 class MemoryAccountState implements AccountStateRepository {
-  readonly accounts = new Map<string, ProviderAccountRecordV1>()
+  readonly accounts = new Map<string, ProviderAccountRecordV2>()
   readonly sync = new Map<string, ProviderSyncStateV1>()
   failDelete = false
   deleteCalls: string[] = []
 
-  saveProviderAccount(record: ProviderAccountRecordV1): void {
+  saveProviderAccount(record: ProviderAccountRecordV2): void {
     this.accounts.set(record.accountId, record)
   }
   hasProviderAccount(value: string): boolean { return this.accounts.has(value) }
-  loadProviderAccount(value: string): ProviderAccountRecordV1 | undefined {
+  loadProviderAccount(value: string): ProviderAccountRecordV2 | undefined {
     return this.accounts.get(value)
   }
   saveSyncState(state: ProviderSyncStateV1): void { this.sync.set(state.accountId, state) }
@@ -97,11 +97,12 @@ class ConfirmationVerifier implements AccountConnectionRecoveryConfirmationVerif
   }
 }
 
-const providerAccount = (): ProviderAccountRecordV1 => ({
-  version: 1,
+const providerAccount = (): ProviderAccountRecordV2 => ({
+  version: 2,
   accountId,
   provider: 'google',
   providerAccountId: 'provider-subject-fixture-1',
+  displayIdentity: { mailboxAddress: 'owner@example.test' },
   consentVersion: GOOGLE_CONNECT_CONSENT.consentVersion,
   connectedAt: '2026-08-28T07:00:00.000Z'
 })

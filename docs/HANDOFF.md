@@ -176,9 +176,15 @@ Implemented:
   in sample mode and selects a separate canonical live snapshot immediately after
   the durable schema-v10 transition,
 - a production-composed read-only projection-worker operation capped at 50 newest
-  summaries and 32 opaque account scopes, with canonical source locators and
+  summaries and 32 account scopes, with canonical source locators and
   account provenance but no bodies, recipients, remote provider IDs, provider
   subjects, cursors, paths, keys, or raw errors,
+- provider-account record v2 with a provider-verified encrypted mailbox address,
+  optional bounded user display label, hidden provider subject, exact validation,
+  and fail-closed rejection of legacy simulated v1 payloads,
+- live snapshot v2 provenance that exposes only an available address/label or an
+  unavailable safe state, while status UI no longer renders opaque account scope
+  as human identity,
 - truthful live-empty, recorded-syncing, offline, attention-required, and cached-
   data renderer states with local-status reload; canonical summary content remains
   hidden until source-detail and open-original review,
@@ -223,8 +229,7 @@ Simulated or deliberately inactive:
 Not implemented:
 
 - Gmail OAuth, message ingestion, incremental history sync, or user-triggered/live disconnect,
-- a user-readable live account identity, canonical message-detail query, and
-  reviewed open-original path,
+- a canonical message-detail query and reviewed open-original path,
 - production activation of the approved provider-mail lifecycle,
 - user-triggered account disconnect or any remote mailbox mutation control,
 - automatic pending-disconnect resume with a live idempotent revocation adapter,
@@ -262,8 +267,9 @@ confirmed local deletion are complete at their current layers. Continue in this 
 4. Treat canonical fixed-window retention, journaled account removal, worker
    integration, schema-v10 mode, provider-mail lifecycle ordering, and the status-
    only live application read model as complete at their credential-free layers.
-   Next settle encrypted user-readable account identity and a bounded canonical
-   source-detail query before rendering live summaries.
+   Encrypted user-readable account identity is complete at its credential-free
+   storage and status boundary. Next implement a bounded canonical source-detail
+   query before rendering live summaries.
 5. Request explicit owner approval before composing a real Google adapter,
    credentials, browser authorization, connection activation, or live account.
 6. Keep real Gmail ingestion disabled until authorization activation is separately
@@ -294,9 +300,11 @@ the legacy `Message` is a deterministic sample-presentation record, while only
 path because Posita will not invent provider provenance. The new live read model
 returns only a bounded summary projection and the renderer keeps its content
 hidden. No dependency, schema, provider adapter, credential, network request,
-external action, secret, personal mailbox data, or mutation was added. The next
-milestone is a credential-free user-readable account and canonical source-detail
-boundary, not OAuth or external Gmail navigation.
+external action, secret, personal mailbox data, or mutation was added. Provider-
+account record v2 and live snapshot v2 now project the verified encrypted mailbox
+address plus optional label while keeping the provider subject hidden; label
+editing remains unexposed. The next milestone is a credential-free bounded
+canonical source-detail boundary, not OAuth or external Gmail navigation.
 
 ## How to resume
 
@@ -316,7 +324,7 @@ boundary, not OAuth or external Gmail navigation.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 51 test files, 332 tests, strict typecheck, structure
+- Current verified baseline: 51 test files, 334 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,

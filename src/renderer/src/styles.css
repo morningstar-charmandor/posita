@@ -37,6 +37,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:fo
 .live-mail-account-list { width: min(440px, 100%); margin: 22px 0 0; padding: 0; list-style: none; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); text-align: left; }
 .live-mail-account-list li { display: flex; justify-content: space-between; gap: 18px; padding: 11px 13px; color: var(--muted); font-size: 11px; }
 .live-mail-account-list li + li { border-top: 1px solid var(--line); }
+.live-mail-account-list span { display: grid; gap: 2px; }
+.live-mail-account-list span small { color: var(--faint); font-size: 9.5px; }
 .live-mail-account-list strong { color: var(--ink); font-weight: 650; }
 @keyframes startup-pulse { 0%, 100% { opacity: .55; transform: scale(.96); } 50% { opacity: 1; transform: scale(1); } }
 

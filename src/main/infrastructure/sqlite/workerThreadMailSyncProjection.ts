@@ -10,7 +10,7 @@ import {
 } from '../../application/mailSync'
 import type { ProviderMailAccountDataRemover } from '../../application/disconnectAccount'
 import type { ProviderMailReadModelSource } from '../../application/providerMailReadModel'
-import type { LiveMailSnapshotV1 } from '../../../shared/liveMail'
+import type { LiveMailSnapshotV2 } from '../../../shared/liveMail'
 import {
   isMailSyncProjectionWorkerResponseV1,
   type MailSyncProjectionWorkerOperationV1,
@@ -67,7 +67,7 @@ export class WorkerThreadMailSyncProjection implements
     return response.checkpoint
   }
 
-  async loadReadModel(loadedAt: string): Promise<LiveMailSnapshotV1> {
+  async loadReadModel(loadedAt: string): Promise<LiveMailSnapshotV2> {
     if (loadedAt.length > 64 || !Number.isFinite(Date.parse(loadedAt))) throw invalidRequest()
     const response = await this.enqueue({ kind: 'load-read-model', loadedAt })
     if (response.operation !== 'load-read-model' || response.snapshot.loadedAt !== loadedAt) {

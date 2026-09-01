@@ -9,7 +9,7 @@ import type {
 } from './accountLifecycle'
 import type {
   AccountStateRepository,
-  ProviderAccountRecordV1,
+  ProviderAccountRecordV2,
   ProviderSyncStateV1
 } from './accountState'
 import {
@@ -87,9 +87,9 @@ class FakeAccountState implements AccountStateRepository {
   constructor(private readonly actions: string[], failure?: FailureStep) {
     this.failOnce = failure
   }
-  saveProviderAccount(_record: ProviderAccountRecordV1): void {}
+  saveProviderAccount(_record: ProviderAccountRecordV2): void {}
   hasProviderAccount(): boolean { return false }
-  loadProviderAccount(): ProviderAccountRecordV1 | undefined { return undefined }
+  loadProviderAccount(): ProviderAccountRecordV2 | undefined { return undefined }
   saveSyncState(_state: ProviderSyncStateV1): void {}
   loadSyncState(): ProviderSyncStateV1 | undefined { return undefined }
   deleteAccountState(): boolean { return false }

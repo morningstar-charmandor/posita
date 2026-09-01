@@ -164,10 +164,14 @@ The existing application-state query is now mode-aware. Sample installations kee
 the deterministic fixture workspace; live installations use a fixed worker-backed
 canonical summary query and can truthfully show live-empty, recorded-syncing,
 offline, attention-required, or cached-data status. The projection is capped at
-50 summaries and 32 opaque account scopes and excludes bodies, recipients, remote
+50 summaries and 32 account scopes and excludes bodies, recipients, remote
 provider IDs, provider-account subjects, cursors, paths, keys, and raw failures.
-The live renderer is deliberately status-only until source detail, user-readable
-account identity, and open-original behavior are reviewed. Reloading checks local
+Provider-account record v2 stores a provider-verified mailbox address and optional
+user-defined display label in authenticated ciphertext, separate from the hidden
+provider subject. Live status shows that identity instead of the opaque account
+scope, with an explicit unavailable state for incomplete local records. The live
+renderer remains status-only until source detail and open-original behavior are
+reviewed. Reloading checks local
 state; it does not contact Gmail or retry sync. No provider, credential, network
 request, AI service, or mailbox mutation was activated.
 

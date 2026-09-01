@@ -41,6 +41,12 @@ The key is never exposed through IPC, logged, committed, or stored in plaintext.
 If encrypted records exist but the protected key is missing or invalid, startup
 fails closed. Posita must not generate a replacement key over unreadable data.
 
+Provider-account record v2 uses this same envelope for the provider subject,
+verified mailbox address, optional user-defined display label, consent version,
+and connection timestamp. Only its opaque account scope and record kind are
+queryable. The bounded live status projection may intentionally reveal the
+address/label to the renderer, but never the provider subject.
+
 ## Envelope version 1
 
 Each record payload is canonical JSON encrypted independently with AES-256-GCM:
@@ -217,7 +223,9 @@ to ingest Gmail.
 The same worker protocol now has one production-composed read-only operation for
 live-mode application state. It decrypts canonical records inside the worker and
 returns a strictly validated maximum of 50 newest presentation summaries across a
-maximum of 32 opaque account scopes. Full bodies, recipients, remote provider IDs,
+maximum of 32 account scopes. Its version-2 result adds only the human-facing
+mailbox address/optional label decrypted from provider-account record v2, or an
+explicit unavailable identity for incomplete state. Full bodies, recipients, remote provider IDs,
 provider-account subjects, cursors, paths, and key material do not cross the worker
 or renderer boundary. Canonical message/thread IDs plus opaque account scope remain
 the local source locator for a future detail query. Sample snapshots use the legacy

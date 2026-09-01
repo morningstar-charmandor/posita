@@ -100,7 +100,11 @@ describe('WorkerThreadMailSyncProjection', () => {
     await expect(projection.loadReadModel('2026-09-01T05:00:00.000Z')).resolves.toMatchObject({
       dataMode: 'live-canonical',
       status: 'attention-required',
-      accounts: [{ accountId: 'account-work-1', status: 'attention-required' }],
+      accounts: [{
+        accountId: 'account-work-1',
+        displayIdentity: { status: 'unavailable' },
+        status: 'attention-required'
+      }],
       messages: [{
         id: 'message-worker-1',
         accountId: 'account-work-1',
@@ -212,7 +216,7 @@ describe('WorkerThreadMailSyncProjection', () => {
           ok: true,
           operation: 'load-read-model',
           snapshot: {
-            version: 1,
+            version: 2,
             dataMode: 'live-canonical',
             loadedAt: '2026-09-01T05:00:00.000Z',
             status: 'empty',

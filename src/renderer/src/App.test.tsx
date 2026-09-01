@@ -155,7 +155,7 @@ describe('Posita vertical slice', () => {
         value: {
           ...successResponse.value,
           snapshot: {
-            version: 1,
+            version: 2,
             dataMode: 'live-canonical',
             loadedAt: '2026-09-01T05:00:00.000Z',
             status: 'empty',
@@ -181,13 +181,18 @@ describe('Posita vertical slice', () => {
       value: {
         ...successResponse.value,
         snapshot: {
-          version: 1 as const,
+          version: 2 as const,
           dataMode: 'live-canonical' as const,
           loadedAt: '2026-09-01T05:00:00.000Z',
           status: 'offline' as const,
           accounts: [{
             accountId: 'account-work-1',
             provider: 'google' as const,
+            displayIdentity: {
+              status: 'available' as const,
+              mailboxAddress: 'owner.work@example.test',
+              displayLabel: 'Work'
+            },
             status: 'offline' as const,
             lastSuccessAt: '2026-08-31T05:00:00.000Z'
           }],
@@ -202,7 +207,8 @@ describe('Posita vertical slice', () => {
       name: 'The last recorded sync state is offline'
     })).toBeInTheDocument()
     expect(screen.getByRole('list', { name: 'Live mail account provenance' }))
-      .toHaveTextContent('Google · account-work-1')
+      .toHaveTextContent('Google · Workowner.work@example.test')
+    expect(screen.queryByText('account-work-1')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Reload local status' }))
     await waitFor(() => expect(loadApplicationState).toHaveBeenCalledTimes(2))
   })
@@ -214,11 +220,19 @@ describe('Posita vertical slice', () => {
         value: {
           ...successResponse.value,
           snapshot: {
-            version: 1,
+            version: 2,
             dataMode: 'live-canonical',
             loadedAt: '2026-09-01T05:00:00.000Z',
             status: 'ready',
-            accounts: [{ accountId: 'account-work-1', provider: 'google', status: 'ready' }],
+            accounts: [{
+              accountId: 'account-work-1',
+              provider: 'google',
+              displayIdentity: {
+                status: 'available',
+                mailboxAddress: 'owner.work@example.test'
+              },
+              status: 'ready'
+            }],
             messages: [{
               id: 'message-live-1',
               threadId: 'thread-live-1',

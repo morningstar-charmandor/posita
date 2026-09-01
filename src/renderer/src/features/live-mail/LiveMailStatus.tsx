@@ -1,7 +1,7 @@
 import { AlertTriangle, CloudOff, Database, RefreshCw } from 'lucide-react'
-import type { LiveMailSnapshotV1 } from '@shared/liveMail'
+import type { LiveMailSnapshotV2 } from '@shared/liveMail'
 
-const statusCopy: Record<LiveMailSnapshotV1['status'], {
+const statusCopy: Record<LiveMailSnapshotV2['status'], {
   title: string
   detail: string
 }> = {
@@ -27,7 +27,7 @@ const statusCopy: Record<LiveMailSnapshotV1['status'], {
   }
 }
 
-const accountStatusLabel: Record<LiveMailSnapshotV1['accounts'][number]['status'], string> = {
+const accountStatusLabel: Record<LiveMailSnapshotV2['accounts'][number]['status'], string> = {
   'not-synced': 'Not synced',
   syncing: 'Sync state recorded',
   ready: 'Ready',
@@ -37,7 +37,7 @@ const accountStatusLabel: Record<LiveMailSnapshotV1['accounts'][number]['status'
 }
 
 export interface LiveMailStatusProps {
-  snapshot: LiveMailSnapshotV1
+  snapshot: LiveMailSnapshotV2
   onReload: () => void
 }
 
@@ -73,7 +73,15 @@ export function LiveMailStatus({
         <ul aria-label="Live mail account provenance" className="live-mail-account-list">
           {snapshot.accounts.map((account) => (
             <li key={account.accountId}>
-              <span>Google · {account.accountId}</span>
+              <span>
+                Google · {account.displayIdentity.status === 'available'
+                  ? account.displayIdentity.displayLabel ?? account.displayIdentity.mailboxAddress
+                  : 'Account identity unavailable'}
+                {account.displayIdentity.status === 'available' &&
+                  account.displayIdentity.displayLabel !== undefined && (
+                    <small>{account.displayIdentity.mailboxAddress}</small>
+                  )}
+              </span>
               <strong>{accountStatusLabel[account.status]}</strong>
             </li>
           ))}
