@@ -6,9 +6,10 @@ Posita currently contains deterministic sample mail only. Gate 2C stores that
 dataset as independently authenticated encrypted records and migrates existing
 fixture databases away from plaintext. Account-scoped retention, disconnect, and
 full local deletion are now tested at their credential-free boundaries. Real
-mailbox ingestion remains disabled until the sample-to-live transition,
-production sync lifecycle, and separately approved provider activation are
-complete. No real account exists.
+The one-way sample-to-live policy is now implemented as an unexposed schema-v10
+boundary, but real mailbox ingestion remains disabled until production sync
+lifecycle composition and separately approved provider activation are complete.
+No real account exists.
 
 The canonical provider-mail contract validates sensitive normalized source data
 before application use, and the credential-free sync coordinator accepts only
@@ -21,6 +22,12 @@ and uncomposed from sync or providers; only its retention path runs in automatic
 maintenance. Existing sample messages remain fixture
 compatibility records and are not assigned fabricated provider provenance. No
 personal mailbox data has passed through this path.
+
+On first approved live-account activation, Posita will atomically remove all
+sample compatibility records and durably select live mode. It will never mix
+samples with provider records or reseed samples after the last live account is
+disconnected. Full local deletion remains separate and removes this non-sensitive
+mode marker along with Posita mail state.
 
 File-backed canonical projection operations use a short-lived worker rather than
 Electron main or the renderer. The adapter retains one trusted in-memory key copy,

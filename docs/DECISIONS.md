@@ -573,3 +573,28 @@
   separately approved sync composition. No dependency, schema migration, startup
   sync, IPC/UI capability, Google adapter, credential, personal data, network
   action, or remote mailbox mutation is added.
+
+## ADR-033: Make sample-to-live mode a durable one-way installation boundary
+
+- Status: accepted for Gate 2D
+- Context: Posita must not display deterministic samples beside provider mail, and
+  disconnecting the last real account must not make a previously live installation
+  look like a fresh demo. A renderer-only flag or “seed when empty” rule would lose
+  that distinction across restart and could silently recreate samples.
+- Decision: schema v10 stores one versioned non-sensitive installation mode,
+  initially `sample`. A trusted transition requires presence-only proof that the
+  target account is fully connected. In one SQLite transaction it removes every
+  sample compatibility record, marks encrypted storage sanitization pending, and
+  advances the mode to `live`. The ordinary product has no reverse transition.
+  Startup seeds and repairs fixtures only in sample mode; live mode requires the
+  existing protected data key and remains empty after the last account is removed.
+  Physical compaction follows the logical commit and is idempotently retryable.
+  Full local deletion removes the mode marker with all other Posita mail state;
+  its durable completed lifecycle marker remains the terminal restart authority.
+- Consequence: sample and provider projections cannot become one visible dataset,
+  crashes cannot restore samples after a committed switch, and disconnect cannot
+  turn live history back into demo content. The service is composed only inside
+  trusted startup state and has no preload, IPC, UI, OAuth, provider, credential,
+  sync-start, network, or mailbox-mutation path. Production connection/sync
+  lifecycle composition remains a separate reviewed milestone. No dependency,
+  personal data, compatibility conversion, or fabricated provenance is added.

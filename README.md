@@ -141,6 +141,15 @@ integration covers multi-page initial sync, encrypted-cursor resume, replay,
 cursor conflicts, cancellation, and key teardown. This is test composition only:
 startup sync, polling, Gmail, credentials, preload, and UI remain inactive.
 
+Schema v10 now records an explicit installation mail mode. A trusted, unexposed
+transition requires an already complete local account connection, then commits
+sample-record removal and the one-way switch to `live` together. Startup never
+reseeds samples in live mode, including after every account is disconnected, and
+requires the existing encryption key instead of silently creating a replacement.
+Compaction is safely retryable after the logical switch. This policy is verified
+with deterministic data only and does not activate OAuth, Gmail, sync, preload,
+IPC, or UI behavior.
+
 Read the build boundaries before extending the prototype:
 
 - [Agent contract](AGENTS.md)
@@ -212,5 +221,5 @@ and the renderer receives only a validated application state. Source and
 derived fixture records
 use authenticated encryption with an OS-protected installation key. Neither the
 key nor vault has an IPC surface. Personal-mail ingestion remains blocked until
-the sample-to-live transition, production sync lifecycle, and separately approved
-provider activation are complete.
+the approved schema-v10 transition is wired into a verified production sync
+lifecycle and provider activation is separately approved.

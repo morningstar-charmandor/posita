@@ -8,7 +8,7 @@
     "repositoryVisibility": "public",
     "canonicalBranch": "main",
     "currentMilestone": "gate-2d-encrypted-account-lifecycle-in-progress",
-    "dataMode": "fixture-seeded-encrypted-sqlite",
+    "dataMode": "durable-sample-mode-with-uncomposed-one-way-live-transition",
     "mailSendingEnabled": false
   },
   "toolchain": {
@@ -49,6 +49,8 @@
     "localDataSettingsDialog": "src/renderer/src/features/settings/LocalDataSettingsDialog.tsx",
     "gmailConnectConsentPanel": "src/renderer/src/features/settings/GmailConnectConsentPanel.tsx",
     "mailRepository": "src/main/application/mailRepository.ts",
+    "mailDataModeService": "src/main/application/mailDataMode.ts",
+    "mailDataModeRepository": "src/main/infrastructure/sqlite/sqliteMailDataModeRepository.ts",
     "databaseMigrations": "src/main/infrastructure/sqlite/migrations.ts",
     "secretVaultContract": "src/main/application/secretVault.ts",
     "secretVault": "src/main/infrastructure/sqlite/sqliteSecretVault.ts",
@@ -174,6 +176,8 @@
     "one-sync-coordinator-owns-all-provider-io",
     "provider-ingestion-accepts-only-the-versioned-canonical-mail-contract",
     "fixture-messages-never-receive-fabricated-provider-provenance",
+    "sample-and-live-mail-are-separated-by-a-durable-one-way-installation-mode",
+    "first-live-activation-atomically-removes-samples-and-never-reseeds-after-disconnect",
     "canonical-provider-mail-and-sync-cursors-commit-atomically-as-authenticated-ciphertext",
     "provider-mail-source-identity-and-content-never-enter-queryable-projection-metadata",
     "file-backed-provider-mail-projection-is-serialized-worker-owned-and-key-erasing",

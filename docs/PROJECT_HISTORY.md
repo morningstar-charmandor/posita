@@ -1470,6 +1470,51 @@ sync. The sample-to-live transition and production lifecycle ownership require a
 explicit owner-reviewed decision before composition. Gmail, OAuth, AI, live
 accounts, and remote mailbox actions remain blocked.
 
+## Gate 2D milestone — Durable one-way sample-to-live boundary
+
+Date: 2026-09-01
+Checkpoint: use the Git commit whose subject is `feat: add durable live mail mode`
+
+Goal: encode the owner-approved rule that the first real connection replaces the
+demo dataset completely, and that disconnecting every account never recreates it.
+
+Delivered:
+
+- schema v10 with one non-sensitive versioned `sample`/`live` installation marker,
+- a trusted application service that requires a complete account credential/state
+  pair before the initial transition,
+- one transaction that removes sample compatibility records, marks compaction
+  pending, and commits live mode without touching canonical provider records,
+- idempotent cleanup retry after a committed logical switch,
+- startup behavior that seeds and repairs fixtures only in sample mode and
+  requires the existing protected key in live mode,
+- restart evidence that removing the final account leaves an empty live
+  installation rather than reseeding samples,
+- full-deletion integration that removes the mail-mode marker while preserving
+  the lifecycle journal as the terminal restart authority.
+
+Important decisions:
+
+- make the boundary ordinary-operation irreversible; account disconnect has no
+  route back to sample mode,
+- commit logical sample removal before physical SQLite compaction so a crash or
+  cleanup failure cannot restore demo content,
+- keep the service outside preload, IPC, renderer, OAuth, Gmail, and sync-start
+  composition until one production lifecycle owner is separately verified,
+- add no dependency, provider access, credential, personal data, network action,
+  compatibility conversion, or mailbox mutation.
+
+Evidence: 47 test files and 306 tests pass. Strict typecheck, renderer
+structure/security checks, and production Electron builds pass. Tests cover the
+connected-account gate, malformed input, exact atomic deletion scope, one-way
+idempotence, cleanup failure/retry, restart after last-account removal, and
+full-deletion compatibility.
+
+Limitations: no user can activate live mode, no canonical sync starts, and the
+visible application read model remains fixture-only. The next milestone is a
+credential-free production sync lifecycle composition design. Gmail, OAuth, AI,
+live accounts, and remote mailbox actions remain blocked.
+
 ## How future entries should be written
 
 For each material milestone, record:

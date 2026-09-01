@@ -185,6 +185,8 @@ The fixture-oriented shared `Message` type intentionally remains a sample-only
 compatibility view and is not a provider contract. Posita will not invent Gmail
 IDs or recipient metadata to migrate it. `GATE_2D_READINESS.md` keeps live Gmail
 authorization and ingestion blocked until the new canonical records have an
-encrypted atomic projection and complete local lifecycle. The sample-to-live
-transition, production sync lifecycle, and remaining connection/disconnect
-activation gates still require review.
+encrypted atomic projection and complete local lifecycle. Schema v10 now settles
+the sample-to-live rule: the first complete connection must atomically remove
+samples and durably enter live mode, and later disconnects must never reseed them.
+Production sync lifecycle and the remaining connection/disconnect activation
+gates still require review.

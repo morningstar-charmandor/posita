@@ -309,6 +309,21 @@ export const migrations: readonly Migration[] = [
       CREATE INDEX encrypted_provider_mail_records_scope_idx
         ON encrypted_provider_mail_records(account_scope, record_type);
     `
+  },
+  {
+    version: 10,
+    name: 'durable_mail_data_mode',
+    sql: `
+      CREATE TABLE mail_data_mode_state (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        version INTEGER NOT NULL CHECK (version = 1),
+        mode TEXT NOT NULL CHECK (mode IN ('sample', 'live')),
+        updated_at TEXT NOT NULL
+      ) STRICT;
+
+      INSERT INTO mail_data_mode_state (id, version, mode, updated_at)
+      VALUES (1, 1, 'sample', datetime('now'));
+    `
   }
 ]
 

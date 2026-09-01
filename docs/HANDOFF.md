@@ -24,7 +24,8 @@ Implemented:
   and editable local draft interactions,
 - accessible loading, error, retry, empty, and source-grounding behavior,
 - sandboxed Electron renderer with a narrow validated preload/IPC contract,
-- SQLite schema versions 1–9 with transactional migrations and encrypted seeding,
+- SQLite schema versions 1–10 with transactional migrations, encrypted seeding,
+  and a durable one-way sample/live installation mode,
 - main-process `SecretVault` with asynchronous OS-backed protection,
 - fail-closed credential behavior and a test-only deterministic fake,
 - per-installation OS-protected data key and AES-256-GCM record envelopes,
@@ -190,6 +191,9 @@ Simulated or deliberately inactive:
   deterministic fakes, an encrypted SQLite proof, and file-backed workers;
   only retention is composed into startup maintenance, while ingestion and
   provider access remain uncomposed,
+- the schema-v10 sample-to-live service is trusted-main-only and unexposed; it
+  has been verified with deterministic connected state but has no production
+  connection, sync-start, preload, IPC, or UI caller,
 - account consistency is not independently exposed; the recovery command uses it
   inside main without mutation or provider action,
 - local account recovery is active only for inconsistent local records and has no
@@ -199,7 +203,8 @@ Simulated or deliberately inactive:
 Not implemented:
 
 - Gmail OAuth, message ingestion, incremental history sync, or user-triggered/live disconnect,
-- sample-to-live transition policy and production sync lifecycle composition,
+- production sync lifecycle composition and activation of the approved
+  sample-to-live transition,
 - user-triggered account disconnect or any remote mailbox mutation control,
 - automatic pending-disconnect resume with a live idempotent revocation adapter,
 - a model provider, embeddings, classification, retrieval, or generation,
@@ -233,10 +238,10 @@ confirmed local deletion are complete at their current layers. Continue in this 
    automatic startup repair; failed execution must continue to require fresh review.
 3. Treat automatic retention scheduling and its Settings status as complete at
    the current fixed 90-day boundary. Do not add configurable retention yet.
-4. Treat canonical fixed-window retention, journaled account removal, and the
-   coordinator-to-file-worker integration as complete at their credential-free
-   boundaries. Before production composition, obtain an explicit owner decision
-   on the sample-to-live transition and document its fail-closed lifecycle rules.
+4. Treat canonical fixed-window retention, journaled account removal, worker
+   integration, and the schema-v10 one-way sample/live boundary as complete at
+   their credential-free layers. Next define one production sync lifecycle owner
+   and its startup/cancellation ordering without activating a provider.
 5. Request explicit owner approval before composing a real Google adapter,
    credentials, browser authorization, connection activation, or live account.
 6. Keep real Gmail ingestion disabled until authorization activation is separately
@@ -249,7 +254,10 @@ plaintext mailbox. Record the selected search tradeoff in `docs/DECISIONS.md`.
 Milestone change report: canonical provider mail contracts, sync ownership,
 encrypted atomic persistence, fixed-window retention, disconnect deletion, and
 coordinator-to-worker operation are credential-free verified, not activated for
-ingestion. Schema v9 remains the
+ingestion. Schema v10 now durably separates sample and live installations: a
+complete local connection is required, sample deletion and mode activation are
+atomic, cleanup is retryable, and disconnect/restart never reseeds samples.
+Schema v9 remains the
 single canonical projection and the existing sync-state repository remains the
 cursor source of truth. The automatic retention worker now performs bounded
 canonical decrypt/plan/delete/thread-rewrite/sanitization work without a plaintext
@@ -258,8 +266,8 @@ action, secret, personal mailbox data, or mutation was added. One intentional
 compatibility distinction remains:
 the legacy `Message` is a deterministic sample-presentation record, while only
 `ProviderMailMessageV1` may enter future provider ingestion. There is no conversion
-path because Posita will not invent provider provenance. The next milestone is an
-owner-reviewed sample-to-live transition decision, not OAuth.
+path because Posita will not invent provider provenance. The next milestone is a
+credential-free production sync lifecycle composition design, not OAuth.
 
 ## How to resume
 
@@ -279,7 +287,7 @@ owner-reviewed sample-to-live transition decision, not OAuth.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 45 test files, 296 tests, strict typecheck, structure
+- Current verified baseline: 47 test files, 306 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,

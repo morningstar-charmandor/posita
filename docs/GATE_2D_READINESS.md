@@ -17,7 +17,8 @@ projection, and packaged file-backed projection worker are now verified. The
 coordinator-to-worker boundary is now integration-tested with the deterministic
 provider but remains uncomposed from the running product. Canonical provider-mail
 retention and journaled deletion are complete at their credential-free boundaries, but no
-Google adapter, production sync composition, or sample-to-live transition exists.
+Google adapter or production sync composition exists. The sample-to-live policy
+is now a durable, credential-free, unexposed schema-v10 boundary.
 Disconnect also has no production revoker or active user command.
 
 No credential, provider connection, browser authorization, network request, Gmail
@@ -39,7 +40,8 @@ SDK, mailbox data, or model provider was used for this audit.
 | Full local deletion | Ready | confirmed Settings command, durable recovery, keyless restart, cryptographic erasure | Removes local projection ciphertext; never deletes remote provider mail |
 | Account disconnect | Orchestrator-ready, inactive | journaled idempotent application service and deterministic revoker tests | Needs a real idempotent revoker and separately reviewed user command |
 | Canonical provider mail model | Lifecycle-ready, empty | exact validators, schema-v9 authenticated envelopes, opaque row IDs, packaged serial worker, fixed-window retention, and journaled account deletion | Needs credential-free sync lifecycle integration before provider activation |
-| Sync coordinator | Worker-integrated, uncomposed | 90-day initial path, real file-worker batching/cursor ordering, replay, conflict preservation, bounded recovery/concurrency, cancellation, and key teardown are tested | Needs sample-to-live and production lifecycle decisions |
+| Sample/live boundary | Ready, unexposed | schema-v10 one-way mode, connected-pair gate, atomic sample removal, restart/no-reseed and retry tests | Must be invoked only by reviewed connection/sync composition |
+| Sync coordinator | Worker-integrated, uncomposed | 90-day initial path, real file-worker batching/cursor ordering, replay, conflict preservation, bounded recovery/concurrency, cancellation, and key teardown are tested | Needs production lifecycle composition |
 | Gmail adapter | **Not implemented** | adapter contract is documented only | Blocks OAuth and mail access |
 | AI provider | Deferred | no model adapter, prompt, embedding, or model output path | Fixture summaries/drafts remain explicitly simulated |
 
@@ -58,8 +60,9 @@ credential-free boundary. Schema v9 now persists:
 
 ADR-031 settles fixture compatibility: the current encrypted `Message` stays a
 sample-only view and receives no fabricated provider provenance. The projection
-starts empty. A later reviewed sample-to-live transition must prevent fixture and
-provider records from appearing as one mailbox dataset.
+starts empty. Schema v10 now prevents fixture and provider records from becoming
+one mailbox dataset: a complete connected pair is required before an atomic
+sample removal and one-way live-mode commit, and startup never reseeds afterward.
 
 File-backed decrypt/scan/write work now has bounded worker ownership with validated
 messages and key cleanup. Canonical records enter the existing automatic 90-day
@@ -118,20 +121,18 @@ state, screenshots, tests, or portfolio assets.
 
 ## Recommended next milestone
 
-Proceed with a **sample-to-live transition decision milestone** before composing
-production sync:
+Proceed with a **credential-free production sync lifecycle composition design**:
 
-1. decide exactly when deterministic samples stop being the visible data source,
-2. define fail-closed startup and recovery behavior so sample and provider records
-   can never appear as one mailbox dataset,
-3. specify lifecycle ownership for sync start, cancellation, disconnect, retention,
-   full deletion, and key teardown before adding composition,
+1. define one main-owned lifecycle for sync start, cancellation, disconnect,
+   retention, full deletion, and worker-key teardown,
+2. place the schema-v10 live-mode transition after complete connection persistence
+   and before any provider projection becomes visible,
+3. define startup recovery for connected/live, disconnected/live-empty, offline,
+   and interrupted activation states without adding a second scheduler,
 4. keep preload, UI activation, Google code, credentials, network access, and live
-   data unchanged until that decision is accepted.
+   data unchanged until that lifecycle is verified and separately approved.
 
-This follows already accepted architecture and does not itself authorize Gmail.
-It is the smallest safe step that makes the new encrypted storage obey Posita's
-already accepted responsiveness, retention, and deletion boundaries.
+This milestone must use deterministic adapters only and does not authorize Gmail.
 
 ## Completed credential-free contract evidence
 
@@ -157,7 +158,7 @@ already accepted responsiveness, retention, and deletion boundaries.
 - The inactive disconnect service requires account-scoped canonical projection
   deletion in its durable mail-data phase and safely retries after fixture removal
   has already committed.
-- The verified baseline is 45 test files and 296 tests plus strict TypeScript,
+- The verified baseline is 47 test files and 306 tests plus strict TypeScript,
   renderer structure/security checks, and production Electron builds.
 - No dependency, production provider adapter, credential,
   personal mailbox data, network action, renderer surface, or mailbox mutation was

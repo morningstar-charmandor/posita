@@ -197,8 +197,11 @@ resolved by decrypting only the target account projection and comparing the
 account-scoped provider identity. Tampering, duplicate stored source identity,
 cursor conflict, or checkpoint-write failure rejects or rolls back the batch.
 
-It remains empty and uncomposed from sync, preserving the sample dataset until an explicit
-sample-to-live transition is reviewed. The synchronous SQLite proof is limited to
+It remains empty and uncomposed from sync. Schema v10 now supplies the reviewed
+sample-to-live boundary: a connected-account-gated transaction removes fixture
+records and durably selects live mode before canonical sync can be composed.
+Startup then refuses fixture reseeding and requires the existing data key, even
+after every account is disconnected. The synchronous SQLite proof is limited to
 bounded in-memory use. A packaged serial worker adapter now owns file-backed
 checkpoint reads and batch commits through validated bounded messages, transfers
 only an in-memory key copy, and supports explicit key destruction. Its account-

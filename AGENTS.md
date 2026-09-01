@@ -42,6 +42,9 @@ exists deeper in the tree.
   Settings recovery flow. It is local-only and refuses complete or absent state.
 - A versioned canonical provider-independent source-message/thread contract and
   one credential-free sync coordinator are verified.
+- Schema v10 adds a durable one-way sample/live mode marker; activating live mode
+  requires a complete connected-account pair, atomically removes sample records,
+  and never reverts or reseeds samples after account removal.
 - Schema v9 and an uncomposed credential-free SQLite projection persist canonical
   provider messages/threads with their encrypted account cursor atomically.
 - A bounded serial worker-thread adapter owns file-backed canonical projection

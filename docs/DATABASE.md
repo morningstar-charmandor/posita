@@ -202,7 +202,7 @@ idempotent canonical delete before compaction.
 
 Installation-wide deletion uses narrower idempotent repository primitives. It
 deletes every encrypted account-state row, deletes all fixture and canonical
-provider-mail encrypted records while
+provider-mail encrypted records and the schema-v10 mail-mode marker while
 marking sanitization pending, and advances the lifecycle journal before running
 compaction. Only after SQLite reaches `ready` does it delete the OS-protected data
 key and destroy the shared in-memory encryption context. The non-sensitive journal
@@ -214,6 +214,17 @@ SQLite helpers and vault erasure, so it does not need a protector or readable ke
 After completion, the retained journal marker selects `local-data-deleted` mode;
 normal encrypted repository construction and fixture seeding are skipped on that
 startup and every later restart. Conflicting pending lifecycle rows fail closed.
+
+Schema v10 adds a singleton `mail_data_mode_state` record with version `1` and
+mode `sample` or `live`. Existing installations migrate to `sample` because no
+production provider-ingestion path existed before this migration. The trusted
+transition first verifies a complete local account connection, then deletes only
+the sample `encrypted_records`, marks sanitization pending, and changes the mode
+to `live` in one transaction. Canonical provider records are not deleted. Startup
+seeding and exact-fixture compatibility run only in sample mode. Live mode is
+ordinary-operation irreversible, requires the existing protected key, and stays
+live-empty after all accounts are removed. A compaction failure cannot reverse
+the logical switch and is retried from the pending marker.
 
 ## Migrations
 

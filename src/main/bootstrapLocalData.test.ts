@@ -5,7 +5,8 @@ import type { DatabaseSync } from 'node:sqlite'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_TEXT,
-  DELETE_LOCAL_DATA_CONFIRMATION_TEXT
+  DELETE_LOCAL_DATA_CONFIRMATION_TEXT,
+  GOOGLE_CONNECT_CONSENT
 } from '../shared/contracts'
 import { fixtures } from '../shared/fixtures'
 import {
@@ -13,6 +14,7 @@ import {
   type LocalDataBootstrapDependencies
 } from './bootstrapLocalData'
 import { CACHE_DATA_KEY_NAME } from './application/secretVault'
+import { googleRefreshTokenName } from './application/secretVault'
 import { AccountLifecycleStatusService } from './application/accountLifecycleStatus'
 import { ApplicationStateService } from './application/applicationStateService'
 import { LocalDataDeletionCommandService } from './application/localDataDeletionCommand'
@@ -66,6 +68,37 @@ afterEach(async () => {
 })
 
 describe('bootstrapLocalData lifecycle recovery', () => {
+  it('stays live-empty after the last connected account is removed and never reseeds samples', async () => {
+    const databasePath = await createDatabasePath()
+    const initial = await bootstrapLocalDataWithDependencies(databasePath, dependencies())
+    if (initial.mode !== 'ready') throw new Error('Expected ready runtime.')
+    initial.accountStateRepository.saveProviderAccount({
+      version: 1,
+      accountId: 'work',
+      provider: 'google',
+      providerAccountId: 'provider-subject-test-1',
+      consentVersion: GOOGLE_CONNECT_CONSENT.consentVersion,
+      connectedAt: '2026-08-31T12:00:00.000Z'
+    })
+    await initial.secretVault.set(
+      googleRefreshTokenName('work'),
+      'deterministic-test-refresh-credential'
+    )
+
+    await expect(initial.mailDataModeService.activateLive({ version: 1, accountId: 'work' }))
+      .resolves.toEqual({ version: 1, mode: 'live', changed: true })
+    expect(initial.repository.loadDataset()).toMatchObject({ accounts: [], messages: [] })
+    initial.accountStateRepository.deleteAccountState('work')
+    await initial.secretVault.delete(googleRefreshTokenName('work'))
+    initial.repository.close()
+
+    const restarted = await bootstrapLocalDataWithDependencies(databasePath, dependencies())
+    if (restarted.mode !== 'ready') throw new Error('Expected ready runtime.')
+    expect(restarted.mailDataModeService.load()).toEqual({ version: 1, mode: 'live' })
+    expect(restarted.repository.loadDataset()).toMatchObject({ accounts: [], messages: [] })
+    restarted.repository.close()
+  })
+
   it('composes confirmed local-only recovery for an orphaned credential', async () => {
     const databasePath = await createDatabasePath()
     const ids = ['confirmation-recovery-1', 'operation-recovery-1']
@@ -181,6 +214,8 @@ describe('bootstrapLocalData lifecycle recovery', () => {
 
     const deleted = inspect(databasePath)
     expect(countEncryptedRecords(deleted.database)).toBe(0)
+    expect(deleted.database.prepare('SELECT COUNT(*) AS count FROM mail_data_mode_state').get())
+      .toEqual({ count: 0 })
     expect(deleted.database.prepare('SELECT COUNT(*) AS count FROM encrypted_account_records').get())
       .toEqual({ count: 0 })
     expect(await deleted.vault.get(CACHE_DATA_KEY_NAME)).toBeUndefined()

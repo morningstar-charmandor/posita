@@ -382,6 +382,16 @@ an externally advanced cursor on conflict, provider cancellation, and teardown
 of the worker's retained key. This test composition is not a startup owner,
 polling schedule, provider adapter, renderer capability, or live mailbox path.
 
+Schema v10 adds a separate installation-level mail-mode boundary. Startup seeds
+the deterministic compatibility projection only in `sample`; `live` requires the
+existing protected key and never falls back to fixtures. The first transition is
+allowed only after the canonical connection inspector reports a complete local
+credential/provider-state pair. Sample deletion, sanitization-pending state, and
+the mode update share one transaction; physical compaction may retry afterward.
+The mode has no ordinary reverse transition, so removing every account produces
+live-empty rather than demo content. The service is trusted-main-only and has no
+preload, IPC, renderer, provider, or sync-start caller yet.
+
 The inactive disconnect orchestrator's existing `mail-data-delete-pending` phase
 now runs both fixture account removal and worker-backed canonical projection
 removal before advancing its journal. Both actions are idempotent: if the second

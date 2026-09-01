@@ -21,6 +21,7 @@ import { RetentionMaintenanceService } from './application/retentionMaintenance'
 import type { RetentionMaintenanceRunner } from './application/retentionMaintenanceOwner'
 import { MailApplicationService, systemClock } from './application/mailApplicationService'
 import type { MailRepository } from './application/mailRepository'
+import { MailDataModeService } from './application/mailDataMode'
 import type { SecretVault } from './application/secretVault'
 import { AesGcmCacheProtector } from './infrastructure/security/aesGcmCacheProtector'
 import { CacheDataKeyManager } from './infrastructure/security/cacheDataKeyManager'
@@ -39,6 +40,7 @@ import {
 import { applyMigrations } from './infrastructure/sqlite/migrations'
 import { SqliteSecretVault } from './infrastructure/sqlite/sqliteSecretVault'
 import { SqliteLocalActionConfirmationRepository } from './infrastructure/sqlite/sqliteLocalActionConfirmationRepository'
+import { SqliteMailDataModeRepository } from './infrastructure/sqlite/sqliteMailDataModeRepository'
 import { InlineSqliteStorageSanitizer } from './infrastructure/sqlite/sqliteSanitization'
 import { WorkerThreadSqliteStorageSanitizer } from './infrastructure/sqlite/workerThreadSqliteStorageSanitizer'
 import { WorkerThreadRetentionMaintenance } from './infrastructure/sqlite/workerThreadRetentionMaintenance'
@@ -59,6 +61,7 @@ export interface ReadyLocalDataRuntime extends LocalDataRuntimeBase {
   accountConnectionRecoveryCommandService: AccountConnectionRecoveryCommandService
   confirmationService: LocalActionConfirmationService
   deleteLocalDataService: DeleteLocalDataService
+  mailDataModeService: MailDataModeService
 }
 
 export interface DeletedLocalDataRuntime extends LocalDataRuntimeBase {
@@ -108,6 +111,7 @@ export const bootstrapLocalDataWithDependencies = async (
   try {
     applyMigrations(database)
     const secretVault = new SqliteSecretVault(database, dependencies.credentialProtector)
+    const mailDataModeRepository = new SqliteMailDataModeRepository(database)
     const keyManager = new CacheDataKeyManager(secretVault)
     const storageSanitizer = databasePath === ':memory:'
       ? new InlineSqliteStorageSanitizer(database)
@@ -136,7 +140,8 @@ export const bootstrapLocalDataWithDependencies = async (
     if (recovery.mode === 'local-data-deleted') {
       return deletedRuntime(database, accountLifecycleRepository)
     }
-    const key = recovery.pendingDisconnects > 0
+    const mailDataMode = mailDataModeRepository.load()
+    const key = recovery.pendingDisconnects > 0 || mailDataMode.mode === 'live'
       ? await keyManager.loadExisting()
       : await keyManager.loadOrCreate(countEncryptedRecords(database) > 0)
     if (databasePath !== ':memory:') retentionWorkerKey = Uint8Array.from(key)
@@ -145,7 +150,7 @@ export const bootstrapLocalDataWithDependencies = async (
     repository = new EncryptedSqliteMailRepository(database, protector)
     migrateLegacyPlaintextCache(database, protector)
     const retentionService = new RetentionMaintenanceService(repository, storageSanitizer)
-    if (recovery.pendingDisconnects === 0) {
+    if (recovery.pendingDisconnects === 0 && mailDataMode.mode === 'sample') {
       repository.seedIfEmpty(fixtures)
       await retentionService.ensureFixtureCompatibility(fixtures)
     }
@@ -181,6 +186,11 @@ export const bootstrapLocalDataWithDependencies = async (
       secretVault,
       accountStateRepository
     )
+    const mailDataModeService = new MailDataModeService(
+      mailDataModeRepository,
+      connections,
+      storageSanitizer
+    )
     const activeDeletion = new DeleteLocalDataService(
       accountLifecycleRepository,
       new ComposedDeleteLocalDataActions(
@@ -208,7 +218,8 @@ export const bootstrapLocalDataWithDependencies = async (
         accountRecovery
       ),
       confirmationService: confirmation,
-      deleteLocalDataService: activeDeletion
+      deleteLocalDataService: activeDeletion,
+      mailDataModeService
     }
   } catch (error) {
     retentionWorkerKey?.fill(0)

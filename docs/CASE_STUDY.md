@@ -36,8 +36,9 @@ queryable metadata. A packaged serial worker now proves that file-backed project
 work stays off Electron main, while the automatic retention worker applies the
 fixed 90-day window to canonical ciphertext and repairs affected threads. The
 coordinator-to-worker path is now verified end to end with the deterministic
-provider. Live Gmail remains correctly blocked by the sample-to-live transition,
-production lifecycle composition, and provider adapters.
+provider. The one-way sample-to-live boundary is now verified in schema v10;
+live Gmail remains correctly blocked by production lifecycle composition and
+provider adapters.
 
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
 
@@ -306,7 +307,7 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - an explicit compatibility boundary that keeps fixture `Message` records sample-
   only rather than fabricating provider identity,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 45 automated test files containing 296 passing tests,
+- 47 automated test files containing 306 passing tests,
 - a desktop visual and accessibility-tree check of the local-only Settings entry,
   sample-account controls, normal no-recovery-needed outcome, and automatic
   retention card with readable next/last status and Gmail non-mutation copy,
@@ -322,10 +323,14 @@ canonical provider-mail contract, and credential-free sync coordinator are compl
 at their current Gate 2D boundaries. The empty encrypted canonical-mail projection,
 atomic cursor store, journaled account removal, and worker-owned 90-day canonical
 retention are now verified. The deterministic sync coordinator also passes real
-file-backed worker integration without activating startup sync. The next milestone
-is an owner-reviewed sample-to-live transition and lifecycle decision. Real OAuth,
-browser activation, credentials, live account connection, and production sync
-remain separate actions blocked behind explicit owner approval.
+file-backed worker integration without activating startup sync. Schema v10 now
+adds the approved one-way installation boundary: the first complete connection
+will atomically remove samples, startup will never reseed them in live mode, and
+removing the last account leaves a truthful empty live state. The transition is
+still unexposed, so the next milestone is a credential-free production sync
+lifecycle design. Real OAuth, browser activation, credentials, live account
+connection, and production sync remain separate actions blocked behind explicit
+owner approval.
 
 Later evidence should include measured sync reliability, duplicate prevention,
 citation correctness, draft usefulness, correction rate, and time to attention.
@@ -366,5 +371,7 @@ shape and coordinates credential-free synchronization through deterministic
 interfaces, with an empty authenticated SQLite projection proving atomic canonical
 records, cursor persistence, journaled removal, and worker-owned 90-day retention.
 The coordinator-to-worker path is also verified with deterministic file-backed
-integration. Real mail remains blocked until the sample-to-live and production
-lifecycle decisions plus remaining provider activation gates pass.
+integration. A durable schema-v10 mode now proves samples can be removed once and
+never silently restored after disconnect or restart. Real mail remains blocked
+until production lifecycle composition and the remaining provider activation
+gates pass.
