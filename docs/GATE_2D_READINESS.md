@@ -41,7 +41,7 @@ SDK, mailbox data, or model provider was used for this audit.
 | Account disconnect | Orchestrator-ready, inactive | journaled idempotent application service and deterministic revoker tests | Needs a real idempotent revoker and separately reviewed user command |
 | Canonical provider mail model | Lifecycle-ready, empty | exact validators, schema-v9 authenticated envelopes, opaque row IDs, packaged serial worker, fixed-window retention, and journaled account deletion | Needs credential-free sync lifecycle integration before provider activation |
 | Sample/live boundary | Ready, unexposed | schema-v10 one-way mode, connected-pair gate, atomic sample removal, restart/no-reseed and retry tests | Must be invoked only by reviewed connection/sync composition |
-| Live application read model | Ready, status-only | durable mode-aware query, encrypted human-readable account identity, bounded canonical summaries, worker ownership, live-empty/offline/error validation, and renderer status states | Needs source-detail/open-original review before displaying live mail |
+| Live application read model | Ready, status-only | durable mode-aware query, encrypted human-readable account identity, bounded canonical summaries and source detail, worker ownership, live-empty/offline/error validation, and renderer status states | Needs source-detail UI/open-original review before displaying live mail |
 | Sync coordinator | Lifecycle-owned, uncomposed | 90-day path, real worker integration, bounded concurrency, cancellation, retention exclusion, disconnect/deletion quiescence, and key teardown are tested | Needs trusted account inventory, retry command/status policy, and provider composition |
 | Gmail adapter | **Not implemented** | adapter contract is documented only | Blocks OAuth and mail access |
 | AI provider | Deferred | no model adapter, prompt, embedding, or model output path | Fixture summaries/drafts remain explicitly simulated |
@@ -137,9 +137,9 @@ live summaries can be displayed:
 
 1. treat encrypted user-readable account identity as complete at its current
    contract, persistence, and status-projection boundary,
-2. define a bounded worker-backed canonical message-detail query keyed by opaque
-   Posita account and canonical message ID,
-3. render plain-text source detail with recipient and attachment metadata, loading,
+2. treat the bounded worker-backed canonical message-detail query as complete at
+   its contract, encrypted projection, and native-worker boundary,
+3. compose and render plain-text source detail with recipient and attachment metadata, loading,
    missing, stale, safe-error, and retry behavior; do not render provider HTML,
 4. keep opening Gmail externally disabled until its target derivation, trusted
    main-process command, and explicit external-action review are complete,

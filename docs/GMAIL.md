@@ -9,7 +9,7 @@ authorize live mailbox access.
 Posita can now project its durable `live` installation mode through a bounded
 worker-backed application snapshot. That local read model is not Gmail access: it
 starts no sync, uses no credential, and exposes no remote provider IDs or cursor.
-Its renderer remains status-only until source detail and open-original behavior
+Its renderer remains status-only until source-detail UI and open-original behavior
 are separately reviewed.
 
 Settings now renders a credential-free consent preview identified as
@@ -70,6 +70,13 @@ opaque provider subject remains hidden; its verified mailbox address and optiona
 bounded user label are encrypted in the same account-scoped payload. The live
 status projection exposes only the address/label and uses an explicit unavailable
 identity for incomplete local state. No renderer command can set a label yet.
+
+A provider-independent source-detail query is now verified against deterministic
+encrypted canonical data and the packaged worker. It uses only Posita account and
+message IDs and returns bounded plain text, recipients, safe attachment metadata,
+canonical provenance, and exact found/missing state. Gmail IDs, provider HTML, and
+attachment/content IDs remain inside authenticated ciphertext. The query is not
+an active IPC/UI capability and performs no Google request or external action.
 
 Gate 2D now also defines the canonical provider-independent message/thread
 contract and one credential-free `MailSyncCoordinator`. Exact validators require

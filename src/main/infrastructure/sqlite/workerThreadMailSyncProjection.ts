@@ -10,7 +10,13 @@ import {
 } from '../../application/mailSync'
 import type { ProviderMailAccountDataRemover } from '../../application/disconnectAccount'
 import type { ProviderMailReadModelSource } from '../../application/providerMailReadModel'
+import type { ProviderMailSourceDetailSource } from '../../application/providerMailSourceDetail'
 import type { LiveMailSnapshotV2 } from '../../../shared/liveMail'
+import {
+  isLiveMailMessageDetailRequestV1,
+  type LiveMailMessageDetailRequestV1,
+  type LiveMailMessageDetailResultV1
+} from '../../../shared/liveMailDetail'
 import {
   isMailSyncProjectionWorkerResponseV1,
   type MailSyncProjectionWorkerOperationV1,
@@ -41,7 +47,8 @@ const invalidRequest = (): MailSyncError => new MailSyncError(
 
 /** Serializes file-backed projection work outside Electron's main event loop. */
 export class WorkerThreadMailSyncProjection implements
-  MailSyncProjection, ProviderMailAccountDataRemover, ProviderMailReadModelSource {
+  MailSyncProjection, ProviderMailAccountDataRemover, ProviderMailReadModelSource,
+  ProviderMailSourceDetailSource {
   private readonly key: Buffer
   private tail: Promise<void> = Promise.resolve()
   private pending = 0
@@ -74,6 +81,22 @@ export class WorkerThreadMailSyncProjection implements
       throw unavailable()
     }
     return response.snapshot
+  }
+
+  async loadMessageDetail(
+    request: LiveMailMessageDetailRequestV1
+  ): Promise<LiveMailMessageDetailResultV1> {
+    if (!isLiveMailMessageDetailRequestV1(request)) throw invalidRequest()
+    const response = await this.enqueue({
+      kind: 'load-message-detail',
+      request: structuredClone(request)
+    })
+    if (response.operation !== 'load-message-detail') throw unavailable()
+    const result = response.result
+    const accountId = result.status === 'found' ? result.detail.accountId : result.accountId
+    const messageId = result.status === 'found' ? result.detail.messageId : result.messageId
+    if (accountId !== request.accountId || messageId !== request.messageId) throw unavailable()
+    return result
   }
 
   async commitBatch(

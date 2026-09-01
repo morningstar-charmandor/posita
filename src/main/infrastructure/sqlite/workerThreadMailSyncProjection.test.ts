@@ -111,6 +111,28 @@ describe('WorkerThreadMailSyncProjection', () => {
         preview: 'Worker encrypted body.'
       }]
     })
+    await expect(projection.loadMessageDetail({
+      version: 1,
+      accountId: 'account-work-1',
+      messageId: 'message-worker-1'
+    })).resolves.toMatchObject({
+      status: 'found',
+      detail: {
+        accountId: 'account-work-1',
+        messageId: 'message-worker-1',
+        body: { plainText: 'Worker encrypted body.', truncated: false }
+      }
+    })
+    await expect(projection.loadMessageDetail({
+      version: 1,
+      accountId: 'account-work-1',
+      messageId: 'message-missing-1'
+    })).resolves.toEqual({
+      version: 1,
+      status: 'missing',
+      accountId: 'account-work-1',
+      messageId: 'message-missing-1'
+    })
     expect(database.prepare(`
       SELECT COUNT(*) AS count FROM encrypted_provider_mail_records
     `).get()).toEqual({ count: 2 })
@@ -162,6 +184,34 @@ describe('WorkerThreadMailSyncProjection', () => {
     })
   })
 
+  it('rejects a valid detail result bound to a different canonical request', async () => {
+    const { databasePath } = await createFileDatabase()
+    const projection = new WorkerThreadMailSyncProjection(
+      databasePath,
+      key,
+      workerUrl(`
+        import { parentPort } from 'node:worker_threads'
+        parentPort.postMessage({
+          version: 1,
+          ok: true,
+          operation: 'load-message-detail',
+          result: {
+            version: 1,
+            status: 'missing',
+            accountId: 'account-attacker-1',
+            messageId: 'message-worker-1'
+          }
+        })
+      `)
+    )
+
+    await expect(projection.loadMessageDetail({
+      version: 1,
+      accountId: 'account-work-1',
+      messageId: 'message-worker-1'
+    })).rejects.toMatchObject({ code: 'SYNC_STORAGE_FAILED' })
+  })
+
   it('bounds queued file operations and refuses key teardown while work is active', async () => {
     const { databasePath } = await createFileDatabase()
     const projection = new WorkerThreadMailSyncProjection(
@@ -198,6 +248,11 @@ describe('WorkerThreadMailSyncProjection', () => {
       code: 'INVALID_SYNC_REQUEST',
       retryable: false
     })
+    await expect(projection.loadMessageDetail({
+      version: 1,
+      accountId: 'account-work-1',
+      messageId: '../provider-id'
+    })).rejects.toMatchObject({ code: 'INVALID_SYNC_REQUEST', retryable: false })
     projection.destroyEncryptionContext()
     await expect(projection.loadCheckpoint('account-work-1')).rejects.toMatchObject({
       code: 'SYNC_STORAGE_FAILED'

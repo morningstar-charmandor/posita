@@ -41,6 +41,14 @@ if (!isMailSyncProjectionWorkerRequestV1(workerData)) {
         operation: 'load-read-model',
         snapshot
       })
+    } else if (workerData.operation.kind === 'load-message-detail') {
+      const result = await projection.loadMessageDetail(workerData.operation.request)
+      parentPort.postMessage({
+        version: 1,
+        ok: true,
+        operation: 'load-message-detail',
+        result
+      })
     } else if (workerData.operation.kind === 'commit-batch') {
       const result = await projection.commitBatch(workerData.operation.batch)
       parentPort.postMessage({ version: 1, ok: true, operation: 'commit-batch', result })

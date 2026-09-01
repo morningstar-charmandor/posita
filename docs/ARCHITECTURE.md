@@ -416,9 +416,19 @@ never blocks Electron main.
 
 The renderer distinguishes live-empty, recorded-syncing, offline, attention, and
 cached-data states. It intentionally does not render the summary content yet:
-source detail and the separately reviewed open-original
+source-detail UI and the separately reviewed open-original
 path must be complete before the live workspace is enabled. Its reload button
 re-queries local state only and never starts provider sync.
+
+The canonical source-detail boundary now has one exact version-1 request keyed by
+opaque Posita account and canonical message ID. The same serialized file worker
+decrypts the account projection, returns exact found/missing state, and binds a
+found result back to both requested IDs. Output contains canonical message/thread
+identity, visible encrypted account identity, sender/recipients, timestamps,
+subject, read state, safe attachment metadata, and at most 128 KiB of plain text
+with an explicit truncation flag. It excludes provider message/thread/attachment
+IDs, provider HTML, content IDs, labels, paths, keys, and raw failures. This source
+is not yet composed through preload, IPC, or renderer UI.
 
 `ProviderMailLifecycleOwner` now defines the credential-free composition order
 above the existing sync coordinator, mail-mode service, retention owner,

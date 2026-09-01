@@ -3,6 +3,7 @@
     "composite": true,
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "allowImportingTsExtensions": true,
     "target": "ES2022",
     "tsBuildInfoFile": "./node_modules/.cache/posita/tsconfig.web.tsbuildinfo",
     "jsx": "react-jsx",

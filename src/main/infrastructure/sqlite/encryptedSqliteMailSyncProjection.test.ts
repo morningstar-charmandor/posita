@@ -10,6 +10,7 @@ import { openPositaDatabase } from './database'
 import { EncryptedSqliteMailSyncProjection } from './encryptedSqliteMailSyncProjection'
 import { applyMigrations } from './migrations'
 import { EncryptedSqliteAccountStateRepository } from './encryptedSqliteAccountStateRepository'
+import { LIVE_MAIL_DETAIL_BODY_LIMIT } from '../../../shared/liveMailDetail'
 
 const testKey = Uint8Array.from({ length: 32 }, (_, index) => index * 7 + 3)
 const openDatabases: DatabaseSync[] = []
@@ -150,6 +151,102 @@ describe('EncryptedSqliteMailSyncProjection', () => {
     expect(serialized).not.toContain('provider-subject-test-1')
     expect(serialized).not.toContain('recipients')
     expect(readModel.messages.every((message) => !Object.hasOwn(message, 'body'))).toBe(true)
+  })
+
+  it('loads one bounded plain-text source detail without remote identifiers or HTML', async () => {
+    const { accountState, projection } = createProjection()
+    accountState.saveProviderAccount({
+      version: 2,
+      accountId: 'account-work-1',
+      provider: 'google',
+      providerAccountId: 'provider-subject-test-1',
+      displayIdentity: {
+        mailboxAddress: 'owner.work@example.test',
+        displayLabel: 'Work'
+      },
+      consentVersion: GOOGLE_CONNECT_CONSENT.consentVersion,
+      connectedAt: '2026-08-30T09:00:00.000Z'
+    })
+    const batch = commit()
+    batch.messages[0]!.recipients = [
+      { role: 'to', mailbox: { address: 'owner.work@example.test' } },
+      { role: 'cc', mailbox: { address: 'reviewer@example.test', displayName: 'Reviewer' } }
+    ]
+    batch.messages[0]!.body = {
+      plain: 'Trusted plain-text source body.',
+      html: { sanitization: 'reviewed-html-v1', content: '<p>Private provider HTML</p>' }
+    }
+    batch.messages[0]!.attachments = [{
+      providerAttachmentId: 'provider-attachment-private-1',
+      filename: 'brief.pdf',
+      mediaType: 'application/pdf',
+      sizeBytes: 2048,
+      inline: false,
+      contentId: 'provider-content-private-1'
+    }]
+    await projection.commitBatch(batch)
+
+    const result = await projection.loadMessageDetail({
+      version: 1,
+      accountId: 'account-work-1',
+      messageId: 'message-1'
+    })
+    expect(result).toMatchObject({
+      version: 1,
+      status: 'found',
+      detail: {
+        accountId: 'account-work-1',
+        messageId: 'message-1',
+        threadId: 'thread-1',
+        accountIdentity: {
+          status: 'available',
+          mailboxAddress: 'owner.work@example.test',
+          displayLabel: 'Work'
+        },
+        body: { plainText: 'Trusted plain-text source body.', truncated: false },
+        attachments: [{
+          filename: 'brief.pdf',
+          mediaType: 'application/pdf',
+          sizeBytes: 2048,
+          inline: false
+        }]
+      }
+    })
+    const serialized = JSON.stringify(result)
+    expect(serialized).not.toContain('provider-message-1')
+    expect(serialized).not.toContain('provider-subject-test-1')
+    expect(serialized).not.toContain('provider-attachment-private-1')
+    expect(serialized).not.toContain('provider-content-private-1')
+    expect(serialized).not.toContain('Private provider HTML')
+  })
+
+  it('returns scoped missing detail and explicitly truncates oversized plain text', async () => {
+    const { projection } = createProjection()
+    const batch = commit()
+    batch.messages[0]!.body.plain = 'x'.repeat(LIVE_MAIL_DETAIL_BODY_LIMIT + 1)
+    await projection.commitBatch(batch)
+
+    await expect(projection.loadMessageDetail({
+      version: 1,
+      accountId: 'account-personal-1',
+      messageId: 'message-1'
+    })).resolves.toEqual({
+      version: 1,
+      status: 'missing',
+      accountId: 'account-personal-1',
+      messageId: 'message-1'
+    })
+    const found = await projection.loadMessageDetail({
+      version: 1,
+      accountId: 'account-work-1',
+      messageId: 'message-1'
+    })
+    expect(found.status).toBe('found')
+    if (found.status === 'found') {
+      expect(found.detail.body.truncated).toBe(true)
+      expect(found.detail.body.plainText.length).toBe(LIVE_MAIL_DETAIL_BODY_LIMIT)
+      expect(found.detail.accountIdentity).toEqual({ status: 'unavailable' })
+    }
   })
 
   it('distinguishes live-empty and safe offline state', async () => {

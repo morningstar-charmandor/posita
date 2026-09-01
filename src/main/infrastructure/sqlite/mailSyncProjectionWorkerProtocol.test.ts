@@ -47,4 +47,47 @@ describe('mail-sync projection worker read protocol', () => {
       snapshot: { ...response.snapshot, cursor: 'private-cursor' }
     })).toBe(false)
   })
+
+  it('accepts only exact canonical source-detail work and bounded results', () => {
+    const request = {
+      version: 1,
+      databasePath: '/tmp/posita.sqlite3',
+      key,
+      operation: {
+        kind: 'load-message-detail',
+        request: { version: 1, accountId: 'account-work-1', messageId: 'message-1' }
+      }
+    }
+    expect(isMailSyncProjectionWorkerRequestV1(request)).toBe(true)
+    expect(isMailSyncProjectionWorkerRequestV1({
+      ...request,
+      operation: {
+        ...request.operation,
+        request: { ...request.operation.request, providerMessageId: 'remote-id' }
+      }
+    })).toBe(false)
+    expect(isMailSyncProjectionWorkerResponseV1({
+      version: 1,
+      ok: true,
+      operation: 'load-message-detail',
+      result: {
+        version: 1,
+        status: 'missing',
+        accountId: 'account-work-1',
+        messageId: 'message-1'
+      }
+    })).toBe(true)
+    expect(isMailSyncProjectionWorkerResponseV1({
+      version: 1,
+      ok: true,
+      operation: 'load-message-detail',
+      result: {
+        version: 1,
+        status: 'missing',
+        accountId: 'account-work-1',
+        messageId: 'message-1',
+        databasePath: '/private/mail.sqlite'
+      }
+    })).toBe(false)
+  })
 })

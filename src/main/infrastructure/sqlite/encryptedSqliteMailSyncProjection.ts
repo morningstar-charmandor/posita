@@ -6,6 +6,7 @@ import {
   type ProviderSyncStateV1
 } from '../../application/accountState.ts'
 import type { ProviderMailReadModelSource } from '../../application/providerMailReadModel.ts'
+import type { ProviderMailSourceDetailSource } from '../../application/providerMailSourceDetail.ts'
 import {
   MailSyncError,
   isCommitProviderMailBatchV1,
@@ -34,6 +35,12 @@ import {
   type LiveMailAccountStatusV1,
   type LiveMailSnapshotV2
 } from '../../../shared/liveMail.ts'
+import {
+  LIVE_MAIL_DETAIL_BODY_LIMIT,
+  isLiveMailMessageDetailRequestV1,
+  type LiveMailMessageDetailRequestV1,
+  type LiveMailMessageDetailResultV1
+} from '../../../shared/liveMailDetail.ts'
 import {
   EncryptedSqliteAccountStateRepository,
   saveEncryptedProviderSyncState
@@ -93,7 +100,7 @@ export const deleteAllEncryptedProviderMailRecords = (database: DatabaseSync): b
  * file-backed production use must place this synchronous work behind one worker owner.
  */
 export class EncryptedSqliteMailSyncProjection implements
-  MailSyncProjection, ProviderMailReadModelSource {
+  MailSyncProjection, ProviderMailReadModelSource, ProviderMailSourceDetailSource {
   private readonly accountState: EncryptedSqliteAccountStateRepository
 
   constructor(
@@ -179,6 +186,58 @@ export class EncryptedSqliteMailSyncProjection implements
         accounts,
         messages,
         hasMore: allMessages.length > LIVE_MAIL_READ_LIMIT
+      }
+    } catch (error) {
+      if (error instanceof MailSyncError) throw error
+      throw storageFailure(error)
+    }
+  }
+
+  async loadMessageDetail(
+    request: LiveMailMessageDetailRequestV1
+  ): Promise<LiveMailMessageDetailResultV1> {
+    if (!isLiveMailMessageDetailRequestV1(request)) {
+      throw malformed('The source-message detail request is invalid.')
+    }
+    try {
+      const message = this.loadAccountRecords(request.accountId).messages
+        .find(({ value }) => value.id === request.messageId)?.value
+      if (message === undefined) {
+        return {
+          version: 1,
+          status: 'missing',
+          accountId: request.accountId,
+          messageId: request.messageId
+        }
+      }
+      const providerAccount = this.accountState.loadProviderAccount(request.accountId)
+      const plainText = this.boundPlainText(message.body.plain)
+      return {
+        version: 1,
+        status: 'found',
+        detail: {
+          version: 1,
+          accountId: message.accountId,
+          messageId: message.id,
+          threadId: message.threadId,
+          provider: message.source.provider,
+          accountIdentity: providerAccount === undefined
+            ? { status: 'unavailable' }
+            : { status: 'available', ...providerAccount.displayIdentity },
+          sender: message.sender,
+          recipients: message.recipients,
+          sentAt: message.sentAt,
+          receivedAt: message.receivedAt,
+          subject: message.subject,
+          body: plainText,
+          isRead: message.isRead,
+          attachments: message.attachments.map((attachment) => ({
+            filename: attachment.filename,
+            mediaType: attachment.mediaType,
+            sizeBytes: attachment.sizeBytes,
+            inline: attachment.inline
+          }))
+        }
       }
     } catch (error) {
       if (error instanceof MailSyncError) throw error
@@ -468,6 +527,16 @@ export class EncryptedSqliteMailSyncProjection implements
   private preview(body: string): string {
     const normalized = body.replace(/\s+/g, ' ').trim()
     return normalized.length <= 240 ? normalized : `${normalized.slice(0, 239)}…`
+  }
+
+  private boundPlainText(body: string): { plainText: string; truncated: boolean } {
+    if (body.length <= LIVE_MAIL_DETAIL_BODY_LIMIT) {
+      return { plainText: body, truncated: false }
+    }
+    let plainText = body.slice(0, LIVE_MAIL_DETAIL_BODY_LIMIT)
+    const lastCodeUnit = plainText.charCodeAt(plainText.length - 1)
+    if (lastCodeUnit >= 0xD800 && lastCodeUnit <= 0xDBFF) plainText = plainText.slice(0, -1)
+    return { plainText, truncated: true }
   }
 
   private saveRecord(

@@ -8,10 +8,17 @@ import {
   type MailSyncCheckpointV1
 } from '../../application/mailSync.ts'
 import { isLiveMailSnapshotV2, type LiveMailSnapshotV2 } from '../../../shared/liveMail.ts'
+import {
+  isLiveMailMessageDetailRequestV1,
+  isLiveMailMessageDetailResultV1,
+  type LiveMailMessageDetailRequestV1,
+  type LiveMailMessageDetailResultV1
+} from '../../../shared/liveMailDetail.ts'
 
 export type MailSyncProjectionWorkerOperationV1 =
   | { kind: 'load-checkpoint'; accountId: string }
   | { kind: 'load-read-model'; loadedAt: string }
+  | { kind: 'load-message-detail'; request: LiveMailMessageDetailRequestV1 }
   | { kind: 'commit-batch'; batch: CommitProviderMailBatchV1 }
   | { kind: 'delete-account-records'; accountId: string }
 
@@ -34,6 +41,12 @@ export type MailSyncProjectionWorkerSuccessV1 =
     ok: true
     operation: 'load-read-model'
     snapshot: LiveMailSnapshotV2
+  }
+  | {
+    version: 1
+    ok: true
+    operation: 'load-message-detail'
+    result: LiveMailMessageDetailResultV1
   }
   | {
     version: 1
@@ -91,6 +104,10 @@ export const isMailSyncProjectionWorkerRequestV1 = (
       typeof operation.loadedAt === 'string' && operation.loadedAt.length <= 64 &&
       Number.isFinite(Date.parse(operation.loadedAt))
   }
+  if (operation.kind === 'load-message-detail') {
+    return hasOnlyKeys(operation, ['kind', 'request']) &&
+      isLiveMailMessageDetailRequestV1(operation.request)
+  }
   if (operation.kind === 'delete-account-records') {
     return hasOnlyKeys(operation, ['kind', 'accountId']) && isAccountId(operation.accountId)
   }
@@ -115,6 +132,10 @@ export const isMailSyncProjectionWorkerResponseV1 = (
   if (value.operation === 'load-read-model') {
     return hasOnlyKeys(value, ['version', 'ok', 'operation', 'snapshot']) &&
       isLiveMailSnapshotV2(value.snapshot)
+  }
+  if (value.operation === 'load-message-detail') {
+    return hasOnlyKeys(value, ['version', 'ok', 'operation', 'result']) &&
+      isLiveMailMessageDetailResultV1(value.result)
   }
   if (value.operation === 'delete-account-records') {
     return hasOnlyKeys(value, [

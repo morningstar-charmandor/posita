@@ -232,6 +232,14 @@ the local source locator for a future detail query. Sample snapshots use the leg
 fixture projection only; the two shapes are never merged. This does not compose
 sync, a provider, or an account connection.
 
+The worker protocol also supports one exact source-detail operation over the same
+encrypted projection. Because canonical IDs remain ciphertext, the worker scans
+and validates the selected account's authenticated records, then returns only a
+bounded presentation result. Plain text is capped at 128 KiB with explicit
+truncation; provider IDs, HTML, attachment/content IDs, paths, keys, and raw errors
+never cross the worker boundary. Missing is an explicit result and never triggers
+cache mutation, provider access, or fixture fallback.
+
 The credential-free coordinator is now integration-tested against this actual
 file-backed worker. The proof covers consecutive atomic pages, encrypted cursor
 resume, replay without duplicate source rows, a real checkpoint conflict that

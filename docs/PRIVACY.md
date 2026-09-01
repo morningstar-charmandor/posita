@@ -47,8 +47,16 @@ source provenance without exposing remote identifiers. Provider-account record v
 adds a verified mailbox address and optional user label inside authenticated
 ciphertext. Only that human-facing identity—not the hidden provider subject—is
 included in the bounded status projection. The current renderer shows
-only safe status and counts; it does not render those summaries until source-detail
+only safe status and counts; it does not render those summaries until source-detail UI
 and original-source behavior pass a separate review.
+
+The credential-free source-detail worker query is separately bounded. It accepts
+only opaque canonical account/message IDs and returns exact found/missing state.
+A found result may expose sender and recipients, subject, timestamps, read state,
+safe attachment filename/type/size/inline metadata, visible encrypted account
+identity, and at most 128 KiB of plain text with explicit truncation. It excludes
+provider IDs, attachment/content IDs, provider HTML, labels, paths, keys, and raw
+failures. No preload, IPC, or renderer surface currently invokes this query.
 
 The credential-free provider-mail lifecycle owner now suspends retention around
 sync batches and prevents new sync while disconnect or full local deletion is

@@ -683,3 +683,30 @@
   No dependency, Google adapter, credential, browser action, network request,
   personal mailbox data, live-summary rendering, AI path, external action, or
   mailbox mutation is added.
+
+## ADR-037: Inspect canonical source through one bounded worker query
+
+- Status: accepted for Gate 2D
+- Context: live summaries cannot be shown responsibly without a path back to the
+  exact local source message. Returning the canonical provider record would expose
+  remote identifiers, HTML, attachment IDs, and up to two megabytes of body data;
+  querying provider IDs in SQLite would weaken the ciphertext-only projection.
+- Decision: define one exact version-1 source-detail request keyed by opaque Posita
+  account ID and canonical message ID. Execute it through the existing serialized
+  projection worker, which decrypts and validates the selected account records and
+  returns exact found/missing state. A found result is rebound to both request IDs
+  and contains only canonical message/thread identity, visible encrypted account
+  identity, sender/recipients, timestamps, subject, read state, safe attachment
+  filename/type/size/inline metadata, and at most 128 KiB of plain text with an
+  explicit truncation flag. Provider message/thread/account/attachment IDs,
+  content IDs, provider HTML, labels, paths, keys, and raw failures are excluded.
+- Consequence: source inspection has one bounded credential-free data boundary and
+  cannot silently fall back to Gmail or fixtures when retained data is missing.
+  Canonical IDs remain encrypted, so the current implementation deliberately scans
+  one account inside the worker instead of adding a plaintext index. Preload, IPC,
+  renderer states, summary rendering, and open-original remain separate milestones.
+  The web TypeScript configuration permits explicit `.ts` imports, matching the
+  existing Node configuration so the directly executed worker and bundled web
+  graph reuse the same account-identity validator rather than duplicating it.
+  No dependency, schema migration, compatibility path, provider adapter, credential,
+  personal data, network request, external action, AI path, or mailbox mutation is added.

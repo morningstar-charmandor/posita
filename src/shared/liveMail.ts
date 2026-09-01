@@ -81,7 +81,9 @@ const statuses: readonly LiveMailAccountStatusV1[] = [
   'not-synced', 'syncing', 'ready', 'offline', 'attention-required', 'disabled'
 ]
 
-const isDisplayIdentity = (value: unknown): value is LiveMailAccountDisplayIdentityV1 => {
+export const isLiveMailAccountDisplayIdentityV1 = (
+  value: unknown
+): value is LiveMailAccountDisplayIdentityV1 => {
   if (!isRecord(value) || typeof value.status !== 'string') return false
   if (value.status === 'unavailable') return hasOnlyKeys(value, ['status'])
   if (value.status !== 'available') return false
@@ -103,7 +105,7 @@ const isAccount = (value: unknown): value is LiveMailAccountV2 => {
     typeof value.accountId === 'string' && idPattern.test(value.accountId) &&
     value.provider === 'google' && typeof value.status === 'string' &&
     statuses.includes(value.status as LiveMailAccountStatusV1) &&
-    isDisplayIdentity(value.displayIdentity) &&
+    isLiveMailAccountDisplayIdentityV1(value.displayIdentity) &&
     (value.lastSuccessAt === undefined || isTimestamp(value.lastSuccessAt))
 }
 

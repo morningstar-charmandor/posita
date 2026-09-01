@@ -1653,6 +1653,47 @@ Limitations: address and optional label are exercised only with deterministic
 values. No real provider account exists, and users cannot edit labels yet. The
 next milestone is the bounded worker-backed canonical source-detail query.
 
+## Gate 2D milestone — Bounded canonical source-detail query
+
+Date: 2026-09-01
+Checkpoint: use the Git commit whose subject is `feat: inspect canonical source safely`
+
+Goal: create the credential-free source-inspection boundary required before live
+summary content can be rendered.
+
+Delivered:
+
+- one exact versioned request keyed only by opaque Posita account and canonical
+  message ID,
+- worker-owned encrypted lookup with exact found/missing state and request/result
+  rebinding to prevent cross-account or cross-message substitution,
+- canonical provenance, visible account identity, sender/recipients, timestamps,
+  subject, read state, and safe attachment metadata,
+- a 128 KiB plain-text body cap with an explicit truncation flag and safe handling
+  of a split UTF-16 surrogate boundary,
+- exact shared and worker-protocol validation plus encrypted in-memory and real
+  file-backed worker coverage for missing, truncation, malformed input/output,
+  cross-request substitution, and key lifecycle.
+
+Important decisions:
+
+- reuse the one encrypted projection worker and scan only the selected account
+  instead of creating a plaintext canonical-ID index,
+- reuse one account-identity validator across bundled web code and the direct Node
+  worker by aligning the web TypeScript import-extension setting with Node,
+- exclude provider IDs, provider HTML, attachment/content IDs, labels, paths,
+  keys, and raw errors from the presentation result,
+- keep preload, IPC, renderer states, summary rendering, and open-original deferred,
+- add no schema migration, dependency, compatibility path, credential, provider
+  call, real account, personal mail, external action, AI path, or mailbox mutation.
+
+Evidence: 52 test files and 341 tests pass. Strict typecheck, renderer security
+checks, and production Electron build pass through `npm run verify`.
+
+Limitations: only deterministic encrypted records exercise the query. It is not
+reachable from the renderer and therefore does not yet provide loading, stale,
+error, or retry UX. That credential-free composition is the next milestone.
+
 ## How future entries should be written
 
 For each material milestone, record:
