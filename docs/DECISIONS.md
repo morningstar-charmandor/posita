@@ -598,3 +598,30 @@
   sync-start, network, or mailbox-mutation path. Production connection/sync
   lifecycle composition remains a separate reviewed milestone. No dependency,
   personal data, compatibility conversion, or fabricated provenance is added.
+
+## ADR-034: Coordinate provider mail through one lifecycle owner
+
+- Status: accepted for Gate 2D
+- Context: the sync coordinator, retention owner, sample/live boundary,
+  disconnect journal, full deletion, and file-worker keys were individually safe,
+  but composing them independently would permit sync to race retention or account
+  removal and could leave a projection key alive after shutdown or deletion.
+- Decision: place one application-owned `ProviderMailLifecycleOwner` above the
+  existing capabilities. Startup accepts a bounded exact trusted account
+  inventory, completes any sample-to-live transition before initial sync, reports
+  offline/provider failure as bounded per-account outcomes, and starts retention
+  only after startup sync settles. Later sync batches suspend retention while
+  preserving the coordinator's bounded account concurrency. Disconnect prevents
+  new sync, cancels and awaits active work, suspends retention, then invokes the
+  existing journaled service. Confirmed full deletion uses the same sync/retention
+  quiescence gate. Shutdown settles both owners and destroys the projection key.
+  Allow full-deletion composition to destroy every retained worker-key context in
+  its existing final data-key phase, attempting every context even if one teardown
+  fails.
+- Consequence: lifecycle ordering has one deterministic, testable source of truth;
+  live-empty and offline restart never restore fixtures, destructive local work
+  cannot overlap provider projection writes, and key teardown is explicit. The
+  owner remains uncomposed until a trusted account inventory, live read model,
+  retry/status policy, and real provider are separately reviewed. No dependency,
+  schema migration, credential, personal data, network request, IPC/UI capability,
+  external action, or mailbox mutation is added.

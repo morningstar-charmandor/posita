@@ -1515,6 +1515,54 @@ visible application read model remains fixture-only. The next milestone is a
 credential-free production sync lifecycle composition design. Gmail, OAuth, AI,
 live accounts, and remote mailbox actions remain blocked.
 
+## Gate 2D milestone — Credential-free provider-mail lifecycle owner
+
+Date: 2026-09-01
+Checkpoint: use the Git commit whose subject is `feat: coordinate provider mail lifecycle`
+
+Goal: make sync, retention, account removal, full deletion, and worker-key
+teardown obey one lifecycle ordering before any production provider is composed.
+
+Delivered:
+
+- `ProviderMailLifecycleOwner` above the existing sync coordinator, schema-v10
+  mode service, retention owner, disconnect orchestrator, and projection key,
+- bounded exact startup inventory with duplicate refusal and concurrent account
+  sync through the existing coordinator limit,
+- recovery ordering for persisted connected/sample state, connected/live state,
+  disconnected live-empty state, and offline retry-required startup,
+- retention suspension around later sync and first connection activation,
+- global sync suspension and settlement before journaled disconnect mutation,
+- a quiescence gate for the separately confirmed full local-deletion command,
+- coordinator-wide suspend/resume plus account cancellation-and-wait contracts,
+- shutdown that settles retention and sync before projection-key destruction,
+- full-deletion support for multiple retained worker-key contexts with best-effort
+  teardown of every context in the existing final key phase.
+
+Important decisions:
+
+- retain one provider I/O coordinator and one lifecycle owner; do not add per-
+  screen polling, a second retention timer, or another projection manager,
+- make offline/provider failures bounded account outcomes so restart cannot be
+  mistaken for a sample-mode reset,
+- preserve cross-account concurrency inside an explicitly bounded startup or
+  refresh batch while keeping destructive lifecycle work exclusive,
+- keep trusted account discovery, automatic retry scheduling/status, the live
+  renderer read model, Electron composition, and provider activation deferred,
+- add no dependency, schema migration, credential, provider call, personal data,
+  IPC/UI surface, external action, or mailbox mutation.
+
+Evidence: 48 test files and 317 tests pass. Strict typecheck, renderer
+structure/security checks, and production Electron builds pass. New tests cover
+startup ordering, live-empty behavior, offline outcomes, retention exclusion,
+disconnect preemption, deletion suspension/resume, malformed and duplicate input,
+coordinator suspension, complete multi-key teardown, and shutdown ordering.
+
+Limitations: the running application still starts no provider sync and displays
+only fixture-backed mail. The next milestone is a credential-free live application
+read-model boundary so schema-v10 mode and canonical records can be represented
+truthfully before provider activation.
+
 ## How future entries should be written
 
 For each material milestone, record:

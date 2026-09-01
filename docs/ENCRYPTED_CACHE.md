@@ -219,6 +219,14 @@ preserves the externally committed cursor, cancellation before provider output,
 and key teardown. The database contains only deterministic test ciphertext and is
 temporary; no production composition or provider access is created.
 
+The credential-free provider-mail lifecycle owner now supplies the shared
+quiescence boundary around this worker. Retention is suspended during sync;
+disconnect and confirmed full deletion prevent new sync and await current work;
+shutdown settles work before destroying the retained projection key. The full-
+deletion action accepts every retained encryption context and attempts them all
+in its existing final key phase, so adding the sync worker does not create an
+untracked in-memory key copy. This remains uncomposed deterministic evidence.
+
 ## Deletion boundary
 
 The repository separates logical encrypted-record deletion from SQLite

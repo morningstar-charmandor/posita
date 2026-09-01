@@ -297,6 +297,36 @@ describe('MailSyncCoordinator', () => {
     })
   })
 
+  it('globally suspends new sync until the lifecycle owner resumes it', async () => {
+    class BlockingProvider implements ProviderMailAdapter {
+      fetchBatch(_request: ProviderMailBatchRequestV1, signal: AbortSignal): Promise<unknown> {
+        return new Promise((_resolve, reject) => {
+          signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')),
+            { once: true })
+        })
+      }
+    }
+    const coordinator = new MailSyncCoordinator(
+      new BlockingProvider(),
+      new DeterministicFakeMailSyncProjection(),
+      clock
+    )
+    const running = coordinator.syncAccount(request())
+    await Promise.resolve()
+
+    await coordinator.suspend()
+    await expect(running).rejects.toMatchObject({ code: 'SYNC_CANCELLED' })
+    await expect(coordinator.syncAccount(request())).rejects.toMatchObject({
+      code: 'SYNC_CANCELLED'
+    })
+
+    coordinator.resume()
+    const resumable = coordinator.syncAccount(request())
+    await Promise.resolve()
+    await coordinator.suspend()
+    await expect(resumable).rejects.toMatchObject({ code: 'SYNC_CANCELLED' })
+  })
+
   it('cancels superseded account work before starting its replacement', async () => {
     class SupersedingProvider implements ProviderMailAdapter {
       calls = 0

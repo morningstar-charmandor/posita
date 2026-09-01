@@ -41,7 +41,7 @@ SDK, mailbox data, or model provider was used for this audit.
 | Account disconnect | Orchestrator-ready, inactive | journaled idempotent application service and deterministic revoker tests | Needs a real idempotent revoker and separately reviewed user command |
 | Canonical provider mail model | Lifecycle-ready, empty | exact validators, schema-v9 authenticated envelopes, opaque row IDs, packaged serial worker, fixed-window retention, and journaled account deletion | Needs credential-free sync lifecycle integration before provider activation |
 | Sample/live boundary | Ready, unexposed | schema-v10 one-way mode, connected-pair gate, atomic sample removal, restart/no-reseed and retry tests | Must be invoked only by reviewed connection/sync composition |
-| Sync coordinator | Worker-integrated, uncomposed | 90-day initial path, real file-worker batching/cursor ordering, replay, conflict preservation, bounded recovery/concurrency, cancellation, and key teardown are tested | Needs production lifecycle composition |
+| Sync coordinator | Lifecycle-owned, uncomposed | 90-day path, real worker integration, bounded concurrency, cancellation, retention exclusion, disconnect/deletion quiescence, and key teardown are tested | Needs trusted account inventory, live read model, retry/status policy, and provider composition |
 | Gmail adapter | **Not implemented** | adapter contract is documented only | Blocks OAuth and mail access |
 | AI provider | Deferred | no model adapter, prompt, embedding, or model output path | Fixture summaries/drafts remain explicitly simulated |
 
@@ -72,7 +72,7 @@ pending sanitization is resumed. The inactive journaled disconnect removes the
 selected account's canonical records after fixture removal and retries the phase
 idempotently. Installation-wide deletion removes all schema-v9 ciphertext keylessly.
 
-### 2. Keep the worker-integrated sync owner inactive until transition review
+### 2. Keep the lifecycle-owned sync boundary inactive until activation review
 
 One trusted coordinator now owns the provider boundary and proves, with a
 deterministic fake:
@@ -96,6 +96,15 @@ the persisted cursor; an externally advanced cursor wins a real conflict; blocke
 provider work cancels before teardown; and the retained worker key is explicitly
 destroyed. No application startup, polling, UI, network, or provider composition
 was added.
+
+One credential-free lifecycle owner now places that coordinator in the required
+ordering. Startup activates the durable live boundary before initial sync and
+starts retention only after account work settles. Later sync excludes retention;
+disconnect and confirmed full deletion first suspend new provider work and await
+active work; shutdown settles both owners before projection-key teardown. A live-
+empty startup performs no provider work, and offline startup returns a bounded
+retry-required account result without reseeding samples. This is deterministic
+application composition only and is not wired to Electron startup or a provider.
 
 ### 3. Disconnect activation paired with connection activation
 
@@ -121,18 +130,19 @@ state, screenshots, tests, or portfolio assets.
 
 ## Recommended next milestone
 
-Proceed with a **credential-free production sync lifecycle composition design**:
+Proceed with a **credential-free live application read-model boundary**:
 
-1. define one main-owned lifecycle for sync start, cancellation, disconnect,
-   retention, full deletion, and worker-key teardown,
-2. place the schema-v10 live-mode transition after complete connection persistence
-   and before any provider projection becomes visible,
-3. define startup recovery for connected/live, disconnected/live-empty, offline,
-   and interrupted activation states without adding a second scheduler,
-4. keep preload, UI activation, Google code, credentials, network access, and live
-   data unchanged until that lifecycle is verified and separately approved.
+1. project schema-v10 `sample` versus `live` truthfully through main without
+   presenting canonical records as fixture `Message` objects,
+2. define a bounded worker-backed canonical query for live-empty and provider-mail
+   states with account provenance and original-source identity,
+3. add loading, empty, offline, safe-error, and retry semantics before any live
+   renderer surface is enabled,
+4. keep Google code, credentials, connection activation, network access, polling,
+   and real mailbox data unchanged until the read model is verified.
 
-This milestone must use deterministic adapters only and does not authorize Gmail.
+This is the smallest next step because the lifecycle can now safely create a live
+projection, but the current renderer query is still fixture-only.
 
 ## Completed credential-free contract evidence
 
@@ -155,10 +165,14 @@ This milestone must use deterministic adapters only and does not authorize Gmail
 - The coordinator-to-worker integration proves multi-page initial sync,
   incremental encrypted-cursor resume, replay classification, real checkpoint
   conflict preservation, cancellation, and key teardown with the deterministic provider.
+- `ProviderMailLifecycleOwner` proves startup activation, live-empty behavior,
+  offline retry outcomes, concurrent startup sync, retention exclusion,
+  disconnect preemption, full-deletion suspension, shutdown, and projection-key
+  teardown through credential-free collaborators.
 - The inactive disconnect service requires account-scoped canonical projection
   deletion in its durable mail-data phase and safely retries after fixture removal
   has already committed.
-- The verified baseline is 47 test files and 306 tests plus strict TypeScript,
+- The verified baseline is 48 test files and 317 tests plus strict TypeScript,
   renderer structure/security checks, and production Electron builds.
 - No dependency, production provider adapter, credential,
   personal mailbox data, network action, renderer surface, or mailbox mutation was

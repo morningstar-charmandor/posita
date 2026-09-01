@@ -56,6 +56,9 @@ exists deeper in the tree.
   only opaque local storage IDs, opaque account scope, and record kind are queryable.
 - The deterministic fixture `Message` remains a sample-presentation compatibility
   record and is never accepted as provider-ingestion data.
+- One credential-free provider-mail lifecycle owner now defines startup activation,
+  concurrent account sync, retention exclusion, disconnect quiescence, deletion
+  suspension, shutdown, and sync-worker key teardown, but remains uncomposed.
 - Gmail, production provider-mail projection composition, pending-disconnect
   scheduling, and model providers are not connected.
 - Sending mail is intentionally disabled.

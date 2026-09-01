@@ -304,10 +304,13 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - credential-free end-to-end integration from deterministic provider through the
   sync coordinator to the real file-backed encrypted worker, including replay,
   cursor-conflict preservation, cancellation, and key teardown,
+- one credential-free lifecycle owner that activates live mode before sync,
+  excludes retention during provider writes, settles work before disconnect or
+  deletion, preserves live-empty/offline truth, and tears down worker keys,
 - an explicit compatibility boundary that keeps fixture `Message` records sample-
   only rather than fabricating provider identity,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 47 automated test files containing 306 passing tests,
+- 48 automated test files containing 317 passing tests,
 - a desktop visual and accessibility-tree check of the local-only Settings entry,
   sample-account controls, normal no-recovery-needed outcome, and automatic
   retention card with readable next/last status and Gmail non-mutation copy,
@@ -327,8 +330,10 @@ file-backed worker integration without activating startup sync. Schema v10 now
 adds the approved one-way installation boundary: the first complete connection
 will atomically remove samples, startup will never reseed them in live mode, and
 removing the last account leaves a truthful empty live state. The transition is
-still unexposed, so the next milestone is a credential-free production sync
-lifecycle design. Real OAuth, browser activation, credentials, live account
+still unexposed. A new credential-free lifecycle owner now proves startup,
+offline, retention, disconnect, deletion, shutdown, and key-teardown ordering.
+The next milestone is a truthful live application read-model boundary. Real OAuth,
+browser activation, credentials, live account
 connection, and production sync remain separate actions blocked behind explicit
 owner approval.
 
@@ -372,6 +377,7 @@ interfaces, with an empty authenticated SQLite projection proving atomic canonic
 records, cursor persistence, journaled removal, and worker-owned 90-day retention.
 The coordinator-to-worker path is also verified with deterministic file-backed
 integration. A durable schema-v10 mode now proves samples can be removed once and
-never silently restored after disconnect or restart. Real mail remains blocked
-until production lifecycle composition and the remaining provider activation
+never silently restored after disconnect or restart. The provider lifecycle now
+has one deterministic application owner, but real mail remains blocked until a
+live read model, production composition, and the remaining provider activation
 gates pass.

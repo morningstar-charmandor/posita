@@ -392,6 +392,21 @@ The mode has no ordinary reverse transition, so removing every account produces
 live-empty rather than demo content. The service is trusted-main-only and has no
 preload, IPC, renderer, provider, or sync-start caller yet.
 
+`ProviderMailLifecycleOwner` now defines the credential-free composition order
+above the existing sync coordinator, mail-mode service, retention owner,
+disconnect service, and projection key lifecycle. It accepts at most eight exact,
+unique trusted account requests at startup. A persisted connection activates live
+mode before provider work; live-empty starts no provider work; offline sync is a
+bounded retry-required result rather than a startup reset. Account batches keep
+the coordinator's bounded concurrency while retention is suspended. Disconnect
+globally suspends and settles sync before retention and local lifecycle mutation,
+then resumes both on completion or safe failure. The same owner implements the
+quiescence gate used before confirmed full deletion. Deletion composition can now
+destroy every retained worker-key context in its data-key phase, while normal
+shutdown settles sync and retention before destroying the projection key. This
+owner is application-only and uncomposed; it adds no provider polling schedule,
+account discovery, preload/IPC method, renderer status, or live adapter.
+
 The inactive disconnect orchestrator's existing `mail-data-delete-pending` phase
 now runs both fixture account removal and worker-backed canonical projection
 removal before advancing its journal. Both actions are idempotent: if the second

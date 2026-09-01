@@ -216,7 +216,7 @@ describe('DeleteLocalDataService', () => {
     })
   })
 
-  it('erases the maintenance worker encryption context after the durable data key', async () => {
+  it('erases every worker encryption context after the durable data key', async () => {
     const actions: string[] = []
     const mail = new FakeMailRepository(actions)
     const composed = new ComposedDeleteLocalDataActions(
@@ -225,12 +225,48 @@ describe('DeleteLocalDataService', () => {
       mail,
       new FakeKeyEraser(actions),
       { sanitize: async () => undefined },
-      { destroyEncryptionContext: () => { actions.push('destroy-maintenance-key') } }
+      [
+        { destroyEncryptionContext: () => { actions.push('destroy-maintenance-key') } },
+        { destroyEncryptionContext: () => { actions.push('destroy-sync-key') } }
+      ]
     )
 
     await composed.eraseDataKey()
 
-    expect(actions).toEqual(['delete-key', 'destroy-key', 'destroy-maintenance-key'])
+    expect(actions).toEqual([
+      'delete-key',
+      'destroy-key',
+      'destroy-maintenance-key',
+      'destroy-sync-key'
+    ])
+  })
+
+  it('attempts every in-memory key teardown when one context fails', async () => {
+    const actions: string[] = []
+    const mail = new FakeMailRepository(actions)
+    mail.destroyEncryptionContext = () => {
+      actions.push('destroy-key-failed')
+      throw new Error('test-only main key teardown failure')
+    }
+    const composed = new ComposedDeleteLocalDataActions(
+      new FakeVault(actions),
+      new FakeAccountState(actions),
+      mail,
+      new FakeKeyEraser(actions),
+      { sanitize: async () => undefined },
+      [
+        { destroyEncryptionContext: () => { actions.push('destroy-maintenance-key') } },
+        { destroyEncryptionContext: () => { actions.push('destroy-sync-key') } }
+      ]
+    )
+
+    await expect(composed.eraseDataKey()).rejects.toThrow('test-only main key teardown failure')
+    expect(actions).toEqual([
+      'delete-key',
+      'destroy-key-failed',
+      'destroy-maintenance-key',
+      'destroy-sync-key'
+    ])
   })
 
   it.each([

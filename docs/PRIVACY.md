@@ -35,6 +35,14 @@ transfers a temporary copy into each worker, zeroes worker key buffers, serializ
 bounded operations, validates safe result schemas, and supports explicit teardown.
 It has no startup composition and has processed deterministic records only.
 
+The credential-free provider-mail lifecycle owner now suspends retention around
+sync batches and prevents new sync while disconnect or full local deletion is
+quiescing private state. Normal shutdown waits for provider and retention work,
+then destroys the sync projection's retained in-memory key. Full deletion can
+include every retained worker key in the existing final key-erasure phase. These
+are verified ordering guarantees only; no personal mailbox data or provider
+credential has entered the lifecycle.
+
 The inactive disconnect flow now deletes local canonical projection records for
 the selected opaque account in the same journaled mail-data phase as fixture
 account removal. Retrying after a partial local failure is idempotent. This local

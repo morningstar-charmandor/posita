@@ -167,6 +167,11 @@ Implemented:
   application coordinator, and real file-backed encrypted projection worker,
   covering multi-page commits, encrypted-cursor resume, replay, real conflicts,
   cancellation, and retained-key teardown,
+- one credential-free provider-mail lifecycle owner that orders live activation,
+  bounded startup/account sync, retention exclusion, disconnect quiescence,
+  confirmed-deletion suspension, shutdown, and projection-worker key teardown,
+- bounded startup outcomes for connected/live, interrupted sample activation,
+  disconnected live-empty, and offline retry-required states without reseeding,
 - an explicit fixture compatibility decision: existing encrypted sample messages
   remain a presentation view and never receive fabricated provider provenance,
 - truthful sample-mode labels that do not describe fixture accounts, briefs, or
@@ -194,6 +199,9 @@ Simulated or deliberately inactive:
 - the schema-v10 sample-to-live service is trusted-main-only and unexposed; it
   has been verified with deterministic connected state but has no production
   connection, sync-start, preload, IPC, or UI caller,
+- the provider-mail lifecycle owner is application-only and deterministic; it has
+  no trusted production account inventory, scheduler/status surface, Electron
+  startup composition, or provider adapter,
 - account consistency is not independently exposed; the recovery command uses it
   inside main without mutation or provider action,
 - local account recovery is active only for inconsistent local records and has no
@@ -203,8 +211,8 @@ Simulated or deliberately inactive:
 Not implemented:
 
 - Gmail OAuth, message ingestion, incremental history sync, or user-triggered/live disconnect,
-- production sync lifecycle composition and activation of the approved
-  sample-to-live transition,
+- a credential-free live application read model and production activation of the
+  approved provider-mail lifecycle,
 - user-triggered account disconnect or any remote mailbox mutation control,
 - automatic pending-disconnect resume with a live idempotent revocation adapter,
 - a model provider, embeddings, classification, retrieval, or generation,
@@ -239,9 +247,10 @@ confirmed local deletion are complete at their current layers. Continue in this 
 3. Treat automatic retention scheduling and its Settings status as complete at
    the current fixed 90-day boundary. Do not add configurable retention yet.
 4. Treat canonical fixed-window retention, journaled account removal, worker
-   integration, and the schema-v10 one-way sample/live boundary as complete at
-   their credential-free layers. Next define one production sync lifecycle owner
-   and its startup/cancellation ordering without activating a provider.
+   integration, schema-v10 mode, and provider-mail lifecycle ordering as complete
+   at their credential-free layers. Next define a live application read model
+   that truthfully distinguishes live-empty and canonical provider mail from the
+   fixture-only renderer snapshot.
 5. Request explicit owner approval before composing a real Google adapter,
    credentials, browser authorization, connection activation, or live account.
 6. Keep real Gmail ingestion disabled until authorization activation is separately
@@ -253,8 +262,10 @@ plaintext mailbox. Record the selected search tradeoff in `docs/DECISIONS.md`.
 
 Milestone change report: canonical provider mail contracts, sync ownership,
 encrypted atomic persistence, fixed-window retention, disconnect deletion, and
-coordinator-to-worker operation are credential-free verified, not activated for
-ingestion. Schema v10 now durably separates sample and live installations: a
+coordinator-to-worker operation and one lifecycle owner are credential-free
+verified, not activated for ingestion. The owner excludes retention during sync,
+settles provider work before disconnect/deletion, and tears down worker keys.
+Schema v10 now durably separates sample and live installations: a
 complete local connection is required, sample deletion and mode activation are
 atomic, cleanup is retryable, and disconnect/restart never reseeds samples.
 Schema v9 remains the
@@ -267,7 +278,7 @@ compatibility distinction remains:
 the legacy `Message` is a deterministic sample-presentation record, while only
 `ProviderMailMessageV1` may enter future provider ingestion. There is no conversion
 path because Posita will not invent provider provenance. The next milestone is a
-credential-free production sync lifecycle composition design, not OAuth.
+credential-free live application read-model boundary, not OAuth.
 
 ## How to resume
 
@@ -287,7 +298,7 @@ credential-free production sync lifecycle composition design, not OAuth.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 47 test files, 306 tests, strict typecheck, structure
+- Current verified baseline: 48 test files, 317 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,

@@ -150,6 +150,16 @@ Compaction is safely retryable after the logical switch. This policy is verified
 with deterministic data only and does not activate OAuth, Gmail, sync, preload,
 IPC, or UI behavior.
 
+A credential-free provider-mail lifecycle owner now defines the missing runtime
+ordering without activating it. On startup, a bounded trusted account inventory
+enters live mode before initial sync and starts retention only after that sync
+settles. Later sync pauses retention; disconnect first prevents new sync and waits
+for active provider work before local mutation; confirmed full deletion uses the
+same quiescence gate; shutdown settles both workers before erasing the projection
+worker's retained key. Offline startup returns a safe retry-required outcome and
+never restores samples. The owner remains outside Electron startup, IPC, UI, and
+Google composition.
+
 Read the build boundaries before extending the prototype:
 
 - [Agent contract](AGENTS.md)

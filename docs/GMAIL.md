@@ -76,6 +76,14 @@ cursor resume, conflict refusal, cancellation, and key teardown are verified.
 This is a credential-free test boundary, not a Gmail adapter, polling owner,
 startup composition, connection command, or live-account path.
 
+One credential-free `ProviderMailLifecycleOwner` now defines how a future trusted
+composition must operate: live-mode activation precedes initial sync, retention
+does not overlap sync batches, disconnect/deletion first suspend and settle sync,
+and shutdown destroys the projection worker key only after work finishes. A
+live-empty startup starts no provider work; offline startup returns a safe retry-
+required outcome. The owner receives no token and remains outside Electron
+startup, preload, IPC, UI, Google, and network composition.
+
 ## Desktop OAuth flow
 
 Posita will use Google's installed-desktop application flow with Authorization

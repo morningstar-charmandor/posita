@@ -98,6 +98,7 @@ interface ActiveSync {
 export class MailSyncCoordinator {
   private readonly active = new Map<string, ActiveSync>()
   private readonly concurrency: BoundedConcurrencyGate
+  private suspended = false
   private shuttingDown = false
 
   constructor(
@@ -113,7 +114,7 @@ export class MailSyncCoordinator {
 
   syncAccount(request: SyncAccountRequestV1): Promise<SyncAccountResultV1> {
     if (!isSyncAccountRequestV1(request)) return Promise.reject(invalidRequest())
-    if (this.shuttingDown) return Promise.reject(cancelled())
+    if (this.shuttingDown || this.suspended) return Promise.reject(cancelled())
     const existing = this.active.get(request.accountId)
     if (existing !== undefined) return existing.promise
 
@@ -145,11 +146,30 @@ export class MailSyncCoordinator {
     return true
   }
 
-  async shutdown(): Promise<void> {
-    this.shuttingDown = true
+  async cancelAccountAndWait(accountId: string): Promise<boolean> {
+    if (!isAccountId(accountId)) return false
+    const active = this.active.get(accountId)
+    if (active === undefined) return false
+    active.controller.abort()
+    await Promise.allSettled([active.promise])
+    return true
+  }
+
+  /** Prevents new work and waits until every active account is idle. */
+  async suspend(): Promise<void> {
+    this.suspended = true
     const active = [...this.active.values()]
     for (const sync of active) sync.controller.abort()
     await Promise.allSettled(active.map((sync) => sync.promise))
+  }
+
+  resume(): void {
+    if (!this.shuttingDown) this.suspended = false
+  }
+
+  async shutdown(): Promise<void> {
+    this.shuttingDown = true
+    await this.suspend()
   }
 
   private async run(

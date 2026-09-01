@@ -35,7 +35,9 @@ export class ComposedDeleteLocalDataActions implements DeleteLocalDataActions {
     private readonly mailRepository: MutableMailRepository,
     private readonly keyEraser: CacheDataKeyEraser,
     private readonly storageSanitizer: StorageSanitizer,
-    private readonly additionalEncryptionContext?: EncryptionContextDestroyer
+    private readonly additionalEncryptionContexts:
+      | EncryptionContextDestroyer
+      | readonly EncryptionContextDestroyer[] = []
   ) {}
 
   async deleteRefreshCredentials(): Promise<void> {
@@ -56,8 +58,23 @@ export class ComposedDeleteLocalDataActions implements DeleteLocalDataActions {
 
   async eraseDataKey(): Promise<void> {
     await this.keyEraser.delete()
-    this.mailRepository.destroyEncryptionContext()
-    this.additionalEncryptionContext?.destroyEncryptionContext()
+    const contexts = Array.isArray(this.additionalEncryptionContexts)
+      ? this.additionalEncryptionContexts
+      : [this.additionalEncryptionContexts]
+    let destructionFailure: unknown
+    try {
+      this.mailRepository.destroyEncryptionContext()
+    } catch (error) {
+      destructionFailure = error
+    }
+    for (const context of contexts) {
+      try {
+        context.destroyEncryptionContext()
+      } catch (error) {
+        destructionFailure ??= error
+      }
+    }
+    if (destructionFailure !== undefined) throw destructionFailure
   }
 }
 
