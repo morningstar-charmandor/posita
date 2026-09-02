@@ -459,6 +459,16 @@ shutdown settles sync and retention before destroying the projection key. This
 owner is application-only and uncomposed; it adds no provider polling schedule,
 account discovery, preload/IPC method, renderer status, or live adapter.
 
+Startup now supplies the previously missing read-only account discovery boundary.
+The encrypted account repository lists only validated opaque scopes for provider-
+account records, while the vault lists only validated Google refresh-token scopes
+without unprotecting values. `ProviderMailStartupInventoryService` compares their
+bounded union, decrypts and validates provider identity only for complete pairs,
+and returns deterministic sync requests for at most eight accounts. Any credential-
+only or provider-state-only pair makes the whole result recovery-required; no
+partial account list may start. The result remains trusted-main-only and does not
+invoke mode activation, sync, retention, provider access, or recovery.
+
 The inactive disconnect orchestrator's existing `mail-data-delete-pending` phase
 now runs both fixture account removal and worker-backed canonical projection
 removal before advancing its journal. Both actions are idempotent: if the second

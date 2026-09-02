@@ -6,6 +6,7 @@ import {
   type SecretName,
   type SecretVault
 } from '../../application/secretVault'
+import { MAX_PROVIDER_MAIL_STARTUP_ACCOUNTS } from '../../application/providerMailLimits.ts'
 import type { StringProtector } from '../security/stringProtector'
 
 interface ProtectedSecretRow {
@@ -95,6 +96,29 @@ export class SqliteSecretVault implements SecretVault {
       `).run().changes)
     } catch (error) {
       throw this.storageFailure('The Google refresh credentials could not be removed.', error)
+    }
+  }
+
+  listGoogleRefreshTokenAccountIds(): string[] {
+    try {
+      const rows = this.database.prepare(`
+        SELECT name FROM protected_secrets
+        WHERE name LIKE 'oauth.google.%.refresh-token'
+        ORDER BY name ASC
+        LIMIT ?
+      `).all(MAX_PROVIDER_MAIL_STARTUP_ACCOUNTS + 1) as Array<{ name: unknown }>
+      return rows.map((row) => {
+        if (typeof row.name !== 'string' || !isSecretName(row.name)) {
+          throw new SecretVaultError('SECRET_CORRUPTED', 'A credential name is invalid.')
+        }
+        const match = /^oauth\.google\.([A-Za-z0-9_-]{1,128})\.refresh-token$/.exec(row.name)
+        if (match?.[1] === undefined) {
+          throw new SecretVaultError('SECRET_CORRUPTED', 'A credential name is invalid.')
+        }
+        return match[1]
+      })
+    } catch (error) {
+      throw this.storageFailure('The credential inventory could not be inspected.', error)
     }
   }
 

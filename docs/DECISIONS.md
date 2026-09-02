@@ -775,3 +775,24 @@
   and does not claim current sync. No dependency, schema, IPC method, repository,
   provider adapter, credential, personal data, network request, AI path, or mailbox
   mutation is added.
+
+## ADR-041: Build startup sync inventory from both protected local halves
+
+- Status: accepted for Gate 2D
+- Context: the lifecycle owner accepts trusted sync requests but startup had no
+  bounded source for them. Enumerating provider-account state alone could treat an
+  orphaned record as connected; enumerating the vault alone would either expose
+  credential names too broadly or ignore encrypted consent and provider identity.
+- Decision: add separate main-only inventory methods that return validated opaque
+  account scopes for encrypted provider-account records and protected Google refresh
+  credentials. Compare their union in one read-only service, cap it at eight, load
+  and validate provider records only for complete pairs, and return deterministic
+  sync requests in stable order. If any pair is one-sided, return no ready accounts
+  and a bounded recovery-required diagnosis. Never unprotect credential values.
+  Compose inspection during local bootstrap but do not pass it to the lifecycle owner.
+- Consequence: future startup lifecycle composition has one fail-closed inventory
+  source and cannot silently sync a partial subset around inconsistent local state.
+  Inventory storage failures are safe and retryable; malformed or excessive state
+  is non-retryable until repaired. No dependency, schema, IPC/UI surface, provider
+  adapter, credential value access, network request, personal data, sync start, AI
+  path, compatibility layer, or mailbox mutation is added.

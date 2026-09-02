@@ -120,6 +120,15 @@ describe('EncryptedSqliteAccountStateRepository', () => {
     )
   })
 
+  it('lists only opaque provider-account scopes in deterministic order', () => {
+    const { repository } = createRepository()
+    repository.saveSyncState(syncState('sync-only'))
+    repository.saveProviderAccount(providerAccount('work'))
+    repository.saveProviderAccount(providerAccount('personal'))
+
+    expect(repository.listProviderAccountIds()).toEqual(['personal', 'work'])
+  })
+
   it('deletes only the selected account state', () => {
     const { repository } = createRepository()
     repository.saveProviderAccount(providerAccount('work'))

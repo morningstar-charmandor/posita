@@ -1804,6 +1804,44 @@ live record, so the running app remains in deterministic sample mode. The next s
 milestone is a credential-free production-lifecycle activation preflight, not Gmail
 connection or OAuth activation.
 
+## Gate 2D milestone — Trusted provider startup inventory
+
+Date: 2026-09-02
+Checkpoint: use the Git commit whose subject is `feat: inspect provider startup inventory`
+
+Goal: give future lifecycle composition one fail-closed, credential-free account
+inventory instead of letting startup infer connections from only one local store.
+
+Delivered:
+
+- deterministic encrypted provider-account scope enumeration,
+- protected Google refresh-credential scope enumeration without unprotection,
+- one bounded comparison over at most eight unique account scopes,
+- stable sync requests only for complete provider-state/credential pairs,
+- whole-inventory recovery-required state for credential-only or provider-state-only pairs,
+- safe malformed, over-limit, missing-record, and storage-failure behavior,
+- read-only bootstrap composition that retains the result but starts no sync.
+
+Important decisions:
+
+- compare both protected halves before a future lifecycle owner sees any account,
+- return no partially ready subset when one local pair is inconsistent,
+- keep opaque account scopes and the complete result in trusted main only,
+- reuse the existing encrypted account repository and vault with narrow list methods,
+- add no dependency, schema, compatibility path, IPC/UI, provider adapter,
+  credential value access, network request, personal data, AI path, or mailbox mutation.
+
+Evidence: 61 test files and 372 tests pass. New coverage proves stable complete-pair
+ordering, empty state, both one-sided states, no partial activation, malformed and
+duplicate refusal, the eight-account limit, safe storage failure, SQLite scope
+filtering, vault enumeration without unprotection, and empty production bootstrap.
+Strict typecheck, renderer security checks, and the production Electron build pass
+through `npm run verify`.
+
+Limitations: the inventory result is not passed to `ProviderMailLifecycleOwner`,
+no sync status/retry command is public, and no provider exists. The next safe
+milestone is lifecycle status plus explicit retry policy before owner composition.
+
 ## How future entries should be written
 
 For each material milestone, record:

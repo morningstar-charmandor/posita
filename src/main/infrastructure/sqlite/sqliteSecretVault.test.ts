@@ -61,6 +61,20 @@ describe('SqliteSecretVault', () => {
     await expect(vault.get(name)).rejects.toThrow('presence checks must not unprotect')
   })
 
+  it('lists only Google refresh-token account scopes without unprotecting values', async () => {
+    const protector: StringProtector = {
+      scheme: 'inventory-test-v1',
+      protect: async (value) => Buffer.from(`opaque:${value}`),
+      unprotect: async () => { throw new Error('inventory must not unprotect') }
+    }
+    const { vault } = createVault(protector)
+    await vault.set(googleRefreshTokenName('work'), 'work-value')
+    await vault.set(googleRefreshTokenName('personal'), 'personal-value')
+    await vault.set(CACHE_DATA_KEY_NAME, 'cache-value')
+
+    expect(vault.listGoogleRefreshTokenAccountIds()).toEqual(['personal', 'work'])
+  })
+
   it('never persists the credential value as plaintext', async () => {
     const { database, vault } = createVault()
     const name = googleRefreshTokenName('work')

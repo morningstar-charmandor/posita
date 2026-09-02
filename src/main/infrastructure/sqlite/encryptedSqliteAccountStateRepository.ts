@@ -8,6 +8,7 @@ import {
   type ProviderAccountRecordV2,
   type ProviderSyncStateV1
 } from '../../application/accountState.ts'
+import { MAX_PROVIDER_MAIL_STARTUP_ACCOUNTS } from '../../application/providerMailLimits.ts'
 import {
   EncryptedCacheError,
   type CacheRecordContext,
@@ -78,6 +79,25 @@ export class EncryptedSqliteAccountStateRepository implements AccountStateReposi
       throw new AccountStateError('INVALID_ACCOUNT_STATE', 'Provider account state is invalid.')
     }
     this.save('provider-account', record.accountId, record)
+  }
+
+  listProviderAccountIds(): string[] {
+    try {
+      const rows = this.database.prepare(`
+        SELECT account_scope FROM encrypted_account_records
+        WHERE record_type = 'provider-account'
+        ORDER BY account_scope ASC
+        LIMIT ?
+      `).all(MAX_PROVIDER_MAIL_STARTUP_ACCOUNTS + 1) as Array<{ account_scope: unknown }>
+      if (!rows.every((row) => typeof row.account_scope === 'string' &&
+          isAccountId(row.account_scope))) {
+        throw new AccountStateError('INVALID_ACCOUNT_STATE', 'Provider account state is invalid.')
+      }
+      return rows.map((row) => row.account_scope as string)
+    } catch (error) {
+      if (error instanceof AccountStateError) throw error
+      throw storageFailure('Failed to list encrypted provider-account state.', error)
+    }
   }
 
   hasProviderAccount(accountId: string): boolean {

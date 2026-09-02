@@ -189,6 +189,12 @@ open a strictly allow-listed Gmail target derived in main from encrypted provena
 No URL or provider ID crosses renderer IPC, and Posita reports only the browser
 handoff—not that Gmail navigation or sign-in succeeded.
 
+Startup now also performs one trusted, read-only provider-account inventory. It
+compares at most eight encrypted provider-account scopes with protected Google
+credential scopes without decrypting credential values. Only complete pairs become
+future lifecycle sync requests; any one-sided pair is reported as recovery-required.
+The result stays in main and does not start sync, authorization, or provider access.
+
 Read the build boundaries before extending the prototype:
 
 - [Agent contract](AGENTS.md)

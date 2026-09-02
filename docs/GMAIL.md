@@ -19,6 +19,12 @@ validated read-only application-state response and requests only `gmail.readonly
 Its activation button is disabled. It creates no authorization state, PKCE
 verifier, browser navigation, token, provider account, or consent receipt.
 
+Normal startup now performs a credential-free, trusted-main inventory over at most
+eight local account scopes. It compares encrypted provider-account presence with
+protected Google refresh-credential presence without unprotecting credential values.
+Only complete pairs become future lifecycle requests; any one-sided pair withholds
+the whole ready inventory. The result does not authorize, connect, or sync Google.
+
 Gate 2D now defines the provider-independent main-process authorization-session
 interface and a deterministic fake. The boundary accepts only the reviewed
 `google-gmail-readonly-v1` consent and `gmail.readonly`, requires an HTTPS

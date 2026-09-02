@@ -83,6 +83,11 @@ describe('bootstrapLocalData lifecycle recovery', () => {
     if (initial.mode !== 'ready') throw new Error('Expected ready runtime.')
     expect(initial.providerMailSourceDetailSource).toBeUndefined()
     expect(initial.providerMailOriginalSourceLocatorSource).toBeUndefined()
+    expect(initial.providerMailStartupInventory).toEqual({
+      version: 1,
+      status: 'ready',
+      accounts: []
+    })
     initial.accountStateRepository.saveProviderAccount({
       version: 2,
       accountId: 'work',

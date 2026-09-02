@@ -170,6 +170,10 @@ Implemented:
 - one credential-free provider-mail lifecycle owner that orders live activation,
   bounded startup/account sync, retention exclusion, disconnect quiescence,
   confirmed-deletion suspension, shutdown, and projection-worker key teardown,
+- one production-composed read-only startup inventory that compares at most eight
+  encrypted provider-account scopes with protected credential scopes, returns
+  deterministic sync requests only for complete pairs, and reports any one-sided
+  state as recovery-required without unprotecting credentials or starting sync,
 - bounded startup outcomes for connected/live, interrupted sample activation,
   disconnected live-empty, and offline retry-required states without reseeding,
 - a mode-aware application-state query that preserves the exact fixture snapshot
@@ -287,7 +291,9 @@ confirmed local deletion are complete at their current layers. Continue in this 
    complete at its contract, encrypted projection, and native-worker boundary.
    Its bounded summary list, loading, missing/stale, safe-error, and retry UI and
    confirmed main-derived browser handoff are now composed. Next perform a
-   credential-free production-lifecycle activation preflight.
+   credential-free production-lifecycle activation preflight. The bounded trusted
+   startup account inventory is now complete; next define lifecycle status and a
+   safe explicit sync-retry policy before composing the owner.
 5. Request explicit owner approval before composing a real Google adapter,
    credentials, browser authorization, connection activation, or live account.
 6. Keep real Gmail ingestion disabled until authorization activation is separately
@@ -325,8 +331,9 @@ editing remains unexposed. The canonical source-detail query now returns bounded
 plain text and safe metadata through the existing worker and a fixed validated
 trusted-main-frame preload/IPC/UI path without provider IDs or HTML. Open-original
 now resolves provider identity only inside the trusted worker/main boundary and
-requires explicit browser confirmation. The next milestone is a credential-free
-production-lifecycle activation preflight, not OAuth activation.
+requires explicit browser confirmation. The trusted startup inventory is now
+composed read-only. The next milestone is durable lifecycle status and a safe
+explicit sync-retry policy, not OAuth activation.
 The new presentation abstraction is `LiveMailSummaryList`; it consumes the existing
 `LiveMailSnapshotV2` without adding a parallel domain or data source. The other
 recent abstractions are the shared `LiveMailMessageDetailV1` and open-original
@@ -340,6 +347,12 @@ an explicit revalidation risk before live activation. `tsconfig.web.json`
 now permits explicit TypeScript import extensions, matching the existing Node
 configuration so one shared runtime validator works in both the bundled renderer
 graph and directly executed worker graph.
+The new activation-preflight abstraction is `ProviderMailStartupInventoryService`;
+the existing encrypted account repository and protected vault each add one narrow
+scope-list operation, and bootstrap retains the exact result without starting the
+existing lifecycle owner. No dependency, schema, compatibility path, duplicate
+repository/service, credential decryption, public contract, provider action, or
+intentional duplication was added.
 
 ## How to resume
 
@@ -359,7 +372,7 @@ graph and directly executed worker graph.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 60 test files, 366 tests, strict typecheck, structure
+- Current verified baseline: 61 test files, 372 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,

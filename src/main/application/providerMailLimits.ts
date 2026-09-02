@@ -1,0 +1,1 @@
+export const MAX_PROVIDER_MAIL_STARTUP_ACCOUNTS = 8 as const

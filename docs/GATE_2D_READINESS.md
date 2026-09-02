@@ -147,8 +147,9 @@ Next perform a production-lifecycle activation preflight without credentials:
 5. treat the live-mode-only main-derived, strictly allow-listed, two-step confirmed
    browser handoff as complete at its deterministic boundary; revalidate the
    undocumented Gmail web route before live activation,
-6. identify and verify the remaining trusted account-inventory, lifecycle status,
-   sync retry, and startup-composition decisions before adding a Google adapter,
+6. treat the bounded trusted startup account inventory as complete; next define
+   durable lifecycle status and an explicit safe sync-retry policy before composing
+   the owner,
 7. keep Google code, credentials, connection activation, network access, polling,
    AI, and real mailbox data unchanged.
 
@@ -191,7 +192,7 @@ mailbox mutation.
 - The inactive disconnect service requires account-scoped canonical projection
   deletion in its durable mail-data phase and safely retries after fixture removal
   has already committed.
-- The current verified baseline is 60 test files and 366 tests plus strict TypeScript,
+- The current verified baseline is 61 test files and 372 tests plus strict TypeScript,
   renderer structure/security checks, and production Electron builds.
 - No dependency, production provider adapter, credential,
   personal mailbox data, network action, privileged renderer capability, or mailbox mutation was

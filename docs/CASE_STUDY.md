@@ -307,6 +307,9 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - one credential-free lifecycle owner that activates live mode before sync,
   excludes retention during provider writes, settles work before disconnect or
   deletion, preserves live-empty/offline truth, and tears down worker keys,
+- a production-composed startup inventory that compares encrypted provider-account
+  scopes with protected credential scopes without unprotecting token values and
+  refuses partial activation around any one-sided pair,
 - a mode-aware worker-backed live snapshot capped at 50 canonical summaries and
   32 account scopes, with bodies, recipients, remote provider IDs, cursors,
   key material, paths, and raw failures excluded,
@@ -326,7 +329,7 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - an explicit compatibility boundary that keeps fixture `Message` records sample-
   only rather than fabricating provider identity,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 60 automated test files containing 366 passing tests,
+- 61 automated test files containing 372 passing tests,
 - a desktop visual and accessibility-tree check of the local-only Settings entry,
   sample-account controls, normal no-recovery-needed outcome, and automatic
   retention card with readable next/last status and Gmail non-mutation copy,
@@ -354,8 +357,9 @@ opaque scope. A bounded canonical source-detail query is composed
 through fixed validated desktop boundaries with loading, missing/stale, safe-error,
 retry, and explicit encrypted-local inspection. A separate two-step confirmed
 browser handoff derives the provider target only in trusted code and never claims
-Gmail navigation succeeded. The next milestone is a credential-free production-
-lifecycle activation preflight. Real OAuth, browser activation, credentials, live account
+Gmail navigation succeeded. Trusted startup account inventory is now composed
+read-only. The next milestone is lifecycle status and explicit safe sync-retry
+policy. Real OAuth, browser activation, credentials, live account
 connection, and production sync remain separate actions blocked behind explicit
 owner approval.
 
@@ -404,6 +408,9 @@ has one deterministic application owner, and the running product can distinguish
 sample from live-empty, offline, or cached canonical state through a bounded worker
 read. Its recent-mail presentation uses encrypted human-readable identity while
 keeping provider subjects hidden.
+Startup also compares the two protected halves of every bounded local connection
+without decrypting credentials and withholds the entire sync inventory when any
+pair needs recovery.
 The worker-backed canonical detail boundary is also composed with deterministic
 data only. Real mail remains blocked until production lifecycle composition and sync,
 the undocumented Gmail web route is revalidated, and the remaining provider

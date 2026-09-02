@@ -30,6 +30,10 @@ import {
 import type { MailRepository } from './application/mailRepository'
 import type { ProviderMailSourceDetailSource } from './application/providerMailSourceDetail'
 import type { ProviderMailOriginalSourceLocatorSource } from './application/providerMailOriginalSource'
+import {
+  ProviderMailStartupInventoryService,
+  type ProviderMailStartupInventoryV1
+} from './application/providerMailStartupInventory'
 import { MailDataModeService } from './application/mailDataMode'
 import type { SecretVault } from './application/secretVault'
 import { AesGcmCacheProtector } from './infrastructure/security/aesGcmCacheProtector'
@@ -76,6 +80,7 @@ export interface ReadyLocalDataRuntime extends LocalDataRuntimeBase {
   providerMailReadWorker?: EncryptionContextDestroyer & { shutdown(): Promise<void> }
   providerMailSourceDetailSource?: ProviderMailSourceDetailSource
   providerMailOriginalSourceLocatorSource?: ProviderMailOriginalSourceLocatorSource
+  providerMailStartupInventory: ProviderMailStartupInventoryV1
 }
 
 export interface DeletedLocalDataRuntime extends LocalDataRuntimeBase {
@@ -183,6 +188,10 @@ export const bootstrapLocalDataWithDependencies = async (
     const retentionEncryptionContext = scheduledRetentionService instanceof
       WorkerThreadRetentionMaintenance ? scheduledRetentionService : undefined
     const accountStateRepository = new EncryptedSqliteAccountStateRepository(database, protector)
+    const providerMailStartupInventory = new ProviderMailStartupInventoryService(
+      accountStateRepository,
+      secretVault
+    ).inspect()
     const sampleMailService = new MailApplicationService(
       repository,
       systemClock
@@ -262,6 +271,7 @@ export const bootstrapLocalDataWithDependencies = async (
       confirmationService: confirmation,
       deleteLocalDataService: activeDeletion,
       mailDataModeService,
+      providerMailStartupInventory,
       ...(mailDataMode.mode === 'live' ? { providerMailSourceDetailSource: source } : {}),
       ...(mailDataMode.mode === 'live'
         ? { providerMailOriginalSourceLocatorSource: source }
