@@ -3,8 +3,8 @@
 ## Current status
 
 Gmail is not connected and Posita does not yet contain a Google OAuth client ID.
-This document is the contract for the next implementation gate; it does not
-authorize live mailbox access.
+A real idempotent revocation adapter is implemented but uncomposed. This document
+does not authorize live mailbox access.
 
 Posita can now project its durable `live` installation mode through a bounded
 worker-backed application snapshot. That local read model is not Gmail access: it
@@ -130,6 +130,16 @@ must remain the only provider I/O owner; and the lifecycle owner must replace th
 standalone retention/deletion/shutdown gates when activated. Adapter implementation,
 credential configuration, account connection, and real ingestion are separate
 approval gates.
+
+The approved `GoogleOAuthRevoker` uses `POST https://oauth2.googleapis.com/revoke`
+with the account-scoped protected refresh token in the form body, never the URL.
+It accepts HTTP 200 and Google's exact `invalid_token` response as idempotent
+success, because that code means the token is already expired or revoked. All
+other outcomes are bounded and mapped to safe errors. The implementation follows
+Google's current [desktop OAuth guidance](https://developers.google.com/identity/protocols/oauth2/native-app)
+and [revocation endpoint contract](https://developers.google.com/identity/openid-connect/reference#tokenrevoke).
+It remains outside startup, disconnect composition, IPC, and UI and has never been
+called with a real credential.
 
 ## Desktop OAuth flow
 

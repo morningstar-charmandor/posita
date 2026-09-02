@@ -1923,6 +1923,42 @@ mode. The next milestone requires explicit approval to implement the read-only
 Google adapter and idempotent revoker. Credentials and account connection require
 later separate approval.
 
+## Gate 2D milestone — Bounded Google OAuth revoker
+
+Date: 2026-09-02
+Checkpoint: use the Git commit whose subject is `feat: revoke Google authorization safely`
+
+Goal: implement the real revocation half of the approved Google adapter pair without
+configuring OAuth, connecting an account, or activating a production network path.
+
+Delivered:
+
+- one `GoogleOAuthRevoker` behind the existing idempotent disconnect contract,
+- account-scoped protected-token retrieval with absent-token success,
+- fixed HTTPS POST with the token only in a form-encoded body and redirects refused,
+- bounded 15-second requests and 4 KiB error responses,
+- exact HTTP 200 and documented `invalid_token` idempotent success behavior,
+- stable storage, transport, quota/server, malformed-response, and invalid-request
+  failures without token or raw-provider detail,
+- injected HTTP and deterministic tests; no SDK or dependency.
+
+Important decisions:
+
+- do not treat every HTTP 400 as success; only Google's exact `invalid_token` means
+  an already expired or revoked token,
+- leave local credential deletion to the next durable disconnect phase,
+- keep the adapter uncomposed until the read adapter, OAuth, disconnect UI, and
+  production lifecycle are separately reviewed.
+
+Evidence: 63 test files and 382 tests pass with strict typecheck, renderer security
+checks, and the production Electron build. Focused tests cover absent credentials,
+exact request construction, idempotent invalid-token handling, safe storage/provider
+failures, invalid account scope, and bounded bodies.
+
+Limitations: no real credential or Google request has been used, and Gmail remains
+disconnected. The next approved milestone is the uncomposed read-only Gmail adapter;
+credential configuration and account connection remain separate approval gates.
+
 ## How future entries should be written
 
 For each material milestone, record:

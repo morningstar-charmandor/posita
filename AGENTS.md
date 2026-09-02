@@ -6,8 +6,8 @@ exists deeper in the tree.
 
 ## Product state
 
-- Current milestone: Gate 2D credential-free lifecycle complete; Google activation
-  awaits an explicit owner decision.
+- Current milestone: Gate 2D Google activation adapters in progress; the read-only
+  Gmail adapter remains next and all production composition remains inactive.
 - Current data: deterministic fixtures stored as authenticated encrypted records.
 - Encrypted provider-account and sync-state storage is implemented but empty.
 - A non-sensitive lifecycle journal and confirmed full local-deletion execution are implemented.
@@ -20,7 +20,8 @@ exists deeper in the tree.
   synchronous adapter remains only for bounded in-memory tests and legacy migration.
 - Fixture and canonical provider-mail account removal are implemented in the
   inactive disconnect orchestrator's journaled mail-data phase.
-- Disconnect orchestration is implemented against interfaces/fakes but has no live revoker or UI trigger.
+- Disconnect orchestration has a real, uncomposed Google revoker plus deterministic
+  fakes, but no production composition or UI trigger.
 - Full local-data deletion is composed at startup and available through a narrow
   confirmed Settings & privacy flow; it affects Posita data only.
 - New full deletion requires a bounded typed confirmation; safe lifecycle status,
@@ -89,6 +90,9 @@ exists deeper in the tree.
 - The final production-composition audit is complete. No smaller credential-free
   implementation milestone remains before the real read-only Google adapter and
   idempotent revoker decision gate.
+- The owner approved adapter implementation only. A bounded idempotent Google OAuth
+  revoker is implemented without a dependency and remains uncomposed; credentials,
+  account connection, ingestion, and live network use remain unapproved.
 - Product promise: **Your inboxes, understood as one.**
 
 Do not imply that fixture-backed behavior is connected to real mail or AI.

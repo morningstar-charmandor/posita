@@ -162,9 +162,11 @@ The Gate 2D disconnect orchestrator now connects these local phases at the
 application layer: authorization revocation, refresh-credential deletion,
 encrypted provider-state deletion, account source/derived removal, and SQLite
 sanitization. It persists the next phase only after an idempotent action succeeds
-and retains a safe error on failure. There is no live revocation adapter, account,
-background resumer, or user trigger, so this is verified orchestration rather than
-an active disconnect feature.
+and retains a safe error on failure. A real Google revoker now exists but remains
+uncomposed: it obtains only the target token from the protected vault, sends it in
+the fixed HTTPS request body, bounds the response, and treats Google's documented
+already-invalid token result as success. There is still no account, background
+resumer, or user trigger, so disconnect remains inactive.
 
 The installation-wide deletion orchestrator now removes all stored Google refresh
 credentials, encrypted provider state, encrypted mail and derived records, SQLite

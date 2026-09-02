@@ -478,6 +478,14 @@ normal shutdown under that owner together. Provider reads must arrive with an
 idempotent revoker and confirmed disconnect path so the product cannot enter a
 half-live state with no safe removal owner.
 
+`GoogleOAuthRevoker` is the first approved real adapter and remains uncomposed. It
+implements the existing idempotent revocation contract, retrieves only the target
+account's refresh token from `SecretVault`, posts it in the body to the fixed Google
+HTTPS endpoint, and accepts only HTTP 200 or the documented `invalid_token` result
+as success. Response bodies and time are bounded; raw provider detail and token
+material are never returned or logged. Networking is injected for deterministic
+tests, so no SDK or new dependency is required.
+
 Startup now supplies the previously missing read-only account discovery boundary.
 The encrypted account repository lists only validated opaque scopes for provider-
 account records, while the vault lists only validated Google refresh-token scopes

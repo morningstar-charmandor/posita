@@ -839,3 +839,26 @@
   or no removal path. The audit itself adds no dependency, schema, abstraction,
   provider code, credential, network request, IPC/UI capability, personal data, AI
   path, compatibility layer, or mailbox mutation.
+
+## ADR-044: Revoke Google grants through a fixed bounded adapter
+
+- Status: accepted for Gate 2D Google activation
+- Context: the disconnect journal requires revocation to be idempotent before local
+  credential deletion. Google documents one HTTPS POST endpoint, HTTP 200 success,
+  and `invalid_token` when a token is already expired or revoked. Treating every
+  HTTP 400 as success would hide malformed requests; putting tokens in URLs would
+  increase accidental disclosure risk.
+- Decision: implement `GoogleOAuthRevoker` behind the existing revoker contract.
+  Read only the target account's refresh token from `SecretVault`, send it as an
+  `application/x-www-form-urlencoded` request body to the fixed endpoint, reject
+  redirects, and bound request time and error response bytes. Treat an absent local
+  token, HTTP 200, or exact bounded `invalid_token` error as idempotent success.
+  Map storage, transport, quota/server, malformed-response, and invalid-request
+  failures to stable safe errors without exposing token or provider detail. Inject
+  fetch for deterministic offline tests and do not compose the adapter yet.
+- Consequence: Posita now has the real revocation half required by future disconnect
+  activation without using a credential or network in the product. The existing
+  lifecycle journal remains authoritative and deletes the local credential only in
+  its next phase. No dependency, schema, compatibility path, IPC/UI surface,
+  account, credential configuration, provider call, personal data, or mailbox
+  mutation is added.

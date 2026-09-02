@@ -1,7 +1,7 @@
 # Posita Portfolio Case Study
 
 Status: evolving working draft  
-Last reviewed: 2026-09-01
+Last reviewed: 2026-09-02
 
 This document turns verified project history into a portfolio-ready narrative.
 It should remain honest about what is implemented, simulated, measured, and
@@ -15,10 +15,11 @@ and actions.
 
 **Product promise:** Your inboxes, understood as one.
 
-**Current stage:** Gate 2D account-lifecycle foundation in progress, with a real
+**Current stage:** Gate 2D Google adapter implementation in progress, with a real
 SQLite path, OS-protected key hierarchy, authenticated mail and provider-account
 state, plus tested crash-resumable disconnect and full local-deletion orchestrators.
-Gmail and AI are not connected. Disconnect has no live revoker or user trigger;
+Gmail and AI are not connected. Disconnect now has a real but uncomposed bounded
+Google revoker and no user trigger;
 full deletion now has a Settings & privacy flow, keyless startup recovery, and an
 operation-bound typed-confirmation gate. A separate read-only application-state
 boundary renders lifecycle and deleted outcomes. A provider-independent
@@ -313,6 +314,9 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - a production-composed encrypted sync-status service and exhaustive descriptive
   retry policy, with lifecycle tests proving syncing/success/failure/cancellation
   transitions and fail-closed refusal before provider work,
+- a real but uncomposed Google OAuth revoker with fixed endpoint/body handling,
+  bounded responses, idempotent already-invalid behavior, and deterministic HTTP
+  tests that never use a credential or network,
 - a mode-aware worker-backed live snapshot capped at 50 canonical summaries and
   32 account scopes, with bodies, recipients, remote provider IDs, cursors,
   key material, paths, and raw failures excluded,
@@ -332,7 +336,7 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - an explicit compatibility boundary that keeps fixture `Message` records sample-
   only rather than fabricating provider identity,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 62 automated test files containing 377 passing tests,
+- 63 automated test files containing 382 passing tests,
 - a desktop visual and accessibility-tree check of the local-only Settings entry,
   sample-account controls, normal no-recovery-needed outcome, and automatic
   retention card with readable next/last status and Gmail non-mutation copy,
@@ -365,8 +369,8 @@ status are now composed inertly in trusted main, while the lifecycle owner remai
 unstarted. A final production-composition audit now records how activation will
 reuse one projection worker, coordinator, lifecycle owner, retention/deletion gate,
 and shutdown path, paired with read-only provider access and revocation. The next
-milestone requires explicit adapter approval. Real OAuth, browser activation,
-credentials, live account
+adapter pair is approved and the revoker is complete; the read-only Gmail adapter
+is next. Real OAuth, browser activation, credentials, live account
 connection, and production sync remain separate actions blocked behind explicit
 owner approval.
 

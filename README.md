@@ -9,8 +9,8 @@ Public repository: [github.com/morningstar-charmandor/posita](https://github.com
 
 ## Current status
 
-Gate 2D's credential-free lifecycle foundation is complete; Posita is waiting at
-the explicit read-only Google activation decision gate. Posita includes a Daily Brief,
+Gate 2D's credential-free lifecycle foundation is complete and approved Google
+adapter implementation is in progress. Posita includes a Daily Brief,
 topic timeline with source citations, original-message inspection, a unified
 classic mail view, and an editable draft flow. Realistic fixture data is seeded
 idempotently as independently authenticated AES-256-GCM records in a versioned
@@ -125,8 +125,8 @@ erases its retained key context. All visible mail remains deterministic sample d
 The inactive journaled disconnect service now requires that worker-backed
 projection remover in its local mail-data phase. If canonical deletion fails after
 sample data was already removed, retry resumes the same phase safely and repeats
-both idempotent actions. There is still no live revoker, disconnect UI, credential,
-or provider account.
+both idempotent actions. A real Google revoker now implements that contract but
+remains uncomposed; there is still no disconnect UI, credential, or provider account.
 
 The existing automatic retention worker now applies the same exact 90-day cutoff
 to canonical provider messages by absolute `receivedAt`. It retains the boundary,
@@ -175,6 +175,13 @@ adapter with an idempotent revoker, then reuse the existing projection worker,
 sync coordinator, lifecycle owner, encrypted status, retention gate, deletion
 gate, and shutdown path. Implementing that adapter requires explicit approval;
 credentials and connecting an account remain later, separate decisions.
+
+The first approved adapter slice is a real but uncomposed Google OAuth revoker.
+It reads one account-scoped refresh token only from the protected vault, sends it
+in a form-encoded body to Google's fixed HTTPS revocation endpoint, bounds the
+response, and treats only Google's documented `invalid_token` response as the
+required already-revoked success. It uses injected networking in tests, adds no
+dependency, and is not reachable from startup, IPC, UI, or a real account.
 
 The existing application-state query is now mode-aware. Sample installations keep
 the deterministic fixture workspace; live installations use a fixed worker-backed

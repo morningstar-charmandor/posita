@@ -7,7 +7,7 @@
     "repository": "https://github.com/morningstar-charmandor/posita",
     "repositoryVisibility": "public",
     "canonicalBranch": "main",
-    "currentMilestone": "gate-2d-credential-free-lifecycle-complete-google-activation-awaiting-decision",
+    "currentMilestone": "gate-2d-google-adapters-in-progress-revoker-complete-read-adapter-next",
     "dataMode": "deterministic-sample-with-inert-activation-ready-encrypted-provider-foundation",
     "mailSendingEnabled": false
   },
@@ -110,6 +110,7 @@
     "openLiveMailOriginalDataSource": "src/renderer/src/application/openLiveMailOriginalDataSource.ts",
     "openOriginalConfirmation": "src/renderer/src/features/live-mail/OpenOriginalConfirmation.tsx",
     "deterministicMailSyncFakes": "src/main/infrastructure/providers/deterministicFakeMailSync.ts",
+    "googleOAuthRevoker": "src/main/infrastructure/providers/googleOAuthRevoker.ts",
     "fixtures": "src/shared/fixtures.ts"
   },
   "scopedInstructions": {
@@ -207,6 +208,7 @@
     "provider-sync-status-is-durable-account-scoped-and-fails-closed-before-provider-work",
     "provider-sync-retry-disposition-is-fixed-explicit-and-never-an-automatic-mailbox-command",
     "google-activation-pairs-read-only-provider-sync-with-idempotent-disconnect-revocation",
+    "google-revocation-is-fixed-endpoint-bounded-token-private-and-invalid-token-idempotent",
     "production-provider-activation-reuses-one-worker-one-coordinator-and-one-lifecycle-owner",
     "disconnect-mail-data-phase-removes-fixture-and-canonical-account-records-idempotently",
     "canonical-provider-mail-retention-is-fixed-window-worker-owned-account-scoped-and-cursor-preserving",

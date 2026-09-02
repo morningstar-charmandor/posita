@@ -180,6 +180,9 @@ Implemented:
   encrypted account state, plus one fixed descriptive retry policy,
 - lifecycle fail-closed behavior that refuses provider work when the initial
   durable status write is unavailable, without scheduling an automatic retry,
+- a real but uncomposed Google OAuth revoker that reads only the selected protected
+  token, uses the fixed HTTPS form-body endpoint, bounds time and response bytes,
+  and treats only absent/HTTP-200/documented-invalid-token cases as success,
 - a final production-composition audit proving that startup inventory, encrypted
   status, one sync coordinator, one projection worker, retention, deletion,
   disconnect, and shutdown have a coherent activation path without a second owner,
@@ -230,7 +233,8 @@ Simulated or deliberately inactive:
 - generated-looking summaries and drafts are not produced by an AI provider,
 - no OAuth credential has been created or stored,
 - encrypted provider-account and sync-state tables contain no real account,
-- authorization revocation uses deterministic test implementations only,
+- Google authorization revocation has a real fixed-endpoint adapter, exercised only
+  through injected deterministic HTTP and still uncomposed,
 - local deletion operates only on deterministic fixture-backed Posita data because
   no real account or credential exists,
 - account disconnect remains application-only and has no preload, IPC, or UI trigger,
@@ -279,10 +283,10 @@ Not implemented:
 
 ## Next recommended milestone
 
-The credential-free Gate 2D lifecycle work is complete. The next milestone requires
-an explicit owner decision: implement the real **read-only Google adapter and
-idempotent revoker** behind the existing contracts. This does not yet authorize
-credentials, account connection, or mailbox ingestion.
+The owner approved implementation of the real Google adapter pair. The idempotent
+revoker is complete and uncomposed. Next implement the **read-only Gmail adapter**
+behind the existing provider batch contract. This does not authorize credentials,
+account connection, production composition, network testing, or mailbox ingestion.
 
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,
@@ -305,9 +309,10 @@ confirmed local deletion are complete at their current layers. Continue in this 
    confirmed main-derived browser handoff are now composed. The bounded trusted
    startup account inventory, durable lifecycle status, safe explicit sync-retry
    policy, and final production-composition audit are complete.
-5. Request explicit owner approval before implementing a real Google adapter and
-   revoker. Treat credentials, browser authorization, connection activation, and
-   a live account as later independent approval gates.
+5. Treat the approved uncomposed revoker as complete and implement the read adapter
+   next. Treat credentials, browser authorization, production composition,
+   connection activation, network testing, and a live account as later independent
+   approval gates.
 6. Keep real Gmail ingestion disabled until authorization activation is separately
    approved and the remaining lifecycle activation
    and consent gates pass.
@@ -347,8 +352,9 @@ requires explicit browser confirmation. The trusted startup inventory and encryp
 sync-status service are now composed read-only/inert. The lifecycle owner writes
 status through that service in tests, but remains unstarted. The final composition
 audit is complete: activation must reuse one projection worker, coordinator,
-lifecycle owner, retention gate, and shutdown path. The next milestone is the
-separately approved read-only Google adapter and revoker, not account connection.
+lifecycle owner, retention gate, and shutdown path. The approved revoker is now
+implemented and uncomposed. The next milestone is the read-only Gmail adapter, not
+credentials or account connection.
 The new presentation abstraction is `LiveMailSummaryList`; it consumes the existing
 `LiveMailSnapshotV2` without adding a parallel domain or data source. The other
 recent abstractions are the shared `LiveMailMessageDetailV1` and open-original
@@ -376,6 +382,11 @@ was added.
 The final audit adds no abstraction or compatibility path. It retains the current
 standalone retention/read shutdown wiring only while provider sync is inactive and
 records the exact replacement order for activation in `docs/GATE_2D_READINESS.md`.
+The new infrastructure abstraction is `GoogleOAuthRevoker`; it implements the
+existing `AccountAuthorizationRevoker` contract with injected fetch and reuses the
+existing `SecretVault`. No dependency, schema, compatibility path, duplicate
+service, production composition, IPC/UI command, credential, account, network test,
+personal data, or intentional duplication was added.
 
 ## How to resume
 
@@ -395,7 +406,7 @@ records the exact replacement order for activation in `docs/GATE_2D_READINESS.md
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 62 test files, 377 tests, strict typecheck, structure
+- Current verified baseline: 63 test files, 382 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,
