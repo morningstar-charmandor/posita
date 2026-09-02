@@ -14,6 +14,10 @@ import {
   normalizeGoogleMessage,
   type NormalizedGoogleMessage
 } from './googleMailNormalizer'
+import {
+  GoogleAccessTokenError,
+  type GoogleAccessTokenSource
+} from './googleOAuthAccessTokenSource'
 
 const GMAIL_API_ORIGIN = 'https://gmail.googleapis.com'
 const MAX_LIST_RESPONSE_BYTES = 512 * 1024
@@ -23,10 +27,6 @@ const MAX_PARALLEL_MESSAGE_READS = 4
 type NotFoundMeaning = 'provider-failure' | 'invalid-cursor' | 'missing-message'
 
 type JsonRecord = Record<string, unknown>
-
-export interface GoogleAccessTokenSource {
-  getAccessToken(accountId: string): Promise<string | undefined>
-}
 
 export type GoogleMailFetch = (
   url: string,
@@ -179,8 +179,15 @@ export class GoogleMailReadAdapter implements ProviderMailAdapter {
     if (signal.aborted) throw new DOMException('Aborted', 'AbortError')
     let token: string | undefined
     try {
-      token = await this.tokens.getAccessToken(request.accountId)
+      token = await this.tokens.getAccessToken(request.accountId, signal)
     } catch (error) {
+      if (signal.aborted) throw error
+      if (error instanceof GoogleAccessTokenError) {
+        if (error.code === 'ACCESS_TOKEN_AUTHORIZATION_EXPIRED') {
+          throw failure('AUTHENTICATION_EXPIRED', false, error)
+        }
+        throw failure('PROVIDER_UNAVAILABLE', error.retryable, error)
+      }
       throw failure('PROVIDER_UNAVAILABLE', true, error)
     }
     if (signal.aborted) throw new DOMException('Aborted', 'AbortError')

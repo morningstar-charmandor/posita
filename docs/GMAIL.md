@@ -3,8 +3,8 @@
 ## Current status
 
 Gmail is not connected and Posita does not yet contain a Google OAuth client ID.
-Real read-only and idempotent revocation adapters are implemented but uncomposed.
-This document does not authorize live mailbox access.
+Real read-only, idempotent revocation, and refresh-to-access-token adapters are
+implemented but uncomposed. This document does not authorize live mailbox access.
 
 Posita can now project its durable `live` installation mode through a bounded
 worker-backed application snapshot. That local read model is not Gmail access: it
@@ -36,9 +36,10 @@ main-process contract so a future
 coordinator can move it directly into encrypted account state and `SecretVault`.
 
 The fake uses conspicuous test-only values, performs no network or browser action,
-and is not composed at startup. The real Google adapter, PKCE generation, loopback
-listener, system-browser launch, code exchange, credential persistence, account
-creation, preload/IPC command, and enabled UI action remain unimplemented.
+and is not composed at startup. The real Google authorization-session adapter,
+PKCE generation, loopback listener, system-browser launch, code exchange,
+credential persistence, account creation, preload/IPC command, and enabled UI
+action remain unimplemented.
 
 Gate 2D also defines a credential-free `AccountConnectionService` above the
 authorization adapter. It verifies that the opaque Posita account has neither an
@@ -168,6 +169,16 @@ Google's [full/partial synchronization guidance](https://developers.google.com/w
 and [history listing](https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.history/list).
 The adapter uses injected deterministic HTTP in tests and has never contacted Gmail.
 
+The matching `GoogleOAuthAccessTokenSource` now reads one account-scoped refresh
+credential from `SecretVault` and exchanges it at the fixed Google token endpoint.
+Its client ID and HTTP transport are injected; no production configuration exists.
+It keeps the access token only in trusted memory, refreshes within a one-minute
+expiry margin, shares one cancellable refresh per account, bounds time and response
+bytes, refuses a returned scope other than the reviewed full `gmail.readonly` URI,
+and exposes account invalidation plus teardown. Missing or `invalid_grant`
+authorization is distinct from retryable storage/provider failure. Deterministic
+tests use conspicuous tokens and no network.
+
 ## Desktop OAuth flow
 
 Posita will use Google's installed-desktop application flow with Authorization
@@ -179,6 +190,15 @@ code in the main process.
 The authorization code, verifier, state, and access token are memory-only and
 short-lived. Only the refresh token is persisted, under the allow-listed name
 `oauth.google.<opaque-account-id>.refresh-token`, through `SecretVault`.
+
+One identity decision remains before this flow can implement the existing grant
+contract. Gmail [`users.getProfile`](https://developers.google.com/workspace/gmail/api/reference/rest/v1/users/getProfile)
+under `gmail.readonly` returns the verified mailbox address, but the stable non-
+reused Google `sub` identifier is an [OpenID claim](https://developers.google.com/identity/openid-connect/openid-connect).
+Requesting it requires additional identity scopes (`openid` and `email`), while
+reusing the email address as the hidden provider subject would weaken the accepted
+identity split. Do not choose either path or change consent copy without explicit
+owner approval.
 
 ## Scope progression
 

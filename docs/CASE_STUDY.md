@@ -15,7 +15,8 @@ and actions.
 
 **Product promise:** Your inboxes, understood as one.
 
-**Current stage:** Gate 2D Google adapter implementation in progress, with a real
+**Current stage:** Gate 2D Google adapter and trusted token-boundary implementation
+complete but inactive, with a real
 SQLite path, OS-protected key hierarchy, authenticated mail and provider-account
 state, plus tested crash-resumable disconnect and full local-deletion orchestrators.
 Gmail and AI are not connected. Disconnect now has a real but uncomposed bounded
@@ -38,8 +39,8 @@ work stays off Electron main, while the automatic retention worker applies the
 fixed 90-day window to canonical ciphertext and repairs affected threads. The
 coordinator-to-worker path is now verified end to end with the deterministic
 provider. The one-way sample-to-live boundary is now verified in schema v10;
-live Gmail remains correctly blocked by production lifecycle composition and
-provider adapters.
+live Gmail remains correctly blocked by identity consent, OAuth configuration,
+and production lifecycle composition.
 
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
 
@@ -321,6 +322,10 @@ At the current Gate 2D foundation checkpoint, Posita has:
   short-lived access tokens, resumable full/history cursors, bounded response and
   concurrency limits, canonical account-scoped normalization, deletion events,
   and deterministic HTTP tests that use neither credentials nor the network,
+- a vault-backed, uncomposed refresh-to-access-token source with a fixed bounded
+  exchange, memory-only expiry cache, per-account single-flight, cancellation,
+  invalidation, teardown, scope refusal, and deterministic tests that use no real
+  client, credential, token, account, or network,
 - a mode-aware worker-backed live snapshot capped at 50 canonical summaries and
   32 account scopes, with bodies, recipients, remote provider IDs, cursors,
   key material, paths, and raw failures excluded,
@@ -340,7 +345,7 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - an explicit compatibility boundary that keeps fixture `Message` records sample-
   only rather than fabricating provider identity,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 65 automated test files containing 403 passing tests,
+- 66 automated test files containing 412 passing tests,
 - a desktop visual and accessibility-tree check of the local-only Settings entry,
   sample-account controls, normal no-recovery-needed outcome, and automatic
   retention card with readable next/last status and Gmail non-mutation copy,
@@ -373,14 +378,16 @@ status are now composed inertly in trusted main, while the lifecycle owner remai
 unstarted. A final production-composition audit now records how activation will
 reuse one projection worker, coordinator, lifecycle owner, retention/deletion gate,
 and shutdown path, paired with read-only provider access and revocation. The
-approved adapter pair is now complete but uncomposed: the revoker, deletion-aware
-reconciliation foundation, and bounded read-only Gmail adapter are deterministic-
-tested without credentials or network use. Provider batch v2 removes remote
+approved adapter pair and its trusted access-token source are now complete but
+uncomposed: the revoker, deletion-aware reconciliation foundation, bounded read-
+only Gmail adapter, and vault-to-memory token exchange are deterministic-tested
+without credentials or network use. Provider batch v2 removes remote
 deletions atomically and replaces a stale bounded window only after every page is
-available. The next decision is whether to implement desktop OAuth/PKCE and its
-trusted access-token boundary before one reviewed production activation. Real
-OAuth, browser activation, credentials, live account connection, network testing,
-and production sync remain blocked behind explicit owner approval.
+available. The next decision is whether to add the OpenID identity scopes needed
+for Google's stable subject, or revise the accepted provider-identity model, before
+implementing desktop authorization-code/PKCE and one reviewed production activation.
+Real OAuth, browser activation, credentials, live account connection, network
+testing, and production sync remain blocked behind explicit owner approval.
 
 Later evidence should include measured sync reliability, duplicate prevention,
 citation correctness, draft usefulness, correction rate, and time to attention.

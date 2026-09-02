@@ -200,6 +200,15 @@ and separately stored MIME text—without retaining provider HTML or downloading
 binary attachment bodies. Deterministic injected HTTP tests exercise the adapter;
 it is not composed into startup, OAuth, IPC, UI, or a real account.
 
+The trusted-main `GoogleOAuthAccessTokenSource` now supplies the reader's missing
+refresh boundary without configuring or using OAuth. It reads only the selected
+account's protected refresh credential, posts it in a bounded form body to Google's
+fixed token endpoint, keeps the returned access token in memory with an expiry
+safety window, shares one cancellable refresh per account, refuses widened scopes,
+and exposes explicit invalidation and teardown. Its client ID and HTTP transport
+are injected only in deterministic tests; no real client, credential, token,
+account, or network request is present in the running product.
+
 The existing application-state query is now mode-aware. Sample installations keep
 the deterministic fixture workspace; live installations use a fixed worker-backed
 canonical summary query and can truthfully show live-empty, recorded-syncing,

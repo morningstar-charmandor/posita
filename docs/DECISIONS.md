@@ -910,3 +910,34 @@
   testing. No dependency, schema, compatibility path, production composition,
   OAuth configuration, credential, personal data, IPC/UI capability, provider
   network call, mailbox mutation, or intentional duplicate sync owner is added.
+
+## ADR-047: Refresh Gmail access through one bounded memory-only source
+
+- Status: accepted for Gate 2D Google activation
+- Context: the Gmail reader accepted a short-lived access-token source, but no
+  trusted implementation joined protected refresh credentials to that boundary.
+  Refreshing once per message page without caching would add unnecessary token
+  traffic, while persisting access tokens or returning them through IPC would
+  weaken the credential boundary.
+- Decision: implement one uncomposed `GoogleOAuthAccessTokenSource`. It reads only
+  the selected account's refresh token from `SecretVault`, posts it in a form body
+  to the fixed Google HTTPS token endpoint with an injected desktop client ID, and
+  keeps the returned bearer token only in a bounded in-memory cache. Use a fixed
+  one-minute expiry margin, one shared refresh per account, independent caller
+  cancellation, explicit account invalidation, full teardown, bounded time/body,
+  and exact response validation. An absent credential returns absent; Google's
+  exact `invalid_grant` becomes authorization-expired; storage, transport, quota,
+  configuration, and malformed responses remain typed and redacted. If Google
+  returns a scope, accept only the reviewed full `gmail.readonly` URI. Do not add
+  DPoP in this unconfigured slice; revisit Google's optional recommendation and
+  its additional signing-key lifecycle before live activation.
+- Consequence: the real Gmail reader now has a credential-private access-token
+  supplier that is deterministic-testable without a client, credential, or network.
+  The existing lifecycle composition must invalidate it on disconnect and destroy
+  it on shutdown. Completing the authorization adapter remains blocked on a
+  separate identity-consent choice: the current exact Gmail-only consent can read
+  the mailbox address from Gmail profile, while Google's stable `sub` identity is
+  an OpenID claim that requires additional identity scopes. No dependency, schema,
+  compatibility path, production composition, configured client, credential,
+  browser action, real account, personal data, mailbox mutation, or intentional
+  duplicate token store is added.

@@ -6,8 +6,9 @@ exists deeper in the tree.
 
 ## Product state
 
-- Current milestone: Gate 2D approved Google read/revocation adapters complete;
-  all production composition remains inactive pending an owner decision.
+- Current milestone: Gate 2D Google read/revocation adapters and the trusted
+  refresh-to-access-token boundary are complete; authorization identity consent
+  and all production composition remain inactive pending an owner decision.
 - Current data: deterministic fixtures stored as authenticated encrypted records.
 - Encrypted provider-account and sync-state storage is implemented but empty.
 - A non-sensitive lifecycle journal and confirmed full local-deletion execution are implemented.
@@ -31,6 +32,9 @@ exists deeper in the tree.
 - Startup keylessly resumes a pending full deletion and honors its completed
   marker without recreating a data key or reseeding fixtures.
 - An OS-protected credential vault is implemented but contains no real token.
+- A bounded refresh-to-access-token source now connects that vault contract to the
+  Gmail reader contract in trusted main, but has no client configuration or
+  production composition and has never received a real credential.
 - A versioned read-only Gmail consent preview is visible in Settings; OAuth
   activation remains unavailable and no Google client or credential is configured.
 - Provider-independent authorization-session contracts and a deterministic fake
@@ -84,16 +88,18 @@ exists deeper in the tree.
   provider-account scopes with protected refresh-credential scopes without
   decrypting credentials. It returns sync requests only for complete pairs and
   reports one-sided state as recovery-required; it does not start sync.
-- The real read-only Gmail adapter and idempotent revoker are implemented but
-  uncomposed; Gmail, production provider-mail projection composition, pending-
-  disconnect scheduling, and model providers are not connected.
+- The real read-only Gmail adapter, idempotent revoker, and memory-only access-
+  token source are implemented but uncomposed; Gmail, production provider-mail
+  projection composition, pending-disconnect scheduling, and model providers are
+  not connected.
 - Sending mail is intentionally disabled.
-- The final production-composition audit and approved Google adapter pair are
-  complete. No smaller credential-free implementation milestone remains before
-  the OAuth/configuration and production activation decision gate.
-- The owner approved adapter implementation only. A bounded idempotent Google OAuth
-  revoker is implemented without a dependency and remains uncomposed; credentials,
-  account connection, ingestion, and live network use remain unapproved.
+- The final production-composition audit, approved Google adapter pair, and
+  refresh-to-access-token boundary are complete. The next gate must settle how
+  Google identity is consented and verified before completing desktop OAuth.
+- The owner approved adapter implementation and then the credential-free trusted
+  access-token boundary. Credentials, OAuth client configuration, identity-scope
+  changes, account connection, production composition, ingestion, and live network
+  use remain unapproved.
 - Product promise: **Your inboxes, understood as one.**
 
 Do not imply that fixture-backed behavior is connected to real mail or AI.

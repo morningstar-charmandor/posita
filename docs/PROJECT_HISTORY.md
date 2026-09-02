@@ -2039,6 +2039,49 @@ capability, personal mailbox data, binary attachment content, or mailbox mutatio
 was added. Dedicated-account activation testing must cover uncommon valid RFC/MIME
 shapes. OAuth/PKCE and production lifecycle composition require a new owner decision.
 
+## Gate 2D milestone — Trusted Google access-token boundary
+
+Date: 2026-09-02
+Checkpoint: use the Git commit whose subject is `feat: refresh Google access safely`
+
+Goal: supply the existing Gmail reader with a protected, memory-only access-token
+boundary without configuring OAuth, connecting an account, or using Google.
+
+Delivered:
+
+- one `GoogleOAuthAccessTokenSource` behind the reader's existing narrow contract,
+- account-scoped refresh-token reads from `SecretVault` and one fixed Google HTTPS
+  form-body exchange with injected client configuration and HTTP,
+- a one-minute expiry safety window, per-account single-flight refresh, independent
+  waiter cancellation, explicit account invalidation, and full teardown,
+- bounded time, response bytes, access-token length, lifetime, token type, and exact
+  reviewed-scope validation,
+- stable redacted absent, authorization-expired, storage, transport, quota,
+  configuration, cancellation, and malformed-response behavior,
+- Gmail-reader mapping from expired refresh authorization to the existing reconnect-
+  required sync failure.
+
+Important decisions:
+
+- retain refresh credentials only in the protected vault and access credentials
+  only in bounded trusted memory,
+- refuse a returned scope outside the reviewed full Gmail read-only URI,
+- require lifecycle composition to invalidate account tokens on disconnect and
+  destroy all cached tokens on shutdown,
+- defer optional DPoP until its signing-key lifecycle is reviewed for activation,
+- stop before desktop authorization completion because the current Gmail-only
+  consent cannot supply the accepted stable Google `sub` without additional
+  OpenID identity scopes.
+
+Evidence: 66 test files and 412 tests pass with strict typecheck, renderer security
+checks, and the production Electron build.
+
+Limitations: all HTTP, client IDs, and tokens are deterministic test values. No
+Google client configuration, credential, account, browser action, PKCE exchange,
+network request, dependency, schema migration, production composition, personal
+data, or mailbox mutation was added. The next milestone requires an explicit owner
+choice about identity consent before implementing the real authorization session.
+
 ## How future entries should be written
 
 For each material milestone, record:

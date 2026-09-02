@@ -7,7 +7,7 @@
     "repository": "https://github.com/morningstar-charmandor/posita",
     "repositoryVisibility": "public",
     "canonicalBranch": "main",
-    "currentMilestone": "gate-2d-google-adapter-pair-complete-activation-decision-next",
+    "currentMilestone": "gate-2d-google-access-token-boundary-complete-identity-consent-decision-next",
     "dataMode": "deterministic-sample-with-inert-activation-ready-encrypted-provider-foundation",
     "mailSendingEnabled": false
   },
@@ -111,6 +111,7 @@
     "openOriginalConfirmation": "src/renderer/src/features/live-mail/OpenOriginalConfirmation.tsx",
     "deterministicMailSyncFakes": "src/main/infrastructure/providers/deterministicFakeMailSync.ts",
     "googleOAuthRevoker": "src/main/infrastructure/providers/googleOAuthRevoker.ts",
+    "googleOAuthAccessTokenSource": "src/main/infrastructure/providers/googleOAuthAccessTokenSource.ts",
     "googleMailReadAdapter": "src/main/infrastructure/providers/googleMailReadAdapter.ts",
     "googleMailNormalizer": "src/main/infrastructure/providers/googleMailNormalizer.ts",
     "fixtures": "src/shared/fixtures.ts"
@@ -212,6 +213,8 @@
     "provider-sync-retry-disposition-is-fixed-explicit-and-never-an-automatic-mailbox-command",
     "google-activation-pairs-read-only-provider-sync-with-idempotent-disconnect-revocation",
     "google-revocation-is-fixed-endpoint-bounded-token-private-and-invalid-token-idempotent",
+    "google-access-tokens-are-vault-sourced-memory-only-bounded-single-flight-and-uncomposed",
+    "google-token-responses-cannot-widen-the-reviewed-gmail-readonly-scope",
     "google-mail-read-adapter-is-bounded-readonly-token-injected-and-uncomposed",
     "google-mail-cursors-are-versioned-opaque-resumable-and-history-aware",
     "google-mail-normalization-is-canonical-bounded-and-provider-payload-private",

@@ -6,9 +6,10 @@ import {
 } from '../../application/mailSync'
 import {
   GoogleMailReadAdapter,
-  type GoogleAccessTokenSource,
   type GoogleMailFetch
 } from './googleMailReadAdapter'
+import type { GoogleAccessTokenSource } from './googleOAuthAccessTokenSource'
+import { GoogleAccessTokenError } from './googleOAuthAccessTokenSource'
 import { MailSyncCoordinator } from '../../application/mailSyncCoordinator'
 import { DeterministicFakeMailSyncProjection } from './deterministicFakeMailSync'
 
@@ -109,7 +110,10 @@ describe('GoogleMailReadAdapter', () => {
       'https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=100&q=after%3A1780574400&includeSpamTrash=false',
       'https://gmail.googleapis.com/gmail/v1/users/me/messages/message-1?format=FULL'
     ])
-    expect(tokens.getAccessToken).toHaveBeenCalledWith('account-work-1')
+    expect(tokens.getAccessToken).toHaveBeenCalledWith(
+      'account-work-1',
+      expect.any(AbortSignal)
+    )
     for (const [url, init] of fetchRequest.calls) {
       expect(url).not.toContain('access-token')
       expect(init).toMatchObject({
@@ -257,6 +261,19 @@ describe('GoogleMailReadAdapter', () => {
       .rejects.toMatchObject({ code: 'INVALID_CURSOR', retryable: true })
 
     await expect(new GoogleMailReadAdapter(tokenSource(null)).fetchBatch(
+      request(), new AbortController().signal
+    )).rejects.toMatchObject({ code: 'AUTHENTICATION_EXPIRED', retryable: false })
+
+    const expiredTokenSource: GoogleAccessTokenSource = {
+      getAccessToken: async () => {
+        throw new GoogleAccessTokenError(
+          'ACCESS_TOKEN_AUTHORIZATION_EXPIRED',
+          'The Google authorization has expired.',
+          false
+        )
+      }
+    }
+    await expect(new GoogleMailReadAdapter(expiredTokenSource).fetchBatch(
       request(), new AbortController().signal
     )).rejects.toMatchObject({ code: 'AUTHENTICATION_EXPIRED', retryable: false })
 

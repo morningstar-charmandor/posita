@@ -78,6 +78,15 @@ supported Linux desktops it uses the selected secret store. Posita fails closed
 when asynchronous encryption is unavailable and rejects Linux `basic_text` and
 `unknown` backends.
 
+The uncomposed access-token source now reads only one selected protected refresh
+credential and exchanges it through a fixed bounded trusted-main endpoint adapter.
+Short-lived access tokens remain memory-only, are cached with an expiry margin,
+can be invalidated per account, and are cleared on teardown. Exact response
+validation refuses a scope outside the reviewed Gmail read-only permission. Tests
+use only conspicuous deterministic client/token values. No real client ID,
+credential, account, or network request is present in production composition or
+tests.
+
 The deterministic fake protector is test-only. It demonstrates adapter behavior
 and makes plaintext-persistence assertions possible; it provides no security and
 must never be used by production composition code.

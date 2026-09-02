@@ -370,6 +370,17 @@ to the existing typed application errors. Deterministic injected-HTTP tests cove
 this behavior without credentials or network use; production composition remains
 inactive.
 
+Its token boundary is now implemented by the uncomposed
+`GoogleOAuthAccessTokenSource`. The source reads only the account-scoped refresh
+credential from `SecretVault`, exchanges it at the fixed Google token endpoint,
+and caches the short-lived access token only in trusted memory with a one-minute
+expiry margin. Refresh is single-flight per account, independently cancellable by
+waiters, bounded by time and response size, and explicitly invalidated on future
+disconnect or destroyed on shutdown. Exact response validation refuses any scope
+other than the reviewed full `gmail.readonly` URI. Client configuration remains an
+injected value with no production instance, and no token or error detail crosses
+IPC.
+
 Sync operations remain idempotent, transactional at a batch boundary, resumable,
 quota-aware, and isolated per account.
 

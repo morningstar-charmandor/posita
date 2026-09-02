@@ -9,7 +9,7 @@ next move. Technical details remain in their linked source documents.
 ## Current state
 
 Posita has completed the **Gate 2D credential-free lifecycle foundation** and is at
-the explicit Google activation decision gate. The product is a runnable Electron
+the explicit Google identity-consent decision inside the activation gate. The product is a runnable Electron
 desktop prototype using React, strict TypeScript, and SQLite. All visible mail is
 deterministic sample data.
 
@@ -187,6 +187,11 @@ Implemented:
 - a real but uncomposed read-only Gmail adapter with injected short-lived token and
   HTTP boundaries, fixed GET routes, 90-day full sync, resumable history cursors,
   four-at-a-time message reads, bounded responses, and stable safe failures,
+- a real but uncomposed trusted-main access-token source that reads only one
+  account-scoped protected refresh credential, uses Google's fixed bounded token
+  exchange, caches bearer access only in memory with an expiry margin, coalesces
+  per-account refresh, supports cancellation/invalidation/teardown, and refuses
+  returned scope widening,
 - canonical Gmail normalization with deterministic account-scoped IDs, recipients,
   labels, read state, safe attachment metadata, plain/HTML-only/external MIME text,
   no retained provider HTML, and no binary attachment-body download,
@@ -246,6 +251,8 @@ Simulated or deliberately inactive:
 - encrypted provider-account and sync-state tables contain no real account,
 - Google authorization revocation has a real fixed-endpoint adapter, exercised only
   through injected deterministic HTTP and still uncomposed,
+- Google access-token refresh has a real fixed-endpoint adapter, exercised only
+  through an injected fake client ID and deterministic HTTP and still uncomposed,
 - local deletion operates only on deterministic fixture-backed Posita data because
   no real account or credential exists,
 - account disconnect remains application-only and has no preload, IPC, or UI trigger,
@@ -273,7 +280,7 @@ Simulated or deliberately inactive:
 
 Not implemented:
 
-- Gmail OAuth, production-composed message ingestion, or user-triggered/live disconnect,
+- Gmail authorization code/PKCE, production-composed message ingestion, or user-triggered/live disconnect,
 - production activation of the approved provider-mail lifecycle,
 - user-triggered account disconnect or any remote mailbox mutation control,
 - automatic pending-disconnect resume with a live idempotent revocation adapter,
@@ -295,12 +302,16 @@ Not implemented:
 
 ## Next recommended milestone
 
-The owner-approved real Google adapter pair and its deletion-aware reconciliation
-contract are complete and uncomposed. The next milestone requires a new explicit
-owner decision: implement the desktop OAuth/PKCE and trusted access-token boundary,
-then compose connection, disconnect, and the existing lifecycle as one reviewed
-activation. Current approval does not authorize credentials, account connection,
-production composition, network testing, or mailbox ingestion.
+The owner-approved real Google adapter pair, deletion-aware reconciliation, and
+trusted refresh-to-access-token boundary are complete and uncomposed. The next
+milestone requires a new explicit owner decision about Google identity consent.
+Gmail profile can supply the verified mailbox address under `gmail.readonly`, but
+the accepted hidden stable provider subject requires Google OpenID identity scopes.
+Posita must not silently add `openid email` or reuse the address as an opaque
+subject. After that decision, implement desktop authorization-code/PKCE and compose
+connection, disconnect, and the existing lifecycle as one reviewed activation.
+Current approval does not authorize identity-scope changes, credentials, account
+connection, production composition, network testing, or mailbox ingestion.
 
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,
@@ -323,9 +334,10 @@ confirmed local deletion are complete at their current layers. Continue in this 
    confirmed main-derived browser handoff are now composed. The bounded trusted
    startup account inventory, durable lifecycle status, safe explicit sync-retry
    policy, and final production-composition audit are complete.
-5. Treat both approved Google adapters as complete and uncomposed. Stop for owner
-   approval before credentials, browser authorization, production composition,
-   connection activation, network testing, or a live account.
+5. Treat both approved Google adapters and the access-token source as complete and
+   uncomposed. Stop for owner approval before changing identity consent, adding a
+   client configuration, browser authorization, production composition, connection
+   activation, network testing, or a live account.
 6. Keep real Gmail ingestion disabled until authorization activation is separately
    approved and the remaining lifecycle activation
    and consent gates pass.
@@ -346,15 +358,17 @@ single canonical projection and the existing sync-state repository remains the
 cursor source of truth. The automatic retention worker now performs bounded
 canonical decrypt/plan/delete/thread-rewrite/sanitization work without a plaintext
 index. Production composition now includes only the mode-aware worker read, the
-existing application-state IPC path, and a bounded summary/local-inspection live renderer. No dependency,
-provider adapter, sync start, external action, secret, personal mailbox data, or
-mutation was added. One intentional compatibility distinction remains:
+existing application-state IPC path, and a bounded summary/local-inspection live
+renderer. Those presentation steps added no dependency, provider adapter, sync
+start, external action, secret, personal mailbox data, or mutation. One intentional
+compatibility distinction remains:
 the legacy `Message` is a deterministic sample-presentation record, while only
 `ProviderMailMessageV1` may enter future provider ingestion. There is no conversion
 path because Posita will not invent provider provenance. The live renderer now
 shows only the existing bounded summary projection with human account provenance
-and exact source selection. No dependency, schema, provider adapter, credential, network request,
-external action, secret, personal mailbox data, or mutation was added. Provider-
+and exact source selection. That renderer step added no dependency, schema,
+provider adapter, credential, network request, external action, secret, personal
+mailbox data, or mutation. Provider-
 account record v2 and live snapshot v2 now project the verified encrypted mailbox
 address plus optional label while keeping the provider subject hidden; label
 editing remains unexposed. The canonical source-detail query now returns bounded
@@ -368,8 +382,10 @@ audit is complete: activation must reuse one projection worker, coordinator,
 lifecycle owner, retention gate, and shutdown path. The approved revoker is now
 implemented and uncomposed. Provider batch v2 closes the remote-deletion and stale-
 cursor replacement gap, and the real bounded Gmail reader now emits that contract.
-The next milestone is the separately approved OAuth/activation boundary, not an
-automatic credential or account connection.
+The vault-backed memory-only access-token source now supplies the reader's final
+trusted credential boundary without configuration or activation. The next milestone
+is the separately approved identity-consent and authorization-code/PKCE boundary,
+not an automatic credential or account connection.
 The new presentation abstraction is `LiveMailSummaryList`; it consumes the existing
 `LiveMailSnapshotV2` without adding a parallel domain or data source. The other
 recent abstractions are the shared `LiveMailMessageDetailV1` and open-original
@@ -408,6 +424,12 @@ provider contract and canonical model rather than adding another sync owner or m
 shape. No dependency, schema, compatibility path, production composition, OAuth
 configuration, credential, account, real network test, personal data, mailbox
 mutation, or intentional duplication was added.
+The concrete `GoogleOAuthAccessTokenSource` implements that existing narrow token
+contract over `SecretVault`. It adds no token repository: access tokens remain only
+in its bounded memory cache, while refresh credentials remain exclusively in the
+vault. No dependency, schema, compatibility path, production composition, configured
+client, credential, browser action, account, network test, personal data, mailbox
+mutation, or intentional duplication was added.
 
 ## How to resume
 
@@ -427,7 +449,7 @@ mutation, or intentional duplication was added.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 65 test files, 403 tests, strict typecheck, structure
+- Current verified baseline: 66 test files, 412 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,
