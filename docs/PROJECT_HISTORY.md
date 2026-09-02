@@ -1959,6 +1959,42 @@ Limitations: no real credential or Google request has been used, and Gmail remai
 disconnected. The next approved milestone is the uncomposed read-only Gmail adapter;
 credential configuration and account connection remain separate approval gates.
 
+## Gate 2D milestone — Provider-authoritative deletion reconciliation
+
+Date: 2026-09-02
+Checkpoint: use the Git commit whose subject is `feat: reconcile provider deletions`
+
+Goal: close the remote-deletion and stale-history gap before implementing the real
+read-only Gmail adapter.
+
+Delivered:
+
+- a strict deletion-aware provider/commit batch v2 with bounded unique tombstones,
+- atomic remote-message deletion, affected-thread repair/removal, and encrypted
+  cursor advancement in the existing projection and worker path,
+- a complete bounded-resync collection that makes one authoritative replacement
+  commit only after all pages arrive,
+- deterministic fake, coordinator, contract, projection, and worker coverage for
+  deletion, multi-page replacement, replay, and failure isolation.
+
+Important decisions:
+
+- remove the never-activated batch v1 instead of retaining an unnecessary
+  compatibility path,
+- keep incremental deletion idempotent and account-scoped,
+- leave the encrypted projection unchanged if bounded recovery does not complete,
+- keep local corrections, derived artifacts, drafts, and pending commands outside
+  provider-authoritative replacement.
+
+Evidence: 63 test files and 388 tests pass with strict typecheck, renderer security
+checks, and the production Electron build.
+
+Limitations: this milestone uses only deterministic provider data. It adds no Gmail
+adapter, credential, network request, schema migration, dependency, production
+composition, personal data, or mailbox mutation. The read-only Gmail adapter remains
+the next approved milestone; OAuth configuration and account connection remain
+separate decisions.
+
 ## How future entries should be written
 
 For each material milestone, record:

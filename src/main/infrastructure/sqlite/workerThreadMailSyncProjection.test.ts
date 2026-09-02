@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { DatabaseSync } from 'node:sqlite'
 import { afterEach, describe, expect, it } from 'vitest'
-import type { CommitProviderMailBatchV1 } from '../../application/mailSync'
+import type { CommitProviderMailBatchV2 } from '../../application/mailSync'
 import type { ProviderMailMessageV1, ProviderMailThreadV1 } from '../../../shared/providerMail'
 import { openPositaDatabase } from './database'
 import { applyMigrations } from './migrations'
@@ -55,15 +55,16 @@ const source = (): { message: ProviderMailMessageV1; thread: ProviderMailThreadV
 const batch = (expectedCursor?: string, nextCursor = 'cursor-worker-1') => {
   const record = source()
   return {
-    version: 1,
+    version: 2,
     accountId: 'account-work-1',
     provider: 'google',
     ...(expectedCursor === undefined ? {} : { expectedCursor }),
     nextCursor,
     reconciliation: 'incremental',
     messages: [record.message],
-    threads: [record.thread]
-  } satisfies CommitProviderMailBatchV1
+    threads: [record.thread],
+    deletedProviderMessageIds: []
+  } satisfies CommitProviderMailBatchV2
 }
 
 const createFileDatabase = async (): Promise<{ databasePath: string; database: DatabaseSync }> => {

@@ -372,8 +372,12 @@ The credential-free `MailSyncCoordinator` now implements this application
 boundary against `ProviderMailAdapter` and `MailSyncProjection` interfaces. It
 performs a 90-day initial request, account single-flight, bounded cross-account
 concurrency, normalized-batch validation, atomic batch-plus-cursor commits,
-account-scoped provider-ID replay handling, one bounded resync after an invalid
-cursor, and cancellation for disconnect, supersession, and shutdown. The
+account-scoped provider-ID replay handling, versioned remote-deletion tombstones,
+one complete atomic bounded replacement after an invalid cursor, and cancellation
+for disconnect, supersession, and shutdown. Incremental projection commits delete
+provider-authoritative records and repair threads in the same transaction as the
+cursor. Bounded recovery collects every page before committing, so incomplete
+recovery leaves the prior projection intact. The
 deterministic provider/projection fakes prove these rules without credentials or
 network access. A schema-v9 SQLite projection now proves authenticated
 canonical message/thread persistence and atomic encrypted-cursor advancement with

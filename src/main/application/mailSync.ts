@@ -10,6 +10,7 @@ import {
 export const INITIAL_SYNC_DAYS = 90
 export const SYNC_BATCH_SIZE = 100
 export const MAX_BATCHES_PER_SYNC = 50
+export const MAX_RECONCILIATION_RECORDS = SYNC_BATCH_SIZE * MAX_BATCHES_PER_SYNC
 
 export interface ProviderMailBatchRequestV1 {
   version: 1
@@ -20,12 +21,13 @@ export interface ProviderMailBatchRequestV1 {
   receivedAfter?: string
 }
 
-export interface ProviderMailBatchV1 {
-  version: 1
+export interface ProviderMailBatchV2 {
+  version: 2
   accountId: string
   provider: MailProvider
   messages: ProviderMailMessageV1[]
   threads: ProviderMailThreadV1[]
+  deletedProviderMessageIds: string[]
   nextCursor: string
   complete: boolean
 }
@@ -37,8 +39,8 @@ export interface MailSyncCheckpointV1 {
   cursor: string
 }
 
-export interface CommitProviderMailBatchV1 {
-  version: 1
+export interface CommitProviderMailBatchV2 {
+  version: 2
   accountId: string
   provider: MailProvider
   expectedCursor?: string
@@ -46,6 +48,7 @@ export interface CommitProviderMailBatchV1 {
   reconciliation: 'incremental' | 'bounded-resync'
   messages: ProviderMailMessageV1[]
   threads: ProviderMailThreadV1[]
+  deletedProviderMessageIds: string[]
 }
 
 export interface CommitProviderMailBatchResultV1 {
@@ -82,7 +85,7 @@ export interface ProviderMailAdapter {
 /** The implementation must commit normalized records and the next cursor atomically. */
 export interface MailSyncProjection {
   loadCheckpoint(accountId: string): Promise<MailSyncCheckpointV1 | undefined>
-  commitBatch(batch: CommitProviderMailBatchV1): Promise<CommitProviderMailBatchResultV1>
+  commitBatch(batch: CommitProviderMailBatchV2): Promise<CommitProviderMailBatchResultV1>
 }
 
 export type MailSyncErrorCode = SyncFailureCode |
@@ -118,6 +121,7 @@ export class ProviderMailAdapterError extends Error {
 
 type JsonRecord = Record<string, unknown>
 const CURSOR_MAX_LENGTH = 16_384
+const PROVIDER_ID_MAX_LENGTH = 1024
 
 const isRecord = (value: unknown): value is JsonRecord =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -173,19 +177,32 @@ export const isMailSyncCheckpointV1 = (
   ]) && value.version === 1 && isAccountId(value.accountId) &&
   value.provider === 'google' && isCursor(value.cursor)
 
-export const isProviderMailBatchV1 = (value: unknown): value is ProviderMailBatchV1 => {
+const isProviderMessageId = (value: unknown): value is string =>
+  typeof value === 'string' && value.length > 0 && value.length <= PROVIDER_ID_MAX_LENGTH
+
+const isProviderMailBatchV2WithLimit = (
+  value: unknown,
+  maximumRecords: number
+): value is ProviderMailBatchV2 => {
   if (!isRecord(value) || !hasOnlyKeys(value, [
-    'version', 'accountId', 'provider', 'messages', 'threads', 'nextCursor', 'complete'
-  ]) || value.version !== 1 || !isAccountId(value.accountId) ||
+    'version', 'accountId', 'provider', 'messages', 'threads',
+    'deletedProviderMessageIds', 'nextCursor', 'complete'
+  ]) || value.version !== 2 || !isAccountId(value.accountId) ||
       value.provider !== 'google' || !Array.isArray(value.messages) ||
-      value.messages.length > SYNC_BATCH_SIZE ||
+      value.messages.length > maximumRecords ||
       !value.messages.every(isProviderMailMessageV1) || !Array.isArray(value.threads) ||
-      value.threads.length > SYNC_BATCH_SIZE ||
-      !value.threads.every(isProviderMailThreadV1) || !isCursor(value.nextCursor) ||
+      value.threads.length > maximumRecords ||
+      !value.threads.every(isProviderMailThreadV1) ||
+      !Array.isArray(value.deletedProviderMessageIds) ||
+      value.deletedProviderMessageIds.length > maximumRecords ||
+      !value.deletedProviderMessageIds.every(isProviderMessageId) ||
+      new Set(value.deletedProviderMessageIds).size !== value.deletedProviderMessageIds.length ||
+      !isCursor(value.nextCursor) ||
       typeof value.complete !== 'boolean') return false
 
   const messages = value.messages as ProviderMailMessageV1[]
   const threads = value.threads as ProviderMailThreadV1[]
+  const deletedProviderMessageIds = value.deletedProviderMessageIds as string[]
   const messageIds = new Set<string>()
   const sourceIds = new Set<string>()
   for (const message of messages) {
@@ -202,32 +219,44 @@ export const isProviderMailBatchV1 = (value: unknown): value is ProviderMailBatc
     threadIds.add(thread.id)
     providerThreadIds.add(thread.providerThreadId)
   }
-  return messages.every((message) => threads.some((thread) =>
+  return messages.every((message) => !deletedProviderMessageIds.includes(
+    message.source.providerMessageId
+  ) && threads.some((thread) =>
     thread.id === message.threadId &&
     thread.providerThreadId === message.source.providerThreadId &&
     thread.messageIds.includes(message.id)))
 }
 
-export const isCommitProviderMailBatchV1 = (
+export const isProviderMailBatchV2 = (value: unknown): value is ProviderMailBatchV2 =>
+  isProviderMailBatchV2WithLimit(value, SYNC_BATCH_SIZE)
+
+export const isCommitProviderMailBatchV2 = (
   value: unknown
-): value is CommitProviderMailBatchV1 => {
+): value is CommitProviderMailBatchV2 => {
   if (!isRecord(value)) return false
   const expectedCursorKey = value.expectedCursor === undefined ? [] : ['expectedCursor']
   if (!hasOnlyKeys(value, [
     'version', 'accountId', 'provider', ...expectedCursorKey, 'nextCursor',
-    'reconciliation', 'messages', 'threads'
+    'reconciliation', 'messages', 'threads', 'deletedProviderMessageIds'
   ]) || (value.reconciliation !== 'incremental' &&
       value.reconciliation !== 'bounded-resync')) return false
 
-  return isProviderMailBatchV1({
+  const maximumRecords = value.reconciliation === 'bounded-resync'
+    ? MAX_RECONCILIATION_RECORDS
+    : SYNC_BATCH_SIZE
+  if (!Array.isArray(value.messages) || value.messages.length > maximumRecords ||
+      !Array.isArray(value.threads) || value.threads.length > maximumRecords) return false
+
+  return isProviderMailBatchV2WithLimit({
     version: value.version,
     accountId: value.accountId,
     provider: value.provider,
     messages: value.messages,
     threads: value.threads,
+    deletedProviderMessageIds: value.deletedProviderMessageIds,
     nextCursor: value.nextCursor,
     complete: true
-  }) && (value.expectedCursor === undefined || isCursor(value.expectedCursor))
+  }, maximumRecords) && (value.expectedCursor === undefined || isCursor(value.expectedCursor))
 }
 
 export const isCommitProviderMailBatchResultV1 = (

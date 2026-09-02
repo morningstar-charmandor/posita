@@ -862,3 +862,26 @@
   its next phase. No dependency, schema, compatibility path, IPC/UI surface,
   account, credential configuration, provider call, personal data, or mailbox
   mutation is added.
+
+## ADR-045: Reconcile remote deletions through a versioned atomic batch
+
+- Status: accepted for Gate 2D Google activation
+- Context: Gmail history can report permanently deleted messages, and an expired
+  history cursor requires a fresh bounded synchronization window. The original
+  normalized batch could only upsert records, while bounded recovery deliberately
+  retained cached provider sources. That would let Posita keep mail that Gmail no
+  longer considers present, contrary to the accepted provider-authoritative model.
+- Decision: replace the never-activated provider/commit batch v1 with a strict v2
+  contract containing bounded, unique provider-message tombstones. Apply tombstones,
+  message/thread changes, thread repair, and the next cursor in one transaction.
+  After one invalid cursor, collect at most the existing 50 pages in memory and
+  commit the completed 90-day provider window once as an authoritative replacement;
+  never erase a partially collected window into storage. Keep local corrections,
+  derived records, drafts, and pending commands outside this provider projection.
+- Consequence: incremental sync can remove remotely deleted cached messages
+  idempotently, and stale-cursor recovery no longer preserves stale provider mail.
+  Recovery temporarily uses bounded memory and makes no partial progress until the
+  complete replacement is available. There is no compatibility path because batch
+  v1 was credential-free, uncomposed, and never persisted as provider input. No
+  dependency, schema migration, credential, network request, provider adapter,
+  personal data, IPC/UI capability, or mailbox mutation is added.

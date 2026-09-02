@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest'
 import type { ProviderMailMessageV1, ProviderMailThreadV1 } from '../../shared/providerMail'
 import {
   MailSyncError,
+  isProviderMailBatchV2,
   type ProviderMailAdapter,
   type ProviderMailBatchRequestV1,
-  type ProviderMailBatchV1
+  type ProviderMailBatchV2
 } from './mailSync'
 import { MailSyncCoordinator } from './mailSyncCoordinator'
 import {
@@ -57,14 +58,15 @@ const batch = (
   suffix = '1',
   nextCursor = `cursor-${suffix}`,
   complete = true
-): ProviderMailBatchV1 => {
+): ProviderMailBatchV2 => {
   const record = source(accountId, suffix)
   return {
-    version: 1,
+    version: 2,
     accountId,
     provider: 'google',
     messages: [record.message],
     threads: [record.thread],
+    deletedProviderMessageIds: [],
     nextCursor,
     complete
   }
@@ -77,6 +79,20 @@ const request = (accountId = 'account-work-1') => ({
 })
 
 describe('MailSyncCoordinator', () => {
+  it('requires the versioned deletion-aware provider batch contract', () => {
+    const valid = batch()
+    expect(isProviderMailBatchV2(valid)).toBe(true)
+    expect(isProviderMailBatchV2({ ...valid, version: 1 })).toBe(false)
+    expect(isProviderMailBatchV2({
+      ...valid,
+      deletedProviderMessageIds: [valid.messages[0]!.source.providerMessageId]
+    })).toBe(false)
+    expect(isProviderMailBatchV2({
+      ...valid,
+      deletedProviderMessageIds: ['provider-deleted', 'provider-deleted']
+    })).toBe(false)
+  })
+
   it('runs a bounded 90-day initial import and atomically advances its cursor', async () => {
     const provider = new DeterministicFakeMailProviderAdapter([{
       accountId: 'account-work-1',
@@ -183,7 +199,50 @@ describe('MailSyncCoordinator', () => {
     expect(projection.snapshot('account-work-1').messages).toHaveLength(1)
   })
 
-  it('uses one bounded resync after an invalid cursor without erasing retained sources', async () => {
+  it('atomically removes provider-deleted mail and repairs an empty thread', async () => {
+    const retained = source('account-work-1', 'deleted')
+    const provider = new DeterministicFakeMailProviderAdapter([{
+      accountId: 'account-work-1',
+      requestCursor: 'cursor-1',
+      batch: {
+        version: 2,
+        accountId: 'account-work-1',
+        provider: 'google',
+        messages: [],
+        threads: [],
+        deletedProviderMessageIds: ['provider-message-deleted'],
+        nextCursor: 'cursor-2',
+        complete: true
+      }
+    }])
+    const projection = new DeterministicFakeMailSyncProjection()
+    projection.seed({
+      checkpoint: {
+        version: 1,
+        accountId: 'account-work-1',
+        provider: 'google',
+        cursor: 'cursor-1'
+      },
+      messages: [retained.message],
+      threads: [retained.thread]
+    })
+    const coordinator = new MailSyncCoordinator(provider, projection, clock)
+
+    await expect(coordinator.syncAccount(request())).resolves.toMatchObject({
+      mode: 'incremental',
+      cursor: 'cursor-2'
+    })
+    expect(projection.commits[0]?.deletedProviderMessageIds).toEqual([
+      'provider-message-deleted'
+    ])
+    expect(projection.snapshot('account-work-1')).toMatchObject({
+      checkpoint: { cursor: 'cursor-2' },
+      messages: [],
+      threads: []
+    })
+  })
+
+  it('uses one atomic bounded resync after an invalid cursor and removes absent provider sources', async () => {
     const retained = source('account-work-1', 'retained')
     const provider = new DeterministicFakeMailProviderAdapter([{
       accountId: 'account-work-1',
@@ -216,10 +275,101 @@ describe('MailSyncCoordinator', () => {
       reconciliation: 'bounded-resync'
     })
     expect(projection.snapshot('account-work-1').messages.map((item) =>
-      item.source.providerMessageId)).toEqual([
-      'provider-message-retained',
-      'provider-message-resynced'
+      item.source.providerMessageId)).toEqual(['provider-message-resynced'])
+  })
+
+  it('collects every bounded-resync page before one authoritative replacement commit', async () => {
+    const firstPage = batch('account-work-1', 'resync-1', 'resync-page-2', false)
+    const secondPage = batch('account-work-1', 'resync-2', 'cursor-recovered')
+    secondPage.messages[0] = {
+      ...secondPage.messages[0]!,
+      threadId: firstPage.threads[0]!.id,
+      source: {
+        ...secondPage.messages[0]!.source,
+        providerThreadId: firstPage.threads[0]!.providerThreadId
+      }
+    }
+    secondPage.threads[0] = {
+      ...firstPage.threads[0]!,
+      messageIds: [secondPage.messages[0]!.id]
+    }
+    const provider = new DeterministicFakeMailProviderAdapter([
+      { accountId: 'account-work-1', batch: firstPage },
+      { accountId: 'account-work-1', requestCursor: 'resync-page-2', batch: secondPage }
     ])
+    provider.failNext('account-work-1', 'INVALID_CURSOR')
+    const projection = new DeterministicFakeMailSyncProjection()
+    const retained = source('account-work-1', 'retained')
+    projection.seed({
+      checkpoint: {
+        version: 1,
+        accountId: 'account-work-1',
+        provider: 'google',
+        cursor: 'cursor-stale'
+      },
+      messages: [retained.message],
+      threads: [retained.thread]
+    })
+    const coordinator = new MailSyncCoordinator(provider, projection, clock)
+
+    await expect(coordinator.syncAccount(request())).resolves.toMatchObject({
+      mode: 'bounded-resync',
+      batchesCommitted: 1,
+      cursor: 'cursor-recovered'
+    })
+    expect(projection.commits).toHaveLength(1)
+    expect(projection.commits[0]?.messages.map((message) =>
+      message.source.providerMessageId)).toEqual([
+      'provider-message-resync-1',
+      'provider-message-resync-2'
+    ])
+    expect(projection.commits[0]?.threads).toEqual([{
+      ...firstPage.threads[0],
+      messageIds: ['message-resync-1', 'message-resync-2']
+    }])
+    expect(projection.snapshot('account-work-1').messages.map((message) =>
+      message.source.providerMessageId)).toEqual([
+      'provider-message-resync-1',
+      'provider-message-resync-2'
+    ])
+  })
+
+  it('preserves the prior projection when bounded resync cannot finish safely', async () => {
+    const fixtures = Array.from({ length: 50 }, (_, index) => ({
+      accountId: 'account-work-1',
+      ...(index === 0 ? {} : { requestCursor: `resync-page-${index}` }),
+      batch: batch(
+        'account-work-1',
+        `resync-${index + 1}`,
+        `resync-page-${index + 1}`,
+        false
+      )
+    }))
+    const provider = new DeterministicFakeMailProviderAdapter(fixtures)
+    provider.failNext('account-work-1', 'INVALID_CURSOR')
+    const projection = new DeterministicFakeMailSyncProjection()
+    const retained = source('account-work-1', 'retained')
+    projection.seed({
+      checkpoint: {
+        version: 1,
+        accountId: 'account-work-1',
+        provider: 'google',
+        cursor: 'cursor-stale'
+      },
+      messages: [retained.message],
+      threads: [retained.thread]
+    })
+    const coordinator = new MailSyncCoordinator(provider, projection, clock)
+
+    await expect(coordinator.syncAccount(request())).rejects.toMatchObject({
+      code: 'SYNC_BATCH_LIMIT_REACHED',
+      retryable: true
+    })
+    expect(projection.commits).toHaveLength(0)
+    expect(projection.snapshot('account-work-1')).toMatchObject({
+      checkpoint: { cursor: 'cursor-stale' },
+      messages: [{ source: { providerMessageId: 'provider-message-retained' } }]
+    })
   })
 
   it('does not advance records or cursor when the atomic projection commit fails', async () => {

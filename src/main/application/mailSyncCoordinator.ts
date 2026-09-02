@@ -1,4 +1,5 @@
 import { isAccountId } from './accountState'
+import type { ProviderMailMessageV1, ProviderMailThreadV1 } from '../../shared/providerMail'
 import {
   INITIAL_SYNC_DAYS,
   MAX_BATCHES_PER_SYNC,
@@ -8,7 +9,7 @@ import {
   isCommitProviderMailBatchResultV1,
   isMailSyncCheckpointV1,
   isProviderMailBatchRequestV1,
-  isProviderMailBatchV1,
+  isProviderMailBatchV2,
   isSyncAccountRequestV1,
   type CommitProviderMailBatchResultV1,
   type MailSyncCheckpointV1,
@@ -209,10 +210,13 @@ export class MailSyncCoordinator {
       : undefined
     let mode: SyncAccountResultV1['mode'] = checkpoint === undefined ? 'initial' : 'incremental'
     let usedCursorRecovery = false
+    const resyncMessages = new Map<string, ProviderMailMessageV1>()
+    const resyncThreads = new Map<string, ProviderMailThreadV1>()
     let batchesCommitted = 0
     let totals = { insertedMessages: 0, updatedMessages: 0, replayedMessages: 0 }
 
-    for (let index = 0; index < MAX_BATCHES_PER_SYNC; index += 1) {
+    let providerBatchesFetched = 0
+    while (providerBatchesFetched < MAX_BATCHES_PER_SYNC) {
       if (signal.aborted) throw cancelled()
       const batchRequest: ProviderMailBatchRequestV1 = {
         version: 1,
@@ -238,7 +242,7 @@ export class MailSyncCoordinator {
         }
         throw this.providerFailure(error)
       }
-      if (!isProviderMailBatchV1(unknownBatch) ||
+      if (!isProviderMailBatchV2(unknownBatch) ||
           unknownBatch.accountId !== request.accountId ||
           unknownBatch.provider !== request.provider ||
           (!unknownBatch.complete && unknownBatch.nextCursor === providerCursor)) {
@@ -248,18 +252,55 @@ export class MailSyncCoordinator {
           false
         )
       }
+      providerBatchesFetched += 1
+
+      if (mode === 'bounded-resync') {
+        for (const providerMessageId of unknownBatch.deletedProviderMessageIds) {
+          resyncMessages.delete(providerMessageId)
+        }
+        for (const message of unknownBatch.messages) {
+          resyncMessages.set(message.source.providerMessageId, message)
+        }
+        for (const thread of unknownBatch.threads) {
+          const existing = resyncThreads.get(thread.providerThreadId)
+          resyncThreads.set(thread.providerThreadId, existing === undefined
+            ? thread
+            : {
+              ...thread,
+              messageIds: [...new Set([...existing.messageIds, ...thread.messageIds])]
+            })
+        }
+        if (!unknownBatch.complete) {
+          providerCursor = unknownBatch.nextCursor
+          continue
+        }
+      }
+
+      const messages = mode === 'bounded-resync'
+        ? [...resyncMessages.values()]
+        : unknownBatch.messages
+      const presentMessageIds = new Set(messages.map((message) => message.id))
+      const threads = mode === 'bounded-resync'
+        ? [...resyncThreads.values()].flatMap((thread) => {
+          const messageIds = thread.messageIds.filter((messageId) => presentMessageIds.has(messageId))
+          return messageIds.length === 0 ? [] : [{ ...thread, messageIds }]
+        })
+        : unknownBatch.threads
 
       let committed: CommitProviderMailBatchResultV1
       try {
         committed = await this.projection.commitBatch({
-          version: 1,
+          version: 2,
           accountId: request.accountId,
           provider: request.provider,
           ...(expectedCursor === undefined ? {} : { expectedCursor }),
           nextCursor: unknownBatch.nextCursor,
           reconciliation: mode === 'bounded-resync' ? 'bounded-resync' : 'incremental',
-          messages: unknownBatch.messages,
-          threads: unknownBatch.threads
+          messages,
+          threads,
+          deletedProviderMessageIds: mode === 'bounded-resync'
+            ? []
+            : unknownBatch.deletedProviderMessageIds
         })
       } catch (error) {
         if (error instanceof MailSyncError) throw error

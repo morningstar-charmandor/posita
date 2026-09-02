@@ -1,7 +1,7 @@
 import type { DatabaseSync } from 'node:sqlite'
 import { afterEach, describe, expect, it } from 'vitest'
 import type {
-  CommitProviderMailBatchV1
+  CommitProviderMailBatchV2
 } from '../../application/mailSync'
 import type { ProviderMailMessageV1, ProviderMailThreadV1 } from '../../../shared/providerMail'
 import { GOOGLE_CONNECT_CONSENT } from '../../../shared/contracts'
@@ -66,17 +66,18 @@ const commit = (
   suffix = '1',
   expectedCursor?: string,
   nextCursor = 'cursor-1'
-): CommitProviderMailBatchV1 => {
+): CommitProviderMailBatchV2 => {
   const record = source(accountId, suffix)
   return {
-    version: 1,
+    version: 2,
     accountId,
     provider: 'google',
     ...(expectedCursor === undefined ? {} : { expectedCursor }),
     nextCursor,
     reconciliation: 'incremental',
     messages: [record.message],
-    threads: [record.thread]
+    threads: [record.thread],
+    deletedProviderMessageIds: []
   }
 }
 
@@ -327,13 +328,14 @@ describe('EncryptedSqliteMailSyncProjection', () => {
       return record
     })
     await projection.commitBatch({
-      version: 1,
+      version: 2,
       accountId: 'account-work-1',
       provider: 'google',
       nextCursor: 'cursor-bounded-1',
       reconciliation: 'incremental',
       messages: records.map(({ message }) => message),
-      threads: records.map(({ thread }) => thread)
+      threads: records.map(({ thread }) => thread),
+      deletedProviderMessageIds: []
     })
 
     const readModel = await projection.loadReadModel('2026-09-01T05:00:00.000Z')
@@ -399,6 +401,49 @@ describe('EncryptedSqliteMailSyncProjection', () => {
       SELECT COUNT(*) AS count FROM encrypted_provider_mail_records
       WHERE record_type = 'provider-message' AND account_scope = 'account-work-1'
     `).get()).toEqual({ count: 1 })
+  })
+
+  it('atomically applies a provider tombstone, repairs its thread, and advances the cursor', async () => {
+    const { database, projection } = createProjection()
+    await projection.commitBatch(commit())
+    const deletion = commit('account-work-1', 'unused', 'cursor-1', 'cursor-2')
+    deletion.messages = []
+    deletion.threads = []
+    deletion.deletedProviderMessageIds = ['provider-message-1']
+
+    await projection.commitBatch(deletion)
+
+    expect(database.prepare(`
+      SELECT record_type FROM encrypted_provider_mail_records
+      WHERE account_scope = 'account-work-1'
+    `).all()).toEqual([])
+    await expect(projection.loadCheckpoint('account-work-1')).resolves.toMatchObject({
+      cursor: 'cursor-2'
+    })
+  })
+
+  it('treats a bounded resync as the authoritative account window', async () => {
+    const { database, projection } = createProjection()
+    await projection.commitBatch(commit('account-work-1', 'stale'))
+    const replacement = commit(
+      'account-work-1',
+      'current',
+      'cursor-1',
+      'cursor-recovered'
+    )
+    replacement.reconciliation = 'bounded-resync'
+
+    await projection.commitBatch(replacement)
+
+    expect(database.prepare(`
+      SELECT COUNT(*) AS count FROM encrypted_provider_mail_records
+      WHERE account_scope = 'account-work-1'
+    `).get()).toEqual({ count: 2 })
+    const readModel = await projection.loadReadModel('2026-09-01T05:00:00.000Z')
+    expect(readModel.messages.map((message) => message.id)).toEqual(['message-current'])
+    await expect(projection.loadCheckpoint('account-work-1')).resolves.toMatchObject({
+      cursor: 'cursor-recovered'
+    })
   })
 
   it('keeps identical provider identities isolated between accounts', async () => {

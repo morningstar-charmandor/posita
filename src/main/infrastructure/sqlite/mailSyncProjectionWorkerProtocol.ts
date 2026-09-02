@@ -1,10 +1,10 @@
 import { isAccountId } from '../../application/accountState.ts'
 import {
   isCommitProviderMailBatchResultV1,
-  isCommitProviderMailBatchV1,
+  isCommitProviderMailBatchV2,
   isMailSyncCheckpointV1,
   type CommitProviderMailBatchResultV1,
-  type CommitProviderMailBatchV1,
+  type CommitProviderMailBatchV2,
   type MailSyncCheckpointV1
 } from '../../application/mailSync.ts'
 import { isLiveMailSnapshotV2, type LiveMailSnapshotV2 } from '../../../shared/liveMail.ts'
@@ -24,7 +24,7 @@ export type MailSyncProjectionWorkerOperationV1 =
   | { kind: 'load-read-model'; loadedAt: string }
   | { kind: 'load-message-detail'; request: LiveMailMessageDetailRequestV1 }
   | { kind: 'load-original-source-locator'; request: LiveMailMessageDetailRequestV1 }
-  | { kind: 'commit-batch'; batch: CommitProviderMailBatchV1 }
+  | { kind: 'commit-batch'; batch: CommitProviderMailBatchV2 }
   | { kind: 'delete-account-records'; accountId: string }
 
 export interface MailSyncProjectionWorkerRequestV1 {
@@ -123,7 +123,7 @@ export const isMailSyncProjectionWorkerRequestV1 = (
     return hasOnlyKeys(operation, ['kind', 'accountId']) && isAccountId(operation.accountId)
   }
   return operation.kind === 'commit-batch' && hasOnlyKeys(operation, ['kind', 'batch']) &&
-    isCommitProviderMailBatchV1(operation.batch)
+    isCommitProviderMailBatchV2(operation.batch)
 }
 
 export const isMailSyncProjectionWorkerResponseV1 = (

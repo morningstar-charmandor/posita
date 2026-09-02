@@ -89,8 +89,8 @@ deterministic fake:
 - cancellation on shutdown, disconnect, and supersession,
 - typed offline, authentication, permission, quota, malformed-payload, invalid-
   cursor, and provider-unavailable outcomes,
-- one bounded invalid-cursor resync that upserts provider state without erasing
-  retained source records.
+- one bounded invalid-cursor resync that collects a complete 90-day window before
+  atomically replacing stale provider records.
 
 UI and AI features may request this coordinator; neither may become another Gmail
 client or polling owner.
@@ -171,9 +171,9 @@ mail model, second cursor store, generic IPC bridge, or renderer provider client
 - `MailSyncCoordinator` is the single provider I/O owner at the application layer
   and remains uncomposed from the running product.
 - Deterministic tests prove the 90-day request boundary, per-account single-flight,
-  bounded cross-account work, replay deduplication, batch/cursor ordering, commit
-  failure rollback, one invalid-cursor resync without source erasure, cancellation,
-  supersession, and safe provider failures.
+  bounded cross-account work, replay deduplication, remote-deletion tombstones,
+  batch/cursor ordering, commit failure rollback, one complete atomic invalid-cursor
+  replacement, cancellation, supersession, and safe provider failures.
 - Schema v9 plus `EncryptedSqliteMailSyncProjection` prove ciphertext-only source
   identity/content, opaque row IDs, empty migration state, account isolation,
   replay/update classification, cursor conflicts, tamper rejection, transaction
@@ -198,7 +198,7 @@ mail model, second cursor store, generic IPC bridge, or renderer provider client
 - The inactive disconnect service requires account-scoped canonical projection
   deletion in its durable mail-data phase and safely retries after fixture removal
   has already committed.
-- The current verified baseline is 63 test files and 382 tests plus strict TypeScript,
+- The current verified baseline is 63 test files and 388 tests plus strict TypeScript,
   renderer structure/security checks, and production Electron builds.
 - No dependency, production provider adapter, credential,
   personal mailbox data, network action, privileged renderer capability, or mailbox mutation was

@@ -4,12 +4,12 @@ import {
   ProviderMailAdapterError,
   isProviderMailBatchRequestV1,
   type CommitProviderMailBatchResultV1,
-  type CommitProviderMailBatchV1,
+  type CommitProviderMailBatchV2,
   type MailSyncCheckpointV1,
   type MailSyncProjection,
   type ProviderMailAdapter,
   type ProviderMailBatchRequestV1,
-  type ProviderMailBatchV1
+  type ProviderMailBatchV2
 } from '../../application/mailSync'
 import type { SyncFailureCode } from '../../application/accountState'
 import type { ProviderMailMessageV1, ProviderMailThreadV1 } from '../../../shared/providerMail'
@@ -17,7 +17,7 @@ import type { ProviderMailMessageV1, ProviderMailThreadV1 } from '../../../share
 export interface DeterministicMailBatchFixture {
   accountId: string
   requestCursor?: string
-  batch: ProviderMailBatchV1
+  batch: ProviderMailBatchV2
 }
 
 const requestKey = (accountId: string, cursor: string | undefined): string =>
@@ -26,7 +26,7 @@ const requestKey = (accountId: string, cursor: string | undefined): string =>
 /** Credential-free provider fake. Never compose this class into production startup. */
 export class DeterministicFakeMailProviderAdapter implements ProviderMailAdapter {
   readonly requests: ProviderMailBatchRequestV1[] = []
-  private readonly batches = new Map<string, ProviderMailBatchV1>()
+  private readonly batches = new Map<string, ProviderMailBatchV2>()
   private readonly failures = new Map<string, SyncFailureCode>()
 
   constructor(fixtures: readonly DeterministicMailBatchFixture[]) {
@@ -91,7 +91,7 @@ export interface DeterministicProjectionSnapshot {
 
 /** Deterministic atomic projection fake for coordinator and failure-path tests. */
 export class DeterministicFakeMailSyncProjection implements MailSyncProjection {
-  readonly commits: CommitProviderMailBatchV1[] = []
+  readonly commits: CommitProviderMailBatchV2[] = []
   private readonly accounts = new Map<string, ProjectionAccountState>()
   private failCommit = false
 
@@ -124,7 +124,7 @@ export class DeterministicFakeMailSyncProjection implements MailSyncProjection {
   }
 
   async commitBatch(
-    batch: CommitProviderMailBatchV1
+    batch: CommitProviderMailBatchV2
   ): Promise<CommitProviderMailBatchResultV1> {
     if (this.failCommit) {
       this.failCommit = false
@@ -151,9 +151,16 @@ export class DeterministicFakeMailSyncProjection implements MailSyncProjection {
     let insertedMessages = 0
     let updatedMessages = 0
     let replayedMessages = 0
+    if (batch.reconciliation === 'bounded-resync') {
+      messages.clear()
+      threads.clear()
+    }
+    for (const providerMessageId of batch.deletedProviderMessageIds) {
+      messages.delete(providerMessageId)
+    }
     for (const message of batch.messages) {
       const key = message.source.providerMessageId
-      const existing = messages.get(key)
+      const existing = current.messages.get(key)
       if (existing === undefined) insertedMessages += 1
       else if (isDeepStrictEqual(existing, message)) replayedMessages += 1
       else updatedMessages += 1
@@ -161,6 +168,17 @@ export class DeterministicFakeMailSyncProjection implements MailSyncProjection {
     }
     for (const thread of batch.threads) {
       threads.set(thread.providerThreadId, structuredClone(thread))
+    }
+    const retainedMessageById = new Map(
+      [...messages.values()].map((message) => [message.id, message])
+    )
+    for (const [providerThreadId, thread] of threads) {
+      const messageIds = thread.messageIds.filter((messageId) =>
+        retainedMessageById.get(messageId)?.threadId === thread.id)
+      if (messageIds.length === 0) threads.delete(providerThreadId)
+      else if (messageIds.length !== thread.messageIds.length) {
+        threads.set(providerThreadId, { ...thread, messageIds })
+      }
     }
 
     const checkpoint: MailSyncCheckpointV1 = {

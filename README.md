@@ -122,6 +122,13 @@ worker adapter now keeps file-backed projection reads, decrypt/scan, encryption,
 and commits off Electron's main event loop, validates a bounded protocol, and
 erases its retained key context. All visible mail remains deterministic sample data.
 
+The normalized provider/commit batch is now a strict deletion-aware v2 contract.
+Incremental tombstones remove remotely deleted cached messages and repair affected
+threads in the same transaction as cursor advancement. Invalid-cursor recovery
+collects the complete bounded 90-day window before one authoritative replacement,
+so incomplete recovery cannot partially erase the encrypted projection. This path
+is still deterministic, credential-free, and uncomposed.
+
 The inactive journaled disconnect service now requires that worker-backed
 projection remover in its local mail-data phase. If canonical deletion fails after
 sample data was already removed, retry resumes the same phase safely and repeats

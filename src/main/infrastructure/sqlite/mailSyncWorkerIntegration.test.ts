@@ -4,10 +4,10 @@ import { join } from 'node:path'
 import type { DatabaseSync } from 'node:sqlite'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
-  type CommitProviderMailBatchV1,
+  type CommitProviderMailBatchV2,
   type ProviderMailAdapter,
   type ProviderMailBatchRequestV1,
-  type ProviderMailBatchV1
+  type ProviderMailBatchV2
 } from '../../application/mailSync'
 import { MailSyncCoordinator } from '../../application/mailSyncCoordinator'
 import { DeterministicFakeMailProviderAdapter } from '../providers/deterministicFakeMailSync'
@@ -64,14 +64,15 @@ const providerBatch = (
   nextCursor: string,
   complete = true,
   accountId = 'account-work-1'
-): ProviderMailBatchV1 => {
+): ProviderMailBatchV2 => {
   const record = source(suffix, accountId)
   return {
-    version: 1,
+    version: 2,
     accountId,
     provider: 'google',
     messages: [record.message],
     threads: [record.thread],
+    deletedProviderMessageIds: [],
     nextCursor,
     complete
   }
@@ -81,17 +82,18 @@ const commit = (
   suffix: string,
   nextCursor: string,
   expectedCursor?: string
-): CommitProviderMailBatchV1 => {
+): CommitProviderMailBatchV2 => {
   const batch = providerBatch(suffix, nextCursor)
   return {
-    version: 1,
+    version: 2,
     accountId: batch.accountId,
     provider: batch.provider,
     ...(expectedCursor === undefined ? {} : { expectedCursor }),
     nextCursor,
     reconciliation: 'incremental',
     messages: batch.messages,
-    threads: batch.threads
+    threads: batch.threads,
+    deletedProviderMessageIds: []
   }
 }
 

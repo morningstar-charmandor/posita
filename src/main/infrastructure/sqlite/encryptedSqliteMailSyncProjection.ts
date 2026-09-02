@@ -13,9 +13,9 @@ import type {
 } from '../../application/providerMailOriginalSource.ts'
 import {
   MailSyncError,
-  isCommitProviderMailBatchV1,
+  isCommitProviderMailBatchV2,
   type CommitProviderMailBatchResultV1,
-  type CommitProviderMailBatchV1,
+  type CommitProviderMailBatchV2,
   type MailSyncCheckpointV1,
   type MailSyncProjection
 } from '../../application/mailSync.ts'
@@ -287,9 +287,9 @@ export class EncryptedSqliteMailSyncProjection implements
   }
 
   async commitBatch(
-    batch: CommitProviderMailBatchV1
+    batch: CommitProviderMailBatchV2
   ): Promise<CommitProviderMailBatchResultV1> {
-    if (!isCommitProviderMailBatchV1(batch)) {
+    if (!isCommitProviderMailBatchV2(batch)) {
       throw malformed('The normalized mail batch is invalid.')
     }
 
@@ -324,12 +324,79 @@ export class EncryptedSqliteMailSyncProjection implements
         if (existing === undefined) insertedMessages += 1
         else if (unchanged) replayedMessages += 1
         else updatedMessages += 1
-        if (!unchanged) {
+      }
+
+      const targetMessages = new Map(stored.messages.map((record) => [
+        record.value.source.providerMessageId,
+        record.value
+      ]))
+      const targetThreads = new Map(stored.threads.map((record) => [
+        record.value.providerThreadId,
+        record.value
+      ]))
+      if (batch.reconciliation === 'bounded-resync') {
+        targetMessages.clear()
+        targetThreads.clear()
+      }
+      for (const providerMessageId of batch.deletedProviderMessageIds) {
+        targetMessages.delete(providerMessageId)
+      }
+      for (const message of batch.messages) {
+        targetMessages.set(message.source.providerMessageId, message)
+      }
+      for (const thread of batch.threads) {
+        targetThreads.set(thread.providerThreadId, thread)
+      }
+
+      const targetMessageById = new Map<string, ProviderMailMessageV1>()
+      for (const message of targetMessages.values()) {
+        const owner = targetMessageById.get(message.id)
+        if (owner !== undefined && owner.source.providerMessageId !== message.source.providerMessageId) {
+          throw malformed('A canonical message identifier belongs to another source record.')
+        }
+        targetMessageById.set(message.id, message)
+      }
+      const targetThreadById = new Map<string, ProviderMailThreadV1>()
+      for (const [providerThreadId, thread] of targetThreads) {
+        const owner = targetThreadById.get(thread.id)
+        if (owner !== undefined && owner.providerThreadId !== thread.providerThreadId) {
+          throw malformed('A canonical thread identifier belongs to another source record.')
+        }
+        const messageIds = thread.messageIds.filter((messageId) =>
+          targetMessageById.get(messageId)?.threadId === thread.id)
+        if (messageIds.length === 0) {
+          targetThreads.delete(providerThreadId)
+          continue
+        }
+        const repaired = messageIds.length === thread.messageIds.length
+          ? thread
+          : { ...thread, messageIds }
+        targetThreads.set(providerThreadId, repaired)
+        targetThreadById.set(repaired.id, repaired)
+      }
+      if ([...targetMessages.values()].some((message) =>
+        targetThreadById.get(message.threadId)?.providerThreadId !==
+          message.source.providerThreadId)) {
+        throw malformed('A canonical message has no matching provider thread.')
+      }
+
+      for (const record of stored.messages) {
+        if (!targetMessages.has(record.value.source.providerMessageId)) {
+          this.deleteStoredRecord('provider-message', record.rowId, batch.accountId)
+        }
+      }
+      for (const message of targetMessages.values()) {
+        const existing = messageBySource.get(message.source.providerMessageId)
+        if (existing === undefined || !isDeepStrictEqual(existing.value, message)) {
           this.saveRecord('provider-message', batch.accountId, existing?.rowId, message)
         }
       }
-
-      for (const thread of batch.threads) {
+      for (const record of stored.threads) {
+        if (!targetThreads.has(record.value.providerThreadId)) {
+          this.deleteStoredRecord('provider-thread', record.rowId, batch.accountId)
+        }
+      }
+      for (const thread of targetThreads.values()) {
         const existing = threadBySource.get(thread.providerThreadId)
         const idOwner = threadById.get(thread.id)
         if (idOwner !== undefined && idOwner !== existing) {

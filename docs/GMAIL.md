@@ -108,6 +108,14 @@ cursor resume, conflict refusal, cancellation, and key teardown are verified.
 This is a credential-free test boundary, not a Gmail adapter, polling owner,
 startup composition, connection command, or live-account path.
 
+The never-activated provider batch is now version 2. It carries bounded remote-
+deletion tombstones as well as normalized messages and threads. Incremental commits
+remove those cached provider messages, repair or remove their threads, and advance
+the encrypted cursor atomically. An invalid cursor now collects the complete bounded
+90-day replacement before one commit, so a partial recovery never erases the cache
+and a completed recovery does not retain provider mail absent from Gmail. This
+changes no local correction, derived, draft, or pending-command ownership.
+
 One credential-free `ProviderMailLifecycleOwner` now defines how a future trusted
 composition must operate: live-mode activation precedes initial sync, retention
 does not overlap sync batches, disconnect/deletion first suspend and settle sync,
@@ -191,9 +199,10 @@ identity or cursor and do not implement authorization or synchronization.
 
 Gate 2D also defines the authorization-revoker interface used by account
 disconnect. Revocation must be idempotent: an already revoked or absent grant is
-success so a crash before journal advancement can retry safely. The current build
-uses deterministic test implementations only; no Google revocation request or
-credential is configured, and the orchestrator has no UI/IPC trigger.
+success so a crash before journal advancement can retry safely. A real bounded
+Google revoker is implemented behind that interface and tested through injected
+deterministic HTTP, but it remains uncomposed. No Google request or credential is
+configured, and the orchestrator has no UI/IPC trigger.
 
 ## Normalized record and account isolation
 

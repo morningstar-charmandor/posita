@@ -2,9 +2,9 @@ import { Worker } from 'node:worker_threads'
 import { isAccountId } from '../../application/accountState'
 import {
   MailSyncError,
-  isCommitProviderMailBatchV1,
+  isCommitProviderMailBatchV2,
   type CommitProviderMailBatchResultV1,
-  type CommitProviderMailBatchV1,
+  type CommitProviderMailBatchV2,
   type MailSyncCheckpointV1,
   type MailSyncProjection
 } from '../../application/mailSync'
@@ -120,9 +120,9 @@ export class WorkerThreadMailSyncProjection implements
   }
 
   async commitBatch(
-    batch: CommitProviderMailBatchV1
+    batch: CommitProviderMailBatchV2
   ): Promise<CommitProviderMailBatchResultV1> {
-    if (!isCommitProviderMailBatchV1(batch)) throw invalidRequest()
+    if (!isCommitProviderMailBatchV2(batch)) throw invalidRequest()
     const response = await this.enqueue({ kind: 'commit-batch', batch: structuredClone(batch) })
     if (response.operation !== 'commit-batch') throw unavailable()
     if (response.result.accountId !== batch.accountId ||

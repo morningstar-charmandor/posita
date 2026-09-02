@@ -144,7 +144,8 @@ Implemented:
 - one uncomposed credential-free sync coordinator with a 90-day initial request,
   per-account single-flight, bounded cross-account concurrency, normalized-batch
   validation, account-scoped replay deduplication, atomic projection/cursor
-  ordering, one bounded invalid-cursor resync, and explicit cancellation,
+  ordering, remote-deletion tombstones, one complete atomic bounded invalid-cursor
+  replacement, and explicit cancellation,
 - deterministic provider and atomic-projection fakes that prove isolation,
   replay, cursor recovery, typed failures, rollback, supersession, and shutdown
   behavior without credentials, provider access, or persistence,
@@ -183,6 +184,10 @@ Implemented:
 - a real but uncomposed Google OAuth revoker that reads only the selected protected
   token, uses the fixed HTTPS form-body endpoint, bounds time and response bytes,
   and treats only absent/HTTP-200/documented-invalid-token cases as success,
+- a strict provider/commit batch v2 that atomically applies bounded remote-deletion
+  tombstones, repairs affected threads, and advances the encrypted cursor,
+- bounded stale-cursor recovery that collects every provider page before one
+  authoritative 90-day replacement, leaving storage untouched if collection fails,
 - a final production-composition audit proving that startup inventory, encrypted
   status, one sync coordinator, one projection worker, retention, deletion,
   disconnect, and shutdown have a coherent activation path without a second owner,
@@ -284,8 +289,9 @@ Not implemented:
 ## Next recommended milestone
 
 The owner approved implementation of the real Google adapter pair. The idempotent
-revoker is complete and uncomposed. Next implement the **read-only Gmail adapter**
-behind the existing provider batch contract. This does not authorize credentials,
+revoker and its prerequisite deletion-aware reconciliation contract are complete
+and uncomposed. Next implement the **read-only Gmail adapter** behind provider batch
+v2. This does not authorize credentials,
 account connection, production composition, network testing, or mailbox ingestion.
 
 Encrypted account state, ownership, the crash-resume journal, deterministic
@@ -353,8 +359,9 @@ sync-status service are now composed read-only/inert. The lifecycle owner writes
 status through that service in tests, but remains unstarted. The final composition
 audit is complete: activation must reuse one projection worker, coordinator,
 lifecycle owner, retention gate, and shutdown path. The approved revoker is now
-implemented and uncomposed. The next milestone is the read-only Gmail adapter, not
-credentials or account connection.
+implemented and uncomposed. Provider batch v2 now closes the remote-deletion and
+stale-cursor replacement gap before that adapter. The next milestone is the read-
+only Gmail adapter, not credentials or account connection.
 The new presentation abstraction is `LiveMailSummaryList`; it consumes the existing
 `LiveMailSnapshotV2` without adding a parallel domain or data source. The other
 recent abstractions are the shared `LiveMailMessageDetailV1` and open-original
@@ -406,7 +413,7 @@ personal data, or intentional duplication was added.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 63 test files, 382 tests, strict typecheck, structure
+- Current verified baseline: 63 test files, 388 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,

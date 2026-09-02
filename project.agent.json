@@ -7,7 +7,7 @@
     "repository": "https://github.com/morningstar-charmandor/posita",
     "repositoryVisibility": "public",
     "canonicalBranch": "main",
-    "currentMilestone": "gate-2d-google-adapters-in-progress-revoker-complete-read-adapter-next",
+    "currentMilestone": "gate-2d-google-adapters-in-progress-reconciliation-v2-complete-read-adapter-next",
     "dataMode": "deterministic-sample-with-inert-activation-ready-encrypted-provider-foundation",
     "mailSendingEnabled": false
   },
@@ -196,6 +196,7 @@
     "completed-full-deletion-prevents-key-recreation-and-fixture-reseeding",
     "one-sync-coordinator-owns-all-provider-io",
     "provider-ingestion-accepts-only-the-versioned-canonical-mail-contract",
+    "provider-batch-v2-applies-remote-deletions-and-bounded-resync-atomically",
     "fixture-messages-never-receive-fabricated-provider-provenance",
     "sample-and-live-mail-are-separated-by-a-durable-one-way-installation-mode",
     "first-live-activation-atomically-removes-samples-and-never-reseeds-after-disconnect",
