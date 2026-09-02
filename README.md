@@ -170,9 +170,9 @@ Provider-account record v2 stores a provider-verified mailbox address and option
 user-defined display label in authenticated ciphertext, separate from the hidden
 provider subject. Live status shows that identity instead of the opaque account
 scope, with an explicit unavailable state for incomplete local records. The live
-renderer now offers explicitly selected, bounded encrypted-local source inspection
-and a two-step confirmed Gmail browser handoff while keeping summary content hidden
-until the live-summary workspace is separately reviewed. Reloading checks local
+renderer now presents bounded encrypted-local recent-mail summaries with visible
+account provenance, unread and attachment cues, and direct source selection, plus
+a two-step confirmed Gmail browser handoff. Reloading checks local
 state; it does not contact Gmail or retry sync. No provider, credential, network
 request, AI service, or mailbox mutation was activated.
 
@@ -183,8 +183,7 @@ account/message pair and returns exact found/missing state, canonical provenance
 visible encrypted account identity, sender/recipients, timestamps, subject, safe
 attachment metadata, and at most 128 KiB of plain text with explicit truncation.
 Provider IDs, HTML, paths, keys, and raw errors are excluded. The renderer covers
-loading, exact missing, safe error, retry, and superseded-result behavior while
-still keeping live summary content hidden.
+loading, exact missing, safe error, retry, and superseded-result behavior.
 After a source is found, an explicit confirmation can ask the default browser to
 open a strictly allow-listed Gmail target derived in main from encrypted provenance.
 No URL or provider ID crosses renderer IPC, and Posita reports only the browser

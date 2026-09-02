@@ -201,8 +201,8 @@ Implemented:
   provenance in the worker, constructs and exactly validates a Gmail HTTPS target
   in main, requires two-step user confirmation, and returns no URL/provider ID,
 - truthful live-empty, recorded-syncing, offline, attention-required, and cached-
-  data renderer states with local-status reload and bounded local source inspection;
-  canonical summary content remains hidden until its workspace review,
+  data renderer states with local-status reload, bounded canonical recent-mail
+  presentation, and local source inspection,
 - read-worker key inclusion in confirmed full deletion and graceful normal shutdown
   that settles accepted reads before key erasure,
 - an explicit fixture compatibility decision: existing encrypted sample messages
@@ -245,7 +245,6 @@ Simulated or deliberately inactive:
 Not implemented:
 
 - Gmail OAuth, message ingestion, incremental history sync, or user-triggered/live disconnect,
-- live-summary rendering,
 - production activation of the approved provider-mail lifecycle,
 - user-triggered account disconnect or any remote mailbox mutation control,
 - automatic pending-disconnect resume with a live idempotent revocation adapter,
@@ -286,8 +285,9 @@ confirmed local deletion are complete at their current layers. Continue in this 
    Encrypted user-readable account identity is complete at its credential-free
    storage and status boundary. The bounded canonical source-detail query is also
    complete at its contract, encrypted projection, and native-worker boundary.
-   Its loading, missing/stale, safe-error, and retry UI and confirmed main-derived
-   browser handoff are now composed. Next review live-summary rendering.
+   Its bounded summary list, loading, missing/stale, safe-error, and retry UI and
+   confirmed main-derived browser handoff are now composed. Next perform a
+   credential-free production-lifecycle activation preflight.
 5. Request explicit owner approval before composing a real Google adapter,
    credentials, browser authorization, connection activation, or live account.
 6. Keep real Gmail ingestion disabled until authorization activation is separately
@@ -310,14 +310,14 @@ single canonical projection and the existing sync-state repository remains the
 cursor source of truth. The automatic retention worker now performs bounded
 canonical decrypt/plan/delete/thread-rewrite/sanitization work without a plaintext
 index. Production composition now includes only the mode-aware worker read, the
-existing application-state IPC path, and a bounded local-inspection live renderer. No dependency,
+existing application-state IPC path, and a bounded summary/local-inspection live renderer. No dependency,
 provider adapter, sync start, external action, secret, personal mailbox data, or
 mutation was added. One intentional compatibility distinction remains:
 the legacy `Message` is a deterministic sample-presentation record, while only
 `ProviderMailMessageV1` may enter future provider ingestion. There is no conversion
-path because Posita will not invent provider provenance. The new live read model
-returns only a bounded summary projection and the renderer keeps its content
-hidden. No dependency, schema, provider adapter, credential, network request,
+path because Posita will not invent provider provenance. The live renderer now
+shows only the existing bounded summary projection with human account provenance
+and exact source selection. No dependency, schema, provider adapter, credential, network request,
 external action, secret, personal mailbox data, or mutation was added. Provider-
 account record v2 and live snapshot v2 now project the verified encrypted mailbox
 address plus optional label while keeping the provider subject hidden; label
@@ -325,9 +325,11 @@ editing remains unexposed. The canonical source-detail query now returns bounded
 plain text and safe metadata through the existing worker and a fixed validated
 trusted-main-frame preload/IPC/UI path without provider IDs or HTML. Open-original
 now resolves provider identity only inside the trusted worker/main boundary and
-requires explicit browser confirmation. The next milestone is live-summary UI,
-not OAuth activation.
-The new abstractions are the shared `LiveMailMessageDetailV1` and open-original
+requires explicit browser confirmation. The next milestone is a credential-free
+production-lifecycle activation preflight, not OAuth activation.
+The new presentation abstraction is `LiveMailSummaryList`; it consumes the existing
+`LiveMailSnapshotV2` without adding a parallel domain or data source. The other
+recent abstractions are the shared `LiveMailMessageDetailV1` and open-original
 command contracts, the trusted `ProviderMailSourceDetailSource` and
 `ProviderMailOriginalSourceLocatorSource`, `OpenProviderMailOriginalService`, and
 the narrow `GmailExternalUrlOpener`; the existing projection and worker remain the
@@ -357,7 +359,7 @@ graph and directly executed worker graph.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 59 test files, 364 tests, strict typecheck, structure
+- Current verified baseline: 60 test files, 366 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,

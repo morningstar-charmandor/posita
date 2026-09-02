@@ -9,8 +9,9 @@ authorize live mailbox access.
 Posita can now project its durable `live` installation mode through a bounded
 worker-backed application snapshot. That local read model is not Gmail access: it
 starts no sync, uses no credential, and exposes no remote provider IDs or cursor.
-Its renderer provides bounded local source inspection and a reviewed, confirmed
-browser handoff while live summary content remains hidden.
+Its renderer provides bounded recent-mail summaries, local source inspection, and
+a reviewed, confirmed browser handoff. These are encrypted-cache views, not proof
+of a current Gmail connection or provider sync.
 
 Settings now renders a credential-free consent preview identified as
 `google-gmail-readonly-v1`. The exact projection is carried through the existing

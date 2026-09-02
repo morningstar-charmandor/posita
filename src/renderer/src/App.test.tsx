@@ -213,7 +213,7 @@ describe('Posita vertical slice', () => {
     await waitFor(() => expect(loadApplicationState).toHaveBeenCalledTimes(2))
   })
 
-  it('does not render canonical summary content before source-detail review is complete', async () => {
+  it('renders reviewed canonical summaries without claiming provider activity', async () => {
     render(<App dataSource={{
       loadApplicationState: async () => ({
         ok: true,
@@ -253,9 +253,10 @@ describe('Posita vertical slice', () => {
 
     expect(await screen.findByRole('heading', { name: 'Encrypted live-mail data is available' }))
       .toBeInTheDocument()
-    expect(screen.getByText(/full live workspace stays disabled/i)).toBeInTheDocument()
-    expect(screen.queryByText('Private canonical subject')).not.toBeInTheDocument()
-    expect(screen.queryByText('Private canonical preview.')).not.toBeInTheDocument()
+    expect(screen.getByText(/bounded encrypted local cache/i)).toBeInTheDocument()
+    expect(screen.getByText('Private canonical subject')).toBeInTheDocument()
+    expect(screen.getByText('Private canonical preview.')).toBeInTheDocument()
+    expect(screen.getByText(/does not contact Gmail/i)).toBeInTheDocument()
   })
 
   it('shows safe pending lifecycle progress with account provenance', async () => {

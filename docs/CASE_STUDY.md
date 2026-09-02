@@ -319,12 +319,14 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - a live-mode-only two-step confirmed original-source handoff that resolves
   encrypted provider identity in the worker, derives and strictly allow-lists a
   Gmail target in main, and exposes neither the URL nor provider ID to the renderer,
-- truthful bounded local-inspection live-empty, recorded-syncing, offline, attention,
-  and cached-data UI that never falls back to samples or claims Gmail or AI is active,
+- a bounded canonical recent-mail interface with human account provenance, unread
+  and attachment cues, semantic timestamps, and exact local-source selection,
+- truthful live-empty, recorded-syncing, offline, attention, and cached-data UI
+  that never falls back to samples or claims Gmail or AI is active,
 - an explicit compatibility boundary that keeps fixture `Message` records sample-
   only rather than fabricating provider identity,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 59 automated test files containing 364 passing tests,
+- 60 automated test files containing 366 passing tests,
 - a desktop visual and accessibility-tree check of the local-only Settings entry,
   sample-account controls, normal no-recovery-needed outcome, and automatic
   retention card with readable next/last status and Gmail non-mutation copy,
@@ -346,14 +348,14 @@ will atomically remove samples, startup will never reseed them in live mode, and
 removing the last account leaves a truthful empty live state. The transition is
 still unexposed. A new credential-free lifecycle owner now proves startup,
 offline, retention, disconnect, deletion, shutdown, and key-teardown ordering.
-The live application read-model boundary is now verified at a status-only layer,
-and its account provenance is a human-readable encrypted address/optional label
-rather than an opaque scope. A bounded canonical source-detail query is now composed
+The live application read-model boundary now presents its bounded canonical recent
+mail with human-readable encrypted address/optional-label provenance rather than
+opaque scope. A bounded canonical source-detail query is composed
 through fixed validated desktop boundaries with loading, missing/stale, safe-error,
 retry, and explicit encrypted-local inspection. A separate two-step confirmed
 browser handoff derives the provider target only in trusted code and never claims
-Gmail navigation succeeded. The next milestone is live-summary presentation. Real OAuth,
-browser activation, credentials, live account
+Gmail navigation succeeded. The next milestone is a credential-free production-
+lifecycle activation preflight. Real OAuth, browser activation, credentials, live account
 connection, and production sync remain separate actions blocked behind explicit
 owner approval.
 
@@ -400,9 +402,9 @@ integration. A durable schema-v10 mode now proves samples can be removed once an
 never silently restored after disconnect or restart. The provider lifecycle now
 has one deterministic application owner, and the running product can distinguish
 sample from live-empty, offline, or cached canonical state through a bounded worker
-read without displaying private live summaries. Its status-only account provenance
-now uses encrypted human-readable identity while keeping provider subjects hidden.
+read. Its recent-mail presentation uses encrypted human-readable identity while
+keeping provider subjects hidden.
 The worker-backed canonical detail boundary is also composed with deterministic
-data only. Real mail remains blocked until live-summary review, production sync,
+data only. Real mail remains blocked until production lifecycle composition and sync,
 the undocumented Gmail web route is revalidated, and the remaining provider
 activation gates pass.

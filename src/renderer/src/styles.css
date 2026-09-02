@@ -22,6 +22,7 @@ html, body, #root { width: 100%; height: 100%; margin: 0; overflow: hidden; }
 button, input, textarea { font: inherit; }
 button { color: inherit; }
 button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:focus-visible { outline: 2px solid #789180; outline-offset: 2px; }
+.visually-hidden { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
 
 .startup-state { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center; background: var(--canvas); }
 .startup-state h1 { margin: 16px 0 7px; font-size: 25px; }
@@ -33,6 +34,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:fo
 .startup-icon.startup-error { color: #985842; background: #f4e7e1; }
 .startup-icon.startup-error svg { animation: none; }
 .startup-retry { margin-top: 20px; height: 34px; display: flex; align-items: center; gap: 7px; border: 1px solid #405b48; border-radius: 8px; padding: 0 13px; color: white; background: #486451; cursor: pointer; }
+.live-mail-status { justify-content: flex-start; overflow: auto; padding-top: 34px; padding-bottom: 34px; }
 .live-mail-status .eyebrow { margin-top: 14px; color: #486451; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .live-mail-account-list { width: min(440px, 100%); margin: 22px 0 0; padding: 0; list-style: none; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); text-align: left; }
 .live-mail-account-list li { display: flex; justify-content: space-between; gap: 18px; padding: 11px 13px; color: var(--muted); font-size: 11px; }
@@ -40,10 +42,30 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:fo
 .live-mail-account-list span { display: grid; gap: 2px; }
 .live-mail-account-list span small { color: var(--faint); font-size: 9.5px; }
 .live-mail-account-list strong { color: var(--ink); font-weight: 650; }
-.live-mail-source-inspection { width: min(620px, 100%); max-height: 46vh; margin-top: 18px; padding: 16px; overflow: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); text-align: left; }
+.live-mail-source-inspection { width: min(720px, 100%); margin-top: 18px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); text-align: left; }
 .live-mail-source-inspection h2, .live-mail-source-inspection h3 { margin: 0 0 7px; }
-.live-mail-source-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
-.live-mail-source-actions button, .live-mail-source-result button { border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; background: var(--paper); color: var(--ink); cursor: pointer; }
+.live-mail-summary-list > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.live-mail-summary-list > header .eyebrow { margin: 0 0 5px; }
+.live-mail-summary-list > header > span { flex: 0 0 auto; padding: 4px 7px; border-radius: 999px; color: #486451; background: var(--sage-soft); font-size: 9.5px; font-weight: 700; }
+.live-mail-summary-intro { margin-top: 3px !important; }
+.live-mail-summary-list ol { display: grid; gap: 1px; margin: 14px -16px 0; padding: 0; list-style: none; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--line); }
+.live-mail-summary-list li { background: var(--paper); }
+.live-mail-summary-list li > button { width: 100%; display: grid; gap: 6px; padding: 13px 16px; border: 0; background: var(--paper); text-align: left; cursor: pointer; }
+.live-mail-summary-list li > button:hover { background: #fafbf8; }
+.live-mail-summary-list li > button.selected { background: var(--sage-soft); }
+.live-mail-summary-list li > button.unread .live-mail-summary-subject { font-weight: 750; }
+.live-mail-summary-topline, .live-mail-summary-meta { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.live-mail-summary-topline strong { overflow: hidden; text-overflow: ellipsis; color: var(--ink); font-size: 11.5px; white-space: nowrap; }
+.live-mail-summary-topline time { flex: 0 0 auto; color: var(--faint); font-size: 9px; }
+.live-mail-summary-subject { display: flex; align-items: center; gap: 7px; color: var(--ink); font-size: 12px; }
+.live-mail-summary-subject i { width: 6px; height: 6px; flex: 0 0 auto; border-radius: 50%; background: #5d8269; }
+.live-mail-summary-preview { overflow: hidden; color: var(--muted); font-size: 10.5px; line-height: 1.45; text-overflow: ellipsis; white-space: nowrap; }
+.live-mail-summary-meta { align-items: flex-end; color: #617466; font-size: 9px; }
+.live-mail-summary-meta > span { display: flex; align-items: center; gap: 4px; }
+.live-mail-summary-meta > span:first-child { display: grid; gap: 2px; }
+.live-mail-summary-meta small { margin: 0; color: var(--faint); font-size: 8.5px; }
+.live-mail-summary-list > small { display: block; margin: 10px 0 0; }
+.live-mail-source-result button { border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; background: var(--paper); color: var(--ink); cursor: pointer; }
 .live-mail-source-result { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
 .live-mail-source-result pre { max-height: 220px; margin: 12px 0 0; padding: 12px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; border-radius: 8px; background: var(--canvas); color: var(--ink); font: inherit; line-height: 1.55; }
 .live-mail-source-result small { display: block; margin-top: 8px; }

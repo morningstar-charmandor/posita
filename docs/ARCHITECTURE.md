@@ -415,12 +415,12 @@ unchanged. The application-state method is asynchronous so file-backed decryptio
 never blocks Electron main.
 
 The renderer distinguishes live-empty, recorded-syncing, offline, attention, and
-cached-data states. It intentionally does not render summary content yet. A user
-may select a generic bounded local locator to inspect its encrypted plain-text
-source through a separate fixed query. The open-original path is now reviewed at
-its inert credential-free boundary; the live-summary workspace remains separately
-disabled. Its reload button
-re-queries local state only and never starts provider sync.
+cached-data states. It renders the already-bounded summary projection as a semantic
+recent-mail list with visible human account identity, unread and attachment cues,
+and direct selection of the exact encrypted local source. It never displays opaque
+account scope, remote provider identity, or full body content in the list. The
+open-original path remains a separate confirmed capability. Reload re-queries local
+state only and never starts provider sync.
 
 The canonical source-detail boundary now has one exact version-1 request keyed by
 opaque Posita account and canonical message ID. The same serialized file worker

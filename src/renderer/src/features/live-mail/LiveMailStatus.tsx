@@ -6,6 +6,7 @@ import type { LiveMailMessageDetailV1 } from '@shared/liveMailDetail'
 import type { LiveMailMessageDetailDataSource } from '../../application/liveMailMessageDetailDataSource'
 import type { OpenLiveMailOriginalDataSource } from '../../application/openLiveMailOriginalDataSource'
 import { OpenOriginalConfirmation } from './OpenOriginalConfirmation'
+import { LiveMailSummaryList } from './LiveMailSummaryList'
 
 const statusCopy: Record<LiveMailSnapshotV2['status'], {
   title: string
@@ -17,7 +18,7 @@ const statusCopy: Record<LiveMailSnapshotV2['status'], {
   },
   ready: {
     title: 'Encrypted live-mail data is available',
-    detail: 'Bounded encrypted source inspection is available. The full live workspace stays disabled while opening Gmail is reviewed.'
+    detail: 'Recent mail is shown from Posita’s bounded encrypted local cache.'
   },
   syncing: {
     title: 'A sync state is recorded',
@@ -71,6 +72,11 @@ export function LiveMailStatus({
     : snapshot.status === 'attention-required'
       ? AlertTriangle
       : Database
+  const selected = detail.status === 'idle'
+    ? undefined
+    : detail.status === 'found'
+      ? { accountId: detail.detail.accountId, messageId: detail.detail.messageId }
+      : { accountId: detail.accountId, messageId: detail.messageId }
 
   const loadDetail = (accountId: string, messageId: string): void => {
     const requestSequence = ++sequence.current
@@ -140,18 +146,14 @@ export function LiveMailStatus({
       )}
       {snapshot.messages.length > 0 && (
         <section className="live-mail-source-inspection" aria-labelledby="source-inspection-title">
-          <h2 id="source-inspection-title">Retained source inspection</h2>
-          <p>Message summaries stay hidden while the external Gmail path remains under review.</p>
-          <div className="live-mail-source-actions">
-            {snapshot.messages.map((message, index) => (
-              <button
-                key={`${message.accountId}:${message.id}`}
-                onClick={() => loadDetail(message.accountId, message.id)}
-              >
-                Inspect encrypted source {index + 1}
-              </button>
-            ))}
-          </div>
+          <h2 id="source-inspection-title" className="visually-hidden">Live mail and source inspection</h2>
+          <LiveMailSummaryList
+            accounts={snapshot.accounts}
+            messages={snapshot.messages}
+            hasMore={snapshot.hasMore}
+            selected={selected}
+            onSelect={loadDetail}
+          />
           {detail.status === 'loading' && (
             <p role="status" aria-live="polite">Loading encrypted source…</p>
           )}

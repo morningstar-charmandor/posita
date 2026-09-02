@@ -754,3 +754,24 @@
   local source detail remains the safe fallback. No dependency, schema migration,
   provider adapter, credential, real account, personal data, network request by
   Posita, AI path, or mailbox mutation is added.
+
+## ADR-040: Render live summaries only from the bounded canonical projection
+
+- Status: accepted for Gate 2D
+- Context: account identity, exact local source detail, and the separately confirmed
+  original-source handoff are now reviewed. Keeping canonical subject and preview
+  hidden no longer improves provenance, while converting live records into fixture
+  workspace objects or adding another renderer data source would create competing
+  models and blur sample/live state.
+- Decision: render `LiveMailSnapshotV2.messages` directly as a semantic recent-mail
+  list. Show sender, subject, bounded preview, semantic time, unread state,
+  attachment count, and human account identity. Never show opaque account scope as
+  identity. Selecting a row invokes the existing exact account/message-scoped local
+  detail query; the list itself starts no provider work. Retain the existing 50-item
+  and 32-account limits, live-empty/offline/attention states, and local-only reload.
+- Consequence: deterministic canonical records can exercise the complete local
+  summary-to-source-to-confirmed-original path without Gmail or a second mail model.
+  The summary is provider-derived source presentation, not AI-generated content,
+  and does not claim current sync. No dependency, schema, IPC method, repository,
+  provider adapter, credential, personal data, network request, AI path, or mailbox
+  mutation is added.

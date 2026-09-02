@@ -1767,6 +1767,43 @@ development or tests. Google does not document the Gmail web route as a stable A
 the route must be revalidated before live activation. Live summary content remains
 hidden and is the next credential-free presentation milestone.
 
+## Gate 2D milestone — Bounded live-summary presentation
+
+Date: 2026-09-02
+Checkpoint: use the Git commit whose subject is `feat: present bounded live mail`
+
+Goal: complete the credential-free local read path by presenting canonical recent
+mail only after account identity, source detail, and original-source boundaries
+were reviewed.
+
+Delivered:
+
+- a semantic recent-mail list built directly from the existing bounded live snapshot,
+- visible human account provenance without rendering opaque account scope,
+- sender, subject, bounded preview, semantic timestamp, unread, and attachment cues,
+- exact row-to-local-source selection with selected state and existing safe detail UX,
+- explicit copy that the view is an encrypted local cache and does not contact Gmail,
+- truthful live-empty, offline, syncing-recorded, attention, and local reload behavior.
+
+Important decisions:
+
+- reuse `LiveMailSnapshotV2` and the existing detail data source rather than adding
+  a second UI model, repository, IPC method, or provider path,
+- describe the list as retained mail rather than AI-generated summaries,
+- keep the 50-message/32-account bounds and the existing provider-ID exclusions,
+- add no dependency, schema, compatibility path, credential, provider adapter,
+  personal mailbox data, network request, AI path, or mailbox mutation.
+
+Evidence: 60 test files and 366 tests pass, including bounded content, provenance,
+selection, missing/error/retry, supersession, and no-provider-contact copy. Strict
+typecheck, renderer security checks, and the production Electron build pass through
+`npm run verify`.
+
+Limitations: the production database contains no connected account or canonical
+live record, so the running app remains in deterministic sample mode. The next safe
+milestone is a credential-free production-lifecycle activation preflight, not Gmail
+connection or OAuth activation.
+
 ## How future entries should be written
 
 For each material milestone, record:

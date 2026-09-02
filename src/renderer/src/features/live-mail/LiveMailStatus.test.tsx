@@ -36,7 +36,7 @@ const openOriginalDataSource = {
 }
 
 describe('LiveMailStatus source inspection', () => {
-  it('keeps summaries hidden and loads one bounded plain-text source on request', async () => {
+  it('shows a bounded summary and loads its plain-text source on request', async () => {
     const loadMessageDetail = vi.fn(async () => ({
       ok: true as const,
       value: {
@@ -54,8 +54,11 @@ describe('LiveMailStatus source inspection', () => {
       }
     }))
     render(<LiveMailStatus snapshot={snapshot} onReload={vi.fn()} detailDataSource={{ loadMessageDetail }} openOriginalDataSource={openOriginalDataSource} />)
-    expect(screen.queryByText('Hidden summary subject')).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Inspect encrypted source 1' }))
+    expect(screen.getByText('Hidden summary subject')).toBeInTheDocument()
+    expect(screen.getByText('Hidden summary preview')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', {
+      name: 'Open Hidden summary subject from sender@example.test in owner@example.test'
+    }))
     expect(await screen.findByRole('heading', { name: 'Verified source subject' })).toBeInTheDocument()
     expect(screen.getByText('Verified plain text.')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Open original in Gmail…' })).toBeInTheDocument()
@@ -73,7 +76,9 @@ describe('LiveMailStatus source inspection', () => {
         ok: false, error: { version: 1, code: 'DATABASE_UNAVAILABLE', message: 'Safe local error.', retryable: true }
       })
     render(<LiveMailStatus snapshot={snapshot} onReload={vi.fn()} detailDataSource={{ loadMessageDetail }} openOriginalDataSource={openOriginalDataSource} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Inspect encrypted source 1' }))
+    fireEvent.click(screen.getByRole('button', {
+      name: 'Open Hidden summary subject from sender@example.test in owner@example.test'
+    }))
     expect(await screen.findByText('Source is no longer retained')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Check again' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Safe local error.')
@@ -89,7 +94,9 @@ describe('LiveMailStatus source inspection', () => {
         ok: true, value: { version: 1, status: 'missing', accountId: 'account-1', messageId: 'message-1' }
       })
     render(<LiveMailStatus snapshot={snapshot} onReload={vi.fn()} detailDataSource={{ loadMessageDetail }} openOriginalDataSource={openOriginalDataSource} />)
-    const inspect = screen.getByRole('button', { name: 'Inspect encrypted source 1' })
+    const inspect = screen.getByRole('button', {
+      name: 'Open Hidden summary subject from sender@example.test in owner@example.test'
+    })
     fireEvent.click(inspect)
     expect(screen.getByRole('status')).toHaveTextContent('Loading encrypted source')
     fireEvent.click(inspect)

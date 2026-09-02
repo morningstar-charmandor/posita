@@ -55,9 +55,9 @@ exists deeper in the tree.
 - Versioned encrypted provider-account state now separates the hidden provider
   subject from a verified mailbox address and optional user-defined display label;
   the status renderer shows this human identity without exposing the opaque scope.
-- The renderer exposes bounded encrypted-local source inspection and a two-step
-  confirmed Gmail browser handoff, but keeps live summary content hidden until
-  the summary workspace itself is reviewed.
+- The renderer exposes bounded encrypted-local summary presentation, source
+  inspection, and a two-step confirmed Gmail browser handoff. Every summary keeps
+  visible account provenance and selects its exact local source.
 - A versioned canonical source-detail contract and worker-backed query are
   composed through one fixed validated preload/IPC/UI path with exact found/missing
   state, a 128 KiB plain-text limit, recipients, safe attachment metadata, loading,
