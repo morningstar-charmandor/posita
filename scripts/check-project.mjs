@@ -268,6 +268,14 @@ if (localDataBootstrap.includes('DeterministicFakeStringProtector')) {
 if (localDataBootstrap.includes('DeterministicFakeAccountAuthorizationAdapter')) {
   fail('production composition must not use the deterministic fake authorization adapter')
 }
+if (localDataBootstrap.includes('GoogleDesktopAccountAuthorizationAdapter') ||
+    localDataBootstrap.includes('GoogleOAuthLoopbackRedirectServer') ||
+    localDataBootstrap.includes('GoogleOAuthSystemBrowserLauncher') ||
+    mainIndex.includes('GoogleDesktopAccountAuthorizationAdapter') ||
+    mainIndex.includes('GoogleOAuthLoopbackRedirectServer') ||
+    mainIndex.includes('GoogleOAuthSystemBrowserLauncher')) {
+  fail('Google desktop authorization infrastructure must remain outside production composition')
+}
 if (localDataBootstrap.includes('AccountConnectionService') ||
     mainIndex.includes('AccountConnectionService')) {
   fail('account connection must remain outside production composition before approval')

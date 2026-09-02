@@ -6,9 +6,9 @@ import {
 } from '../../application/accountAuthorization'
 import {
   GoogleDesktopAccountAuthorizationAdapter,
-  type GoogleAccountAuthorizationFetch,
-  type GoogleOAuthRedirectUriSource
+  type GoogleAccountAuthorizationFetch
 } from './googleDesktopAccountAuthorizationAdapter'
+import type { GoogleOAuthRedirectUriSource } from './googleOAuthLoopbackRedirectServer'
 
 const clientId = '123456789-posita.apps.googleusercontent.com'
 const redirectUri = 'http://127.0.0.1:49152/oauth/google/callback'
@@ -109,7 +109,10 @@ describe('GoogleDesktopAccountAuthorizationAdapter', () => {
     expect(url.searchParams.get('state')).toMatch(/^[A-Za-z0-9_-]{43}$/)
     expect(url.searchParams.get('code_challenge')).toMatch(/^[A-Za-z0-9_-]{43}$/)
     expect(url.search).not.toContain('verifier')
-    expect(redirects.prepare).toHaveBeenCalledWith(launch.sessionId)
+    expect(redirects.prepare).toHaveBeenCalledWith(
+      launch.sessionId,
+      url.searchParams.get('state')
+    )
   })
 
   it('exchanges a verified callback and returns only the trusted grant', async () => {

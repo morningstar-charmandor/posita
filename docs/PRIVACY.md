@@ -266,6 +266,16 @@ and consumes ambiguous exchanges so a code cannot be retried blindly. Determinis
 tests perform no external action; real credential handling still requires separate
 approval and end-to-end composition review.
 
+The uncomposed loopback listener keeps at most one bounded callback URL in trusted
+memory, listens only on an operating-system-selected `127.0.0.1` port, and verifies
+the exact Host, callback path, and cryptographic state before delivery. Wrong
+requests receive generic no-store responses; successful browser copy does not
+reflect the code, state, provider error, identity, or account. The listener expires
+and closes deterministically. The paired browser launcher accepts only the complete
+reviewed Google HTTPS authorization request before calling an injected desktop
+delegate. Tests use a local-only listener and fake delegate; no real browser or
+provider request is performed.
+
 The credential-free account-connection coordinator now proves the only accepted
 cross-store write order: vault credential first, encrypted provider-account state
 second. It preflights both stores, refuses partially existing state, and performs

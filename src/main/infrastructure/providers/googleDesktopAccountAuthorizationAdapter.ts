@@ -1,4 +1,4 @@
-import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
+import { createHash, randomBytes } from 'node:crypto'
 import { GOOGLE_CONNECT_SCOPES } from '../../../shared/contracts'
 import {
   AccountAuthorizationError,
@@ -14,27 +14,26 @@ import {
   type CompleteAccountAuthorizationRequestV1
 } from '../../application/accountAuthorization'
 import { MAX_SECRET_LENGTH } from '../../application/secretVault'
+import type { GoogleOAuthRedirectUriSource } from './googleOAuthLoopbackRedirectServer'
+import {
+  GOOGLE_AUTHORIZATION_ENDPOINT,
+  GOOGLE_OAUTH_CLIENT_ID_PATTERN,
+  isExactGoogleLoopbackRedirect,
+  parseBoundedGoogleOAuthUrl,
+  safelyEqualGoogleOAuthValue
+} from './googleOAuthProtocol'
 
-const GOOGLE_AUTHORIZATION_ENDPOINT = 'https://accounts.google.com/o/oauth2/v2/auth'
 const GOOGLE_TOKEN_ENDPOINT = 'https://oauth2.googleapis.com/token'
 const GOOGLE_USERINFO_ENDPOINT = 'https://openidconnect.googleapis.com/v1/userinfo'
 const GOOGLE_GMAIL_PROFILE_ENDPOINT = 'https://gmail.googleapis.com/gmail/v1/users/me/profile'
-const CALLBACK_PATH = '/oauth/google/callback'
 const SESSION_LIFETIME_MS = 5 * 60 * 1_000
 const DEFAULT_TIMEOUT_MS = 20_000
 const MAX_RESPONSE_BYTES = 32 * 1_024
-const MAX_URL_LENGTH = 4_096
-const CLIENT_ID_PATTERN = /^[A-Za-z0-9._-]{1,480}\.apps\.googleusercontent\.com$/
 const OPAQUE_VALUE_PATTERN = /^[\u0021-\u007E]+$/
 const PROVIDER_SUBJECT_PATTERN = /^[A-Za-z0-9._:@+-]{1,255}$/
 const MAILBOX_ADDRESS_PATTERN = /^[^\s@]+@[^\s@]+$/
 
 type JsonRecord = Record<string, unknown>
-
-export interface GoogleOAuthRedirectUriSource {
-  prepare(sessionId: string): Promise<string>
-  release(sessionId: string): Promise<void>
-}
 
 export interface GoogleOAuthRandomSource {
   bytes(length: number): Uint8Array
@@ -112,29 +111,6 @@ const callbackRejected = (): AccountAuthorizationError => new AccountAuthorizati
   'The authorization callback could not be verified.',
   false
 )
-
-const parseUrl = (value: string): URL | undefined => {
-  if (value.length === 0 || value.length > MAX_URL_LENGTH) return undefined
-  try {
-    return new URL(value)
-  } catch {
-    return undefined
-  }
-}
-
-const isExactLoopbackRedirect = (value: string): boolean => {
-  const url = parseUrl(value)
-  return url !== undefined && url.protocol === 'http:' &&
-    url.hostname === '127.0.0.1' && url.port.length > 0 &&
-    url.pathname === CALLBACK_PATH && url.search === '' && url.hash === '' &&
-    url.username === '' && url.password === ''
-}
-
-const safeEqual = (left: string, right: string): boolean => {
-  const leftBytes = Buffer.from(left, 'utf8')
-  const rightBytes = Buffer.from(right, 'utf8')
-  return leftBytes.length === rightBytes.length && timingSafeEqual(leftBytes, rightBytes)
-}
 
 const randomValue = (source: GoogleOAuthRandomSource, length: number): string => {
   const value = source.bytes(length)
@@ -254,7 +230,7 @@ export class GoogleDesktopAccountAuthorizationAdapter implements AccountAuthoriz
     },
     private readonly timeoutMs = DEFAULT_TIMEOUT_MS
   ) {
-    if (!CLIENT_ID_PATTERN.test(clientId) ||
+    if (!GOOGLE_OAUTH_CLIENT_ID_PATTERN.test(clientId) ||
         !Number.isSafeInteger(timeoutMs) || timeoutMs < 1_000 || timeoutMs > 60_000 ||
         !Number.isFinite(clock.now().getTime())) throw invalidRequest()
   }
@@ -279,11 +255,11 @@ export class GoogleDesktopAccountAuthorizationAdapter implements AccountAuthoriz
     const challenge = createHash('sha256').update(verifier, 'ascii').digest('base64url')
     let redirectUri: string
     try {
-      redirectUri = await this.redirects.prepare(sessionId)
+      redirectUri = await this.redirects.prepare(sessionId, state)
     } catch (error) {
       throw providerUnavailable(error)
     }
-    if (!isExactLoopbackRedirect(redirectUri)) {
+    if (!isExactGoogleLoopbackRedirect(redirectUri)) {
       try { await this.redirects.release(sessionId) } catch { /* Preserve invalid boundary. */ }
       throw invalidRequest()
     }
@@ -426,13 +402,14 @@ export class GoogleDesktopAccountAuthorizationAdapter implements AccountAuthoriz
     value: string,
     session: ActiveSession
   ): { type: 'code'; code: string } | { type: 'declined' } | { type: 'rejected' } {
-    const callback = parseUrl(value)
-    const expected = parseUrl(session.redirectUri)
+    const callback = parseBoundedGoogleOAuthUrl(value)
+    const expected = parseBoundedGoogleOAuthUrl(session.redirectUri)
     if (callback === undefined || expected === undefined || callback.hash !== '' ||
         callback.origin !== expected.origin || callback.pathname !== expected.pathname ||
         callback.username !== '' || callback.password !== '') return { type: 'rejected' }
     const stateValues = callback.searchParams.getAll('state')
-    if (stateValues.length !== 1 || !safeEqual(stateValues[0]!, session.state)) {
+    if (stateValues.length !== 1 ||
+        !safelyEqualGoogleOAuthValue(stateValues[0]!, session.state)) {
       return { type: 'rejected' }
     }
     const codeValues = callback.searchParams.getAll('code')

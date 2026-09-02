@@ -8,11 +8,12 @@ next move. Technical details remain in their linked source documents.
 
 ## Current state
 
-Posita has completed the **Gate 2D credential-free lifecycle foundation and Google
-desktop authorization protocol core**. Exact identity consent is approved; the
-project is now at the loopback/browser/configuration and production-activation
-decision. The product is a runnable Electron desktop prototype using React, strict
-TypeScript, and SQLite. All visible mail is deterministic sample data.
+Posita has completed the **Gate 2D credential-free lifecycle foundation, Google
+desktop authorization protocol core, and bounded loopback/browser infrastructure**.
+Exact identity consent is approved; the project is now at the client-configuration
+and production-activation decision. The product is a runnable Electron desktop
+prototype using React, strict TypeScript, and SQLite. All visible mail is
+deterministic sample data.
 
 The canonical public source repository is
 `https://github.com/morningstar-charmandor/posita`. The local `main` branch is
@@ -102,6 +103,11 @@ Implemented:
 - a real uncomposed Google desktop authorization protocol adapter proving PKCE,
   state and loopback callback verification, bounded exchange, exact scopes, and
   verified OpenID/Gmail identity agreement through injected boundaries,
+- a real uncomposed ephemeral IPv4 loopback listener with exact host/path/state,
+  request/lifetime/queue bounds, safe non-reflective browser responses, cancellation,
+  and deterministic shutdown,
+- an uncomposed system-browser launcher that validates the exact reviewed Google
+  authorization URL before an injected Electron delegate; tests never open the OS,
 - encrypted provider-account validation aligned to the reviewed string consent
   identity, with obsolete numeric simulated records rejected before persistence,
 - a trusted credential-free account-connection coordinator that preflights vault
@@ -261,6 +267,8 @@ Simulated or deliberately inactive:
 - Google desktop authorization has a real PKCE/state/code/identity protocol adapter,
   exercised only through injected loopback and deterministic HTTP boundaries and
   still uncomposed,
+- loopback reception and the system-browser handoff have real bounded adapters,
+  exercised only through local deterministic HTTP and a fake desktop delegate,
 - local deletion operates only on deterministic fixture-backed Posita data because
   no real account or credential exists,
 - account disconnect remains application-only and has no preload, IPC, or UI trigger,
@@ -289,8 +297,8 @@ Simulated or deliberately inactive:
 
 Not implemented:
 
-- a loopback listener, system-browser authorization launch, configured Google
-  client, production-composed message ingestion, or user-triggered/live disconnect,
+- a configured Google client, real system-browser authorization action, production-
+  composed message ingestion, or user-triggered/live disconnect,
 - production activation of the approved provider-mail lifecycle,
 - user-triggered account disconnect or any remote mailbox mutation control,
 - automatic pending-disconnect resume with a live idempotent revocation adapter,
@@ -313,13 +321,14 @@ Not implemented:
 ## Next recommended milestone
 
 The owner-approved Google adapter set, deletion-aware reconciliation, trusted
-refresh-to-access-token boundary, exact identity consent, and desktop authorization-
-code/PKCE protocol core are complete and uncomposed. The next milestone requires a
-new explicit owner decision before implementing loopback-listener and system-browser
-infrastructure or configuring a real Google client. After that, connection,
-disconnect, and the existing lifecycle must be composed as one reviewed activation.
-Current approval does not authorize credentials, account connection, production
-composition, live network testing, or mailbox ingestion.
+refresh-to-access-token boundary, exact identity consent, desktop authorization-
+code/PKCE protocol core, and bounded loopback/browser infrastructure are complete
+and uncomposed. The next milestone requires a new explicit owner decision before
+configuring a real Google client or composing any UI/IPC/account lifecycle. After
+that decision, connection, disconnect, and the existing lifecycle must be composed
+as one reviewed activation. Current approval does not authorize credentials,
+account connection, production composition, real browser action, live provider
+testing, or mailbox ingestion.
 
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,
@@ -342,10 +351,11 @@ confirmed local deletion are complete at their current layers. Continue in this 
    confirmed main-derived browser handoff are now composed. The bounded trusted
    startup account inventory, durable lifecycle status, safe explicit sync-retry
    policy, and final production-composition audit are complete.
-5. Treat the approved Google authorization, reader, revoker, and access-token source
-   as complete and uncomposed. Stop for owner approval before adding the loopback
-   listener, browser authorization, client configuration, production composition,
-   connection activation, network testing, or a live account.
+5. Treat the approved Google authorization, loopback/browser infrastructure,
+   reader, revoker, and access-token source as complete and uncomposed. Stop for
+   owner approval before client configuration, UI/IPC or lifecycle composition,
+   real browser authorization, connection activation, network testing, or a live
+   account.
 6. Keep real Gmail ingestion disabled until authorization activation is separately
    approved and the remaining lifecycle activation
    and consent gates pass.
@@ -392,10 +402,10 @@ implemented and uncomposed. Provider batch v2 closes the remote-deletion and sta
 cursor replacement gap, and the real bounded Gmail reader now emits that contract.
 The vault-backed memory-only access-token source now supplies the reader's trusted
 credential boundary without configuration or activation. The exact identity consent
-and bounded desktop authorization-code/PKCE protocol core are now implemented with
-injected boundaries. The next milestone is a separately approved loopback/browser/
-configuration and lifecycle-composition slice, not an automatic credential or
-account connection.
+bounded desktop authorization-code/PKCE protocol core and short-lived loopback/
+exact-browser boundaries are now implemented with injected seams. The next
+milestone is separately approved client configuration and complete lifecycle/UI
+composition, not an automatic credential or account connection.
 The new presentation abstraction is `LiveMailSummaryList`; it consumes the existing
 `LiveMailSnapshotV2` without adding a parallel domain or data source. The other
 recent abstractions are the shared `LiveMailMessageDetailV1` and open-original
@@ -447,6 +457,13 @@ reviewed as one cohesive bounded protocol boundary containing its validators and
 exchange steps; no dependency, schema, compatibility path, production composition,
 listener, browser action, configured client, credential, account, live request,
 personal data, mailbox mutation, or intentional duplication was added.
+The new `GoogleOAuthLoopbackRedirectServer` and `GoogleOAuthSystemBrowserLauncher`
+are narrow infrastructure boundaries around Node HTTP and Electron external-open.
+The shared `googleOAuthProtocol` policy is the single source of truth for exact
+authorization endpoint, loopback, client, state, PKCE, and scope validation. No
+dependency, schema, compatibility path, production composition, listener at
+startup, real browser action, configured client, credential, account, provider
+request, personal data, mailbox mutation, or intentional duplication was added.
 
 ## How to resume
 
@@ -466,7 +483,7 @@ personal data, mailbox mutation, or intentional duplication was added.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 67 test files, 421 tests, strict typecheck, structure
+- Current verified baseline: 69 test files, 437 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,

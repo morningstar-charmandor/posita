@@ -971,3 +971,31 @@
   and dedicated-account testing. No dependency, schema migration, compatibility
   path, generic IPC surface, duplicate connection service, credential, personal
   data, mailbox mutation, or live network action is added.
+
+## ADR-049: Isolate loopback reception and browser handoff behind exact boundaries
+
+- Status: accepted for Gate 2D Google activation
+- Context: the verified protocol adapter depended on an injected callback URI and
+  intentionally could not open a browser. A desktop OAuth implementation needs a
+  local callback receiver and an OS handoff, but composing either prematurely would
+  activate an external flow. A generic listener or generic external-URL opener would
+  create unnecessarily broad trusted-main capabilities.
+- Decision: implement one uncomposed `GoogleOAuthLoopbackRedirectServer` that owns
+  at most one five-minute session on an operating-system-selected IPv4
+  `127.0.0.1` port. Require exact Host, callback path, and cryptographic state;
+  bound header bytes, header/request/socket time, requests per connection, queued
+  callbacks, and callback URL length; return no-store, restrictive-CSP browser copy
+  that never reflects callback values; support cancellable waiting and deterministic
+  close. Implement one separate `GoogleOAuthSystemBrowserLauncher` that accepts only
+  the complete reviewed Google authorization URL—exact endpoint, configured client,
+  loopback redirect, scopes, state, S256 challenge, and fixed options—before calling
+  an injected Electron delegate. Centralize those URL rules in one pure protocol
+  policy. Keep all three components outside startup, preload, IPC, and UI.
+- Consequence: the browser/callback infrastructure is real and local integration-
+  tested without contacting Google or invoking the operating system. Production
+  activation must reuse these narrow boundaries and the existing connection service;
+  it must not add a generic URL opener, second callback listener, or renderer-owned
+  OAuth flow. Full verification requires permission to bind an ephemeral localhost
+  port in constrained environments. No dependency, schema migration, compatibility
+  path, configured client, credential, account, real browser action, provider request,
+  personal data, mailbox mutation, or intentional duplicate service is added.

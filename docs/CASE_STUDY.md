@@ -16,7 +16,8 @@ and actions.
 **Product promise:** Your inboxes, understood as one.
 
 **Current stage:** Gate 2D Google adapter, trusted token boundary, exact identity
-consent, and desktop authorization protocol implementation complete but inactive,
+consent, desktop authorization protocol, and bounded loopback/browser infrastructure
+complete but inactive,
 with a real
 SQLite path, OS-protected key hierarchy, authenticated mail and provider-account
 state, plus tested crash-resumable disconnect and full local-deletion orchestrators.
@@ -40,11 +41,15 @@ work stays off Electron main, while the automatic retention worker applies the
 fixed 90-day window to canonical ciphertext and repairs affected threads. The
 coordinator-to-worker path is now verified end to end with the deterministic
 provider. The one-way sample-to-live boundary is now verified in schema v10;
-live Gmail remains correctly blocked by loopback/browser infrastructure, OAuth
-client configuration, and production lifecycle composition. The uncomposed desktop
+live Gmail remains correctly blocked by OAuth client configuration and production
+lifecycle/UI composition. The uncomposed desktop
 adapter now proves S256 PKCE, callback state/origin validation, one-time bounded
 code exchange, and agreement between verified OpenID and Gmail profile identity
 using deterministic injected boundaries only.
+The concrete callback listener binds only an ephemeral IPv4 localhost port with
+strict state and resource limits; its copy reflects no callback data. The browser
+launcher verifies the entire reviewed Google request before an injected delegate,
+which remains fake in tests.
 
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
 
@@ -334,6 +339,9 @@ At the current Gate 2D foundation checkpoint, Posita has:
   read-only access, plus an uncomposed desktop authorization adapter with S256
   PKCE, state/callback verification, bounded exchange, verified identity agreement,
   replay-safe fresh-start failure behavior, and deterministic tests,
+- a local-only ephemeral OAuth callback listener with exact host/path/state and
+  resource limits plus an exact-URL system-browser boundary, both uncomposed and
+  tested without a real browser or provider request,
 - a mode-aware worker-backed live snapshot capped at 50 canonical summaries and
   32 account scopes, with bodies, recipients, remote provider IDs, cursors,
   key material, paths, and raw failures excluded,
@@ -353,7 +361,7 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - an explicit compatibility boundary that keeps fixture `Message` records sample-
   only rather than fabricating provider identity,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 67 automated test files containing 421 passing tests,
+- 69 automated test files containing 437 passing tests,
 - a desktop visual and accessibility-tree check of the local-only Settings entry,
   sample-account controls, normal no-recovery-needed outcome, and automatic
   retention card with readable next/last status and Gmail non-mutation copy,
@@ -388,13 +396,15 @@ reuse one projection worker, coordinator, lifecycle owner, retention/deletion ga
 and shutdown path, paired with read-only provider access and revocation. The
 approved adapter set and its trusted access-token source are now complete but
 uncomposed: the revoker, deletion-aware reconciliation foundation, bounded read-
-only Gmail adapter, vault-to-memory token exchange, and desktop PKCE/state/identity
-protocol are deterministic-tested without credentials or network use. Provider batch v2 removes remote
+only Gmail adapter, vault-to-memory token exchange, desktop PKCE/state/identity
+protocol, local callback listener, and exact browser handoff are deterministic-
+tested without credentials or provider network use. Provider batch v2 removes remote
 deletions atomically and replaces a stale bounded window only after every page is
 available. OpenID identity scopes are now explicitly approved and transparently
-disclosed. The next decision is whether to implement loopback-listener and system-
-browser infrastructure and then configure and review one complete production
-activation. Browser activation, credentials, live account connection, network
+disclosed, and the loopback/browser infrastructure is complete but inert. The next
+decision is whether to configure a Google desktop client and review one complete
+production lifecycle/UI activation. Real browser activation, credentials, live
+account connection, provider-network
 testing, and production sync remain blocked behind explicit owner approval.
 
 Later evidence should include measured sync reliability, duplicate prevention,

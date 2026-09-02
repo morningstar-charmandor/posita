@@ -2126,6 +2126,50 @@ deterministic test values. No loopback listener, browser launch, configured clie
 credential, account, dependency, schema migration, production composition, live
 network request, personal data, or mailbox mutation was added.
 
+## Gate 2D milestone — Bounded OAuth loopback and browser boundaries
+
+Date: 2026-09-02
+Checkpoint: use the Git commit whose subject is `feat: bound Google OAuth desktop handoff`
+
+Goal: complete the local desktop callback and browser infrastructure needed by the
+verified authorization protocol without configuring a client, opening a real
+browser, connecting an account, or contacting Google.
+
+Delivered:
+
+- one short-lived `GoogleOAuthLoopbackRedirectServer` bound only to an ephemeral
+  IPv4 `127.0.0.1` port,
+- exact Host, callback path, and cryptographic-state prefiltering with bounded
+  header/request/socket time, header size, connection requests, callback length,
+  one-item queue, cancellation, expiry, and deterministic close,
+- generic no-store, restrictive-CSP browser responses that never reflect an
+  authorization code, state, provider error, identity, or account,
+- one `GoogleOAuthSystemBrowserLauncher` that verifies the full reviewed Google
+  HTTPS request before invoking an injected Electron-compatible delegate,
+- a shared pure protocol policy so endpoint, client, redirect, scope, state, and
+  PKCE rules are not duplicated between generation and browser handoff,
+- local-only integration proving listener-to-real-protocol compatibility and
+  deterministic fake-delegate tests proving no browser action occurs.
+
+Important decisions:
+
+- bind only the numeric IPv4 loopback address, never all interfaces, localhost
+  aliases, IPv6, a fixed port, or a custom protocol,
+- prefilter state at the listener and verify it again in the protocol adapter,
+- keep the browser opener provider-specific and exact rather than exposing a
+  generic external URL capability,
+- leave client configuration, IPC/UI, account persistence, lifecycle composition,
+  and real provider testing behind the next explicit decision.
+
+Evidence: 69 test files and 437 tests pass with strict typecheck, renderer security
+checks, local-only callback integration, and the production Electron build.
+
+Limitations: the OS browser delegate is fake, the client ID and provider responses
+are deterministic fixtures, and the only HTTP traffic is to an ephemeral local test
+listener. No dependency, schema migration, configured client, credential, account,
+production composition, browser action, Google request, personal data, or mailbox
+mutation was added.
+
 ## How future entries should be written
 
 For each material milestone, record:

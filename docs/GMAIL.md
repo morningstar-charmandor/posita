@@ -43,9 +43,14 @@ and is not composed at startup. A real `GoogleDesktopAccountAuthorizationAdapter
 now implements S256 PKCE, cryptographic state, an exact `127.0.0.1` callback check,
 bounded code exchange, verified OpenID `sub`/email, and agreement with Gmail profile
 identity. Its loopback URI and HTTP transport are injected and deterministic in
-tests. It never opens a browser itself. A loopback listener, system-browser launch,
-production client configuration, credential persistence, account creation,
-preload/IPC command, enabled UI action, and live request remain unimplemented.
+tests. It never opens a browser itself. The matching uncomposed loopback listener
+now binds one ephemeral IPv4 localhost port with strict host/path/state, header,
+request, queue, and five-minute lifetime bounds. Its browser response never reflects
+callback data. The separate system-browser launcher validates the entire exact
+Google URL and uses an injected Electron delegate; deterministic tests never invoke
+the OS. Production client configuration, credential persistence, account creation,
+preload/IPC command, enabled UI action, browser launch, and live provider request
+remain unimplemented.
 
 Gate 2D also defines a credential-free `AccountConnectionService` above the
 authorization adapter. It verifies that the opaque Posita account has neither an

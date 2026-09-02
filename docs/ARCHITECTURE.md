@@ -314,8 +314,13 @@ deterministic fake proves one pending session, expiry, callback matching,
 cancellation, and typed failures without network access. The real uncomposed
 Google adapter implements S256 PKCE, state, exact loopback callback verification,
 bounded code exchange, and verified OpenID/Gmail identity agreement through
-injected infrastructure boundaries. No implementation is composed in `index.ts`,
-so the disabled consent UI cannot start authorization.
+injected infrastructure boundaries. The concrete loopback boundary listens only on
+one ephemeral IPv4 localhost port, prefilters exact host/path/state, bounds requests
+and lifetime, queues at most one callback, and returns copy that never reflects the
+authorization response. A separate system-browser boundary validates the complete
+Google authorization URL before invoking an injected Electron delegate. Neither is
+composed in `index.ts`, so the disabled consent UI cannot start authorization or
+open a browser.
 
 `AccountConnectionService` is the next trusted application layer above that
 adapter. It validates begin output against the requested account, binds completion

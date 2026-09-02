@@ -57,9 +57,13 @@ session contract, deterministic fake, and real uncomposed Google desktop protoco
 adapter. The real adapter generates PKCE and state, verifies the exact loopback
 callback, exchanges one code through injected HTTP, and requires a verified OpenID
 subject/email to agree with Gmail profile identity. Ambiguous exchange failures
-consume the session and require a fresh start. No loopback listener, system-browser
-launcher, production client configuration, startup composition, preload/IPC action,
-credential, account, or live network request is present.
+consume the session and require a fresh start. A separate uncomposed listener now
+binds one short-lived operating-system-selected `127.0.0.1` port, validates the
+host/path/state, bounds requests, and returns generic non-reflective browser copy.
+An exact-URL system-browser launcher has an injected Electron delegate and is tested
+without opening a browser. No production client configuration, startup composition,
+preload/IPC action, credential, account, browser action, or live provider request is
+present.
 
 A trusted account-connection coordinator now composes that interface with the
 existing vault and encrypted account-state contracts in credential-free tests.
