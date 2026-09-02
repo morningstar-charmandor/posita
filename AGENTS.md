@@ -35,6 +35,10 @@ exists deeper in the tree.
   are implemented but are not composed into startup, preload, IPC, or UI.
 - A credential-free account-connection coordinator proves authorization-to-vault-
   to-encrypted-state ordering and rollback, but it has no production composition.
+- A production-composed trusted-main sync-status service durably records syncing,
+  success, cancellation, and typed failure state with one fixed safe retry policy;
+  the inactive lifecycle owner uses its contract and fails closed before provider
+  work when status persistence is unavailable.
 - Read-only account-connection consistency inspection distinguishes absent,
   connected, credential-only, and provider-state-only states without automatic repair.
 - A confirmed discard-only policy and one-use durable confirmation producer for

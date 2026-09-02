@@ -139,6 +139,17 @@ export const isSyncAccountRequestV1 = (value: unknown): value is SyncAccountRequ
   isRecord(value) && hasOnlyKeys(value, ['version', 'accountId', 'provider']) &&
   value.version === 1 && isAccountId(value.accountId) && value.provider === 'google'
 
+export const isSyncAccountResultV1 = (value: unknown): value is SyncAccountResultV1 =>
+  isRecord(value) && hasOnlyKeys(value, [
+    'version', 'accountId', 'provider', 'mode', 'batchesCommitted', 'insertedMessages',
+    'updatedMessages', 'replayedMessages', 'cursor'
+  ]) && value.version === 1 && isAccountId(value.accountId) &&
+  value.provider === 'google' &&
+  (value.mode === 'initial' || value.mode === 'incremental' || value.mode === 'bounded-resync') &&
+  ['batchesCommitted', 'insertedMessages', 'updatedMessages', 'replayedMessages']
+    .every((key) => Number.isSafeInteger(value[key]) && (value[key] as number) >= 0) &&
+  isCursor(value.cursor)
+
 export const isProviderMailBatchRequestV1 = (
   value: unknown
 ): value is ProviderMailBatchRequestV1 => {

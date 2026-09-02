@@ -31,7 +31,7 @@ SDK, mailbox data, or model provider was used for this audit.
 | Renderer trust boundary | Ready | sandbox, context isolation, allow-listed validated preload/IPC, structural check | Keep provider payloads and credentials in main |
 | Credential vault | Ready, empty | OS-backed fail-closed protector and `SecretVault`; deterministic fake tests | A future refresh token has a protected account-scoped destination |
 | Encrypted private cache | Ready for current records | per-record AES-256-GCM, protected installation key, authenticated metadata, migrations, sanitization | Real records still require the provider-normalized schema below |
-| Provider account/sync state | Ready, empty | versioned encrypted account and cursor records with runtime validation | Can store future connection identity and bounded cursor state |
+| Provider account/sync state | Ready, empty | versioned encrypted account/cursor records plus production-composed lifecycle status writer and fixed retry dispositions | Can store future connection identity and truthful bounded sync state without starting provider work |
 | Consent | Ready for review only | exact `google-gmail-readonly-v1` / `gmail.readonly` projection and disabled Settings action | Activation remains a separate explicit decision |
 | Authorization session | Contract-ready, fake only | bounded begin/complete/cancel contract and deterministic fake | Real PKCE, loopback listener, browser launch, and exchange are absent |
 | Connection persistence | Contract-ready, fake only | vault-before-state ordering, duplicate preflight, rollback, safe errors | Not composed into production startup, preload, IPC, or UI |
@@ -42,7 +42,7 @@ SDK, mailbox data, or model provider was used for this audit.
 | Canonical provider mail model | Lifecycle-ready, empty | exact validators, schema-v9 authenticated envelopes, opaque row IDs, packaged serial worker, fixed-window retention, and journaled account deletion | Needs credential-free sync lifecycle integration before provider activation |
 | Sample/live boundary | Ready, unexposed | schema-v10 one-way mode, connected-pair gate, atomic sample removal, restart/no-reseed and retry tests | Must be invoked only by reviewed connection/sync composition |
 | Live application read model | Ready at credential-free presentation boundary | durable mode-aware query, encrypted human-readable account identity, bounded canonical recent-mail list and source detail, fixed validated IPC/preload, worker ownership, loading/missing/error/retry UI, and confirmed main-derived original-source handoff | Contains no live record until separately approved provider activation |
-| Sync coordinator | Lifecycle-owned, uncomposed | 90-day path, real worker integration, bounded concurrency, cancellation, retention exclusion, disconnect/deletion quiescence, and key teardown are tested | Needs trusted account inventory, retry command/status policy, and provider composition |
+| Sync coordinator | Lifecycle-owned, uncomposed | 90-day path, real worker integration, bounded concurrency, cancellation, retention exclusion, disconnect/deletion quiescence, key teardown, durable status, and explicit retry policy are tested | Needs a separately approved provider composition; no retry command is exposed |
 | Gmail adapter | **Not implemented** | adapter contract is documented only | Blocks OAuth and mail access |
 | AI provider | Deferred | no model adapter, prompt, embedding, or model output path | Fixture summaries/drafts remain explicitly simulated |
 
@@ -147,9 +147,9 @@ Next perform a production-lifecycle activation preflight without credentials:
 5. treat the live-mode-only main-derived, strictly allow-listed, two-step confirmed
    browser handoff as complete at its deterministic boundary; revalidate the
    undocumented Gmail web route before live activation,
-6. treat the bounded trusted startup account inventory as complete; next define
-   durable lifecycle status and an explicit safe sync-retry policy before composing
-   the owner,
+6. treat the bounded trusted startup account inventory, durable lifecycle status,
+   and explicit safe sync-retry policy as complete; next perform the final
+   credential-free lifecycle composition audit before any provider decision,
 7. keep Google code, credentials, connection activation, network access, polling,
    AI, and real mailbox data unchanged.
 

@@ -459,6 +459,16 @@ shutdown settles sync and retention before destroying the projection key. This
 owner is application-only and uncomposed; it adds no provider polling schedule,
 account discovery, preload/IPC method, renderer status, or live adapter.
 
+`ProviderMailSyncStatusService` is the single durable status writer for future
+lifecycle-owned sync. It reuses encrypted account sync state, preserves the last
+safe cursor and success time while work is running or fails, and validates the
+account-bound coordinator result before advancing either. Cancellation returns the
+record to idle. Typed failures map to one fixed disposition: retry allowed, retry
+later, reconnect required, review required, or cancelled. The policy is descriptive
+only; it never schedules provider work or exposes a mailbox command. The lifecycle
+owner fails closed before provider I/O when the status write cannot be established.
+Bootstrap composes the service in trusted main but still does not start the owner.
+
 Startup now supplies the previously missing read-only account discovery boundary.
 The encrypted account repository lists only validated opaque scopes for provider-
 account records, while the vault lists only validated Google refresh-token scopes

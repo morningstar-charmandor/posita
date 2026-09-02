@@ -8,7 +8,7 @@
     "repositoryVisibility": "public",
     "canonicalBranch": "main",
     "currentMilestone": "gate-2d-encrypted-account-lifecycle-in-progress",
-    "dataMode": "durable-mode-aware-sample-or-worker-backed-live-summary-with-trusted-startup-account-inventory",
+    "dataMode": "durable-mode-aware-sample-or-worker-backed-live-summary-with-trusted-startup-inventory-and-sync-status",
     "mailSendingEnabled": false
   },
   "toolchain": {
@@ -91,6 +91,7 @@
     "mailSyncCoordinator": "src/main/application/mailSyncCoordinator.ts",
     "providerMailLifecycleOwner": "src/main/application/providerMailLifecycleOwner.ts",
     "providerMailStartupInventory": "src/main/application/providerMailStartupInventory.ts",
+    "providerMailSyncStatus": "src/main/application/providerMailSyncStatus.ts",
     "providerMailReadModel": "src/main/application/providerMailReadModel.ts",
     "providerMailSourceDetail": "src/main/application/providerMailSourceDetail.ts",
     "liveMailMessageDetailService": "src/main/application/liveMailMessageDetailService.ts",
@@ -203,6 +204,8 @@
     "sync-coordinator-to-file-worker-integration-is-credential-free-deterministic-and-uncomposed",
     "one-provider-mail-lifecycle-owner-orders-sync-retention-disconnect-deletion-and-key-teardown",
     "provider-startup-inventory-is-bounded-presence-only-and-refuses-one-sided-account-state",
+    "provider-sync-status-is-durable-account-scoped-and-fails-closed-before-provider-work",
+    "provider-sync-retry-disposition-is-fixed-explicit-and-never-an-automatic-mailbox-command",
     "disconnect-mail-data-phase-removes-fixture-and-canonical-account-records-idempotently",
     "canonical-provider-mail-retention-is-fixed-window-worker-owned-account-scoped-and-cursor-preserving",
     "live-gmail-ingestion-is-blocked-until-provider-activation-and-consent-gates-pass",

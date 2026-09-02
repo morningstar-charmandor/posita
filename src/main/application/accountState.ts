@@ -28,6 +28,11 @@ export type SyncFailureCode =
   | 'MALFORMED_PAYLOAD'
   | 'INVALID_CURSOR'
   | 'PROVIDER_UNAVAILABLE'
+  | 'INVALID_SYNC_REQUEST'
+  | 'SYNC_CANCELLED'
+  | 'SYNC_BATCH_LIMIT_REACHED'
+  | 'SYNC_CHECKPOINT_CONFLICT'
+  | 'SYNC_STORAGE_FAILED'
 
 export interface ProviderSyncStateV1 {
   version: 1
@@ -118,7 +123,12 @@ const syncFailureCodes = new Set<SyncFailureCode>([
   'OFFLINE',
   'MALFORMED_PAYLOAD',
   'INVALID_CURSOR',
-  'PROVIDER_UNAVAILABLE'
+  'PROVIDER_UNAVAILABLE',
+  'INVALID_SYNC_REQUEST',
+  'SYNC_CANCELLED',
+  'SYNC_BATCH_LIMIT_REACHED',
+  'SYNC_CHECKPOINT_CONFLICT',
+  'SYNC_STORAGE_FAILED'
 ])
 
 export const isProviderSyncStateV1 = (value: unknown): value is ProviderSyncStateV1 => {

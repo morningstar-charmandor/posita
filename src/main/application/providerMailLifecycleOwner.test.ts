@@ -11,7 +11,8 @@ import {
   type ProviderMailDisconnectLifecycle,
   type ProviderMailProjectionKeyLifecycle,
   type ProviderMailRetentionLifecycle,
-  type ProviderMailSyncLifecycle
+  type ProviderMailSyncLifecycle,
+  type ProviderMailSyncStatusLifecycle
 } from './providerMailLifecycleOwner'
 
 const request = (accountId = 'work'): SyncAccountRequestV1 => ({
@@ -126,20 +127,39 @@ class FakeProjectionKey implements ProviderMailProjectionKeyLifecycle {
   }
 }
 
+class FakeSyncStatus implements ProviderMailSyncStatusLifecycle {
+  readonly states = new Map<string, string>()
+  fail = false
+  recordStarted(syncRequest: SyncAccountRequestV1): void {
+    if (this.fail) throw new Error('test-only sync-status failure')
+    this.states.set(syncRequest.accountId, 'syncing')
+  }
+  recordSucceeded(syncRequest: SyncAccountRequestV1): void {
+    if (this.fail) throw new Error('test-only sync-status failure')
+    this.states.set(syncRequest.accountId, 'idle')
+  }
+  recordFailed(syncRequest: SyncAccountRequestV1, errorCode: string): void {
+    if (this.fail) throw new Error('test-only sync-status failure')
+    this.states.set(syncRequest.accountId, errorCode === 'SYNC_CANCELLED' ? 'idle' : `error:${errorCode}`)
+  }
+}
+
 const harness = (mode: MailDataModeStateV1['mode'] = 'sample') => {
   const events: string[] = []
   const sync = new FakeSync(events)
   const mailMode = new FakeMailMode(events, mode)
   const retention = new FakeRetention(events)
   const projectionKey = new FakeProjectionKey(events)
+  const syncStatus = new FakeSyncStatus()
   const owner = new ProviderMailLifecycleOwner(
     sync,
     mailMode,
     retention,
     new FakeDisconnect(events),
-    projectionKey
+    projectionKey,
+    syncStatus
   )
-  return { events, sync, mailMode, retention, projectionKey, owner }
+  return { events, sync, mailMode, retention, projectionKey, syncStatus, owner }
 }
 
 const flush = async (): Promise<void> => {
@@ -184,7 +204,7 @@ describe('ProviderMailLifecycleOwner', () => {
   })
 
   it('keeps offline startup truthful and retryable after durable live activation', async () => {
-    const { owner, sync, mailMode, events } = harness('sample')
+    const { owner, sync, mailMode, events, syncStatus } = harness('sample')
     sync.behavior.set('work', 'offline')
 
     await expect(owner.start([request('work')])).resolves.toEqual({
@@ -201,10 +221,29 @@ describe('ProviderMailLifecycleOwner', () => {
     })
     expect(mailMode.state.mode).toBe('live')
     expect(events.at(-1)).toBe('retention:start')
+    expect(syncStatus.states.get('work')).toBe('error:OFFLINE')
+  })
+
+  it('fails closed before provider work when durable sync status is unavailable', async () => {
+    const { owner, syncStatus, events } = harness('live')
+    await owner.start([])
+    events.length = 0
+    syncStatus.fail = true
+
+    await expect(owner.syncAccounts([request('work')])).resolves.toEqual([{
+      version: 1,
+      accountId: 'work',
+      provider: 'google',
+      status: 'retry-required',
+      errorCode: 'SYNC_STORAGE_FAILED',
+      retryable: true
+    }])
+    expect(events).toEqual(['retention:suspend', 'retention:resume'])
+    expect(events.some((event) => event.startsWith('sync:start:'))).toBe(false)
   })
 
   it('pauses retention around connection activation and its first sync', async () => {
-    const { owner, events } = harness('sample')
+    const { owner, events, syncStatus } = harness('sample')
     await owner.start([])
     events.length = 0
 
@@ -219,10 +258,11 @@ describe('ProviderMailLifecycleOwner', () => {
       'sync:settled:work',
       'retention:resume'
     ])
+    expect(syncStatus.states.get('work')).toBe('idle')
   })
 
   it('cancels and settles provider work before disconnect mutates local state', async () => {
-    const { owner, sync, events } = harness('live')
+    const { owner, sync, events, syncStatus } = harness('live')
     await owner.start([])
     events.length = 0
     sync.behavior.set('work', 'blocked')
@@ -240,6 +280,7 @@ describe('ProviderMailLifecycleOwner', () => {
     expect(events.indexOf('sync:settled:work')).toBeLessThan(events.indexOf('disconnect:work'))
     expect(events.indexOf('retention:suspend')).toBeLessThan(events.indexOf('disconnect:work'))
     expect(events.slice(-2)).toEqual(['sync:resume', 'retention:resume'])
+    expect(syncStatus.states.get('work')).toBe('idle')
   })
 
   it('acts as the quiescence gate for separately confirmed full deletion', async () => {

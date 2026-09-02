@@ -174,6 +174,11 @@ Implemented:
   encrypted provider-account scopes with protected credential scopes, returns
   deterministic sync requests only for complete pairs, and reports any one-sided
   state as recovery-required without unprotecting credentials or starting sync,
+- one production-composed trusted-main sync-status service that records syncing,
+  validated success checkpoints, cancellation, and typed failures in the existing
+  encrypted account state, plus one fixed descriptive retry policy,
+- lifecycle fail-closed behavior that refuses provider work when the initial
+  durable status write is unavailable, without scheduling an automatic retry,
 - bounded startup outcomes for connected/live, interrupted sample activation,
   disconnected live-empty, and offline retry-required states without reseeding,
 - a mode-aware application-state query that preserves the exact fixture snapshot
@@ -237,9 +242,9 @@ Simulated or deliberately inactive:
 - the schema-v10 sample-to-live service is trusted-main-only and unexposed; it
   has been verified with deterministic connected state but has no production
   connection, sync-start, preload, IPC, or UI caller,
-- the provider-mail lifecycle owner is application-only and deterministic; it has
-  no trusted production account inventory, scheduler/status surface, Electron
-  startup composition, or provider adapter,
+- the provider-mail lifecycle owner is application-only and deterministic; trusted
+  inventory and status services are composed separately, but the owner has no
+  scheduler, Electron startup activation, retry command, or provider adapter,
 - account consistency is not independently exposed; the recovery command uses it
   inside main without mutation or provider action,
 - local account recovery is active only for inconsistent local records and has no
@@ -290,10 +295,10 @@ confirmed local deletion are complete at their current layers. Continue in this 
    storage and status boundary. The bounded canonical source-detail query is also
    complete at its contract, encrypted projection, and native-worker boundary.
    Its bounded summary list, loading, missing/stale, safe-error, and retry UI and
-   confirmed main-derived browser handoff are now composed. Next perform a
-   credential-free production-lifecycle activation preflight. The bounded trusted
-   startup account inventory is now complete; next define lifecycle status and a
-   safe explicit sync-retry policy before composing the owner.
+   confirmed main-derived browser handoff are now composed. The bounded trusted
+   startup account inventory, durable lifecycle status, and safe explicit sync-
+   retry policy are complete. Next perform the final credential-free production-
+   lifecycle composition audit before any provider decision.
 5. Request explicit owner approval before composing a real Google adapter,
    credentials, browser authorization, connection activation, or live account.
 6. Keep real Gmail ingestion disabled until authorization activation is separately
@@ -331,9 +336,10 @@ editing remains unexposed. The canonical source-detail query now returns bounded
 plain text and safe metadata through the existing worker and a fixed validated
 trusted-main-frame preload/IPC/UI path without provider IDs or HTML. Open-original
 now resolves provider identity only inside the trusted worker/main boundary and
-requires explicit browser confirmation. The trusted startup inventory is now
-composed read-only. The next milestone is durable lifecycle status and a safe
-explicit sync-retry policy, not OAuth activation.
+requires explicit browser confirmation. The trusted startup inventory and encrypted
+sync-status service are now composed read-only/inert. The lifecycle owner writes
+status through that service in tests, but remains unstarted. The next milestone is
+a final credential-free lifecycle composition audit, not OAuth activation.
 The new presentation abstraction is `LiveMailSummaryList`; it consumes the existing
 `LiveMailSnapshotV2` without adding a parallel domain or data source. The other
 recent abstractions are the shared `LiveMailMessageDetailV1` and open-original
@@ -353,6 +359,11 @@ scope-list operation, and bootstrap retains the exact result without starting th
 existing lifecycle owner. No dependency, schema, compatibility path, duplicate
 repository/service, credential decryption, public contract, provider action, or
 intentional duplication was added.
+The new status abstraction is `ProviderMailSyncStatusService`; it reuses the existing
+encrypted account-state repository and current live-status read model. The lifecycle
+owner depends on its narrow contract. No dependency, schema, compatibility path,
+duplicate state store, IPC/UI command, provider action, or intentional duplication
+was added.
 
 ## How to resume
 
@@ -372,7 +383,7 @@ intentional duplication was added.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 61 test files, 372 tests, strict typecheck, structure
+- Current verified baseline: 62 test files, 377 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,

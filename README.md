@@ -160,6 +160,15 @@ worker's retained key. Offline startup returns a safe retry-required outcome and
 never restores samples. The owner remains outside Electron startup, IPC, UI, and
 Google composition.
 
+Trusted startup now also composes a credential-free sync-status service over the
+existing encrypted account-state repository. The lifecycle owner records each
+account as syncing before provider work, persists the new cursor and success time
+after a valid result, returns cancellation to idle, and records typed safe failures.
+A fixed policy distinguishes immediate manual retry, delayed retry, reconnect,
+review, and cancellation; it does not schedule work. If status persistence is
+unavailable, provider work does not start. No retry command, provider, credential,
+network request, or Gmail access is activated.
+
 The existing application-state query is now mode-aware. Sample installations keep
 the deterministic fixture workspace; live installations use a fixed worker-backed
 canonical summary query and can truthfully show live-empty, recorded-syncing,

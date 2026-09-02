@@ -40,6 +40,12 @@ export interface ProviderMailProjectionKeyLifecycle {
   destroyEncryptionContext(): void
 }
 
+export interface ProviderMailSyncStatusLifecycle {
+  recordStarted(request: SyncAccountRequestV1): unknown
+  recordSucceeded(request: SyncAccountRequestV1, result: SyncAccountResultV1): unknown
+  recordFailed(request: SyncAccountRequestV1, errorCode: MailSyncErrorCode): unknown
+}
+
 export type ProviderMailLifecycleAccountOutcomeV1 = {
   version: 1
   accountId: string
@@ -125,7 +131,8 @@ export class ProviderMailLifecycleOwner {
     private readonly mailMode: Pick<MailDataModeService, 'load' | 'activateLive'>,
     private readonly retention: ProviderMailRetentionLifecycle,
     private readonly disconnect: ProviderMailDisconnectLifecycle,
-    private readonly projectionKey: ProviderMailProjectionKeyLifecycle
+    private readonly projectionKey: ProviderMailProjectionKeyLifecycle,
+    private readonly syncStatus: ProviderMailSyncStatusLifecycle
   ) {}
 
   start(accountsValue: unknown): Promise<ProviderMailLifecycleStartupResultV1> {
@@ -308,15 +315,18 @@ export class ProviderMailLifecycleOwner {
     request: SyncAccountRequestV1
   ): Promise<ProviderMailLifecycleAccountOutcomeV1> {
     try {
+      this.syncStatus.recordStarted(request)
+      const result = await this.sync.syncAccount(request)
+      this.syncStatus.recordSucceeded(request, result)
       return {
         version: 1,
         accountId: request.accountId,
         provider: request.provider,
         status: 'synced',
-        result: await this.sync.syncAccount(request)
+        result
       }
     } catch (error) {
-      const failure = error instanceof MailSyncError
+      let failure = error instanceof MailSyncError
         ? error
         : new MailSyncError(
           'SYNC_STORAGE_FAILED',
@@ -324,6 +334,16 @@ export class ProviderMailLifecycleOwner {
           true,
           { cause: error }
         )
+      try {
+        this.syncStatus.recordFailed(request, failure.code)
+      } catch (statusError) {
+        failure = new MailSyncError(
+          'SYNC_STORAGE_FAILED',
+          'Provider-mail synchronization status failed safely.',
+          true,
+          { cause: statusError }
+        )
+      }
       return {
         version: 1,
         accountId: request.accountId,

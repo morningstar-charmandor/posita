@@ -1842,6 +1842,48 @@ Limitations: the inventory result is not passed to `ProviderMailLifecycleOwner`,
 no sync status/retry command is public, and no provider exists. The next safe
 milestone is lifecycle status plus explicit retry policy before owner composition.
 
+## Gate 2D milestone — Durable sync status and explicit retry policy
+
+Date: 2026-09-02
+Checkpoint: use the Git commit whose subject is `feat: persist safe sync status`
+
+Goal: make future lifecycle-owned sync truthfully durable and give every accepted
+failure one reviewed recovery direction before any provider is activated.
+
+Delivered:
+
+- one trusted-main `ProviderMailSyncStatusService` over the existing encrypted
+  account-state repository,
+- durable syncing, validated success cursor/time, cancellation-to-idle, and typed
+  failure transitions that preserve the last safe checkpoint,
+- one exhaustive descriptive policy for retry allowed, retry later, reconnect,
+  review, and cancellation,
+- lifecycle-owner integration that writes status around every provider sync and
+  refuses provider work if the initial status write fails,
+- inert production bootstrap composition of the status service without starting
+  sync or exposing a retry command.
+
+Important decisions:
+
+- keep the existing encrypted sync record and live read model as the sole status
+  source rather than create a scheduler or parallel store,
+- validate the coordinator result against its account request before advancing the
+  cursor or success time,
+- make retry disposition explicit but descriptive; no failure code autonomously
+  starts provider work,
+- add no dependency, schema, compatibility path, IPC/UI surface, provider adapter,
+  credential, network request, personal data, AI path, or mailbox mutation.
+
+Evidence: 62 test files and 377 tests pass with strict typecheck, renderer security
+checks, and the production Electron build. Focused coverage proves checkpoint
+preservation, exact policy mapping, cancellation, malformed result refusal,
+repository failure, lifecycle success/failure transitions, and fail-closed refusal
+before provider work.
+
+Limitations: the lifecycle owner remains unstarted in production, no retry command
+is exposed, and Gmail/OAuth/provider access remains absent. The next safe milestone
+is a final credential-free lifecycle composition audit before a provider decision.
+
 ## How future entries should be written
 
 For each material milestone, record:

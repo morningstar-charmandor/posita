@@ -34,6 +34,7 @@ import {
   ProviderMailStartupInventoryService,
   type ProviderMailStartupInventoryV1
 } from './application/providerMailStartupInventory'
+import { ProviderMailSyncStatusService } from './application/providerMailSyncStatus'
 import { MailDataModeService } from './application/mailDataMode'
 import type { SecretVault } from './application/secretVault'
 import { AesGcmCacheProtector } from './infrastructure/security/aesGcmCacheProtector'
@@ -81,6 +82,7 @@ export interface ReadyLocalDataRuntime extends LocalDataRuntimeBase {
   providerMailSourceDetailSource?: ProviderMailSourceDetailSource
   providerMailOriginalSourceLocatorSource?: ProviderMailOriginalSourceLocatorSource
   providerMailStartupInventory: ProviderMailStartupInventoryV1
+  providerMailSyncStatusService: ProviderMailSyncStatusService
 }
 
 export interface DeletedLocalDataRuntime extends LocalDataRuntimeBase {
@@ -192,6 +194,10 @@ export const bootstrapLocalDataWithDependencies = async (
       accountStateRepository,
       secretVault
     ).inspect()
+    const providerMailSyncStatusService = new ProviderMailSyncStatusService(
+      accountStateRepository,
+      systemClock
+    )
     const sampleMailService = new MailApplicationService(
       repository,
       systemClock
@@ -272,6 +278,7 @@ export const bootstrapLocalDataWithDependencies = async (
       deleteLocalDataService: activeDeletion,
       mailDataModeService,
       providerMailStartupInventory,
+      providerMailSyncStatusService,
       ...(mailDataMode.mode === 'live' ? { providerMailSourceDetailSource: source } : {}),
       ...(mailDataMode.mode === 'live'
         ? { providerMailOriginalSourceLocatorSource: source }

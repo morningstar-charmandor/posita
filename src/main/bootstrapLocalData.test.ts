@@ -88,6 +88,7 @@ describe('bootstrapLocalData lifecycle recovery', () => {
       status: 'ready',
       accounts: []
     })
+    expect(initial.providerMailSyncStatusService).toBeDefined()
     initial.accountStateRepository.saveProviderAccount({
       version: 2,
       accountId: 'work',

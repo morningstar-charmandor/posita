@@ -116,6 +116,13 @@ live-empty startup starts no provider work; offline startup returns a safe retry
 required outcome. The owner receives no token and remains outside Electron
 startup, preload, IPC, UI, Google, and network composition.
 
+The owner now writes account-scoped encrypted sync status through one trusted-main
+service: syncing before provider work, idle with a validated cursor and success time
+afterward, idle on cancellation, and a typed error on failure. A fixed descriptive
+policy separates retry, delayed retry, reconnect, review, and cancellation. It does
+not automatically retry or contact Google, and status-storage failure prevents the
+provider call from starting.
+
 ## Desktop OAuth flow
 
 Posita will use Google's installed-desktop application flow with Authorization

@@ -796,3 +796,25 @@
   is non-retryable until repaired. No dependency, schema, IPC/UI surface, provider
   adapter, credential value access, network request, personal data, sync start, AI
   path, compatibility layer, or mailbox mutation is added.
+
+## ADR-042: Persist lifecycle sync status before provider work
+
+- Status: accepted for Gate 2D
+- Context: the encrypted sync-state record already supported idle, syncing, and
+  error presentation, but the lifecycle owner did not write it. A future provider
+  start could therefore be invisible locally, and retry behavior could be inferred
+  inconsistently by separate callers.
+- Decision: add one trusted-main status service over the existing encrypted account
+  repository. Record syncing before provider I/O; record a validated account-bound
+  cursor and injected-clock success time afterward; preserve the last safe checkpoint
+  across start and failure; and treat lifecycle cancellation as idle. Map every
+  accepted sync failure code to exactly one descriptive disposition: retry allowed,
+  retry later, reconnect required, review required, or cancelled. Require the
+  lifecycle owner to fail closed with `SYNC_STORAGE_FAILED` before provider work if
+  status persistence is unavailable. Compose the service at local bootstrap, but
+  do not start the owner or expose a retry command.
+- Consequence: future live status has one durable writer and one explicit retry
+  policy without creating a scheduler or autonomous mailbox action. Existing schema,
+  account repository, renderer snapshot, and coordinator remain the sources of truth.
+  No dependency, migration, compatibility path, provider adapter, credential,
+  network request, personal data, IPC/UI surface, AI path, or mailbox mutation is added.
