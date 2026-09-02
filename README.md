@@ -177,11 +177,11 @@ unavailable, provider work does not start. No retry command, provider, credentia
 network request, or Gmail access is activated.
 
 The final production-composition audit confirms there is no smaller standalone
-credential-free milestone left. Future activation must pair a read-only Gmail
-adapter with an idempotent revoker, then reuse the existing projection worker,
+credential-free milestone left. The approved read-only Gmail adapter and idempotent
+revoker are now complete and uncomposed. Future activation must reuse the existing projection worker,
 sync coordinator, lifecycle owner, encrypted status, retention gate, deletion
-gate, and shutdown path. Implementing that adapter requires explicit approval;
-credentials and connecting an account remain later, separate decisions.
+gate, and shutdown path. Credentials and connecting an account remain later,
+separate decisions.
 
 The first approved adapter slice is a real but uncomposed Google OAuth revoker.
 It reads one account-scoped refresh token only from the protected vault, sends it
@@ -189,6 +189,16 @@ in a form-encoded body to Google's fixed HTTPS revocation endpoint, bounds the
 response, and treats only Google's documented `invalid_token` response as the
 required already-revoked success. It uses injected networking in tests, adds no
 dependency, and is not reachable from startup, IPC, UI, or a real account.
+
+The matching `GoogleMailReadAdapter` now implements bounded 90-day full reads and
+resumable Gmail history reads behind the existing provider-independent coordinator.
+It uses only fixed HTTPS GET routes, a trusted injected short-lived access-token
+source, opaque versioned cursors, four-at-a-time message reads, bounded response and
+MIME-body sizes, deterministic account-scoped IDs, provider-deletion tombstones,
+and typed redacted failures. It extracts canonical plain text—including HTML-only
+and separately stored MIME text—without retaining provider HTML or downloading
+binary attachment bodies. Deterministic injected HTTP tests exercise the adapter;
+it is not composed into startup, OAuth, IPC, UI, or a real account.
 
 The existing application-state query is now mode-aware. Sample installations keep
 the deterministic fixture workspace; live installations use a fixed worker-backed

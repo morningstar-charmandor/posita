@@ -121,7 +121,7 @@ export class ProviderMailAdapterError extends Error {
 
 type JsonRecord = Record<string, unknown>
 const CURSOR_MAX_LENGTH = 16_384
-const PROVIDER_ID_MAX_LENGTH = 1024
+const PROVIDER_ID_MAX_LENGTH = 512
 
 const isRecord = (value: unknown): value is JsonRecord =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -178,7 +178,8 @@ export const isMailSyncCheckpointV1 = (
   value.provider === 'google' && isCursor(value.cursor)
 
 const isProviderMessageId = (value: unknown): value is string =>
-  typeof value === 'string' && value.length > 0 && value.length <= PROVIDER_ID_MAX_LENGTH
+  typeof value === 'string' && value.length <= PROVIDER_ID_MAX_LENGTH &&
+  /^[\u0021-\u007E]+$/.test(value)
 
 const isProviderMailBatchV2WithLimit = (
   value: unknown,

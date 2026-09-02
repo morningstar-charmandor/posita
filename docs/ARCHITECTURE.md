@@ -229,10 +229,11 @@ journal write fails, resumption repeats that action safely. One in-memory
 single-flight guard permits the same operation to share its promise and rejects a
 different concurrent operation for that account.
 
-The orchestrator is tested through an authorization-revoker interface; there is
-no Google revocation adapter, OAuth token, background resume scheduler, preload
-method, or UI trigger. The installation data key is not deleted for one account
-because other accounts share it.
+The orchestrator is tested through an authorization-revoker interface. A bounded,
+idempotent `GoogleOAuthRevoker` now implements that interface, but remains
+uncomposed; there is no OAuth token, background resume scheduler, preload method,
+or UI trigger. The installation data key is not deleted for one account because
+other accounts share it.
 
 ### Full local-data deletion orchestration
 
@@ -357,9 +358,20 @@ does not revoke, reconnect, reconstruct, open a browser, or contact a provider.
 
 ## Gmail synchronization
 
-The Gmail adapter will use an initial 90-day import followed by incremental
-history synchronization. Sync operations must be idempotent, transactional at a
-batch boundary, resumable, quota-aware, and isolated per account.
+The uncomposed `GoogleMailReadAdapter` implements the approved initial 90-day
+import followed by incremental history synchronization. It receives short-lived
+access tokens through an injected trusted-main boundary, uses only fixed Google
+HTTPS GET routes, caps response sizes and concurrent message reads, and emits the
+existing canonical provider batch rather than exposing Google payloads. Its
+opaque versioned cursor resumes full-list pages, history pages, and oversized
+history records. It maps expired authorization, revoked permission, quota,
+stale-history, malformed-response, cancellation, and temporary-provider failures
+to the existing typed application errors. Deterministic injected-HTTP tests cover
+this behavior without credentials or network use; production composition remains
+inactive.
+
+Sync operations remain idempotent, transactional at a batch boundary, resumable,
+quota-aware, and isolated per account.
 
 One application-owned sync coordinator is the only component permitted to call
 provider adapters. Provider mail is the remote source of truth; the encrypted

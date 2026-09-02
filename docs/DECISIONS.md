@@ -885,3 +885,28 @@
   v1 was credential-free, uncomposed, and never persisted as provider input. No
   dependency, schema migration, credential, network request, provider adapter,
   personal data, IPC/UI capability, or mailbox mutation is added.
+
+## ADR-046: Keep Gmail reads bounded, token-injected, and provider-private
+
+- Status: accepted for Gate 2D Google activation
+- Context: the approved Gmail reader must support Google's distinct full-list and
+  history cursors, canonical message content, large MIME text parts, remote
+  deletions, and uncommon failure responses without bringing refresh credentials,
+  provider payloads, or a provider SDK into the application contract.
+- Decision: implement one uncomposed main-process `GoogleMailReadAdapter` behind
+  `ProviderMailAdapter`. Inject a trusted short-lived access-token source and HTTP
+  transport; keep refresh/client configuration outside this slice. Use fixed HTTPS
+  GET routes, an initial profile history anchor, a 90-day list query, `FULL` message
+  reads, text-only MIME attachment reads, and resumable versioned opaque cursors.
+  Limit each canonical batch to 100 changes, split a large immutable history page
+  through a bounded replay offset, run at most four message reads concurrently,
+  and bound all responses. Normalize to the existing provider-independent model
+  with deterministic account-scoped IDs, plain text, safe attachment metadata,
+  and batch-v2 tombstones; never retain raw Gmail HTML or fetch binary bodies.
+- Consequence: the real read half can be tested end to end with injected redacted
+  HTTP and the existing coordinator without credentials or network access. Valid
+  uncommon address/MIME shapes that cannot be represented safely fail closed as a
+  typed malformed payload and must be covered in dedicated-account activation
+  testing. No dependency, schema, compatibility path, production composition,
+  OAuth configuration, credential, personal data, IPC/UI capability, provider
+  network call, mailbox mutation, or intentional duplicate sync owner is added.

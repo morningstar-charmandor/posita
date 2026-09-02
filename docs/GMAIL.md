@@ -3,8 +3,8 @@
 ## Current status
 
 Gmail is not connected and Posita does not yet contain a Google OAuth client ID.
-A real idempotent revocation adapter is implemented but uncomposed. This document
-does not authorize live mailbox access.
+Real read-only and idempotent revocation adapters are implemented but uncomposed.
+This document does not authorize live mailbox access.
 
 Posita can now project its durable `live` installation mode through a bounded
 worker-backed application snapshot. That local read model is not Gmail access: it
@@ -135,9 +135,9 @@ The final activation audit requires provider reads and revocation to arrive as o
 reviewed lifecycle composition. A single existing projection worker must own reads,
 sync commits, account deletion, shutdown, and key erasure; the existing coordinator
 must remain the only provider I/O owner; and the lifecycle owner must replace the
-standalone retention/deletion/shutdown gates when activated. Adapter implementation,
-credential configuration, account connection, and real ingestion are separate
-approval gates.
+standalone retention/deletion/shutdown gates when activated. Adapter implementation
+is complete; credential configuration, account connection, production composition,
+and real ingestion remain separate approval gates.
 
 The approved `GoogleOAuthRevoker` uses `POST https://oauth2.googleapis.com/revoke`
 with the account-scoped protected refresh token in the form body, never the URL.
@@ -148,6 +148,25 @@ Google's current [desktop OAuth guidance](https://developers.google.com/identity
 and [revocation endpoint contract](https://developers.google.com/identity/openid-connect/reference#tokenrevoke).
 It remains outside startup, disconnect composition, IPC, and UI and has never been
 called with a real credential.
+
+The approved `GoogleMailReadAdapter` uses fixed `gmail.googleapis.com` GET routes
+for profile anchoring, 90-day message listing, full message reads, text MIME-body
+reads, and incremental history. It receives only a short-lived access token from
+an injected trusted-main source; OAuth refresh and client configuration remain
+outside the adapter. Opaque versioned cursors preserve full-list pages, history
+pages, and bounded offsets for large history records. Responses, text bodies,
+identities, labels, recipients, and attachments are bounded before canonical use.
+Only text MIME bodies are fetched; binary attachment bodies remain remote.
+
+Normalization creates deterministic account-scoped local IDs, retains encrypted
+provider provenance for later source opening, emits plain text rather than provider
+HTML, and maps permanent or concurrent disappearance to batch-v2 tombstones.
+Authentication, permission, quota, invalid-history, malformed-data, cancellation,
+and transport outcomes remain typed and redacted. Official behavior is based on
+Google's [full/partial synchronization guidance](https://developers.google.com/workspace/gmail/api/guides/sync),
+[message listing](https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.messages/list),
+and [history listing](https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.history/list).
+The adapter uses injected deterministic HTTP in tests and has never contacted Gmail.
 
 ## Desktop OAuth flow
 
@@ -178,8 +197,8 @@ consent copy, provider-contract tests, and a fresh user authorization.
 
 ## Adapter contract
 
-The future Gmail adapter lives in main-process infrastructure behind a
-provider-independent application interface. It must:
+The Gmail adapter now lives in main-process infrastructure behind the existing
+provider-independent application interface. It:
 
 - namespace provider IDs by opaque Posita account ID,
 - perform a bounded 90-day import and resumable history sync,

@@ -1995,6 +1995,50 @@ composition, personal data, or mailbox mutation. The read-only Gmail adapter rem
 the next approved milestone; OAuth configuration and account connection remain
 separate decisions.
 
+## Gate 2D milestone — Bounded read-only Gmail adapter
+
+Date: 2026-09-02
+Checkpoint: use the Git commit whose subject is `feat: read Gmail through a bounded adapter`
+
+Goal: implement the approved real Gmail read boundary without configuring OAuth,
+connecting an account, composing production sync, or using personal mailbox data.
+
+Delivered:
+
+- one `GoogleMailReadAdapter` behind the existing provider-independent interface,
+- an injected trusted short-lived access-token source and injected HTTP transport,
+- fixed read-only Gmail profile, message-list, message-detail, text-body, and
+  history GET routes,
+- opaque versioned cursors for full pages, history pages, and bounded replay of a
+  history record larger than Posita's 100-change commit boundary,
+- a 90-day initial query, four-at-a-time message reads, bounded response/body sizes,
+  cancellation, and safe authentication/permission/quota/cursor/provider errors,
+- canonical deterministic account-scoped IDs, sender/recipient parsing, labels,
+  timestamps, read state, attachment metadata, plain MIME text, HTML-to-plain text,
+  and separately stored MIME text without provider HTML or binary-body caching,
+- deterministic HTTP and coordinator integration tests covering full/history
+  pagination, deletion, concurrent disappearance, external text, malformed data,
+  response bounds, cancellation, and account isolation.
+
+Important decisions:
+
+- keep OAuth refresh and client configuration outside the reader by injecting only
+  a short-lived access-token source,
+- re-fetch immutable history pages with a bounded offset rather than making a
+  provider response exceed the canonical commit limit,
+- fail closed on unrepresentable address/MIME payloads rather than fabricating
+  identity or silently presenting incomplete source content,
+- reuse the existing coordinator, batch v2, canonical mail model, and projection.
+
+Evidence: 65 test files and 403 tests pass with strict typecheck, renderer security
+checks, and the production Electron build.
+
+Limitations: all HTTP is deterministic and injected. No Google request, credential,
+OAuth client, account, schema migration, dependency, production composition, IPC/UI
+capability, personal mailbox data, binary attachment content, or mailbox mutation
+was added. Dedicated-account activation testing must cover uncommon valid RFC/MIME
+shapes. OAuth/PKCE and production lifecycle composition require a new owner decision.
+
 ## How future entries should be written
 
 For each material milestone, record:

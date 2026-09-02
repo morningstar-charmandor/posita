@@ -317,6 +317,10 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - a real but uncomposed Google OAuth revoker with fixed endpoint/body handling,
   bounded responses, idempotent already-invalid behavior, and deterministic HTTP
   tests that never use a credential or network,
+- a matching uncomposed read-only Gmail adapter with fixed GET routes, injected
+  short-lived access tokens, resumable full/history cursors, bounded response and
+  concurrency limits, canonical account-scoped normalization, deletion events,
+  and deterministic HTTP tests that use neither credentials nor the network,
 - a mode-aware worker-backed live snapshot capped at 50 canonical summaries and
   32 account scopes, with bodies, recipients, remote provider IDs, cursors,
   key material, paths, and raw failures excluded,
@@ -336,7 +340,7 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - an explicit compatibility boundary that keeps fixture `Message` records sample-
   only rather than fabricating provider identity,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 63 automated test files containing 388 passing tests,
+- 65 automated test files containing 403 passing tests,
 - a desktop visual and accessibility-tree check of the local-only Settings entry,
   sample-account controls, normal no-recovery-needed outcome, and automatic
   retention card with readable next/last status and Gmail non-mutation copy,
@@ -368,13 +372,15 @@ Gmail navigation succeeded. Trusted startup account inventory and durable sync
 status are now composed inertly in trusted main, while the lifecycle owner remains
 unstarted. A final production-composition audit now records how activation will
 reuse one projection worker, coordinator, lifecycle owner, retention/deletion gate,
-and shutdown path, paired with read-only provider access and revocation. The adapter
-pair is approved: the revoker and deletion-aware reconciliation foundation are
-complete, and the read-only Gmail adapter is next. Provider batch v2 removes remote
+and shutdown path, paired with read-only provider access and revocation. The
+approved adapter pair is now complete but uncomposed: the revoker, deletion-aware
+reconciliation foundation, and bounded read-only Gmail adapter are deterministic-
+tested without credentials or network use. Provider batch v2 removes remote
 deletions atomically and replaces a stale bounded window only after every page is
-available. Real OAuth, browser activation, credentials, live account
-connection, and production sync remain separate actions blocked behind explicit
-owner approval.
+available. The next decision is whether to implement desktop OAuth/PKCE and its
+trusted access-token boundary before one reviewed production activation. Real
+OAuth, browser activation, credentials, live account connection, network testing,
+and production sync remain blocked behind explicit owner approval.
 
 Later evidence should include measured sync reliability, duplicate prevention,
 citation correctness, draft usefulness, correction rate, and time to attention.

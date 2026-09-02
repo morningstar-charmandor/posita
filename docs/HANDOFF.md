@@ -184,6 +184,12 @@ Implemented:
 - a real but uncomposed Google OAuth revoker that reads only the selected protected
   token, uses the fixed HTTPS form-body endpoint, bounds time and response bytes,
   and treats only absent/HTTP-200/documented-invalid-token cases as success,
+- a real but uncomposed read-only Gmail adapter with injected short-lived token and
+  HTTP boundaries, fixed GET routes, 90-day full sync, resumable history cursors,
+  four-at-a-time message reads, bounded responses, and stable safe failures,
+- canonical Gmail normalization with deterministic account-scoped IDs, recipients,
+  labels, read state, safe attachment metadata, plain/HTML-only/external MIME text,
+  no retained provider HTML, and no binary attachment-body download,
 - a strict provider/commit batch v2 that atomically applies bounded remote-deletion
   tombstones, repairs affected threads, and advances the encrypted cursor,
 - bounded stale-cursor recovery that collects every provider page before one
@@ -256,8 +262,9 @@ Simulated or deliberately inactive:
   has been verified with deterministic connected state but has no production
   connection, sync-start, preload, IPC, or UI caller,
 - the provider-mail lifecycle owner is application-only and deterministic; trusted
-  inventory and status services are composed separately, but the owner has no
-  scheduler, Electron startup activation, retry command, or provider adapter,
+  inventory and status services are composed separately, and the Google adapter
+  exists independently, but the owner has no scheduler, Electron startup activation,
+  retry command, or provider composition,
 - account consistency is not independently exposed; the recovery command uses it
   inside main without mutation or provider action,
 - local account recovery is active only for inconsistent local records and has no
@@ -266,7 +273,7 @@ Simulated or deliberately inactive:
 
 Not implemented:
 
-- Gmail OAuth, message ingestion, incremental history sync, or user-triggered/live disconnect,
+- Gmail OAuth, production-composed message ingestion, or user-triggered/live disconnect,
 - production activation of the approved provider-mail lifecycle,
 - user-triggered account disconnect or any remote mailbox mutation control,
 - automatic pending-disconnect resume with a live idempotent revocation adapter,
@@ -288,19 +295,20 @@ Not implemented:
 
 ## Next recommended milestone
 
-The owner approved implementation of the real Google adapter pair. The idempotent
-revoker and its prerequisite deletion-aware reconciliation contract are complete
-and uncomposed. Next implement the **read-only Gmail adapter** behind provider batch
-v2. This does not authorize credentials,
-account connection, production composition, network testing, or mailbox ingestion.
+The owner-approved real Google adapter pair and its deletion-aware reconciliation
+contract are complete and uncomposed. The next milestone requires a new explicit
+owner decision: implement the desktop OAuth/PKCE and trusted access-token boundary,
+then compose connection, disconnect, and the existing lifecycle as one reviewed
+activation. Current approval does not authorize credentials, account connection,
+production composition, network testing, or mailbox ingestion.
 
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,
 safe status, full-deletion startup recovery, read-only lifecycle UI, and explicitly
 confirmed local deletion are complete at their current layers. Continue in this order:
 
-1. Keep pending disconnect visible but inactive until a real idempotent Google
-   revocation adapter can be composed and tested.
+1. Keep pending disconnect visible but inactive until the completed idempotent
+   Google revoker can be composed with the full activation lifecycle.
 2. Treat the local recovery UI as complete at its current boundary. Do not add
    automatic startup repair; failed execution must continue to require fresh review.
 3. Treat automatic retention scheduling and its Settings status as complete at
@@ -315,10 +323,9 @@ confirmed local deletion are complete at their current layers. Continue in this 
    confirmed main-derived browser handoff are now composed. The bounded trusted
    startup account inventory, durable lifecycle status, safe explicit sync-retry
    policy, and final production-composition audit are complete.
-5. Treat the approved uncomposed revoker as complete and implement the read adapter
-   next. Treat credentials, browser authorization, production composition,
-   connection activation, network testing, and a live account as later independent
-   approval gates.
+5. Treat both approved Google adapters as complete and uncomposed. Stop for owner
+   approval before credentials, browser authorization, production composition,
+   connection activation, network testing, or a live account.
 6. Keep real Gmail ingestion disabled until authorization activation is separately
    approved and the remaining lifecycle activation
    and consent gates pass.
@@ -359,9 +366,10 @@ sync-status service are now composed read-only/inert. The lifecycle owner writes
 status through that service in tests, but remains unstarted. The final composition
 audit is complete: activation must reuse one projection worker, coordinator,
 lifecycle owner, retention gate, and shutdown path. The approved revoker is now
-implemented and uncomposed. Provider batch v2 now closes the remote-deletion and
-stale-cursor replacement gap before that adapter. The next milestone is the read-
-only Gmail adapter, not credentials or account connection.
+implemented and uncomposed. Provider batch v2 closes the remote-deletion and stale-
+cursor replacement gap, and the real bounded Gmail reader now emits that contract.
+The next milestone is the separately approved OAuth/activation boundary, not an
+automatic credential or account connection.
 The new presentation abstraction is `LiveMailSummaryList`; it consumes the existing
 `LiveMailSnapshotV2` without adding a parallel domain or data source. The other
 recent abstractions are the shared `LiveMailMessageDetailV1` and open-original
@@ -394,6 +402,12 @@ existing `AccountAuthorizationRevoker` contract with injected fetch and reuses t
 existing `SecretVault`. No dependency, schema, compatibility path, duplicate
 service, production composition, IPC/UI command, credential, account, network test,
 personal data, or intentional duplication was added.
+The matching infrastructure abstractions are `GoogleMailReadAdapter`, its narrow
+`GoogleAccessTokenSource`, and `googleMailNormalizer`; they implement the existing
+provider contract and canonical model rather than adding another sync owner or mail
+shape. No dependency, schema, compatibility path, production composition, OAuth
+configuration, credential, account, real network test, personal data, mailbox
+mutation, or intentional duplication was added.
 
 ## How to resume
 
@@ -413,7 +427,7 @@ personal data, or intentional duplication was added.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 63 test files, 388 tests, strict typecheck, structure
+- Current verified baseline: 65 test files, 403 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,

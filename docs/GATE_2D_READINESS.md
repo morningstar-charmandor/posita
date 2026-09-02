@@ -18,12 +18,12 @@ projection, and packaged file-backed projection worker are now verified. The
 coordinator-to-worker boundary is now integration-tested with the deterministic
 provider but remains uncomposed from the running product. Canonical provider-mail
 retention and journaled deletion are complete at their credential-free boundaries.
-The real Google revoker is implemented but uncomposed; no Gmail read adapter or
-production sync composition exists. The sample-to-live policy
+The real Google revoker and read-only Gmail adapter are implemented but uncomposed;
+no production sync composition exists. The sample-to-live policy
 is now a durable, credential-free, unexposed schema-v10 boundary.
 Disconnect has no production composition or active user command. The final
 composition trace found no smaller credential-free milestone: activating the owner
-still requires the real read provider and authorization boundary.
+still requires the real authorization/configuration boundary and owner approval.
 
 No credential, provider connection, browser authorization, network request, Gmail
 SDK, mailbox data, or model provider was used for this audit.
@@ -47,7 +47,7 @@ SDK, mailbox data, or model provider was used for this audit.
 | Sample/live boundary | Ready, unexposed | schema-v10 one-way mode, connected-pair gate, atomic sample removal, restart/no-reseed and retry tests | Must be invoked only by reviewed connection/sync composition |
 | Live application read model | Ready at credential-free presentation boundary | durable mode-aware query, encrypted human-readable account identity, bounded canonical recent-mail list and source detail, fixed validated IPC/preload, worker ownership, loading/missing/error/retry UI, and confirmed main-derived original-source handoff | Contains no live record until separately approved provider activation |
 | Sync coordinator | Lifecycle-owned, uncomposed | 90-day path, real worker integration, bounded concurrency, cancellation, retention exclusion, disconnect/deletion quiescence, key teardown, durable status, and explicit retry policy are tested | Needs a separately approved provider composition; no retry command is exposed |
-| Gmail read adapter | **Not implemented** | provider-independent batch contract and official API behavior are reviewed | Blocks mail access and production sync composition |
+| Gmail read adapter | Ready, uncomposed | fixed read-only routes, versioned full/history cursors, bounded normalization, deletion events, safe failures, deterministic HTTP and coordinator integration tests | Requires a trusted access-token source and production lifecycle composition |
 | AI provider | Deferred | no model adapter, prompt, embedding, or model output path | Fixture summaries/drafts remain explicitly simulated |
 
 ## Blocking gaps before real mail
@@ -143,9 +143,9 @@ run a second scheduler, sync owner, projection worker, or deletion gate.
 
 Implement activation in this order, without skipping or splitting the safety pair:
 
-1. treat the deterministic-tested idempotent revoker as complete and uncomposed;
-   next add the read-only Gmail adapter behind the existing provider contract,
-2. implement the reviewed desktop OAuth/PKCE boundary and compose connection
+1. treat the deterministic-tested read-only Gmail adapter and idempotent revoker
+   as complete and uncomposed,
+2. after explicit owner approval, implement the reviewed desktop OAuth/PKCE boundary and compose connection
    persistence vault-before-encrypted-state, with no credentials in renderer or Git,
 3. expose a separately confirmed disconnect path and keyless pending-disconnect
    startup resume before accepting the first real account,
@@ -198,16 +198,17 @@ mail model, second cursor store, generic IPC bridge, or renderer provider client
 - The inactive disconnect service requires account-scoped canonical projection
   deletion in its durable mail-data phase and safely retries after fixture removal
   has already committed.
-- The current verified baseline is 63 test files and 388 tests plus strict TypeScript,
+- The current verified baseline is 65 test files and 403 tests plus strict TypeScript,
   renderer structure/security checks, and production Electron builds.
-- No dependency, production provider adapter, credential,
+- No dependency, production composition, credential,
   personal mailbox data, network action, privileged renderer capability, or mailbox mutation was
   added.
 
 ## Owner decision gate
 
 The owner approved implementation of the real read-only Google adapter and revoker.
-The revoker is now complete and uncomposed; the read adapter is next. This approval
+Both adapters and the prerequisite deletion-aware reconciliation are now complete
+and uncomposed. This approval
 does not authorize credential configuration, browser authorization, production
 composition, connecting an account, network testing with Google, or ingesting mail;
 those remain later explicit gates.

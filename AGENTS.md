@@ -6,8 +6,8 @@ exists deeper in the tree.
 
 ## Product state
 
-- Current milestone: Gate 2D Google activation adapters in progress; the read-only
-  Gmail adapter remains next and all production composition remains inactive.
+- Current milestone: Gate 2D approved Google read/revocation adapters complete;
+  all production composition remains inactive pending an owner decision.
 - Current data: deterministic fixtures stored as authenticated encrypted records.
 - Encrypted provider-account and sync-state storage is implemented but empty.
 - A non-sensitive lifecycle journal and confirmed full local-deletion execution are implemented.
@@ -84,12 +84,13 @@ exists deeper in the tree.
   provider-account scopes with protected refresh-credential scopes without
   decrypting credentials. It returns sync requests only for complete pairs and
   reports one-sided state as recovery-required; it does not start sync.
-- Gmail, production provider-mail projection composition, pending-disconnect
-  scheduling, and model providers are not connected.
+- The real read-only Gmail adapter and idempotent revoker are implemented but
+  uncomposed; Gmail, production provider-mail projection composition, pending-
+  disconnect scheduling, and model providers are not connected.
 - Sending mail is intentionally disabled.
-- The final production-composition audit is complete. No smaller credential-free
-  implementation milestone remains before the real read-only Google adapter and
-  idempotent revoker decision gate.
+- The final production-composition audit and approved Google adapter pair are
+  complete. No smaller credential-free implementation milestone remains before
+  the OAuth/configuration and production activation decision gate.
 - The owner approved adapter implementation only. A bounded idempotent Google OAuth
   revoker is implemented without a dependency and remains uncomposed; credentials,
   account connection, ingestion, and live network use remain unapproved.

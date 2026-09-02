@@ -7,7 +7,7 @@
     "repository": "https://github.com/morningstar-charmandor/posita",
     "repositoryVisibility": "public",
     "canonicalBranch": "main",
-    "currentMilestone": "gate-2d-google-adapters-in-progress-reconciliation-v2-complete-read-adapter-next",
+    "currentMilestone": "gate-2d-google-adapter-pair-complete-activation-decision-next",
     "dataMode": "deterministic-sample-with-inert-activation-ready-encrypted-provider-foundation",
     "mailSendingEnabled": false
   },
@@ -111,6 +111,8 @@
     "openOriginalConfirmation": "src/renderer/src/features/live-mail/OpenOriginalConfirmation.tsx",
     "deterministicMailSyncFakes": "src/main/infrastructure/providers/deterministicFakeMailSync.ts",
     "googleOAuthRevoker": "src/main/infrastructure/providers/googleOAuthRevoker.ts",
+    "googleMailReadAdapter": "src/main/infrastructure/providers/googleMailReadAdapter.ts",
+    "googleMailNormalizer": "src/main/infrastructure/providers/googleMailNormalizer.ts",
     "fixtures": "src/shared/fixtures.ts"
   },
   "scopedInstructions": {
@@ -210,6 +212,9 @@
     "provider-sync-retry-disposition-is-fixed-explicit-and-never-an-automatic-mailbox-command",
     "google-activation-pairs-read-only-provider-sync-with-idempotent-disconnect-revocation",
     "google-revocation-is-fixed-endpoint-bounded-token-private-and-invalid-token-idempotent",
+    "google-mail-read-adapter-is-bounded-readonly-token-injected-and-uncomposed",
+    "google-mail-cursors-are-versioned-opaque-resumable-and-history-aware",
+    "google-mail-normalization-is-canonical-bounded-and-provider-payload-private",
     "production-provider-activation-reuses-one-worker-one-coordinator-and-one-lifecycle-owner",
     "disconnect-mail-data-phase-removes-fixture-and-canonical-account-records-idempotently",
     "canonical-provider-mail-retention-is-fixed-window-worker-owned-account-scoped-and-cursor-preserving",
