@@ -818,3 +818,24 @@
   account repository, renderer snapshot, and coordinator remain the sources of truth.
   No dependency, migration, compatibility path, provider adapter, credential,
   network request, personal data, IPC/UI surface, AI path, or mailbox mutation is added.
+
+## ADR-043: Activate Google only as one paired lifecycle composition
+
+- Status: accepted for Gate 2D activation planning
+- Context: startup currently owns automatic retention and projection-read shutdown
+  directly because provider sync is inactive. The credential-free inventory, status,
+  coordinator, projection, disconnect, and lifecycle owner are individually ready.
+  Adding only provider reads or only connection activation would create a live
+  account without complete shutdown, deletion, or disconnect ownership.
+- Decision: when separately approved, introduce the read-only Gmail adapter together
+  with an idempotent revoker and confirmed disconnect path. Reuse one existing
+  projection worker for reads, commits, account deletion, shutdown, and key erasure;
+  one coordinator for provider I/O; and one lifecycle owner for startup sync,
+  retention exclusion, local deletion suspension, disconnect quiescence, and normal
+  shutdown. Replace the current standalone retention/read shutdown wiring only when
+  that owner is activated. Keep adapter implementation, credential configuration,
+  account connection, and real ingestion as distinct approval gates.
+- Consequence: Posita cannot enter a half-live state with competing lifecycle owners
+  or no removal path. The audit itself adds no dependency, schema, abstraction,
+  provider code, credential, network request, IPC/UI capability, personal data, AI
+  path, compatibility layer, or mailbox mutation.

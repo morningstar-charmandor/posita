@@ -6,7 +6,8 @@ exists deeper in the tree.
 
 ## Product state
 
-- Current milestone: Gate 2D, encrypted account lifecycle in progress.
+- Current milestone: Gate 2D credential-free lifecycle complete; Google activation
+  awaits an explicit owner decision.
 - Current data: deterministic fixtures stored as authenticated encrypted records.
 - Encrypted provider-account and sync-state storage is implemented but empty.
 - A non-sensitive lifecycle journal and confirmed full local-deletion execution are implemented.
@@ -85,6 +86,9 @@ exists deeper in the tree.
 - Gmail, production provider-mail projection composition, pending-disconnect
   scheduling, and model providers are not connected.
 - Sending mail is intentionally disabled.
+- The final production-composition audit is complete. No smaller credential-free
+  implementation milestone remains before the real read-only Google adapter and
+  idempotent revoker decision gate.
 - Product promise: **Your inboxes, understood as one.**
 
 Do not imply that fixture-backed behavior is connected to real mail or AI.

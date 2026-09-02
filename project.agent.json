@@ -7,8 +7,8 @@
     "repository": "https://github.com/morningstar-charmandor/posita",
     "repositoryVisibility": "public",
     "canonicalBranch": "main",
-    "currentMilestone": "gate-2d-encrypted-account-lifecycle-in-progress",
-    "dataMode": "durable-mode-aware-sample-or-worker-backed-live-summary-with-trusted-startup-inventory-and-sync-status",
+    "currentMilestone": "gate-2d-credential-free-lifecycle-complete-google-activation-awaiting-decision",
+    "dataMode": "deterministic-sample-with-inert-activation-ready-encrypted-provider-foundation",
     "mailSendingEnabled": false
   },
   "toolchain": {
@@ -206,6 +206,8 @@
     "provider-startup-inventory-is-bounded-presence-only-and-refuses-one-sided-account-state",
     "provider-sync-status-is-durable-account-scoped-and-fails-closed-before-provider-work",
     "provider-sync-retry-disposition-is-fixed-explicit-and-never-an-automatic-mailbox-command",
+    "google-activation-pairs-read-only-provider-sync-with-idempotent-disconnect-revocation",
+    "production-provider-activation-reuses-one-worker-one-coordinator-and-one-lifecycle-owner",
     "disconnect-mail-data-phase-removes-fixture-and-canonical-account-records-idempotently",
     "canonical-provider-mail-retention-is-fixed-window-worker-owned-account-scoped-and-cursor-preserving",
     "live-gmail-ingestion-is-blocked-until-provider-activation-and-consent-gates-pass",

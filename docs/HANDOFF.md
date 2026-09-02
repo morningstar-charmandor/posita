@@ -8,9 +8,10 @@ next move. Technical details remain in their linked source documents.
 
 ## Current state
 
-Posita is at **Gate 2D: encrypted account lifecycle in progress**. The product is
-a runnable Electron desktop prototype using React, strict TypeScript, and SQLite.
-All visible mail is deterministic sample data.
+Posita has completed the **Gate 2D credential-free lifecycle foundation** and is at
+the explicit Google activation decision gate. The product is a runnable Electron
+desktop prototype using React, strict TypeScript, and SQLite. All visible mail is
+deterministic sample data.
 
 The canonical public source repository is
 `https://github.com/morningstar-charmandor/posita`. The local `main` branch is
@@ -179,6 +180,9 @@ Implemented:
   encrypted account state, plus one fixed descriptive retry policy,
 - lifecycle fail-closed behavior that refuses provider work when the initial
   durable status write is unavailable, without scheduling an automatic retry,
+- a final production-composition audit proving that startup inventory, encrypted
+  status, one sync coordinator, one projection worker, retention, deletion,
+  disconnect, and shutdown have a coherent activation path without a second owner,
 - bounded startup outcomes for connected/live, interrupted sample activation,
   disconnected live-empty, and offline retry-required states without reseeding,
 - a mode-aware application-state query that preserves the exact fixture snapshot
@@ -275,7 +279,10 @@ Not implemented:
 
 ## Next recommended milestone
 
-Proceed with **Gate 2D: encrypted account lifecycle** before implementing OAuth.
+The credential-free Gate 2D lifecycle work is complete. The next milestone requires
+an explicit owner decision: implement the real **read-only Google adapter and
+idempotent revoker** behind the existing contracts. This does not yet authorize
+credentials, account connection, or mailbox ingestion.
 
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,
@@ -296,11 +303,11 @@ confirmed local deletion are complete at their current layers. Continue in this 
    complete at its contract, encrypted projection, and native-worker boundary.
    Its bounded summary list, loading, missing/stale, safe-error, and retry UI and
    confirmed main-derived browser handoff are now composed. The bounded trusted
-   startup account inventory, durable lifecycle status, and safe explicit sync-
-   retry policy are complete. Next perform the final credential-free production-
-   lifecycle composition audit before any provider decision.
-5. Request explicit owner approval before composing a real Google adapter,
-   credentials, browser authorization, connection activation, or live account.
+   startup account inventory, durable lifecycle status, safe explicit sync-retry
+   policy, and final production-composition audit are complete.
+5. Request explicit owner approval before implementing a real Google adapter and
+   revoker. Treat credentials, browser authorization, connection activation, and
+   a live account as later independent approval gates.
 6. Keep real Gmail ingestion disabled until authorization activation is separately
    approved and the remaining lifecycle activation
    and consent gates pass.
@@ -338,8 +345,10 @@ trusted-main-frame preload/IPC/UI path without provider IDs or HTML. Open-origin
 now resolves provider identity only inside the trusted worker/main boundary and
 requires explicit browser confirmation. The trusted startup inventory and encrypted
 sync-status service are now composed read-only/inert. The lifecycle owner writes
-status through that service in tests, but remains unstarted. The next milestone is
-a final credential-free lifecycle composition audit, not OAuth activation.
+status through that service in tests, but remains unstarted. The final composition
+audit is complete: activation must reuse one projection worker, coordinator,
+lifecycle owner, retention gate, and shutdown path. The next milestone is the
+separately approved read-only Google adapter and revoker, not account connection.
 The new presentation abstraction is `LiveMailSummaryList`; it consumes the existing
 `LiveMailSnapshotV2` without adding a parallel domain or data source. The other
 recent abstractions are the shared `LiveMailMessageDetailV1` and open-original
@@ -364,6 +373,9 @@ encrypted account-state repository and current live-status read model. The lifec
 owner depends on its narrow contract. No dependency, schema, compatibility path,
 duplicate state store, IPC/UI command, provider action, or intentional duplication
 was added.
+The final audit adds no abstraction or compatibility path. It retains the current
+standalone retention/read shutdown wiring only while provider sync is inactive and
+records the exact replacement order for activation in `docs/GATE_2D_READINESS.md`.
 
 ## How to resume
 

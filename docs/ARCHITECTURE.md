@@ -469,6 +469,15 @@ only; it never schedules provider work or exposes a mailbox command. The lifecyc
 owner fails closed before provider I/O when the status write cannot be established.
 Bootstrap composes the service in trusted main but still does not start the owner.
 
+The final activation audit retains the current standalone retention scheduler and
+read-worker shutdown only while provider sync is inactive. Approved Google
+activation must reuse the same `WorkerThreadMailSyncProjection` for reads, commits,
+account deletion, shutdown, and key erasure; construct one coordinator and one
+lifecycle owner; then move retention start/stop, confirmed-deletion suspension, and
+normal shutdown under that owner together. Provider reads must arrive with an
+idempotent revoker and confirmed disconnect path so the product cannot enter a
+half-live state with no safe removal owner.
+
 Startup now supplies the previously missing read-only account discovery boundary.
 The encrypted account repository lists only validated opaque scopes for provider-
 account records, while the vault lists only validated Google refresh-token scopes

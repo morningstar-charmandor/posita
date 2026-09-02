@@ -1,14 +1,15 @@
 # Gate 2D Lifecycle Readiness Audit
 
-Last reviewed: 2026-09-01
-Audit baseline: `bf7baf9` (`feat: schedule encrypted retention maintenance`)
+Last reviewed: 2026-09-02
+Audit baseline: `2033e86` (`feat: persist safe sync status`)
 
 ## Verdict
 
-The **encrypted local account-lifecycle foundation is ready at its current
-credential-free boundary**. The repository has verified storage, retention,
-full local deletion, account-removal, connection consistency, confirmed orphan
-recovery, and disconnect orchestration contracts.
+The **encrypted local account-lifecycle and provider-mail foundations are complete
+at their credential-free boundary**. The repository has verified storage,
+retention, full local deletion, account removal, connection consistency, confirmed
+orphan recovery, startup inventory, durable sync status, provider-independent sync,
+encrypted projection, read surfaces, and disconnect orchestration contracts.
 
 **Live Gmail authorization and ingestion are not ready to activate.** This is a
 deliberate gate, not a failed implementation. The canonical provider-independent
@@ -19,7 +20,9 @@ provider but remains uncomposed from the running product. Canonical provider-mai
 retention and journaled deletion are complete at their credential-free boundaries, but no
 Google adapter or production sync composition exists. The sample-to-live policy
 is now a durable, credential-free, unexposed schema-v10 boundary.
-Disconnect also has no production revoker or active user command.
+Disconnect also has no production revoker or active user command. The final
+composition trace found no smaller standalone credential-free milestone: activating
+the owner now requires a real provider, authorization, and revocation boundary.
 
 No credential, provider connection, browser authorization, network request, Gmail
 SDK, mailbox data, or model provider was used for this audit.
@@ -39,7 +42,7 @@ SDK, mailbox data, or model provider was used for this audit.
 | Retention | Ready | exact 90-day eviction, daily worker schedule, safe retry/status | Cleanup affects encrypted Posita data only |
 | Full local deletion | Ready | confirmed Settings command, durable recovery, keyless restart, cryptographic erasure | Removes local projection ciphertext; never deletes remote provider mail |
 | Account disconnect | Orchestrator-ready, inactive | journaled idempotent application service and deterministic revoker tests | Needs a real idempotent revoker and separately reviewed user command |
-| Canonical provider mail model | Lifecycle-ready, empty | exact validators, schema-v9 authenticated envelopes, opaque row IDs, packaged serial worker, fixed-window retention, and journaled account deletion | Needs credential-free sync lifecycle integration before provider activation |
+| Canonical provider mail model | Activation-ready, empty | exact validators, schema-v9 authenticated envelopes, opaque row IDs, packaged serial worker, fixed-window retention, journaled account deletion, lifecycle ordering, inventory, and durable status | Must remain empty until the paired Google activation plan is approved |
 | Sample/live boundary | Ready, unexposed | schema-v10 one-way mode, connected-pair gate, atomic sample removal, restart/no-reseed and retry tests | Must be invoked only by reviewed connection/sync composition |
 | Live application read model | Ready at credential-free presentation boundary | durable mode-aware query, encrypted human-readable account identity, bounded canonical recent-mail list and source detail, fixed validated IPC/preload, worker ownership, loading/missing/error/retry UI, and confirmed main-derived original-source handoff | Contains no live record until separately approved provider activation |
 | Sync coordinator | Lifecycle-owned, uncomposed | 90-day path, real worker integration, bounded concurrency, cancellation, retention exclusion, disconnect/deletion quiescence, key teardown, durable status, and explicit retry policy are tested | Needs a separately approved provider composition; no retry command is exposed |
@@ -129,33 +132,35 @@ Only after explicit owner approval may Posita add or configure:
 Secrets and personal mailbox data must never enter Git, fixtures, logs, renderer
 state, screenshots, tests, or portfolio assets.
 
-## Recommended next milestone
+## Final production-composition audit
 
-Treat the **credential-free live application read-model boundary as complete at
-its bounded summary, local-inspection, and confirmed browser-handoff layers**.
-Next perform a production-lifecycle activation preflight without credentials:
+The credential-free activation preflight is complete. Production startup currently
+owns the retention scheduler and read-worker shutdown directly, which is correct
+while provider sync is inactive. Once Google activation is approved, those duties
+must move together under the existing `ProviderMailLifecycleOwner`; Posita must not
+run a second scheduler, sync owner, projection worker, or deletion gate.
 
-1. treat encrypted user-readable account identity as complete at its current
-   contract, persistence, and status-projection boundary,
-2. treat the bounded worker-backed canonical message-detail query as complete at
-   its contract, encrypted projection, and native-worker boundary,
-3. treat composed plain-text source detail with recipient and attachment metadata,
-   loading, missing, stale, safe-error, and retry behavior as complete; do not
-   render provider HTML,
-4. treat bounded summary presentation with human account provenance and exact
-   local-source selection as complete; do not add provider HTML or a second model,
-5. treat the live-mode-only main-derived, strictly allow-listed, two-step confirmed
-   browser handoff as complete at its deterministic boundary; revalidate the
-   undocumented Gmail web route before live activation,
-6. treat the bounded trusted startup account inventory, durable lifecycle status,
-   and explicit safe sync-retry policy as complete; next perform the final
-   credential-free lifecycle composition audit before any provider decision,
-7. keep Google code, credentials, connection activation, network access, polling,
-   AI, and real mailbox data unchanged.
+Implement activation in this order, without skipping or splitting the safety pair:
 
-This is the smallest next step because the user-visible local read boundary is now
-complete enough to review runtime ownership without activating Google access or
-mailbox mutation.
+1. add a deterministic-tested read-only Gmail adapter and idempotent revoker behind
+   the existing provider and disconnect contracts; do not add mailbox mutations,
+2. implement the reviewed desktop OAuth/PKCE boundary and compose connection
+   persistence vault-before-encrypted-state, with no credentials in renderer or Git,
+3. expose a separately confirmed disconnect path and keyless pending-disconnect
+   startup resume before accepting the first real account,
+4. give one `WorkerThreadMailSyncProjection` instance to reads, sync commits,
+   account deletion, shutdown, and key destruction,
+5. construct one `MailSyncCoordinator` and one `ProviderMailLifecycleOwner`; feed
+   only the bounded complete-pair startup inventory and existing sync-status service,
+6. replace standalone retention start/stop, deletion suspension, and projection
+   shutdown wiring with that lifecycle owner, preserving local-data-deleted startup,
+7. expose only bounded status and explicit user retry; do not add autonomous polling
+   until quota/backoff behavior is separately reviewed,
+8. run credential-free integration first, then use a dedicated test account only
+   after a separate credential/configuration approval and privacy-safe test plan.
+
+This sequence reuses the current architecture. It adds no new repository, parallel
+mail model, second cursor store, generic IPC bridge, or renderer provider client.
 
 ## Completed credential-free contract evidence
 
@@ -186,13 +191,13 @@ mailbox mutation.
   selects either the exact fixture snapshot or the bounded worker-backed canonical
   live snapshot. Live output preserves opaque account/source provenance while
   excluding bodies, recipients, remote IDs, cursors, paths, keys, and raw errors.
-- The bounded local-inspection renderer covers live-empty, recorded-syncing, offline,
-  attention-required, cached-data, and local reload behavior without displaying
-  canonical content or claiming provider work.
+- The bounded live renderer covers live-empty, recorded-syncing, offline,
+  attention-required, cached-data, local reload, recent canonical summaries, and
+  exact encrypted-local source detail without claiming provider work.
 - The inactive disconnect service requires account-scoped canonical projection
   deletion in its durable mail-data phase and safely retries after fixture removal
   has already committed.
-- The current verified baseline is 61 test files and 372 tests plus strict TypeScript,
+- The current verified baseline is 62 test files and 377 tests plus strict TypeScript,
   renderer structure/security checks, and production Electron builds.
 - No dependency, production provider adapter, credential,
   personal mailbox data, network action, privileged renderer capability, or mailbox mutation was
@@ -200,10 +205,11 @@ mailbox mutation.
 
 ## Owner decision gate
 
-No owner decision is needed to continue the recommended credential-free contract
-work. Explicit owner approval is required before any real Google adapter,
-credential configuration, browser authorization, production connection command,
-or live mailbox access is introduced.
+The credential-free work listed by the previous audit is complete. The next
+implementation milestone requires explicit owner approval because it introduces a
+real Google adapter and revoker, followed by OAuth/browser configuration. Approval
+to implement the adapter does not itself authorize entering credentials, connecting
+an account, or ingesting mail; those remain later explicit gates.
 
 ## Original audit evidence
 

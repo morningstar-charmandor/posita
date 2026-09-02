@@ -9,8 +9,8 @@ Public repository: [github.com/morningstar-charmandor/posita](https://github.com
 
 ## Current status
 
-Gate 2D is in progress on top of the encrypted local-data prototype. Posita
-includes a Daily Brief,
+Gate 2D's credential-free lifecycle foundation is complete; Posita is waiting at
+the explicit read-only Google activation decision gate. Posita includes a Daily Brief,
 topic timeline with source citations, original-message inspection, a unified
 classic mail view, and an editable draft flow. Realistic fixture data is seeded
 idempotently as independently authenticated AES-256-GCM records in a versioned
@@ -168,6 +168,13 @@ A fixed policy distinguishes immediate manual retry, delayed retry, reconnect,
 review, and cancellation; it does not schedule work. If status persistence is
 unavailable, provider work does not start. No retry command, provider, credential,
 network request, or Gmail access is activated.
+
+The final production-composition audit confirms there is no smaller standalone
+credential-free milestone left. Future activation must pair a read-only Gmail
+adapter with an idempotent revoker, then reuse the existing projection worker,
+sync coordinator, lifecycle owner, encrypted status, retention gate, deletion
+gate, and shutdown path. Implementing that adapter requires explicit approval;
+credentials and connecting an account remain later, separate decisions.
 
 The existing application-state query is now mode-aware. Sample installations keep
 the deterministic fixture workspace; live installations use a fixed worker-backed

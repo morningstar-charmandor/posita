@@ -362,8 +362,11 @@ retry, and explicit encrypted-local inspection. A separate two-step confirmed
 browser handoff derives the provider target only in trusted code and never claims
 Gmail navigation succeeded. Trusted startup account inventory and durable sync
 status are now composed inertly in trusted main, while the lifecycle owner remains
-unstarted. The next milestone is a final credential-free lifecycle composition
-audit. Real OAuth, browser activation, credentials, live account
+unstarted. A final production-composition audit now records how activation will
+reuse one projection worker, coordinator, lifecycle owner, retention/deletion gate,
+and shutdown path, paired with read-only provider access and revocation. The next
+milestone requires explicit adapter approval. Real OAuth, browser activation,
+credentials, live account
 connection, and production sync remain separate actions blocked behind explicit
 owner approval.
 

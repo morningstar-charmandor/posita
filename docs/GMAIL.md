@@ -123,6 +123,14 @@ policy separates retry, delayed retry, reconnect, review, and cancellation. It d
 not automatically retry or contact Google, and status-storage failure prevents the
 provider call from starting.
 
+The final activation audit requires provider reads and revocation to arrive as one
+reviewed lifecycle composition. A single existing projection worker must own reads,
+sync commits, account deletion, shutdown, and key erasure; the existing coordinator
+must remain the only provider I/O owner; and the lifecycle owner must replace the
+standalone retention/deletion/shutdown gates when activated. Adapter implementation,
+credential configuration, account connection, and real ingestion are separate
+approval gates.
+
 ## Desktop OAuth flow
 
 Posita will use Google's installed-desktop application flow with Authorization

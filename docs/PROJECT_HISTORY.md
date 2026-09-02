@@ -1884,6 +1884,45 @@ Limitations: the lifecycle owner remains unstarted in production, no retry comma
 is exposed, and Gmail/OAuth/provider access remains absent. The next safe milestone
 is a final credential-free lifecycle composition audit before a provider decision.
 
+## Gate 2D milestone — Final provider-activation composition audit
+
+Date: 2026-09-02
+Checkpoint: use the Git commit whose subject is `docs: complete provider activation audit`
+
+Goal: determine whether any safe credential-free implementation remained and record
+the exact production ownership transition before Google code is introduced.
+
+Delivered:
+
+- an end-to-end trace of bootstrap, inventory, encrypted status, projection-worker
+  ownership, sync coordination, retention, disconnect, full deletion, and shutdown,
+- a finding that the current standalone retention and read-worker shutdown wiring
+  is correct only while provider sync remains inactive,
+- an ordered activation plan that reuses one worker, coordinator, lifecycle owner,
+  cursor/status store, retention gate, deletion gate, and shutdown path,
+- an explicit separation between adapter approval, credential configuration,
+  account connection, and real mailbox ingestion.
+
+Important decisions:
+
+- pair read-only provider access with an idempotent revoker and confirmed disconnect
+  path before accepting a live account,
+- do not create a disabled production provider, second scheduler, second projection,
+  parallel cursor store, generic IPC bridge, or renderer Gmail client,
+- stop at the owner decision gate because the next code milestone is necessarily a
+  real Google adapter/revoker boundary.
+
+Evidence: the clean `2033e86` baseline passes 62 test files and 377 tests, strict
+typecheck, renderer security checks, and the production Electron build. This audit
+changes documentation and machine-readable state only; it uses no dependency,
+credential, provider, provider network access, personal mailbox data, or product
+external action.
+
+Limitations: Gmail remains disconnected and the running product remains in sample
+mode. The next milestone requires explicit approval to implement the read-only
+Google adapter and idempotent revoker. Credentials and account connection require
+later separate approval.
+
 ## How future entries should be written
 
 For each material milestone, record:
