@@ -941,3 +941,33 @@
   compatibility path, production composition, configured client, credential,
   browser action, real account, personal data, mailbox mutation, or intentional
   duplicate token store is added.
+
+## ADR-048: Verify Google desktop authorization before connection composition
+
+- Status: accepted for Gate 2D Google activation
+- Context: the accepted encrypted account identity requires a stable hidden Google
+  subject and a separately visible verified mailbox address. Gmail profile returns
+  the address but not the OpenID `sub`. Desktop authorization must also resist
+  callback substitution, code replay, widened grants, and ambiguous exchange
+  retries without introducing credentials or a live browser path during this gate.
+- Decision: revise the exact consent to `google-gmail-readonly-identity-v2` with
+  `openid`, `email`, and the full Gmail read-only scope. Implement one uncomposed
+  `GoogleDesktopAccountAuthorizationAdapter` behind the existing authorization
+  contract. Generate cryptographic state and an S256 PKCE verifier/challenge, accept
+  only an injected explicit-port `127.0.0.1` callback, compare state safely, exchange
+  one code at Google's fixed token endpoint, refuse a widened returned scope set,
+  and require verified OpenID subject/email to agree with Gmail profile identity.
+  Keep authorization code, verifier, state, and access token in bounded trusted
+  memory. Consume denial, expiry, successful completion, and every started exchange;
+  an ambiguous provider result requires a fresh session rather than replaying the
+  code. Inject loopback and HTTP boundaries and do not implement or compose a
+  listener, browser launcher, client configuration, credential, account, or live
+  request in this milestone.
+- Consequence: Posita now has a deterministic-tested real desktop OAuth protocol
+  core and a transparent identity-consent contract without activating Google. The
+  existing account connection service remains the only vault-before-encrypted-state
+  coordinator. The next activation slice requires separate approval for loopback/
+  browser infrastructure, client configuration, production lifecycle composition,
+  and dedicated-account testing. No dependency, schema migration, compatibility
+  path, generic IPC surface, duplicate connection service, credential, personal
+  data, mailbox mutation, or live network action is added.

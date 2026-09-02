@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { GOOGLE_CONNECT_CONSENT } from '../../shared/contracts'
 import {
-  GOOGLE_READONLY_SCOPES,
+  GOOGLE_AUTHORIZATION_SCOPES,
   type AccountAuthorizationAdapter,
   type AuthorizedAccountGrantV2,
   type BeginAccountAuthorizationRequestV1
@@ -24,7 +24,7 @@ const request: BeginAccountAuthorizationRequestV1 = {
   accountId: 'account-work-1',
   provider: 'google',
   consentVersion: GOOGLE_CONNECT_CONSENT.consentVersion,
-  requestedScopes: GOOGLE_READONLY_SCOPES
+  requestedScopes: GOOGLE_AUTHORIZATION_SCOPES
 }
 
 class MemoryVault implements SecretVault {
@@ -258,7 +258,7 @@ describe('AccountConnectionService', () => {
 
     await expect(service.begin({
       ...request,
-      requestedScopes: ['gmail.modify']
+      requestedScopes: ['openid', 'email', 'gmail.modify']
     } as unknown as BeginAccountAuthorizationRequestV1)).rejects.toMatchObject({
       code: 'INVALID_AUTHORIZATION_REQUEST'
     })

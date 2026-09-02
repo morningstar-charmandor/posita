@@ -2082,6 +2082,50 @@ network request, dependency, schema migration, production composition, personal
 data, or mailbox mutation was added. The next milestone requires an explicit owner
 choice about identity consent before implementing the real authorization session.
 
+## Gate 2D milestone — Verified Google desktop authorization protocol
+
+Date: 2026-09-02
+Checkpoint: use the Git commit whose subject is `feat: verify Google desktop authorization`
+
+Goal: implement the owner-approved identity consent and credential-free desktop
+OAuth protocol core without configuring Google, opening a browser, connecting an
+account, or making a live request.
+
+Delivered:
+
+- exact consent v2 for `openid`, `email`, and full Gmail read-only access, with a
+  user-visible explanation that identity scopes do not permit mail mutation,
+- one real uncomposed `GoogleDesktopAccountAuthorizationAdapter` behind the existing
+  provider-independent contract,
+- cryptographic state, S256 PKCE, five-minute sessions, exact explicit-port
+  `127.0.0.1` callback validation, and cancellation/release behavior,
+- fixed bounded token, OpenID userinfo, and Gmail profile exchanges through injected
+  HTTP, with exact grant scopes and verified subject/email/profile agreement,
+- terminal fresh-start behavior after a denial or any attempted code exchange,
+  including retryable but ambiguous provider failure,
+- deterministic failure-path tests for expiry, wrong state/origin, scope widening,
+  identity mismatch, unverified identity, response bounds, cancellation, and
+  malformed client/redirect/request boundaries.
+
+Important decisions:
+
+- use the stable OpenID `sub` as hidden provider identity and Gmail profile only as
+  a cross-check for the visible verified mailbox address,
+- never reuse the mailbox address as the opaque provider subject,
+- consume an authorization code after exchange starts instead of risking replay,
+- keep the listener, browser, configuration, persistence composition, and UI action
+  outside the protocol adapter and behind the next explicit activation decision,
+- reuse the existing connection coordinator and authorization contract rather than
+  adding a parallel OAuth-owned account store or service.
+
+Evidence: 67 test files and 421 tests pass with strict typecheck, renderer security
+checks, and the production Electron build.
+
+Limitations: all client IDs, callbacks, provider payloads, and tokens are conspicuous
+deterministic test values. No loopback listener, browser launch, configured client,
+credential, account, dependency, schema migration, production composition, live
+network request, personal data, or mailbox mutation was added.
+
 ## How future entries should be written
 
 For each material milestone, record:

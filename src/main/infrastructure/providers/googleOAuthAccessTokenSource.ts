@@ -1,4 +1,5 @@
 import { isAccountId } from '../../application/accountState'
+import { GOOGLE_CONNECT_SCOPES } from '../../../shared/contracts'
 import {
   MAX_SECRET_LENGTH,
   googleRefreshTokenName,
@@ -6,7 +7,6 @@ import {
 } from '../../application/secretVault'
 
 const GOOGLE_TOKEN_ENDPOINT = 'https://oauth2.googleapis.com/token'
-const GOOGLE_GMAIL_READONLY_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly'
 const MAX_RESPONSE_BYTES = 16 * 1024
 const DEFAULT_TIMEOUT_MS = 15_000
 const EXPIRY_SKEW_MS = 60_000
@@ -172,6 +172,14 @@ const isExpiredGrant = (value: unknown): boolean =>
   (value.error_description === undefined ||
     (typeof value.error_description === 'string' && value.error_description.length <= 1_024))
 
+const hasExactReviewedScopes = (value: unknown): boolean => {
+  if (typeof value !== 'string' || value.length > 1_024) return false
+  const scopes = value.split(' ').filter((scope) => scope.length > 0)
+  return scopes.length === GOOGLE_CONNECT_SCOPES.length &&
+    new Set(scopes).size === scopes.length &&
+    GOOGLE_CONNECT_SCOPES.every((scope) => scopes.includes(scope))
+}
+
 const parseTokenResponse = (
   value: unknown,
   issuedAtMs: number
@@ -185,7 +193,7 @@ const parseTokenResponse = (
       (value.expires_in as number) < 1 ||
       (value.expires_in as number) > MAX_TOKEN_LIFETIME_SECONDS ||
       (value.token_type !== undefined && value.token_type !== 'Bearer') ||
-      (value.scope !== undefined && value.scope !== GOOGLE_GMAIL_READONLY_SCOPE)) {
+      (value.scope !== undefined && !hasExactReviewedScopes(value.scope))) {
     throw invalidResponse()
   }
   return {

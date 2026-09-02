@@ -15,8 +15,9 @@ and actions.
 
 **Product promise:** Your inboxes, understood as one.
 
-**Current stage:** Gate 2D Google adapter and trusted token-boundary implementation
-complete but inactive, with a real
+**Current stage:** Gate 2D Google adapter, trusted token boundary, exact identity
+consent, and desktop authorization protocol implementation complete but inactive,
+with a real
 SQLite path, OS-protected key hierarchy, authenticated mail and provider-account
 state, plus tested crash-resumable disconnect and full local-deletion orchestrators.
 Gmail and AI are not connected. Disconnect now has a real but uncomposed bounded
@@ -39,8 +40,11 @@ work stays off Electron main, while the automatic retention worker applies the
 fixed 90-day window to canonical ciphertext and repairs affected threads. The
 coordinator-to-worker path is now verified end to end with the deterministic
 provider. The one-way sample-to-live boundary is now verified in schema v10;
-live Gmail remains correctly blocked by identity consent, OAuth configuration,
-and production lifecycle composition.
+live Gmail remains correctly blocked by loopback/browser infrastructure, OAuth
+client configuration, and production lifecycle composition. The uncomposed desktop
+adapter now proves S256 PKCE, callback state/origin validation, one-time bounded
+code exchange, and agreement between verified OpenID and Gmail profile identity
+using deterministic injected boundaries only.
 
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
 
@@ -326,6 +330,10 @@ At the current Gate 2D foundation checkpoint, Posita has:
   exchange, memory-only expiry cache, per-account single-flight, cancellation,
   invalidation, teardown, scope refusal, and deterministic tests that use no real
   client, credential, token, account, or network,
+- an exact consent-v2 projection for OpenID identity, verified email, and Gmail
+  read-only access, plus an uncomposed desktop authorization adapter with S256
+  PKCE, state/callback verification, bounded exchange, verified identity agreement,
+  replay-safe fresh-start failure behavior, and deterministic tests,
 - a mode-aware worker-backed live snapshot capped at 50 canonical summaries and
   32 account scopes, with bodies, recipients, remote provider IDs, cursors,
   key material, paths, and raw failures excluded,
@@ -345,7 +353,7 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - an explicit compatibility boundary that keeps fixture `Message` records sample-
   only rather than fabricating provider identity,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 66 automated test files containing 412 passing tests,
+- 67 automated test files containing 421 passing tests,
 - a desktop visual and accessibility-tree check of the local-only Settings entry,
   sample-account controls, normal no-recovery-needed outcome, and automatic
   retention card with readable next/last status and Gmail non-mutation copy,
@@ -378,15 +386,15 @@ status are now composed inertly in trusted main, while the lifecycle owner remai
 unstarted. A final production-composition audit now records how activation will
 reuse one projection worker, coordinator, lifecycle owner, retention/deletion gate,
 and shutdown path, paired with read-only provider access and revocation. The
-approved adapter pair and its trusted access-token source are now complete but
+approved adapter set and its trusted access-token source are now complete but
 uncomposed: the revoker, deletion-aware reconciliation foundation, bounded read-
-only Gmail adapter, and vault-to-memory token exchange are deterministic-tested
-without credentials or network use. Provider batch v2 removes remote
+only Gmail adapter, vault-to-memory token exchange, and desktop PKCE/state/identity
+protocol are deterministic-tested without credentials or network use. Provider batch v2 removes remote
 deletions atomically and replaces a stale bounded window only after every page is
-available. The next decision is whether to add the OpenID identity scopes needed
-for Google's stable subject, or revise the accepted provider-identity model, before
-implementing desktop authorization-code/PKCE and one reviewed production activation.
-Real OAuth, browser activation, credentials, live account connection, network
+available. OpenID identity scopes are now explicitly approved and transparently
+disclosed. The next decision is whether to implement loopback-listener and system-
+browser infrastructure and then configure and review one complete production
+activation. Browser activation, credentials, live account connection, network
 testing, and production sync remain blocked behind explicit owner approval.
 
 Later evidence should include measured sync reliability, duplicate prevention,

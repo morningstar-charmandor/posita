@@ -168,9 +168,11 @@ const accountConnectionRecoveryPanel = await readText(
 const gmailConsentPanel = await readText(
   'src/renderer/src/features/settings/GmailConnectConsentPanel.tsx'
 )
-if (!sharedContracts.includes("consentVersion: 'google-gmail-readonly-v1'") ||
-    !sharedContracts.includes("requestedScope: 'gmail.readonly'")) {
-  fail('the reviewed Gmail consent contract must remain versioned and read-only')
+if (!sharedContracts.includes("consentVersion: 'google-gmail-readonly-identity-v2'") ||
+    !sharedContracts.includes("'openid'") ||
+    !sharedContracts.includes("'email'") ||
+    !sharedContracts.includes("'https://www.googleapis.com/auth/gmail.readonly'")) {
+  fail('the reviewed Google consent must remain versioned, identity-bounded, and Gmail read-only')
 }
 if (!applicationStateService.includes('connectConsent: GOOGLE_CONNECT_CONSENT')) {
   fail('Gmail consent must use the existing read-only application-state projection')

@@ -30,7 +30,7 @@ const providerAccount = (accountId: string): ProviderAccountRecordV2 => ({
     mailboxAddress: `${accountId}@example.test`,
     displayLabel: accountId === 'work' ? 'Work' : 'Personal'
   },
-  consentVersion: 'google-gmail-readonly-v1',
+  consentVersion: 'google-gmail-readonly-identity-v2',
   connectedAt: '2026-08-24T10:00:00.000Z'
 })
 
@@ -209,7 +209,7 @@ describe('EncryptedSqliteAccountStateRepository', () => {
       accountId: 'work',
       provider: 'google',
       providerAccountId: 'google-sub-work',
-      consentVersion: 'google-gmail-readonly-v1',
+      consentVersion: 'google-gmail-readonly-identity-v2',
       connectedAt: '2026-08-24T10:00:00.000Z'
     } as unknown as ProviderAccountRecordV2
     const paddedLabel = {

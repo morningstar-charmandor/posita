@@ -246,21 +246,25 @@ window, local encryption, AI-processing boundary, disconnect behavior, and the
 fact that Posita cannot send or modify mail without a separate confirmed action.
 Consent is versioned and auditable without storing addresses or message content.
 
-Gate 2D now exposes the reviewed `google-gmail-readonly-v1` consent contract in
-the existing read-only application state. Settings shows the exact read-only
-scope, rolling 90-day window, local encryption boundary, inactive AI provider,
+Gate 2D now exposes the reviewed `google-gmail-readonly-identity-v2` consent contract
+in the existing read-only application state. Settings shows exact `openid`, `email`,
+and Gmail read-only scopes, explains the identity-only purpose of the first two,
+and shows the rolling 90-day window, local encryption boundary, inactive AI provider,
 and disconnect outcome. It also states that Gmail is not connected. The contract
 is runtime validated as an exact shape, and the authorization control is disabled;
-no consent acceptance, OAuth client, credential, browser flow, or account record
+no consent acceptance, configured OAuth client, credential, browser flow, or account record
 is created by viewing it.
 
-The authorization-session contract remains main-process-only and explicitly marks
+The authorization-session contract and real uncomposed Google protocol adapter
+remain main-process-only and explicitly mark
 its successful refresh credential as a value that must move directly into
 `SecretVault`. Its authorization URL, callback, provider subject, and credential
-have no renderer or persistence surface in this milestone. The deterministic fake
-contains only test fixtures, performs no external action, and is not production
-composition. Real credential handling still requires separate approval and
-end-to-end composition review.
+have no renderer or persistence surface in this milestone. PKCE verifier, state,
+authorization code, and access token remain bounded in trusted memory. The adapter
+requires a verified stable Google subject/email and agreement with Gmail profile,
+and consumes ambiguous exchanges so a code cannot be retried blindly. Deterministic
+tests perform no external action; real credential handling still requires separate
+approval and end-to-end composition review.
 
 The credential-free account-connection coordinator now proves the only accepted
 cross-store write order: vault credential first, encrypted provider-account state

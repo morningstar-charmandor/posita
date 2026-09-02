@@ -355,13 +355,16 @@ export const isRetentionMaintenanceStatus = (
 
 export const isGoogleConnectConsent = (value: unknown): value is GoogleConnectConsentV1 => {
   if (!isRecord(value) || !hasOnlyKeys(value, [
-    'version', 'consentVersion', 'provider', 'status', 'requestedScope',
+    'version', 'consentVersion', 'provider', 'status', 'requestedScopes',
     'initialImportDays', 'rollingRetentionDays', 'disclosures'
   ]) || value.version !== GOOGLE_CONNECT_CONSENT.version ||
       value.consentVersion !== GOOGLE_CONNECT_CONSENT.consentVersion ||
       value.provider !== GOOGLE_CONNECT_CONSENT.provider ||
       value.status !== GOOGLE_CONNECT_CONSENT.status ||
-      value.requestedScope !== GOOGLE_CONNECT_CONSENT.requestedScope ||
+      !Array.isArray(value.requestedScopes) ||
+      value.requestedScopes.length !== GOOGLE_CONNECT_CONSENT.requestedScopes.length ||
+      !value.requestedScopes.every((scope, index) =>
+        scope === GOOGLE_CONNECT_CONSENT.requestedScopes[index]) ||
       value.initialImportDays !== GOOGLE_CONNECT_CONSENT.initialImportDays ||
       value.rollingRetentionDays !== GOOGLE_CONNECT_CONSENT.rollingRetentionDays ||
       !Array.isArray(value.disclosures) ||

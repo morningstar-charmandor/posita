@@ -1,14 +1,14 @@
-import { GOOGLE_CONNECT_CONSENT } from '../../shared/contracts'
+import { GOOGLE_CONNECT_CONSENT, GOOGLE_CONNECT_SCOPES } from '../../shared/contracts'
 import { isAccountId, type MailProvider } from './accountState'
 
-export const GOOGLE_READONLY_SCOPES = Object.freeze(['gmail.readonly'] as const)
+export const GOOGLE_AUTHORIZATION_SCOPES = GOOGLE_CONNECT_SCOPES
 
 export interface BeginAccountAuthorizationRequestV1 {
   version: 1
   accountId: string
   provider: MailProvider
   consentVersion: typeof GOOGLE_CONNECT_CONSENT.consentVersion
-  requestedScopes: typeof GOOGLE_READONLY_SCOPES
+  requestedScopes: typeof GOOGLE_AUTHORIZATION_SCOPES
 }
 
 export interface AccountAuthorizationLaunchV1 {
@@ -52,6 +52,8 @@ export type AccountAuthorizationErrorCode =
   | 'AUTHORIZATION_SESSION_NOT_FOUND'
   | 'AUTHORIZATION_SESSION_EXPIRED'
   | 'AUTHORIZATION_CALLBACK_REJECTED'
+  | 'AUTHORIZATION_DECLINED'
+  | 'AUTHORIZATION_RESTART_REQUIRED'
   | 'AUTHORIZATION_PROVIDER_UNAVAILABLE'
 
 export class AccountAuthorizationError extends Error {
@@ -119,8 +121,10 @@ export const isBeginAccountAuthorizationRequestV1 = (
   ]) && value.version === 1 && isAccountId(value.accountId) &&
   value.provider === 'google' &&
   value.consentVersion === GOOGLE_CONNECT_CONSENT.consentVersion &&
-  Array.isArray(value.requestedScopes) && value.requestedScopes.length === 1 &&
-  value.requestedScopes[0] === GOOGLE_READONLY_SCOPES[0]
+  Array.isArray(value.requestedScopes) &&
+  value.requestedScopes.length === GOOGLE_AUTHORIZATION_SCOPES.length &&
+  value.requestedScopes.every((scope, index) =>
+    scope === GOOGLE_AUTHORIZATION_SCOPES[index])
 
 export const isAccountAuthorizationLaunchV1 = (
   value: unknown

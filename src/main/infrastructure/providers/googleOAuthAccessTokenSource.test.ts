@@ -14,7 +14,7 @@ const tokenResponse = (token = 'short-lived-access-token', expiresIn = 3_600): R
   response(200, {
     access_token: token,
     expires_in: expiresIn,
-    scope: 'https://www.googleapis.com/auth/gmail.readonly',
+    scope: 'openid email https://www.googleapis.com/auth/gmail.readonly',
     token_type: 'Bearer'
   })
 const vault = (token: string | undefined): Pick<SecretVault, 'get'> => ({

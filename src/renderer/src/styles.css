@@ -211,7 +211,8 @@ h1 { font-family: Georgia, 'Times New Roman', serif; font-weight: 500; letter-sp
 .consent-heading > span:last-child { display: grid; gap: 4px; }
 .consent-heading h2 { margin: 0; font-size: 13px; }
 .consent-heading p { font-size: 9.5px; }
-.consent-scope { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1px solid var(--line); border-radius: 9px; color: #6d736c; font-size: 9px; }
+.consent-scope { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 9px; color: #6d736c; font-size: 9px; }
+.consent-scope ul { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; margin: 0; padding: 0; list-style: none; }
 .consent-scope code, .consent-version code { border-radius: 5px; padding: 3px 5px; color: #4f6858; background: #edf2ed; font-size: 8.5px; }
 .consent-disclosures { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
 .consent-disclosures li { display: grid; grid-template-columns: 20px 1fr; gap: 8px; align-items: start; }

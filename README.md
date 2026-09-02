@@ -46,17 +46,20 @@ outcomes. No other lifecycle command is exposed. Gmail and AI providers
 are not connected, no real OAuth credential exists, and sending is deliberately
 disabled.
 
-Settings now includes a validated `google-gmail-readonly-v1` connection-consent
-preview. It explains the planned `gmail.readonly` scope, 90-day encrypted local
-window, inactive AI-provider boundary, and disconnect behavior. The connect action
-is intentionally disabled: no Google OAuth client, credential, or live account is
-configured.
+Settings now includes a validated `google-gmail-readonly-identity-v2` connection-
+consent preview. It exactly discloses OpenID identity, verified email, and planned
+Gmail read-only access, plus the 90-day encrypted local window, inactive AI-provider
+boundary, and disconnect behavior. The connect action is intentionally disabled:
+no Google OAuth client, credential, browser flow, or live account is configured.
 
 The trusted backend now defines a bounded provider-independent authorization
-session contract and deterministic fake for credential-free testing. It validates
-the reviewed consent, read-only scope, HTTPS authorization target, loopback
-callback, expiry, cancellation, and safe failures. Nothing composes this adapter
-into startup or exposes it through preload, IPC, Settings, or a browser.
+session contract, deterministic fake, and real uncomposed Google desktop protocol
+adapter. The real adapter generates PKCE and state, verifies the exact loopback
+callback, exchanges one code through injected HTTP, and requires a verified OpenID
+subject/email to agree with Gmail profile identity. Ambiguous exchange failures
+consume the session and require a fresh start. No loopback listener, system-browser
+launcher, production client configuration, startup composition, preload/IPC action,
+credential, account, or live network request is present.
 
 A trusted account-connection coordinator now composes that interface with the
 existing vault and encrypted account-state contracts in credential-free tests.
@@ -200,14 +203,15 @@ and separately stored MIME text—without retaining provider HTML or downloading
 binary attachment bodies. Deterministic injected HTTP tests exercise the adapter;
 it is not composed into startup, OAuth, IPC, UI, or a real account.
 
-The trusted-main `GoogleOAuthAccessTokenSource` now supplies the reader's missing
-refresh boundary without configuring or using OAuth. It reads only the selected
+The trusted-main `GoogleOAuthAccessTokenSource` now supplies the reader's refresh
+boundary without configuring or using OAuth. It reads only the selected
 account's protected refresh credential, posts it in a bounded form body to Google's
 fixed token endpoint, keeps the returned access token in memory with an expiry
 safety window, shares one cancellable refresh per account, refuses widened scopes,
 and exposes explicit invalidation and teardown. Its client ID and HTTP transport
 are injected only in deterministic tests; no real client, credential, token,
-account, or network request is present in the running product.
+account, or network request is present in the running product. Its exact returned-
+scope check now matches the approved identity-plus-Gmail-read-only consent.
 
 The existing application-state query is now mode-aware. Sample installations keep
 the deterministic fixture workspace; live installations use a fixed worker-backed

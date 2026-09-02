@@ -199,7 +199,7 @@ describe('shared contract validation', () => {
     expect(isGoogleConnectConsent(GOOGLE_CONNECT_CONSENT)).toBe(true)
     expect(isGoogleConnectConsent({
       ...GOOGLE_CONNECT_CONSENT,
-      requestedScope: 'gmail.modify'
+      requestedScopes: ['openid', 'email', 'gmail.modify']
     })).toBe(false)
     expect(isGoogleConnectConsent({
       ...GOOGLE_CONNECT_CONSENT,

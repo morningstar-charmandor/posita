@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { GOOGLE_CONNECT_CONSENT } from '../../../shared/contracts'
 import {
   AccountAuthorizationError,
-  GOOGLE_READONLY_SCOPES,
+  GOOGLE_AUTHORIZATION_SCOPES,
   isAccountAuthorizationLaunchV1,
   isAuthorizedAccountGrantV2,
   isCompleteAccountAuthorizationRequestV1,
@@ -15,7 +15,7 @@ const request: BeginAccountAuthorizationRequestV1 = {
   accountId: 'account-work-1',
   provider: 'google',
   consentVersion: GOOGLE_CONNECT_CONSENT.consentVersion,
-  requestedScopes: GOOGLE_READONLY_SCOPES
+  requestedScopes: GOOGLE_AUTHORIZATION_SCOPES
 }
 
 const createHarness = () => {
@@ -47,7 +47,7 @@ describe('DeterministicFakeAccountAuthorizationAdapter', () => {
       sessionId: 'authorization-session-1',
       accountId: request.accountId,
       provider: 'google',
-      consentVersion: 'google-gmail-readonly-v1',
+      consentVersion: 'google-gmail-readonly-identity-v2',
       authorizationUrl: 'https://accounts.example.invalid/authorize?fixture=readonly',
       expiresAt: '2026-08-28T07:05:00.000Z'
     })
@@ -75,7 +75,7 @@ describe('DeterministicFakeAccountAuthorizationAdapter', () => {
 
     await expect(adapter.begin({
       ...request,
-      requestedScopes: ['gmail.modify']
+      requestedScopes: ['openid', 'email', 'gmail.modify']
     } as unknown as BeginAccountAuthorizationRequestV1)).rejects.toMatchObject({
       code: 'INVALID_AUTHORIZATION_REQUEST',
       retryable: false

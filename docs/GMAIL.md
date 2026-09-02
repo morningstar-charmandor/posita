@@ -3,8 +3,9 @@
 ## Current status
 
 Gmail is not connected and Posita does not yet contain a Google OAuth client ID.
-Real read-only, idempotent revocation, and refresh-to-access-token adapters are
-implemented but uncomposed. This document does not authorize live mailbox access.
+Real desktop authorization protocol, read-only, idempotent revocation, and refresh-
+to-access-token adapters are implemented but uncomposed. This document does not
+authorize live mailbox access.
 
 Posita can now project its durable `live` installation mode through a bounded
 worker-backed application snapshot. That local read model is not Gmail access: it
@@ -14,10 +15,12 @@ a reviewed, confirmed browser handoff. These are encrypted-cache views, not proo
 of a current Gmail connection or provider sync.
 
 Settings now renders a credential-free consent preview identified as
-`google-gmail-readonly-v1`. The exact projection is carried through the existing
-validated read-only application-state response and requests only `gmail.readonly`.
-Its activation button is disabled. It creates no authorization state, PKCE
-verifier, browser navigation, token, provider account, or consent receipt.
+`google-gmail-readonly-identity-v2`. The exact projection is carried through the
+existing validated read-only application-state response and requests `openid`,
+`email`, and `gmail.readonly`. It explains that identity scopes establish the
+hidden stable Google subject and verified mailbox address but do not permit mail
+mutation. Its activation button is disabled. It creates no authorization state,
+PKCE verifier, browser navigation, token, provider account, or consent receipt.
 
 Normal startup now performs a credential-free, trusted-main inventory over at most
 eight local account scopes. It compares encrypted provider-account presence with
@@ -27,7 +30,7 @@ the whole ready inventory. The result does not authorize, connect, or sync Googl
 
 Gate 2D now defines the provider-independent main-process authorization-session
 interface and a deterministic fake. The boundary accepts only the reviewed
-`google-gmail-readonly-v1` consent and `gmail.readonly`, requires an HTTPS
+`google-gmail-readonly-identity-v2` consent and exact three-scope set, requires an HTTPS
 authorization target and an explicit-port loopback callback, permits one pending
 session, and models exact expiry, cancellation, callback rejection, and safe
 provider failure. A validated successful version-2 result contains the provider
@@ -36,10 +39,13 @@ main-process contract so a future
 coordinator can move it directly into encrypted account state and `SecretVault`.
 
 The fake uses conspicuous test-only values, performs no network or browser action,
-and is not composed at startup. The real Google authorization-session adapter,
-PKCE generation, loopback listener, system-browser launch, code exchange,
-credential persistence, account creation, preload/IPC command, and enabled UI
-action remain unimplemented.
+and is not composed at startup. A real `GoogleDesktopAccountAuthorizationAdapter`
+now implements S256 PKCE, cryptographic state, an exact `127.0.0.1` callback check,
+bounded code exchange, verified OpenID `sub`/email, and agreement with Gmail profile
+identity. Its loopback URI and HTTP transport are injected and deterministic in
+tests. It never opens a browser itself. A loopback listener, system-browser launch,
+production client configuration, credential persistence, account creation,
+preload/IPC command, enabled UI action, and live request remain unimplemented.
 
 Gate 2D also defines a credential-free `AccountConnectionService` above the
 authorization adapter. It verifies that the opaque Posita account has neither an
@@ -174,7 +180,8 @@ credential from `SecretVault` and exchanges it at the fixed Google token endpoin
 Its client ID and HTTP transport are injected; no production configuration exists.
 It keeps the access token only in trusted memory, refreshes within a one-minute
 expiry margin, shares one cancellable refresh per account, bounds time and response
-bytes, refuses a returned scope other than the reviewed full `gmail.readonly` URI,
+bytes, refuses a returned scope set other than exact `openid`, `email`, and the
+full `gmail.readonly` URI,
 and exposes account invalidation plus teardown. Missing or `invalid_grant`
 authorization is distinct from retryable storage/provider failure. Deterministic
 tests use conspicuous tokens and no network.

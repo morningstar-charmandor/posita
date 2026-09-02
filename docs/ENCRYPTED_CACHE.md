@@ -101,12 +101,12 @@ The account-state repository is main-process-only and is composed at startup wit
 the existing cache protector. It stores no real account yet and does not authorize,
 sync, poll, disconnect, or expose anything over IPC.
 
-Provider-account payload version 1 now binds `consentVersion` to the exact reviewed
-string `google-gmail-readonly-v1`, matching the shared consent and authorization
+Provider-account payloads now bind `consentVersion` to the exact reviewed string
+`google-gmail-readonly-identity-v2`, matching the shared consent and authorization
 contracts. The table is known to contain no real or fixture provider account, so
-this is a fail-closed contract correction rather than a data migration. A stale
-simulated payload using the obsolete numeric value is rejected instead of guessed
-or silently rewritten.
+the approved identity-scope revision is a fail-closed contract correction rather
+than a data migration. Stale simulated payloads using the Gmail-only or obsolete
+numeric value are rejected instead of guessed or silently rewritten.
 
 The credential-free account-connection coordinator treats this repository as the
 second half of a cross-store commit. It writes the protected refresh credential

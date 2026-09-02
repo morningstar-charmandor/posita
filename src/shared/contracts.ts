@@ -19,12 +19,17 @@ export const ACCOUNT_CONNECTION_RECOVERY_CONSEQUENCES = Object.freeze([
   'Requires a fresh Gmail connection before Posita can use that account.',
   'Does not contact Google or delete or change mail in Gmail.'
 ] as const)
+export const GOOGLE_CONNECT_SCOPES = Object.freeze([
+  'openid',
+  'email',
+  'https://www.googleapis.com/auth/gmail.readonly'
+] as const)
 export const GOOGLE_CONNECT_CONSENT = Object.freeze({
   version: POSITA_PROTOCOL_VERSION,
-  consentVersion: 'google-gmail-readonly-v1',
+  consentVersion: 'google-gmail-readonly-identity-v2',
   provider: 'google',
   status: 'preview-only',
-  requestedScope: 'gmail.readonly',
+  requestedScopes: GOOGLE_CONNECT_SCOPES,
   initialImportDays: 90,
   rollingRetentionDays: 90,
   disclosures: Object.freeze([
@@ -32,6 +37,11 @@ export const GOOGLE_CONNECT_CONSENT = Object.freeze({
       id: 'read-only-access',
       title: 'Read-only Gmail access',
       description: 'Posita will request permission to read mail. It will not request send, delete, archive, label, or compose access.'
+    }),
+    Object.freeze({
+      id: 'verified-account-identity',
+      title: 'Verified Google account identity',
+      description: 'OpenID and email identify the Google account and verified mailbox address. They do not grant permission to change mail.'
     }),
     Object.freeze({
       id: 'bounded-retention',

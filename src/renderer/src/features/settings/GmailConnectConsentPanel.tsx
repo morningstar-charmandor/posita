@@ -28,8 +28,10 @@ export function GmailConnectConsentPanel({
         </span>
       </div>
       <div className="consent-scope">
-        <span>Permission requested</span>
-        <code>{consent.requestedScope}</code>
+        <span>Permissions requested</span>
+        <ul aria-label="Google permissions requested">
+          {consent.requestedScopes.map((scope) => <li key={scope}><code>{scope}</code></li>)}
+        </ul>
       </div>
       <ul className="consent-disclosures">
         {consent.disclosures.map((disclosure) => (

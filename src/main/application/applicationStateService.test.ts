@@ -52,9 +52,13 @@ describe('ApplicationStateService', () => {
           nextRunAt: '2026-08-25T05:30:00.000Z'
         },
         connectConsent: {
-          consentVersion: 'google-gmail-readonly-v1',
+          consentVersion: 'google-gmail-readonly-identity-v2',
           status: 'preview-only',
-          requestedScope: 'gmail.readonly',
+          requestedScopes: [
+            'openid',
+            'email',
+            'https://www.googleapis.com/auth/gmail.readonly'
+          ],
           initialImportDays: 90,
           rollingRetentionDays: 90
         }

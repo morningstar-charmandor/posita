@@ -23,9 +23,10 @@ token source are implemented but uncomposed; no production sync composition exis
 The sample-to-live policy
 is now a durable, credential-free, unexposed schema-v10 boundary.
 Disconnect has no production composition or active user command. The final
-composition trace and trusted access-token slice leave no smaller credential-free
-milestone: activating the owner still requires an identity-consent decision, the
-real authorization/configuration boundary, and owner approval.
+composition trace, trusted access-token slice, approved identity consent, and real
+uncomposed desktop authorization protocol leave no smaller credential-free
+milestone. Activation still requires loopback/browser infrastructure, production
+client configuration, reviewed lifecycle composition, and owner approval.
 
 No credential, provider connection, browser authorization, network request, Gmail
 SDK, mailbox data, or model provider was used for this audit.
@@ -38,8 +39,8 @@ SDK, mailbox data, or model provider was used for this audit.
 | Credential vault | Ready, empty | OS-backed fail-closed protector and `SecretVault`; deterministic fake tests | A future refresh token has a protected account-scoped destination |
 | Encrypted private cache | Ready for current records | per-record AES-256-GCM, protected installation key, authenticated metadata, migrations, sanitization | Real records still require the provider-normalized schema below |
 | Provider account/sync state | Ready, empty | versioned encrypted account/cursor records plus production-composed lifecycle status writer and fixed retry dispositions | Can store future connection identity and truthful bounded sync state without starting provider work |
-| Consent | Ready for review only | exact `google-gmail-readonly-v1` / `gmail.readonly` projection and disabled Settings action | Activation remains a separate explicit decision |
-| Authorization session | Contract-ready, fake only | bounded begin/complete/cancel contract and deterministic fake | Real PKCE, loopback listener, browser launch, code exchange, and identity-scope decision are absent |
+| Consent | Approved, activation disabled | exact `google-gmail-readonly-identity-v2` projection of `openid`, `email`, and `gmail.readonly`; disabled Settings action | Viewing consent creates no authorization or account state |
+| Authorization session | Protocol-ready, uncomposed | bounded begin/complete/cancel contract, deterministic fake, S256 PKCE/state, exact callback verification, bounded exchange, and verified identity tests | Loopback listener, browser launch, client configuration, persistence composition, and live requests are absent |
 | Connection persistence | Contract-ready, fake only | vault-before-state ordering, duplicate preflight, rollback, safe errors | Not composed into production startup, preload, IPC, or UI |
 | Connection consistency/recovery | Ready locally | presence-only diagnosis plus same-window one-use confirmed orphan discard | Never reconstructs a connection or contacts Google |
 | Retention | Ready | exact 90-day eviction, daily worker schedule, safe retry/status | Cleanup affects encrypted Posita data only |
@@ -124,25 +125,23 @@ real account is accepted.
 
 ### 4. Real OAuth implementation and configuration
 
-Only after explicit owner approval may Posita add or configure:
+The owner approved the exact identity-plus-read-only scope set and the credential-
+free protocol core. A separate explicit approval is still required before Posita
+may add or configure:
 
 - a Google installed-app OAuth client,
-- Authorization Code + PKCE generation and verification,
 - a temporary explicit-port loopback listener,
 - system-browser launch and callback handling,
-- code exchange and refresh-token persistence,
+- refresh-token persistence through production composition,
 - any dependency needed for those capabilities.
 
 Secrets and personal mailbox data must never enter Git, fixtures, logs, renderer
 state, screenshots, tests, or portfolio assets.
 
-Before implementing the authorization adapter, settle one explicit consent choice:
-add Google OpenID identity scopes so the existing hidden provider subject can use
-the stable `sub` claim, or revise the accepted provider-identity model. Gmail
-`users.getProfile` supplies the verified mailbox address under `gmail.readonly`
-but not the stable OpenID subject. The implementation must not silently widen the
-reviewed consent contract or duplicate the mailbox address as a supposed opaque
-subject.
+The accepted consent now uses Google OpenID `sub` as the hidden stable provider
+subject and requires its verified email to agree case-insensitively with Gmail
+`users.getProfile`. The uncomposed adapter refuses widened scopes, callback origin,
+path, or state drift, malformed identity, and ambiguous authorization-code replay.
 
 ## Final production-composition audit
 
@@ -156,9 +155,10 @@ Implement activation in this order, without skipping or splitting the safety pai
 
 1. treat the deterministic-tested read-only Gmail adapter, idempotent revoker, and
    access-token source as complete and uncomposed,
-2. after explicit owner approval of the identity-consent choice, implement the
-   reviewed desktop OAuth/PKCE authorization boundary and compose connection
-   persistence vault-before-encrypted-state, with no credentials in renderer or Git,
+2. treat the approved desktop OAuth/PKCE protocol core as complete and uncomposed;
+   after separate approval, add the loopback/browser boundaries and compose
+   connection persistence vault-before-encrypted-state, with no credentials in
+   renderer or Git,
 3. expose a separately confirmed disconnect path and keyless pending-disconnect
    startup resume before accepting the first real account,
 4. give one `WorkerThreadMailSyncProjection` instance to reads, sync commits,
@@ -210,7 +210,7 @@ mail model, second cursor store, generic IPC bridge, or renderer provider client
 - The inactive disconnect service requires account-scoped canonical projection
   deletion in its durable mail-data phase and safely retries after fixture removal
   has already committed.
-- The current verified baseline is 66 test files and 412 tests plus strict TypeScript,
+- The current verified baseline is 67 test files and 421 tests plus strict TypeScript,
   renderer structure/security checks, and production Electron builds.
 - No dependency, production composition, credential,
   personal mailbox data, network action, privileged renderer capability, or mailbox mutation was
@@ -218,12 +218,12 @@ mail model, second cursor store, generic IPC bridge, or renderer provider client
 
 ## Owner decision gate
 
-The owner approved implementation of the real read-only Google adapter and revoker.
-Both adapters and the prerequisite deletion-aware reconciliation are now complete
-and uncomposed. This approval
-does not authorize credential configuration, browser authorization, production
-composition, connecting an account, network testing with Google, or ingesting mail;
-those remain later explicit gates.
+The owner approved the real read-only Google adapter, revoker, exact OpenID/email/
+Gmail-read-only consent, and credential-free desktop authorization protocol core.
+Those adapters and the prerequisite deletion-aware reconciliation are complete and
+uncomposed. This approval does not authorize loopback/browser infrastructure,
+credential configuration, production composition, connecting an account, network
+testing with Google, or ingesting mail; those remain later explicit gates.
 
 ## Original audit evidence
 

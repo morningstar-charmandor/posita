@@ -6,9 +6,9 @@ exists deeper in the tree.
 
 ## Product state
 
-- Current milestone: Gate 2D Google read/revocation adapters and the trusted
-  refresh-to-access-token boundary are complete; authorization identity consent
-  and all production composition remain inactive pending an owner decision.
+- Current milestone: Gate 2D Google desktop authorization protocol, read,
+  refresh-to-access-token, and revocation adapters are complete; all production
+  composition remains inactive pending configuration and activation decisions.
 - Current data: deterministic fixtures stored as authenticated encrypted records.
 - Encrypted provider-account and sync-state storage is implemented but empty.
 - A non-sensitive lifecycle journal and confirmed full local-deletion execution are implemented.
@@ -35,10 +35,14 @@ exists deeper in the tree.
 - A bounded refresh-to-access-token source now connects that vault contract to the
   Gmail reader contract in trusted main, but has no client configuration or
   production composition and has never received a real credential.
-- A versioned read-only Gmail consent preview is visible in Settings; OAuth
-  activation remains unavailable and no Google client or credential is configured.
+- A versioned Gmail consent preview is visible in Settings and exactly discloses
+  OpenID identity, verified email, and Gmail read-only access; OAuth activation
+  remains unavailable and no Google client or credential is configured.
 - Provider-independent authorization-session contracts and a deterministic fake
   are implemented but are not composed into startup, preload, IPC, or UI.
+- A real uncomposed Google desktop authorization adapter implements bounded PKCE,
+  state/callback verification, code exchange, verified OpenID subject/email, and
+  Gmail-profile identity agreement behind injected loopback and HTTP boundaries.
 - A credential-free account-connection coordinator proves authorization-to-vault-
   to-encrypted-state ordering and rollback, but it has no production composition.
 - A production-composed trusted-main sync-status service durably records syncing,
@@ -93,13 +97,12 @@ exists deeper in the tree.
   projection composition, pending-disconnect scheduling, and model providers are
   not connected.
 - Sending mail is intentionally disabled.
-- The final production-composition audit, approved Google adapter pair, and
-  refresh-to-access-token boundary are complete. The next gate must settle how
-  Google identity is consented and verified before completing desktop OAuth.
-- The owner approved adapter implementation and then the credential-free trusted
-  access-token boundary. Credentials, OAuth client configuration, identity-scope
-  changes, account connection, production composition, ingestion, and live network
-  use remain unapproved.
+- The final production-composition audit and approved Google adapter set are
+  complete. Loopback listener, system-browser launch, OAuth client configuration,
+  credential use, account connection, and production activation remain unapproved.
+- The owner approved exact OpenID/email/Gmail-read-only consent and the credential-
+  free desktop OAuth protocol core. Credentials, account connection, production
+  composition, ingestion, and live network use remain unapproved.
 - Product promise: **Your inboxes, understood as one.**
 
 Do not imply that fixture-backed behavior is connected to real mail or AI.

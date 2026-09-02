@@ -86,10 +86,10 @@ account scope remain queryable; no address, provider subject, or cursor is store
 in plaintext.
 
 The provider-account payload accepts only the reviewed consent identity
-`google-gmail-readonly-v1`. Earlier development code used a numeric placeholder,
-but the encrypted provider-account table is known empty, so no migration or
-compatibility reader is required. Any unexpected stale simulated record fails
-runtime validation without mutation.
+`google-gmail-readonly-identity-v2`. Earlier development code used a Gmail-only
+string and, before that, a numeric placeholder. The encrypted provider-account
+table is known empty, so no migration or compatibility reader is required. Any
+unexpected stale simulated record fails runtime validation without mutation.
 
 Account connection now has an uncomposed application coordinator for this schema.
 It writes a successful refresh grant to the OS-protected vault before saving the

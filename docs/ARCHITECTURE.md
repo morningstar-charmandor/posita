@@ -300,7 +300,7 @@ only bounded in-memory tests and the legacy migration adapter sanitize inline.
 The phase remains atomic, so shutdown cancellation is observed between lifecycle
 phases rather than interrupting `VACUUM` midway.
 
-The same ready-state query carries the immutable `google-gmail-readonly-v1`
+The same ready-state query carries the immutable `google-gmail-readonly-identity-v2`
 consent projection. It contains reviewed public copy and capability metadata only:
 no client ID, authorization URL, state, verifier, token, account identity, or
 command. Settings renders that projection and keeps authorization disabled. This
@@ -311,8 +311,11 @@ authorization preparation, verified callback completion, and cancellation behind
 provider-neutral application types. Inputs and outputs are exact, bounded, and
 versioned; the successful grant is trusted-main-only and never an IPC type. The
 deterministic fake proves one pending session, expiry, callback matching,
-cancellation, and typed failures without network access. No implementation is
-composed in `index.ts`, so the disabled consent UI cannot start authorization.
+cancellation, and typed failures without network access. The real uncomposed
+Google adapter implements S256 PKCE, state, exact loopback callback verification,
+bounded code exchange, and verified OpenID/Gmail identity agreement through
+injected infrastructure boundaries. No implementation is composed in `index.ts`,
+so the disabled consent UI cannot start authorization.
 
 `AccountConnectionService` is the next trusted application layer above that
 adapter. It validates begin output against the requested account, binds completion
