@@ -23,6 +23,17 @@ const snapshot: LiveMailSnapshotV2 = {
   }],
   hasMore: false
 }
+const openOriginalDataSource = {
+  openOriginal: async () => ({
+    ok: false as const,
+    error: {
+      version: 1 as const,
+      code: 'OPEN_UNAVAILABLE' as const,
+      message: 'Unavailable in this test.',
+      retryable: false
+    }
+  })
+}
 
 describe('LiveMailStatus source inspection', () => {
   it('keeps summaries hidden and loads one bounded plain-text source on request', async () => {
@@ -42,12 +53,12 @@ describe('LiveMailStatus source inspection', () => {
         }
       }
     }))
-    render(<LiveMailStatus snapshot={snapshot} onReload={vi.fn()} detailDataSource={{ loadMessageDetail }} />)
+    render(<LiveMailStatus snapshot={snapshot} onReload={vi.fn()} detailDataSource={{ loadMessageDetail }} openOriginalDataSource={openOriginalDataSource} />)
     expect(screen.queryByText('Hidden summary subject')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Inspect encrypted source 1' }))
     expect(await screen.findByRole('heading', { name: 'Verified source subject' })).toBeInTheDocument()
     expect(screen.getByText('Verified plain text.')).toBeInTheDocument()
-    expect(screen.getByText(/Opening Gmail is unavailable/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Open original in Gmail…' })).toBeInTheDocument()
     expect(loadMessageDetail).toHaveBeenCalledExactlyOnceWith({
       version: 1, accountId: 'account-1', messageId: 'message-1'
     })
@@ -61,7 +72,7 @@ describe('LiveMailStatus source inspection', () => {
       .mockResolvedValueOnce({
         ok: false, error: { version: 1, code: 'DATABASE_UNAVAILABLE', message: 'Safe local error.', retryable: true }
       })
-    render(<LiveMailStatus snapshot={snapshot} onReload={vi.fn()} detailDataSource={{ loadMessageDetail }} />)
+    render(<LiveMailStatus snapshot={snapshot} onReload={vi.fn()} detailDataSource={{ loadMessageDetail }} openOriginalDataSource={openOriginalDataSource} />)
     fireEvent.click(screen.getByRole('button', { name: 'Inspect encrypted source 1' }))
     expect(await screen.findByText('Source is no longer retained')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Check again' }))
@@ -77,7 +88,7 @@ describe('LiveMailStatus source inspection', () => {
       .mockResolvedValueOnce({
         ok: true, value: { version: 1, status: 'missing', accountId: 'account-1', messageId: 'message-1' }
       })
-    render(<LiveMailStatus snapshot={snapshot} onReload={vi.fn()} detailDataSource={{ loadMessageDetail }} />)
+    render(<LiveMailStatus snapshot={snapshot} onReload={vi.fn()} detailDataSource={{ loadMessageDetail }} openOriginalDataSource={openOriginalDataSource} />)
     const inspect = screen.getByRole('button', { name: 'Inspect encrypted source 1' })
     fireEvent.click(inspect)
     expect(screen.getByRole('status')).toHaveTextContent('Loading encrypted source')

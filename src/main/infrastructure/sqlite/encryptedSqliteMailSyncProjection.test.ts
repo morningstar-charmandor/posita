@@ -218,6 +218,19 @@ describe('EncryptedSqliteMailSyncProjection', () => {
     expect(serialized).not.toContain('provider-attachment-private-1')
     expect(serialized).not.toContain('provider-content-private-1')
     expect(serialized).not.toContain('Private provider HTML')
+    await expect(projection.loadOriginalSourceLocator({
+      version: 1,
+      accountId: 'account-work-1',
+      messageId: 'message-1'
+    })).resolves.toEqual({
+      version: 1,
+      status: 'found',
+      accountId: 'account-work-1',
+      messageId: 'message-1',
+      provider: 'google',
+      mailboxAddress: 'owner.work@example.test',
+      providerMessageId: 'provider-message-1'
+    })
   })
 
   it('returns scoped missing detail and explicitly truncates oversized plain text', async () => {
@@ -247,6 +260,16 @@ describe('EncryptedSqliteMailSyncProjection', () => {
       expect(found.detail.body.plainText.length).toBe(LIVE_MAIL_DETAIL_BODY_LIMIT)
       expect(found.detail.accountIdentity).toEqual({ status: 'unavailable' })
     }
+    await expect(projection.loadOriginalSourceLocator({
+      version: 1,
+      accountId: 'account-work-1',
+      messageId: 'message-1'
+    })).resolves.toEqual({
+      version: 1,
+      status: 'account-identity-unavailable',
+      accountId: 'account-work-1',
+      messageId: 'message-1'
+    })
   })
 
   it('distinguishes live-empty and safe offline state', async () => {

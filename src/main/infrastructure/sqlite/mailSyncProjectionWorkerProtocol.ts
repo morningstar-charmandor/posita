@@ -14,11 +14,16 @@ import {
   type LiveMailMessageDetailRequestV1,
   type LiveMailMessageDetailResultV1
 } from '../../../shared/liveMailDetail.ts'
+import {
+  isProviderMailOriginalSourceLocatorResultV1,
+  type ProviderMailOriginalSourceLocatorResultV1
+} from '../../application/providerMailOriginalSource.ts'
 
 export type MailSyncProjectionWorkerOperationV1 =
   | { kind: 'load-checkpoint'; accountId: string }
   | { kind: 'load-read-model'; loadedAt: string }
   | { kind: 'load-message-detail'; request: LiveMailMessageDetailRequestV1 }
+  | { kind: 'load-original-source-locator'; request: LiveMailMessageDetailRequestV1 }
   | { kind: 'commit-batch'; batch: CommitProviderMailBatchV1 }
   | { kind: 'delete-account-records'; accountId: string }
 
@@ -47,6 +52,12 @@ export type MailSyncProjectionWorkerSuccessV1 =
     ok: true
     operation: 'load-message-detail'
     result: LiveMailMessageDetailResultV1
+  }
+  | {
+    version: 1
+    ok: true
+    operation: 'load-original-source-locator'
+    result: ProviderMailOriginalSourceLocatorResultV1
   }
   | {
     version: 1
@@ -104,7 +115,7 @@ export const isMailSyncProjectionWorkerRequestV1 = (
       typeof operation.loadedAt === 'string' && operation.loadedAt.length <= 64 &&
       Number.isFinite(Date.parse(operation.loadedAt))
   }
-  if (operation.kind === 'load-message-detail') {
+  if (operation.kind === 'load-message-detail' || operation.kind === 'load-original-source-locator') {
     return hasOnlyKeys(operation, ['kind', 'request']) &&
       isLiveMailMessageDetailRequestV1(operation.request)
   }
@@ -136,6 +147,10 @@ export const isMailSyncProjectionWorkerResponseV1 = (
   if (value.operation === 'load-message-detail') {
     return hasOnlyKeys(value, ['version', 'ok', 'operation', 'result']) &&
       isLiveMailMessageDetailResultV1(value.result)
+  }
+  if (value.operation === 'load-original-source-locator') {
+    return hasOnlyKeys(value, ['version', 'ok', 'operation', 'result']) &&
+      isProviderMailOriginalSourceLocatorResultV1(value.result)
   }
   if (value.operation === 'delete-account-records') {
     return hasOnlyKeys(value, [

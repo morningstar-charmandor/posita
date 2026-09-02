@@ -133,6 +133,16 @@ describe('WorkerThreadMailSyncProjection', () => {
       accountId: 'account-work-1',
       messageId: 'message-missing-1'
     })
+    await expect(projection.loadOriginalSourceLocator({
+      version: 1,
+      accountId: 'account-work-1',
+      messageId: 'message-worker-1'
+    })).resolves.toEqual({
+      version: 1,
+      status: 'account-identity-unavailable',
+      accountId: 'account-work-1',
+      messageId: 'message-worker-1'
+    })
     expect(database.prepare(`
       SELECT COUNT(*) AS count FROM encrypted_provider_mail_records
     `).get()).toEqual({ count: 2 })

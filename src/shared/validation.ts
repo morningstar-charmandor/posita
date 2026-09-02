@@ -22,6 +22,10 @@ import type {
   LoadApplicationStateRequestV1,
   LoadApplicationStateResponseV1,
   LoadSnapshotResponseV1,
+  OpenLiveMailOriginalErrorCodeV1,
+  OpenLiveMailOriginalErrorV1,
+  OpenLiveMailOriginalRequestV1,
+  OpenLiveMailOriginalResponseV1,
   PrepareLocalDataDeletionRequestV1,
   PrepareLocalDataDeletionResponseV1,
   PrepareAccountConnectionRecoveryRequestV1,
@@ -393,6 +397,37 @@ export const isLoadApplicationStateResponse = (
   return value.ok
     ? hasOnlyKeys(value, ['ok', 'value']) && isApplicationState(value.value)
     : hasOnlyKeys(value, ['ok', 'error']) && isAppError(value.error)
+}
+
+const openOriginalErrorCodes: readonly OpenLiveMailOriginalErrorCodeV1[] = [
+  'INVALID_REQUEST', 'UNTRUSTED_SENDER', 'OPEN_UNAVAILABLE', 'SOURCE_NOT_FOUND',
+  'ACCOUNT_IDENTITY_UNAVAILABLE', 'OPEN_FAILED', 'PROTOCOL_ERROR'
+]
+
+export const isOpenLiveMailOriginalRequest = (
+  value: unknown
+): value is OpenLiveMailOriginalRequestV1 =>
+  isRecord(value) && hasOnlyKeys(value, ['version', 'action', 'accountId', 'messageId']) &&
+  value.version === POSITA_PROTOCOL_VERSION && value.action === 'open-original' &&
+  isOperationId(value.accountId) && isOperationId(value.messageId)
+
+const isOpenLiveMailOriginalError = (
+  value: unknown
+): value is OpenLiveMailOriginalErrorV1 =>
+  isRecord(value) && hasOnlyKeys(value, ['version', 'code', 'message', 'retryable']) &&
+  value.version === POSITA_PROTOCOL_VERSION && isOneOf(value.code, openOriginalErrorCodes) &&
+  isBoundedString(value.message, 240) && isBoolean(value.retryable)
+
+export const isOpenLiveMailOriginalResponse = (
+  value: unknown
+): value is OpenLiveMailOriginalResponseV1 => {
+  if (!isRecord(value) || typeof value.ok !== 'boolean') return false
+  return value.ok
+    ? hasOnlyKeys(value, ['ok', 'value']) && isRecord(value.value) &&
+      hasOnlyKeys(value.value, ['version', 'status']) &&
+      value.value.version === POSITA_PROTOCOL_VERSION &&
+      value.value.status === 'external-open-requested'
+    : hasOnlyKeys(value, ['ok', 'error']) && isOpenLiveMailOriginalError(value.error)
 }
 
 const operationIdPattern = /^[A-Za-z0-9_-]{1,128}$/

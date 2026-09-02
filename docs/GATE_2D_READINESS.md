@@ -41,7 +41,7 @@ SDK, mailbox data, or model provider was used for this audit.
 | Account disconnect | Orchestrator-ready, inactive | journaled idempotent application service and deterministic revoker tests | Needs a real idempotent revoker and separately reviewed user command |
 | Canonical provider mail model | Lifecycle-ready, empty | exact validators, schema-v9 authenticated envelopes, opaque row IDs, packaged serial worker, fixed-window retention, and journaled account deletion | Needs credential-free sync lifecycle integration before provider activation |
 | Sample/live boundary | Ready, unexposed | schema-v10 one-way mode, connected-pair gate, atomic sample removal, restart/no-reseed and retry tests | Must be invoked only by reviewed connection/sync composition |
-| Live application read model | Ready, bounded local inspection | durable mode-aware query, encrypted human-readable account identity, bounded canonical summaries and source detail, fixed validated IPC/preload, worker ownership, and loading/missing/error/retry UI | Needs open-original review before displaying live summaries |
+| Live application read model | Ready, bounded local inspection | durable mode-aware query, encrypted human-readable account identity, bounded canonical summaries and source detail, fixed validated IPC/preload, worker ownership, loading/missing/error/retry UI, and confirmed main-derived original-source handoff | Needs live-summary presentation review before displaying canonical summary content |
 | Sync coordinator | Lifecycle-owned, uncomposed | 90-day path, real worker integration, bounded concurrency, cancellation, retention exclusion, disconnect/deletion quiescence, and key teardown are tested | Needs trusted account inventory, retry command/status policy, and provider composition |
 | Gmail adapter | **Not implemented** | adapter contract is documented only | Blocks OAuth and mail access |
 | AI provider | Deferred | no model adapter, prompt, embedding, or model output path | Fixture summaries/drafts remain explicitly simulated |
@@ -132,8 +132,8 @@ state, screenshots, tests, or portfolio assets.
 ## Recommended next milestone
 
 Treat the **credential-free live application read-model boundary as complete at
-its bounded local-inspection layer**. Next review the external original-source
-boundary required before live summaries can be displayed:
+its bounded local-inspection and confirmed browser-handoff layer**. Next review
+the live-summary workspace presentation:
 
 1. treat encrypted user-readable account identity as complete at its current
    contract, persistence, and status-projection boundary,
@@ -142,14 +142,15 @@ boundary required before live summaries can be displayed:
 3. treat composed plain-text source detail with recipient and attachment metadata,
    loading, missing, stale, safe-error, and retry behavior as complete; do not
    render provider HTML,
-4. keep opening Gmail externally disabled until its target derivation, trusted
-   main-process command, and explicit external-action review are complete,
+4. treat the live-mode-only main-derived, strictly allow-listed, two-step confirmed
+   browser handoff as complete at its deterministic boundary; revalidate the
+   undocumented Gmail web route before live activation,
 5. keep Google code, credentials, connection activation, network access, polling,
    AI, and real mailbox data unchanged.
 
-This is the smallest next step because live mode is now truthful and worker-owned,
-but Posita must not show a mail summary without a safe path to its source and a
-human-readable originating account.
+This is the smallest next step because live mode now has human-readable provenance,
+bounded source detail, and an explicit original-source handoff without activating
+Google access or mailbox mutation.
 
 ## Completed credential-free contract evidence
 
@@ -186,7 +187,7 @@ human-readable originating account.
 - The inactive disconnect service requires account-scoped canonical projection
   deletion in its durable mail-data phase and safely retries after fixture removal
   has already committed.
-- The verified baseline is 51 test files and 332 tests plus strict TypeScript,
+- The current verified baseline is 59 test files and 364 tests plus strict TypeScript,
   renderer structure/security checks, and production Electron builds.
 - No dependency, production provider adapter, credential,
   personal mailbox data, network action, renderer surface, or mailbox mutation was

@@ -10,6 +10,7 @@ import { AccountLifecycleStatusService } from '../application/accountLifecycleSt
 import type { AccountLifecycleRepository } from '../application/accountLifecycle'
 import { ApplicationStateService } from '../application/applicationStateService'
 import { LiveMailMessageDetailService } from '../application/liveMailMessageDetailService'
+import { OpenProviderMailOriginalService } from '../application/openProviderMailOriginal'
 import { LocalDataDeletionCommandService } from '../application/localDataDeletionCommand'
 import { AccountConnectionRecoveryCommandService } from '../application/accountConnectionRecoveryCommand'
 import { MailApplicationService } from '../application/mailApplicationService'
@@ -19,6 +20,7 @@ import {
   createExecuteAccountConnectionRecoveryHandler,
   createLoadApplicationStateHandler,
   createLoadLiveMailMessageDetailHandler,
+  createOpenLiveMailOriginalHandler,
   createPrepareLocalDataDeletionHandler,
   createPrepareAccountConnectionRecoveryHandler,
   LocalDataDeletionIpcAuthorization
@@ -284,6 +286,43 @@ describe('load live-mail source-detail IPC handler', () => {
       ok: true,
       value: { version: 1, status: 'missing', accountId: 'account-1', messageId: 'message-1' }
     })
+  })
+})
+
+describe('open live-mail original IPC handler', () => {
+  const request = {
+    version: 1 as const,
+    action: 'open-original' as const,
+    accountId: 'account-work-1',
+    messageId: 'message-1'
+  }
+  const command = new OpenProviderMailOriginalService({
+    loadOriginalSourceLocator: async () => ({
+      version: 1,
+      status: 'found',
+      accountId: request.accountId,
+      messageId: request.messageId,
+      provider: 'google',
+      mailboxAddress: 'owner@example.test',
+      providerMessageId: 'provider-message-1'
+    })
+  }, { open: async () => undefined })
+
+  it('rejects untrusted and widened requests before an external action', async () => {
+    await expect(createOpenLiveMailOriginalHandler(command, () => false)(event, request))
+      .resolves.toMatchObject({ error: { code: 'UNTRUSTED_SENDER' } })
+    await expect(createOpenLiveMailOriginalHandler(command, () => true)(event, {
+      ...request,
+      url: 'https://evil.example/'
+    })).resolves.toMatchObject({ error: { code: 'INVALID_REQUEST' } })
+  })
+
+  it('returns only the safe handoff result to a trusted main frame', async () => {
+    await expect(createOpenLiveMailOriginalHandler(command, () => true)(event, request))
+      .resolves.toEqual({
+        ok: true,
+        value: { version: 1, status: 'external-open-requested' }
+      })
   })
 })
 

@@ -29,6 +29,7 @@ import {
 } from './application/providerMailReadModel'
 import type { MailRepository } from './application/mailRepository'
 import type { ProviderMailSourceDetailSource } from './application/providerMailSourceDetail'
+import type { ProviderMailOriginalSourceLocatorSource } from './application/providerMailOriginalSource'
 import { MailDataModeService } from './application/mailDataMode'
 import type { SecretVault } from './application/secretVault'
 import { AesGcmCacheProtector } from './infrastructure/security/aesGcmCacheProtector'
@@ -74,6 +75,7 @@ export interface ReadyLocalDataRuntime extends LocalDataRuntimeBase {
   mailDataModeService: MailDataModeService
   providerMailReadWorker?: EncryptionContextDestroyer & { shutdown(): Promise<void> }
   providerMailSourceDetailSource?: ProviderMailSourceDetailSource
+  providerMailOriginalSourceLocatorSource?: ProviderMailOriginalSourceLocatorSource
 }
 
 export interface DeletedLocalDataRuntime extends LocalDataRuntimeBase {
@@ -185,7 +187,8 @@ export const bootstrapLocalDataWithDependencies = async (
       repository,
       systemClock
     )
-    let source: ProviderMailReadModelSource & ProviderMailSourceDetailSource
+    let source: ProviderMailReadModelSource & ProviderMailSourceDetailSource &
+      ProviderMailOriginalSourceLocatorSource
     if (providerMailReadWorkerKey === undefined) {
       source = new EncryptedSqliteMailSyncProjection(database, protector)
     } else {
@@ -260,6 +263,9 @@ export const bootstrapLocalDataWithDependencies = async (
       deleteLocalDataService: activeDeletion,
       mailDataModeService,
       ...(mailDataMode.mode === 'live' ? { providerMailSourceDetailSource: source } : {}),
+      ...(mailDataMode.mode === 'live'
+        ? { providerMailOriginalSourceLocatorSource: source }
+        : {}),
       ...(providerMailReadWorker === undefined ? {} : { providerMailReadWorker })
     }
   } catch (error) {

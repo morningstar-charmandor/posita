@@ -17,6 +17,8 @@ import {
   isLoadApplicationStateRequest,
   isLoadApplicationStateResponse,
   isLoadSnapshotResponse,
+  isOpenLiveMailOriginalRequest,
+  isOpenLiveMailOriginalResponse,
   isMailDataset,
   isPrepareLocalDataDeletionRequest,
   isPrepareLocalDataDeletionResponse,
@@ -40,6 +42,25 @@ describe('shared contract validation', () => {
     expect(isLoadApplicationStateRequest({ version: 1 })).toBe(true)
     expect(isLoadApplicationStateRequest({ version: 2 })).toBe(false)
     expect(isLoadApplicationStateRequest({ version: 1, channel: 'arbitrary' })).toBe(false)
+  })
+
+  it('accepts only exact open-original commands and safe URL-free responses', () => {
+    const request = {
+      version: 1,
+      action: 'open-original',
+      accountId: 'account-work-1',
+      messageId: 'message-1'
+    }
+    expect(isOpenLiveMailOriginalRequest(request)).toBe(true)
+    expect(isOpenLiveMailOriginalRequest({ ...request, url: 'https://mail.google.com/' })).toBe(false)
+    expect(isOpenLiveMailOriginalResponse({
+      ok: true,
+      value: { version: 1, status: 'external-open-requested' }
+    })).toBe(true)
+    expect(isOpenLiveMailOriginalResponse({
+      ok: true,
+      value: { version: 1, status: 'external-open-requested', providerMessageId: 'private-id' }
+    })).toBe(false)
   })
 
   it('accepts only coherent application and lifecycle states', () => {

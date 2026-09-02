@@ -4,6 +4,8 @@ import type { LiveMailSnapshotV2 } from '@shared/liveMail'
 import { POSITA_PROTOCOL_VERSION } from '@shared/contracts'
 import type { LiveMailMessageDetailV1 } from '@shared/liveMailDetail'
 import type { LiveMailMessageDetailDataSource } from '../../application/liveMailMessageDetailDataSource'
+import type { OpenLiveMailOriginalDataSource } from '../../application/openLiveMailOriginalDataSource'
+import { OpenOriginalConfirmation } from './OpenOriginalConfirmation'
 
 const statusCopy: Record<LiveMailSnapshotV2['status'], {
   title: string
@@ -44,6 +46,7 @@ export interface LiveMailStatusProps {
   snapshot: LiveMailSnapshotV2
   onReload: () => void
   detailDataSource: LiveMailMessageDetailDataSource
+  openOriginalDataSource: OpenLiveMailOriginalDataSource
 }
 
 type DetailState =
@@ -56,7 +59,8 @@ type DetailState =
 export function LiveMailStatus({
   snapshot,
   onReload,
-  detailDataSource
+  detailDataSource,
+  openOriginalDataSource
 }: LiveMailStatusProps): React.JSX.Element {
   const [detail, setDetail] = useState<DetailState>({ status: 'idle' })
   const sequence = useRef(0)
@@ -194,7 +198,14 @@ export function LiveMailStatus({
                 </ul>
               )}
               {detail.detail.body.truncated && <small>Long source text was safely shortened.</small>}
-              <small>Opening Gmail is unavailable in this build. No remote mailbox action occurred.</small>
+              <OpenOriginalConfirmation
+                accountId={detail.detail.accountId}
+                messageId={detail.detail.messageId}
+                accountLabel={detail.detail.accountIdentity.status === 'available'
+                  ? detail.detail.accountIdentity.displayLabel ?? detail.detail.accountIdentity.mailboxAddress
+                  : 'the originating account'}
+                dataSource={openOriginalDataSource}
+              />
             </article>
           )}
         </section>

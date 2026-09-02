@@ -7,6 +7,10 @@ import {
 } from '../../application/accountState.ts'
 import type { ProviderMailReadModelSource } from '../../application/providerMailReadModel.ts'
 import type { ProviderMailSourceDetailSource } from '../../application/providerMailSourceDetail.ts'
+import type {
+  ProviderMailOriginalSourceLocatorResultV1,
+  ProviderMailOriginalSourceLocatorSource
+} from '../../application/providerMailOriginalSource.ts'
 import {
   MailSyncError,
   isCommitProviderMailBatchV1,
@@ -100,7 +104,8 @@ export const deleteAllEncryptedProviderMailRecords = (database: DatabaseSync): b
  * file-backed production use must place this synchronous work behind one worker owner.
  */
 export class EncryptedSqliteMailSyncProjection implements
-  MailSyncProjection, ProviderMailReadModelSource, ProviderMailSourceDetailSource {
+  MailSyncProjection, ProviderMailReadModelSource, ProviderMailSourceDetailSource,
+  ProviderMailOriginalSourceLocatorSource {
   private readonly accountState: EncryptedSqliteAccountStateRepository
 
   constructor(
@@ -238,6 +243,42 @@ export class EncryptedSqliteMailSyncProjection implements
             inline: attachment.inline
           }))
         }
+      }
+    } catch (error) {
+      if (error instanceof MailSyncError) throw error
+      throw storageFailure(error)
+    }
+  }
+
+  async loadOriginalSourceLocator(
+    request: LiveMailMessageDetailRequestV1
+  ): Promise<ProviderMailOriginalSourceLocatorResultV1> {
+    if (!isLiveMailMessageDetailRequestV1(request)) {
+      throw malformed('The original-source locator request is invalid.')
+    }
+    try {
+      const message = this.loadAccountRecords(request.accountId).messages
+        .find(({ value }) => value.id === request.messageId)?.value
+      if (message === undefined) {
+        return { version: 1, status: 'missing', accountId: request.accountId, messageId: request.messageId }
+      }
+      const account = this.accountState.loadProviderAccount(request.accountId)
+      if (account === undefined) {
+        return {
+          version: 1,
+          status: 'account-identity-unavailable',
+          accountId: request.accountId,
+          messageId: request.messageId
+        }
+      }
+      return {
+        version: 1,
+        status: 'found',
+        accountId: message.accountId,
+        messageId: message.id,
+        provider: message.source.provider,
+        mailboxAddress: account.displayIdentity.mailboxAddress,
+        providerMessageId: message.source.providerMessageId
       }
     } catch (error) {
       if (error instanceof MailSyncError) throw error

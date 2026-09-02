@@ -417,8 +417,9 @@ never blocks Electron main.
 The renderer distinguishes live-empty, recorded-syncing, offline, attention, and
 cached-data states. It intentionally does not render summary content yet. A user
 may select a generic bounded local locator to inspect its encrypted plain-text
-source through a separate fixed query, while the separately reviewed open-original
-path must be complete before the live workspace is enabled. Its reload button
+source through a separate fixed query. The open-original path is now reviewed at
+its inert credential-free boundary; the live-summary workspace remains separately
+disabled. Its reload button
 re-queries local state only and never starts provider sync.
 
 The canonical source-detail boundary now has one exact version-1 request keyed by
@@ -432,6 +433,16 @@ IDs, provider HTML, content IDs, labels, paths, keys, and raw failures. This sou
 is composed through one application service, trusted-main-frame IPC handler,
 validating preload client, and renderer data source. The UI covers loading, exact
 missing, safe error, retry, and stale-result suppression without external navigation.
+
+The reviewed open-original boundary is a separate command. The renderer sends only
+the same opaque Posita account/message pair after a two-step explicit confirmation.
+The existing encrypted projection worker resolves the provider message ID and
+verified mailbox address; neither crosses public IPC. Main derives one HTTPS
+`mail.google.com` target, a second exact validator rejects scheme/host/path/query
+widening, and a narrow OS adapter requests the default browser. Success means only
+that the system accepted the request. Google does not document the Gmail web route
+as a stable API, so live activation must revalidate it; failure is non-destructive
+and bounded local source detail remains available.
 
 `ProviderMailLifecycleOwner` now defines the credential-free composition order
 above the existing sync coordinator, mail-mode service, retention owner,

@@ -6,10 +6,12 @@ import { AccountConnectionRecoveryCommandService } from './application/accountCo
 import { ApplicationStateService } from './application/applicationStateService'
 import { LocalDataDeletionCommandService } from './application/localDataDeletionCommand'
 import { LiveMailMessageDetailService } from './application/liveMailMessageDetailService'
+import { OpenProviderMailOriginalService } from './application/openProviderMailOriginal'
 import { systemClock } from './application/mailApplicationService'
 import type { MailRepository } from './application/mailRepository'
 import { RetentionMaintenanceOwner } from './application/retentionMaintenanceOwner'
 import { registerApplicationIpc, type ApplicationIpcRegistration } from './ipc/applicationIpc'
+import { GmailExternalUrlOpener } from './infrastructure/external/gmailExternalUrlOpener'
 
 const isTrustedExternalUrl = (candidate: string): boolean => {
   try {
@@ -93,6 +95,7 @@ app.whenReady().then(async () => {
   let localDataDeletion = new LocalDataDeletionCommandService()
   let accountConnectionRecovery = new AccountConnectionRecoveryCommandService()
   let liveMailMessageDetail = new LiveMailMessageDetailService()
+  let openProviderMailOriginal = new OpenProviderMailOriginalService()
 
   try {
     const runtime = await bootstrapLocalData(
@@ -127,6 +130,10 @@ app.whenReady().then(async () => {
       liveMailMessageDetail = new LiveMailMessageDetailService(
         runtime.providerMailSourceDetailSource
       )
+      openProviderMailOriginal = new OpenProviderMailOriginalService(
+        runtime.providerMailOriginalSourceLocatorSource,
+        new GmailExternalUrlOpener((url) => shell.openExternal(url))
+      )
     } else {
       service = new ApplicationStateService('local-data-deleted')
     }
@@ -137,6 +144,7 @@ app.whenReady().then(async () => {
   applicationIpc = registerApplicationIpc({
     applicationState: service,
     liveMailMessageDetail,
+    openProviderMailOriginal,
     localDataDeletion,
     accountConnectionRecovery
   })

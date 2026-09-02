@@ -1,6 +1,6 @@
 # Posita Continuity Handoff
 
-Last reviewed: 2026-09-01
+Last reviewed: 2026-09-02
 
 This is the first document to read when Posita work continues in a new AI model,
 thread, chat, or development session. It records current state and the safest
@@ -196,10 +196,13 @@ Implemented:
   only when the durable installation mode is live,
 - explicit encrypted-local source selection with loading, exact missing, safe
   error, retry, unmount/supersession suppression, recipients, safe attachment
-  metadata, bounded plain text, and external-Gmail unavailability,
+  metadata, bounded plain text, and explicit external-action separation,
+- one live-mode-only open-original command that resolves encrypted provider
+  provenance in the worker, constructs and exactly validates a Gmail HTTPS target
+  in main, requires two-step user confirmation, and returns no URL/provider ID,
 - truthful live-empty, recorded-syncing, offline, attention-required, and cached-
   data renderer states with local-status reload and bounded local source inspection;
-  canonical summary content remains hidden until open-original review,
+  canonical summary content remains hidden until its workspace review,
 - read-worker key inclusion in confirmed full deletion and graceful normal shutdown
   that settles accepted reads before key erasure,
 - an explicit fixture compatibility decision: existing encrypted sample messages
@@ -242,7 +245,7 @@ Simulated or deliberately inactive:
 Not implemented:
 
 - Gmail OAuth, message ingestion, incremental history sync, or user-triggered/live disconnect,
-- a reviewed open-original path and live-summary rendering,
+- live-summary rendering,
 - production activation of the approved provider-mail lifecycle,
 - user-triggered account disconnect or any remote mailbox mutation control,
 - automatic pending-disconnect resume with a live idempotent revocation adapter,
@@ -283,8 +286,8 @@ confirmed local deletion are complete at their current layers. Continue in this 
    Encrypted user-readable account identity is complete at its credential-free
    storage and status boundary. The bounded canonical source-detail query is also
    complete at its contract, encrypted projection, and native-worker boundary.
-   Its loading, missing/stale, safe-error, and retry UI is now composed. Next
-   review the trusted external original-source path before rendering live summaries.
+   Its loading, missing/stale, safe-error, and retry UI and confirmed main-derived
+   browser handoff are now composed. Next review live-summary rendering.
 5. Request explicit owner approval before composing a real Google adapter,
    credentials, browser authorization, connection activation, or live account.
 6. Keep real Gmail ingestion disabled until authorization activation is separately
@@ -320,12 +323,18 @@ account record v2 and live snapshot v2 now project the verified encrypted mailbo
 address plus optional label while keeping the provider subject hidden; label
 editing remains unexposed. The canonical source-detail query now returns bounded
 plain text and safe metadata through the existing worker and a fixed validated
-trusted-main-frame preload/IPC/UI path without provider IDs or HTML. The next
-milestone is the open-original security/product review, not OAuth activation.
-The new abstractions are the shared `LiveMailMessageDetailV1` contract and the
-trusted `ProviderMailSourceDetailSource`; the existing projection and worker remain
-the single storage/read owner. No dependency, schema migration, compatibility
-path, or intentional duplicate repository/service was added. `tsconfig.web.json`
+trusted-main-frame preload/IPC/UI path without provider IDs or HTML. Open-original
+now resolves provider identity only inside the trusted worker/main boundary and
+requires explicit browser confirmation. The next milestone is live-summary UI,
+not OAuth activation.
+The new abstractions are the shared `LiveMailMessageDetailV1` and open-original
+command contracts, the trusted `ProviderMailSourceDetailSource` and
+`ProviderMailOriginalSourceLocatorSource`, `OpenProviderMailOriginalService`, and
+the narrow `GmailExternalUrlOpener`; the existing projection and worker remain the
+single storage/read owner. No dependency, schema migration, compatibility path,
+or intentional duplicate repository/service was added. The existing encrypted
+projection-worker path is retained, and the undocumented Gmail web route remains
+an explicit revalidation risk before live activation. `tsconfig.web.json`
 now permits explicit TypeScript import extensions, matching the existing Node
 configuration so one shared runtime validator works in both the bundled renderer
 graph and directly executed worker graph.
@@ -348,7 +357,7 @@ graph and directly executed worker graph.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 55 test files, 350 tests, strict typecheck, structure
+- Current verified baseline: 59 test files, 364 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,

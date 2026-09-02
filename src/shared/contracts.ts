@@ -61,6 +61,7 @@ export type GoogleConnectConsentV1 = typeof GOOGLE_CONNECT_CONSENT
 export const IPC_CHANNELS = Object.freeze({
   loadApplicationState: 'posita:application:load-state:v1',
   loadLiveMailMessageDetail: 'posita:live-mail:load-message-detail:v1',
+  openLiveMailOriginal: 'posita:live-mail:open-original:v1',
   applicationStateChanged: 'posita:application:state-changed:v1',
   prepareLocalDataDeletion: 'posita:local-data:prepare-deletion:v1',
   executeLocalDataDeletion: 'posita:local-data:execute-deletion:v1',
@@ -197,6 +198,38 @@ export type ApplicationStateV1 =
 
 export type LoadApplicationStateResponseV1 = AppResultV1<ApplicationStateV1>
 export type LoadLiveMailMessageDetailResponseV1 = AppResultV1<LiveMailMessageDetailResultV1>
+
+export interface OpenLiveMailOriginalRequestV1 {
+  version: typeof POSITA_PROTOCOL_VERSION
+  action: 'open-original'
+  accountId: string
+  messageId: string
+}
+
+export interface OpenLiveMailOriginalResultV1 {
+  version: typeof POSITA_PROTOCOL_VERSION
+  status: 'external-open-requested'
+}
+
+export type OpenLiveMailOriginalErrorCodeV1 =
+  | 'INVALID_REQUEST'
+  | 'UNTRUSTED_SENDER'
+  | 'OPEN_UNAVAILABLE'
+  | 'SOURCE_NOT_FOUND'
+  | 'ACCOUNT_IDENTITY_UNAVAILABLE'
+  | 'OPEN_FAILED'
+  | 'PROTOCOL_ERROR'
+
+export interface OpenLiveMailOriginalErrorV1 {
+  version: typeof POSITA_PROTOCOL_VERSION
+  code: OpenLiveMailOriginalErrorCodeV1
+  message: string
+  retryable: boolean
+}
+
+export type OpenLiveMailOriginalResponseV1 =
+  | { ok: true; value: OpenLiveMailOriginalResultV1 }
+  | { ok: false; error: OpenLiveMailOriginalErrorV1 }
 
 export interface PrepareLocalDataDeletionRequestV1 {
   version: typeof POSITA_PROTOCOL_VERSION
@@ -335,6 +368,9 @@ export interface PositaDesktopApi {
   loadLiveMailMessageDetail(
     request: LiveMailMessageDetailRequestV1
   ): Promise<LoadLiveMailMessageDetailResponseV1>
+  openLiveMailOriginal(
+    request: OpenLiveMailOriginalRequestV1
+  ): Promise<OpenLiveMailOriginalResponseV1>
   onApplicationStateChanged(
     listener: (event: ApplicationStateChangedEventV1) => void
   ): () => void

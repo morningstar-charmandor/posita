@@ -90,4 +90,36 @@ describe('mail-sync projection worker read protocol', () => {
       }
     })).toBe(false)
   })
+
+  it('keeps original-source provider identity inside the trusted worker protocol', () => {
+    const request = {
+      version: 1,
+      databasePath: '/tmp/posita.sqlite3',
+      key,
+      operation: {
+        kind: 'load-original-source-locator',
+        request: { version: 1, accountId: 'account-work-1', messageId: 'message-1' }
+      }
+    }
+    expect(isMailSyncProjectionWorkerRequestV1(request)).toBe(true)
+    const response = {
+      version: 1,
+      ok: true,
+      operation: 'load-original-source-locator',
+      result: {
+        version: 1,
+        status: 'found',
+        accountId: 'account-work-1',
+        messageId: 'message-1',
+        provider: 'google',
+        mailboxAddress: 'owner@example.test',
+        providerMessageId: 'provider-message-1'
+      }
+    }
+    expect(isMailSyncProjectionWorkerResponseV1(response)).toBe(true)
+    expect(isMailSyncProjectionWorkerResponseV1({
+      ...response,
+      result: { ...response.result, url: 'https://mail.google.com/' }
+    })).toBe(false)
+  })
 })

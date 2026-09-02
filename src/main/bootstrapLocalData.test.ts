@@ -82,6 +82,7 @@ describe('bootstrapLocalData lifecycle recovery', () => {
     const initial = await bootstrapLocalDataWithDependencies(databasePath, dependencies())
     if (initial.mode !== 'ready') throw new Error('Expected ready runtime.')
     expect(initial.providerMailSourceDetailSource).toBeUndefined()
+    expect(initial.providerMailOriginalSourceLocatorSource).toBeUndefined()
     initial.accountStateRepository.saveProviderAccount({
       version: 2,
       accountId: 'work',
@@ -111,6 +112,7 @@ describe('bootstrapLocalData lifecycle recovery', () => {
     if (restarted.mode !== 'ready') throw new Error('Expected ready runtime.')
     expect(restarted.mailDataModeService.load()).toEqual({ version: 1, mode: 'live' })
     expect(restarted.providerMailSourceDetailSource).toBeDefined()
+    expect(restarted.providerMailOriginalSourceLocatorSource).toBeDefined()
     expect(restarted.repository.loadDataset()).toMatchObject({ accounts: [], messages: [] })
     await expect(restarted.service.loadSnapshot()).resolves.toMatchObject({
       ok: true,

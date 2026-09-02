@@ -49,6 +49,14 @@ if (!isMailSyncProjectionWorkerRequestV1(workerData)) {
         operation: 'load-message-detail',
         result
       })
+    } else if (workerData.operation.kind === 'load-original-source-locator') {
+      const result = await projection.loadOriginalSourceLocator(workerData.operation.request)
+      parentPort.postMessage({
+        version: 1,
+        ok: true,
+        operation: 'load-original-source-locator',
+        result
+      })
     } else if (workerData.operation.kind === 'commit-batch') {
       const result = await projection.commitBatch(workerData.operation.batch)
       parentPort.postMessage({ version: 1, ok: true, operation: 'commit-batch', result })

@@ -1729,6 +1729,44 @@ real account. Live summaries remain hidden, Gmail cannot be opened, and provider
 activation remains blocked. The next milestone is the open-original security and
 product review before any external action or summary rendering.
 
+## Gate 2D milestone — Confirmed original-source browser handoff
+
+Date: 2026-09-02
+Checkpoint: use the Git commit whose subject is `feat: confirm original source handoff`
+
+Goal: provide a reviewed path from encrypted local source detail to the provider
+original without exposing provider identity or creating generic navigation.
+
+Delivered:
+
+- a worker-owned locator for encrypted provider message identity and verified mailbox,
+- a live-mode-only main service that derives the Gmail target and returns no URL,
+- an exact HTTPS Gmail target validator and narrow operating-system opener,
+- fixed validated IPC/preload/renderer contracts keyed only by opaque Posita IDs,
+- two-step accessible confirmation, cancellation, progress, safe error, and retry,
+- truthful success copy that reports browser handoff rather than Gmail navigation.
+
+Important decisions:
+
+- keep provider IDs, mailbox address, and target URL inside worker/main boundaries,
+- reject every scheme, host, path, query, and fragment widening before OS handoff,
+- treat the Gmail web route as undocumented and require revalidation before live activation,
+- retain bounded local detail as the safe fallback and perform no provider API call,
+- add no dependency, schema migration, provider adapter, credential, real account,
+  personal mailbox data, Posita network request, AI path, or mailbox mutation.
+
+Evidence: 59 test files and 364 tests pass. Deterministic coverage includes URL
+encoding/allow-listing, cross-request
+binding, missing identity/source, sample-mode refusal, opener failure, malformed
+IPC/preload values, worker protocol, two-step confirmation, cancellation, and retry.
+Strict typecheck, renderer security checks, and the production Electron build pass
+through `npm run verify`.
+
+Limitations: the running product has no live records, so no browser is opened in
+development or tests. Google does not document the Gmail web route as a stable API;
+the route must be revalidated before live activation. Live summary content remains
+hidden and is the next credential-free presentation milestone.
+
 ## How future entries should be written
 
 For each material milestone, record:

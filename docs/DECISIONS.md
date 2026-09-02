@@ -732,3 +732,25 @@
   dependency, schema migration, compatibility path, credential, provider adapter,
   network request, personal mailbox data, external action, AI path, or mailbox
   mutation is added.
+
+## ADR-039: Confirm and derive original-source browser handoff in main
+
+- Status: accepted for Gate 2D, revalidate before live activation
+- Context: live source inspection needs a path to the provider original, but a
+  renderer-built URL would expose remote identifiers and create an open-redirect
+  surface. Google documents Gmail API message IDs as immutable and retrievable,
+  but does not publish the Gmail web route as a stable API contract.
+- Decision: add one live-mode-only command keyed by opaque Posita account/message
+  IDs. Resolve the encrypted provider message ID and verified mailbox address in
+  the existing projection worker. Construct the Gmail HTTPS target only in main,
+  validate exact scheme, host, port, path, sole `authuser` query, and bounded
+  `#all/` fragment, then pass it to a narrow OS opener after a two-step explicit
+  renderer confirmation. Return only `external-open-requested`; never return the
+  URL, mailbox address, or provider ID over public IPC.
+- Consequence: the deterministic product boundary can request a non-mutating
+  browser handoff without a Gmail API call, credential, or generic navigation
+  capability. It never claims Gmail loaded the correct account/message. Because
+  the web route is undocumented, it must be revalidated before live activation;
+  local source detail remains the safe fallback. No dependency, schema migration,
+  provider adapter, credential, real account, personal data, network request by
+  Posita, AI path, or mailbox mutation is added.

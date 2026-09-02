@@ -11,6 +11,10 @@ import {
 import type { ProviderMailAccountDataRemover } from '../../application/disconnectAccount'
 import type { ProviderMailReadModelSource } from '../../application/providerMailReadModel'
 import type { ProviderMailSourceDetailSource } from '../../application/providerMailSourceDetail'
+import type {
+  ProviderMailOriginalSourceLocatorResultV1,
+  ProviderMailOriginalSourceLocatorSource
+} from '../../application/providerMailOriginalSource'
 import type { LiveMailSnapshotV2 } from '../../../shared/liveMail'
 import {
   isLiveMailMessageDetailRequestV1,
@@ -48,7 +52,7 @@ const invalidRequest = (): MailSyncError => new MailSyncError(
 /** Serializes file-backed projection work outside Electron's main event loop. */
 export class WorkerThreadMailSyncProjection implements
   MailSyncProjection, ProviderMailAccountDataRemover, ProviderMailReadModelSource,
-  ProviderMailSourceDetailSource {
+  ProviderMailSourceDetailSource, ProviderMailOriginalSourceLocatorSource {
   private readonly key: Buffer
   private tail: Promise<void> = Promise.resolve()
   private pending = 0
@@ -96,6 +100,22 @@ export class WorkerThreadMailSyncProjection implements
     const accountId = result.status === 'found' ? result.detail.accountId : result.accountId
     const messageId = result.status === 'found' ? result.detail.messageId : result.messageId
     if (accountId !== request.accountId || messageId !== request.messageId) throw unavailable()
+    return result
+  }
+
+  async loadOriginalSourceLocator(
+    request: LiveMailMessageDetailRequestV1
+  ): Promise<ProviderMailOriginalSourceLocatorResultV1> {
+    if (!isLiveMailMessageDetailRequestV1(request)) throw invalidRequest()
+    const response = await this.enqueue({
+      kind: 'load-original-source-locator',
+      request: structuredClone(request)
+    })
+    if (response.operation !== 'load-original-source-locator') throw unavailable()
+    const result = response.result
+    if (result.accountId !== request.accountId || result.messageId !== request.messageId) {
+      throw unavailable()
+    }
     return result
   }
 

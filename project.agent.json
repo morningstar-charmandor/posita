@@ -8,7 +8,7 @@
     "repositoryVisibility": "public",
     "canonicalBranch": "main",
     "currentMilestone": "gate-2d-encrypted-account-lifecycle-in-progress",
-    "dataMode": "durable-mode-aware-sample-or-worker-backed-live-status-and-composed-bounded-source-detail",
+    "dataMode": "durable-mode-aware-sample-or-worker-backed-live-status-source-detail-and-confirmed-original-handoff",
     "mailSendingEnabled": false
   },
   "toolchain": {
@@ -93,6 +93,9 @@
     "providerMailReadModel": "src/main/application/providerMailReadModel.ts",
     "providerMailSourceDetail": "src/main/application/providerMailSourceDetail.ts",
     "liveMailMessageDetailService": "src/main/application/liveMailMessageDetailService.ts",
+    "providerMailOriginalSource": "src/main/application/providerMailOriginalSource.ts",
+    "openProviderMailOriginalService": "src/main/application/openProviderMailOriginal.ts",
+    "gmailExternalUrlOpener": "src/main/infrastructure/external/gmailExternalUrlOpener.ts",
     "encryptedProviderMailProjection": "src/main/infrastructure/sqlite/encryptedSqliteMailSyncProjection.ts",
     "providerMailProjectionWorkerProtocol": "src/main/infrastructure/sqlite/mailSyncProjectionWorkerProtocol.ts",
     "providerMailProjectionWorker": "src/main/infrastructure/sqlite/mailSyncProjectionWorker.ts",
@@ -100,6 +103,9 @@
     "liveMailStatusSurface": "src/renderer/src/features/live-mail/LiveMailStatus.tsx",
     "liveMailMessageDetailPreloadClient": "src/preload/liveMailMessageDetailClient.ts",
     "liveMailMessageDetailDataSource": "src/renderer/src/application/liveMailMessageDetailDataSource.ts",
+    "openLiveMailOriginalPreloadClient": "src/preload/openLiveMailOriginalClient.ts",
+    "openLiveMailOriginalDataSource": "src/renderer/src/application/openLiveMailOriginalDataSource.ts",
+    "openOriginalConfirmation": "src/renderer/src/features/live-mail/OpenOriginalConfirmation.tsx",
     "deterministicMailSyncFakes": "src/main/infrastructure/providers/deterministicFakeMailSync.ts",
     "fixtures": "src/shared/fixtures.ts"
   },
@@ -204,6 +210,9 @@
     "canonical-source-detail-excludes-provider-ids-html-paths-keys-and-raw-errors",
     "canonical-source-detail-crosses-only-one-fixed-validated-trusted-main-frame-query",
     "canonical-source-detail-is-unavailable-outside-durable-live-mode",
+    "open-original-is-live-mode-only-main-derived-strictly-allow-listed-and-explicitly-confirmed",
+    "open-original-never-returns-provider-ids-or-target-urls-to-renderer",
+    "open-original-browser-handoff-never-claims-provider-navigation-succeeded",
     "canonical-source-detail-ui-covers-loading-missing-safe-error-retry-and-stale-result-suppression",
     "live-summary-content-remains-hidden-until-source-detail-ui-and-open-original-review",
     "provider-mail-is-authoritative-and-cache-reconciliation-is-explicit",

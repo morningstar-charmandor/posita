@@ -316,12 +316,15 @@ At the current Gate 2D foundation checkpoint, Posita has:
   IPC/preload and explicit encrypted-local inspection, with exact found/missing,
   safe retry, stale-result suppression, canonical provenance, recipients, safe
   attachment metadata, and truncated plain text while excluding provider IDs and HTML,
+- a live-mode-only two-step confirmed original-source handoff that resolves
+  encrypted provider identity in the worker, derives and strictly allow-lists a
+  Gmail target in main, and exposes neither the URL nor provider ID to the renderer,
 - truthful bounded local-inspection live-empty, recorded-syncing, offline, attention,
   and cached-data UI that never falls back to samples or claims Gmail or AI is active,
 - an explicit compatibility boundary that keeps fixture `Message` records sample-
   only rather than fabricating provider identity,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 55 automated test files containing 350 passing tests,
+- 59 automated test files containing 364 passing tests,
 - a desktop visual and accessibility-tree check of the local-only Settings entry,
   sample-account controls, normal no-recovery-needed outcome, and automatic
   retention card with readable next/last status and Gmail non-mutation copy,
@@ -347,8 +350,9 @@ The live application read-model boundary is now verified at a status-only layer,
 and its account provenance is a human-readable encrypted address/optional label
 rather than an opaque scope. A bounded canonical source-detail query is now composed
 through fixed validated desktop boundaries with loading, missing/stale, safe-error,
-retry, and explicit encrypted-local inspection. The next milestone is the external
-original-source security/product review before live summaries are displayed. Real OAuth,
+retry, and explicit encrypted-local inspection. A separate two-step confirmed
+browser handoff derives the provider target only in trusted code and never claims
+Gmail navigation succeeded. The next milestone is live-summary presentation. Real OAuth,
 browser activation, credentials, live account
 connection, and production sync remain separate actions blocked behind explicit
 owner approval.
@@ -399,5 +403,6 @@ sample from live-empty, offline, or cached canonical state through a bounded wor
 read without displaying private live summaries. Its status-only account provenance
 now uses encrypted human-readable identity while keeping provider subjects hidden.
 The worker-backed canonical detail boundary is also composed with deterministic
-data only. Real mail remains blocked until open-original review, production sync,
-and the remaining provider activation gates pass.
+data only. Real mail remains blocked until live-summary review, production sync,
+the undocumented Gmail web route is revalidated, and the remaining provider
+activation gates pass.

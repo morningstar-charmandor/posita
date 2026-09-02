@@ -19,6 +19,10 @@ import {
   desktopLiveMailMessageDetailDataSource,
   type LiveMailMessageDetailDataSource
 } from './application/liveMailMessageDetailDataSource'
+import {
+  desktopOpenLiveMailOriginalDataSource,
+  type OpenLiveMailOriginalDataSource
+} from './application/openLiveMailOriginalDataSource'
 import { Workspace } from './features/workspace/Workspace'
 
 type LoadState =
@@ -31,13 +35,15 @@ export interface AppProps {
   deletionDataSource?: LocalDataDeletionDataSource
   recoveryDataSource?: AccountConnectionRecoveryDataSource
   liveMailMessageDetailDataSource?: LiveMailMessageDetailDataSource
+  openLiveMailOriginalDataSource?: OpenLiveMailOriginalDataSource
 }
 
 export function App({
   dataSource = desktopApplicationStateDataSource,
   deletionDataSource = desktopLocalDataDeletionDataSource,
   recoveryDataSource = desktopAccountConnectionRecoveryDataSource,
-  liveMailMessageDetailDataSource = desktopLiveMailMessageDetailDataSource
+  liveMailMessageDetailDataSource = desktopLiveMailMessageDetailDataSource,
+  openLiveMailOriginalDataSource = desktopOpenLiveMailOriginalDataSource
 }: AppProps): React.JSX.Element {
   const [attempt, setAttempt] = useState(0)
   const [state, setState] = useState<LoadState>({ status: 'loading' })
@@ -142,6 +148,7 @@ export function App({
           snapshot={state.application.snapshot}
           onReload={retry}
           detailDataSource={liveMailMessageDetailDataSource}
+          openOriginalDataSource={openLiveMailOriginalDataSource}
         />
         <LifecycleNotice
           lifecycle={state.application.lifecycle}
