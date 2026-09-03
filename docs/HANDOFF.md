@@ -9,8 +9,9 @@ next move. Technical details remain in their linked source documents.
 ## Current state
 
 Posita has completed the **Gate 2D credential-free lifecycle foundation, Google
-desktop authorization protocol, bounded loopback/browser infrastructure, and
-trusted connection-activation sequence**. Exact identity consent is approved; the
+desktop authorization protocol, bounded loopback/browser infrastructure, trusted
+connection-activation sequence, and an inert strict local client-identifier
+configuration source**. Exact identity consent is approved; the
 owner has now created an isolated Google Cloud project named `Posita` with project
 ID `posita-mail-hub-2026`. Gmail API is enabled, external testing consent is
 configured for OpenID identity, verified email, and Gmail read-only, and one
@@ -338,11 +339,13 @@ created and verified. No client credential was downloaded or used.
 The owner-approved Google adapter set, deletion-aware reconciliation, trusted
 refresh-to-access-token boundary, exact identity consent, desktop authorization-
 code/PKCE protocol core, bounded loopback/browser infrastructure, and trusted-main
-connection activation sequence are complete and uncomposed. No smaller credential-
-free connection slice remains. The next milestone is a reviewed, secret-safe runtime
-configuration boundary and complete connection/disconnect lifecycle composition.
-It must keep the client configuration outside Git and expose no credential through
-renderer IPC. Downloading or using client credentials, production UI/IPC activation,
+connection activation sequence and secret-safe runtime configuration source are
+complete and uncomposed. No smaller credential-free connection slice remains. The
+next milestone is reviewed connection/disconnect lifecycle composition that consumes
+only the configuration source's bounded result.
+It must keep client configuration outside Git and expose no credential through
+renderer IPC. Placing or using the real client identifier, downloading or using any
+credential, production UI/IPC activation,
 opening a real authorization browser, and connecting a dedicated test account remain
 later, separate approvals. Current approval does not authorize those actions, live
 provider testing, or mailbox ingestion.
@@ -369,8 +372,9 @@ confirmed local deletion are complete at their current layers. Continue in this 
    startup account inventory, durable lifecycle status, safe explicit sync-retry
    policy, and final production-composition audit are complete.
 5. Treat the approved Google authorization, loopback/browser infrastructure,
-   reader, revoker, and access-token source as complete and uncomposed. Stop for
-   owner approval before client configuration, UI/IPC or lifecycle composition,
+   reader, revoker, access-token source, and strict local client-identifier source
+   as complete and uncomposed. Stop for owner approval before placing the real
+   identifier, UI/IPC or lifecycle composition,
    real browser authorization, connection activation, network testing, or a live
    account.
 6. Keep real Gmail ingestion disabled until authorization activation is separately
@@ -482,6 +486,12 @@ authorization endpoint, loopback, client, state, PKCE, and scope validation. No
 dependency, schema, compatibility path, production composition, listener at
 startup, real browser action, configured client, credential, account, provider
 request, personal data, mailbox mutation, or intentional duplication was added.
+The new `loadGoogleOAuthClientConfiguration` infrastructure source is the only
+client-identifier configuration path. It accepts one exact versioned owner-readable
+file from Posita application data, refuses symlinks, secrets, unknown fields, and
+fallback searches, and remains outside startup and public contracts. No dependency,
+schema, compatibility path, duplicate service, real identifier, credential, account,
+provider request, personal data, mailbox mutation, or intentional duplication was added.
 The new `AccountConnectionActivationService` composes the existing connection,
 callback, and browser interfaces without adding a second persistence coordinator.
 It remains outside startup and public desktop contracts. No dependency, schema,
@@ -507,7 +517,7 @@ was added.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 70 test files, 446 tests, strict typecheck, structure
+- Current verified baseline: 71 test files, 456 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,

@@ -10,7 +10,10 @@ Public repository: [github.com/morningstar-charmandor/posita](https://github.com
 ## Current status
 
 Gate 2D's credential-free lifecycle foundation and approved Google adapter set are
-complete but not activated. Posita includes a Daily Brief,
+complete but not activated. A strict inert trusted-main source can now validate a
+future desktop client identifier from one private application-data file; it is not
+composed and no real identifier, credential, or account is present. Posita includes
+a Daily Brief,
 topic timeline with source citations, original-message inspection, a unified
 classic mail view, and an editable draft flow. Realistic fixture data is seeded
 idempotently as independently authenticated AES-256-GCM records in a versioned
@@ -64,8 +67,9 @@ consume the session and require a fresh start. A separate uncomposed listener no
 binds one short-lived operating-system-selected `127.0.0.1` port, validates the
 host/path/state, bounds requests, and returns generic non-reflective browser copy.
 An exact-URL system-browser launcher has an injected Electron delegate and is tested
-without opening a browser. No production runtime configuration, startup composition,
-preload/IPC action, downloaded client credential, user grant, account, browser
+without opening a browser. The local configuration source is inert and contains no
+real value. No production startup composition, preload/IPC action, downloaded client
+credential, user grant, account, browser
 action, or live provider request is present.
 
 An unexposed trusted-main activation coordinator now joins those boundaries to the

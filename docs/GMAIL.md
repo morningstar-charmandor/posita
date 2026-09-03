@@ -206,6 +206,13 @@ and exposes account invalidation plus teardown. Missing or `invalid_grant`
 authorization is distinct from retryable storage/provider failure. Deterministic
 tests use conspicuous tokens and no network.
 
+The separate inert `loadGoogleOAuthClientConfiguration` boundary accepts only a
+desktop client identifier from the fixed `google-oauth-client.json` file in Posita's
+absolute application-data directory. It refuses symlinks, loose POSIX permissions,
+oversized input, unknown fields, invalid identifiers, and any client secret. It does
+not search Git, the working directory, or environment variables and is not yet wired
+to the authorization or access-token adapters.
+
 ## Desktop OAuth flow
 
 Posita will use Google's installed-desktop application flow with Authorization

@@ -78,6 +78,13 @@ supported Linux desktops it uses the selected secret store. Posita fails closed
 when asynchronous encryption is unavailable and rejects Linux `basic_text` and
 `unknown` backends.
 
+The Google desktop client identifier is not a user token and is not accepted as a
+secret-bearing configuration object. Posita's inert configuration source reads only
+an exact versioned client identifier file from the app's local data directory. It
+refuses symbolic links, oversized or loosely permissioned files, unknown fields,
+and any client-secret field. The source is not production-composed, and no real
+identifier or credential is stored in the repository.
+
 The uncomposed access-token source now reads only one selected protected refresh
 credential and exchanges it through a fixed bounded trusted-main endpoint adapter.
 Short-lived access tokens remain memory-only, are cached with an expiry margin,

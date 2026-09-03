@@ -1026,3 +1026,26 @@
   No dependency, schema migration, compatibility path, startup composition, IPC/UI
   surface, configured client, credential, account, browser/provider action, personal
   data, mailbox mutation, or intentional duplicate service is added.
+
+## ADR-051: Load only a local desktop client identifier from one fixed boundary
+
+- Status: accepted for Gate 2D Google activation
+- Context: Google Cloud now contains Posita's installed-desktop OAuth client, while
+  its runtime identifier has not been placed on the machine or used. The existing
+  authorization and token adapters need only that public client identifier; accepting
+  a downloaded credential object, client secret, repository file, or broad environment
+  lookup would create avoidable secret-handling and configuration ambiguity.
+- Decision: add one uncomposed trusted-main loader for the fixed
+  `google-oauth-client.json` file under Posita's absolute application-data directory.
+  Accept only the exact version-1 `provider: google` and valid `clientId` fields,
+  capped at 4 KiB. Refuse symbolic links, non-regular files, group/world permissions
+  on POSIX, unknown fields, and client secrets. Return only bounded typed availability
+  or safe failure state, never raw file errors. Do not search the repository, current
+  working directory, environment variables, or fallback locations, and do not expose
+  the result through logs, preload, IPC, or renderer code.
+- Consequence: future startup composition has one deterministic fail-closed source
+  for the client identifier without adding a dependency, secret store, compatibility
+  path, or second connection owner. The running product remains unchanged until a
+  later reviewed composition milestone. Actual local placement of the identifier,
+  real authorization, token persistence, and account activation remain separate
+  explicit gates.

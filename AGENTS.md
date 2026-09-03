@@ -9,7 +9,8 @@ exists deeper in the tree.
 - Current milestone: Gate 2D Google desktop authorization, bounded loopback/browser,
   trusted connection activation, read, refresh, and revocation are credential-free
   complete; isolated Google Cloud/API/consent/desktop-client configuration is complete;
-  credential download/use and production composition remain inactive pending review.
+  a strict inert local client-identifier configuration source is complete, while
+  credential placement/use and production composition remain inactive pending review.
 - Current data: deterministic fixtures stored as authenticated encrypted records.
 - Encrypted provider-account and sync-state storage is implemented but empty.
 - A non-sensitive lifecycle journal and confirmed full local-deletion execution are implemented.
@@ -34,8 +35,9 @@ exists deeper in the tree.
   marker without recreating a data key or reseeding fixtures.
 - An OS-protected credential vault is implemented but contains no real token.
 - A bounded refresh-to-access-token source now connects that vault contract to the
-  Gmail reader contract in trusted main, but has no runtime client configuration or
-  production composition and has never received a real user credential.
+  Gmail reader contract in trusted main. A separate strict configuration source can
+  read only a future desktop client identifier from Posita's application-data folder,
+  but neither is production-composed and no real user credential has been received.
 - A versioned Gmail consent preview is visible in Settings and exactly discloses
   OpenID identity, verified email, and Gmail read-only access; OAuth activation
   remains unavailable. Google Cloud has matching testing consent and a desktop client,

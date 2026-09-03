@@ -2279,6 +2279,47 @@ token exists, and no runtime composition, browser authorization, account connect
 provider request, mailbox ingestion, AI service, billing activation, or mailbox
 mutation occurred.
 
+## Gate 2D milestone — Secret-safe Google client configuration source
+
+Date: 2026-09-03
+Checkpoint: use the Git commit whose subject is `feat: load Google client configuration safely`
+
+Goal: establish one deterministic local boundary for Posita's future desktop OAuth
+client identifier without placing the real identifier on disk, accepting a secret,
+or activating Google.
+
+Delivered:
+
+- one trusted-main loader for the fixed `google-oauth-client.json` file under an
+  absolute Posita application-data directory,
+- an exact version-1 `provider` and `clientId` schema reusing the reviewed Google
+  client-ID policy,
+- a 4 KiB input cap, regular-file requirement, symbolic-link refusal, and owner-only
+  POSIX permission requirement,
+- bounded missing/invalid results with stable safe error codes and no raw file detail,
+- deterministic failure coverage for unsafe location, loose permissions, symlink,
+  extra secret field, wrong provider, invalid identifier, unknown version, and size.
+
+Important decisions:
+
+- accept only the desktop client ID; never accept or store a client secret,
+- do not search the repository, current working directory, environment variables,
+  or fallback locations,
+- keep the loader outside startup, preload, IPC, renderer, authorization, and token
+  composition until the complete lifecycle is separately reviewed,
+- add no dependency, schema migration, secret store, compatibility path, duplicate
+  service, real identifier, credential, account, provider request, personal mailbox
+  data, AI path, or mailbox mutation.
+
+Evidence: 71 test files and 456 tests pass with strict typecheck, renderer security
+checks, local-only callback integration, and the production Electron build.
+
+Limitations: the real client identifier is not present locally or in Git, the loader
+is uncomposed, and no browser, Google endpoint, user grant, token, account, sync, or
+mailbox access occurred. The next milestone is reviewed connection/disconnect
+lifecycle composition; real identifier placement and account authorization remain
+separate explicit gates.
+
 ## How future entries should be written
 
 For each material milestone, record:

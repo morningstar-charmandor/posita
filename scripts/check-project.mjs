@@ -217,6 +217,22 @@ if (!accountConnectionRecovery.includes('this.confirmations.consume(recoveryRequ
 
 const localDataBootstrap = await readText('src/main/bootstrapLocalData.ts')
 const mainIndex = await readText('src/main/index.ts')
+const googleOAuthClientConfiguration = await readText(
+  'src/main/infrastructure/providers/googleOAuthClientConfiguration.ts'
+)
+if (!googleOAuthClientConfiguration.includes(
+  "GOOGLE_OAUTH_CLIENT_CONFIGURATION_FILE = 'google-oauth-client.json'"
+) || !googleOAuthClientConfiguration.includes('constants.O_NOFOLLOW') ||
+    !googleOAuthClientConfiguration.includes('(metadata.mode & 0o077) !== 0') ||
+    !googleOAuthClientConfiguration.includes(
+      "const ALLOWED_KEYS = ['version', 'provider', 'clientId'] as const"
+    )) {
+  fail('Google client configuration must stay fixed, private, symlink-refusing, and exact')
+}
+if (googleOAuthClientConfiguration.includes('process.env') ||
+    googleOAuthClientConfiguration.includes('clientSecret')) {
+  fail('Google client configuration must not use environment search or accept a client secret')
+}
 if (!localDataBootstrap.includes('new ElectronSafeStorageProtector()')) {
   fail('production composition must use the Electron OS-backed credential protector')
 }

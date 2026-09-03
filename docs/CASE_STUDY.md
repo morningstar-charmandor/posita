@@ -17,7 +17,8 @@ and actions.
 
 **Current stage:** Gate 2D Google adapter, trusted token boundary, exact identity
 consent, desktop authorization protocol, bounded loopback/browser infrastructure,
-and trusted connection-activation sequencing complete but inactive,
+trusted connection-activation sequencing, and a strict inert local client-identifier
+source complete but inactive,
 with a real
 SQLite path, OS-protected key hierarchy, authenticated mail and provider-account
 state, plus tested crash-resumable disconnect and full local-deletion orchestrators.
@@ -412,8 +413,10 @@ decision is now narrower: the isolated `posita-mail-hub-2026` project has Gmail 
 external testing consent with the exact reviewed identity/read-only scopes, and a
 `Posita macOS Desktop` client configured. The client credential was neither
 downloaded nor used, preserving a clean separation between external infrastructure
-and runtime access. The next review is a secret-safe configuration boundary and
-complete production lifecycle/UI activation. Real
+and runtime access. A fixed, owner-readable, symlink-refusing configuration source
+now validates only a future client identifier and rejects secrets or fallback search;
+it contains no real value and remains uncomposed. The next review is complete
+production lifecycle/UI activation. Real
 browser activation, credentials, live account connection, provider-network
 testing, and production sync remain blocked behind explicit owner approval.
 

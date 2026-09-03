@@ -29,7 +29,8 @@ and trusted connection-activation coordinator leave no smaller credential-free
 connection milestone. Activation now has an isolated Google Cloud project
 (`posita-mail-hub-2026`), Gmail API, external testing consent with the exact approved
 scopes, and a desktop client whose credentials remain unused. It still requires a
-secret-safe runtime configuration boundary and reviewed lifecycle/UI composition,
+reviewed lifecycle/UI composition that consumes the now-complete inert, secret-safe
+client-identifier configuration source,
 dedicated-account testing, and owner approval.
 
 No credential, provider connection, browser authorization, network request, Gmail
@@ -212,9 +213,10 @@ mail model, second cursor store, generic IPC bridge, or renderer provider client
 - The inactive disconnect service requires account-scoped canonical projection
   deletion in its durable mail-data phase and safely retries after fixture removal
   has already committed.
-- The current verified baseline is 70 test files and 446 tests plus strict TypeScript,
+- The current verified baseline is 71 test files and 456 tests plus strict TypeScript,
   renderer structure/security checks, and production Electron builds.
-- No dependency, production composition, credential,
+- One inert client-identifier configuration source is complete; no dependency,
+  production composition, real identifier, credential,
   personal mailbox data, network action, privileged renderer capability, or mailbox mutation was
   added.
 
@@ -227,9 +229,9 @@ sequencing.
 Those adapters and the prerequisite deletion-aware reconciliation are complete and
 uncomposed. The separately approved Google Cloud project, Gmail API, external testing
 consent, and desktop-client creation are complete. The client credential was not
-downloaded or used. This approval does not authorize credential download or use,
-production runtime configuration,
-composition, connecting an account, real browser action, network
+downloaded or used. The strict local configuration source is complete but contains
+no real identifier and is not composed. This approval does not authorize credential
+download or use, production runtime composition, connecting an account, real browser action, network
 testing with Google, or ingesting mail; those remain later explicit gates.
 
 ## Original audit evidence

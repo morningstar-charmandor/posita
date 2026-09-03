@@ -333,6 +333,15 @@ instead of racing cancellation against a possibly committed credential. Cleanup
 failure is distinct recovery-required state. The coordinator has no startup, IPC,
 preload, renderer, configured-client, or real-browser composition.
 
+The future desktop client identifier has one inert infrastructure source:
+`loadGoogleOAuthClientConfiguration`. It reads only `google-oauth-client.json` from
+the absolute Posita application-data directory, refuses symbolic links and files
+readable by other users on POSIX platforms, caps input at 4 KiB, and accepts only
+the exact versioned `provider` and `clientId` fields. It explicitly rejects a client
+secret and does not search the repository, environment variables, or alternate
+locations. The result remains trusted-main-only and is not constructed by startup,
+preload, IPC, or renderer code.
+
 `AccountConnectionService` is the next trusted application layer above that
 adapter. It validates begin output against the requested account, binds completion
 to the pending session, rejects pre-existing or one-sided vault/account-state
