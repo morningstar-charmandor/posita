@@ -7,7 +7,7 @@
     "repository": "https://github.com/morningstar-charmandor/posita",
     "repositoryVisibility": "public",
     "canonicalBranch": "main",
-    "currentMilestone": "gate-2d-google-cloud-project-created-oauth-client-configuration-next",
+    "currentMilestone": "gate-2d-google-oauth-cloud-configuration-complete-runtime-composition-next",
     "dataMode": "deterministic-sample-with-inert-activation-ready-encrypted-provider-foundation",
     "mailSendingEnabled": false
   },
@@ -29,10 +29,19 @@
     "googleCloud": {
       "projectName": "Posita",
       "projectId": "posita-mail-hub-2026",
-      "gmailApiEnabled": false,
-      "oauthConsentConfigured": false,
-      "desktopOAuthClientCreated": false,
+      "gmailApiEnabled": true,
+      "oauthConsentConfigured": true,
+      "oauthAudience": "external-testing",
+      "oauthScopes": [
+        "openid",
+        "https://www.googleapis.com/auth/userinfo.email",
+        "https://www.googleapis.com/auth/gmail.readonly"
+      ],
+      "desktopOAuthClientCreated": true,
+      "desktopOAuthClientName": "Posita macOS Desktop",
+      "desktopOAuthClientCredentialsDownloaded": false,
       "credentialStoredInRepository": false,
+      "productionRuntimeConfigured": false,
       "liveAccountConnected": false
     }
   },

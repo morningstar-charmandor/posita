@@ -8,7 +8,8 @@ exists deeper in the tree.
 
 - Current milestone: Gate 2D Google desktop authorization, bounded loopback/browser,
   trusted connection activation, read, refresh, and revocation are credential-free
-  complete; production composition remains inactive pending a configuration decision.
+  complete; isolated Google Cloud/API/consent/desktop-client configuration is complete;
+  credential download/use and production composition remain inactive pending review.
 - Current data: deterministic fixtures stored as authenticated encrypted records.
 - Encrypted provider-account and sync-state storage is implemented but empty.
 - A non-sensitive lifecycle journal and confirmed full local-deletion execution are implemented.
@@ -33,11 +34,12 @@ exists deeper in the tree.
   marker without recreating a data key or reseeding fixtures.
 - An OS-protected credential vault is implemented but contains no real token.
 - A bounded refresh-to-access-token source now connects that vault contract to the
-  Gmail reader contract in trusted main, but has no client configuration or
-  production composition and has never received a real credential.
+  Gmail reader contract in trusted main, but has no runtime client configuration or
+  production composition and has never received a real user credential.
 - A versioned Gmail consent preview is visible in Settings and exactly discloses
   OpenID identity, verified email, and Gmail read-only access; OAuth activation
-  remains unavailable and no Google client or credential is configured.
+  remains unavailable. Google Cloud has matching testing consent and a desktop client,
+  but its credential was not downloaded, stored locally, or used.
 - Provider-independent authorization-session contracts and a deterministic fake
   are implemented but are not composed into startup, preload, IPC, or UI.
 - A real uncomposed Google desktop authorization adapter implements bounded PKCE,
@@ -105,13 +107,14 @@ exists deeper in the tree.
   not connected.
 - Sending mail is intentionally disabled.
 - The final production-composition audit and approved Google adapter/infrastructure/
-  activation-coordinator set are complete. OAuth client configuration, credential
-  use, UI/IPC exposure, and production activation remain unapproved.
+  activation-coordinator set are complete. Isolated Google Cloud, Gmail API, external
+  testing consent, and desktop-client creation are complete. Credential download/use,
+  runtime configuration, UI/IPC exposure, and production activation remain unapproved.
 - The owner approved exact OpenID/email/Gmail-read-only consent and the credential-
   free desktop OAuth protocol core, uncomposed loopback/browser boundaries, and
-  unexposed trusted connection-activation sequencing. Credentials, a real account,
-  UI/IPC exposure, production composition, ingestion, and live provider-network use
-  remain unapproved.
+  unexposed trusted connection-activation sequencing, plus the isolated Google-side
+  testing configuration. Credential download/use, a real account, UI/IPC exposure,
+  production composition, ingestion, and live provider-network use remain unapproved.
 - Product promise: **Your inboxes, understood as one.**
 
 Do not imply that fixture-backed behavior is connected to real mail or AI.

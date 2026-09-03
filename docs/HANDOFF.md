@@ -12,9 +12,11 @@ Posita has completed the **Gate 2D credential-free lifecycle foundation, Google
 desktop authorization protocol, bounded loopback/browser infrastructure, and
 trusted connection-activation sequence**. Exact identity consent is approved; the
 owner has now created an isolated Google Cloud project named `Posita` with project
-ID `posita-mail-hub-2026`. The Gmail API, OAuth consent configuration, desktop
-OAuth client, credential use, and production activation remain inactive and require
-their next explicit approval.
+ID `posita-mail-hub-2026`. Gmail API is enabled, external testing consent is
+configured for OpenID identity, verified email, and Gmail read-only, and one
+desktop client named `Posita macOS Desktop` exists. Its credentials were not
+downloaded, copied into the repository, or used. Runtime composition, browser
+authorization, account connection, and production activation remain inactive.
 The product is a runnable Electron desktop prototype using React, strict TypeScript,
 and SQLite. All visible mail is deterministic sample data.
 
@@ -265,9 +267,10 @@ Simulated or deliberately inactive:
 
 - all accounts, people, topics, messages, summaries, and drafts are fixtures,
 - generated-looking summaries and drafts are not produced by an AI provider,
-- no OAuth credential has been created or stored,
-- the isolated `posita-mail-hub-2026` Google Cloud project exists, but its Gmail
-  API, OAuth consent, and desktop client are not configured,
+- no OAuth client credential has been downloaded or stored locally, and no user
+  authorization grant or refresh credential exists,
+- the isolated `posita-mail-hub-2026` Google Cloud project has Gmail API, external
+  testing consent, and the `Posita macOS Desktop` client configured,
 - encrypted provider-account and sync-state tables contain no real account,
 - Google authorization revocation has a real fixed-endpoint adapter, exercised only
   through injected deterministic HTTP and still uncomposed,
@@ -329,18 +332,20 @@ Not implemented:
 
 ## Next recommended milestone
 
-The isolated Google Cloud project `posita-mail-hub-2026` is created and verified.
+The isolated Google Cloud project `posita-mail-hub-2026`, Gmail API, external
+testing consent, exact approved scopes, and `Posita macOS Desktop` client are
+created and verified. No client credential was downloaded or used.
 The owner-approved Google adapter set, deletion-aware reconciliation, trusted
 refresh-to-access-token boundary, exact identity consent, desktop authorization-
 code/PKCE protocol core, bounded loopback/browser infrastructure, and trusted-main
 connection activation sequence are complete and uncomposed. No smaller credential-
-free connection slice remains. The next external milestone is to enable only the
-Gmail API, configure the approved identity/read-only consent, and create a Google
-desktop OAuth client after a fresh action-time approval. Client credentials must
-remain outside Git. Production UI/IPC/lifecycle composition and connecting a
-dedicated test account remain later, separate approvals. Current approval does not
-authorize credential creation or use, account connection, production composition,
-real browser authorization, live provider testing, or mailbox ingestion.
+free connection slice remains. The next milestone is a reviewed, secret-safe runtime
+configuration boundary and complete connection/disconnect lifecycle composition.
+It must keep the client configuration outside Git and expose no credential through
+renderer IPC. Downloading or using client credentials, production UI/IPC activation,
+opening a real authorization browser, and connecting a dedicated test account remain
+later, separate approvals. Current approval does not authorize those actions, live
+provider testing, or mailbox ingestion.
 
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,

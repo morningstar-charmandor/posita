@@ -27,8 +27,9 @@ composition trace, trusted access-token slice, approved identity consent, and re
 uncomposed desktop authorization protocol, bounded loopback/browser boundaries,
 and trusted connection-activation coordinator leave no smaller credential-free
 connection milestone. Activation now has an isolated Google Cloud project
-(`posita-mail-hub-2026`) but still requires Gmail API, consent, and desktop-client
-configuration, reviewed lifecycle/UI composition,
+(`posita-mail-hub-2026`), Gmail API, external testing consent with the exact approved
+scopes, and a desktop client whose credentials remain unused. It still requires a
+secret-safe runtime configuration boundary and reviewed lifecycle/UI composition,
 dedicated-account testing, and owner approval.
 
 No credential, provider connection, browser authorization, network request, Gmail
@@ -224,9 +225,10 @@ Gmail-read-only consent, credential-free desktop authorization protocol core,
 uncomposed loopback/browser infrastructure, and trusted connection-activation
 sequencing.
 Those adapters and the prerequisite deletion-aware reconciliation are complete and
-uncomposed. The separately approved Google Cloud project creation is complete, but
-Gmail API, consent, and desktop-client configuration remain inactive. This approval
-does not authorize credential creation or use, production
+uncomposed. The separately approved Google Cloud project, Gmail API, external testing
+consent, and desktop-client creation are complete. The client credential was not
+downloaded or used. This approval does not authorize credential download or use,
+production runtime configuration,
 composition, connecting an account, real browser action, network
 testing with Google, or ingesting mail; those remain later explicit gates.
 

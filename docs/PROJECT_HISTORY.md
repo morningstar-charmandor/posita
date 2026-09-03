@@ -2243,6 +2243,42 @@ Limitations: Gmail API is disabled, OAuth consent is not configured, no desktop
 OAuth client or credential exists, and no browser authorization, account connection,
 provider request, mailbox ingestion, AI service, or mailbox mutation occurred.
 
+## Gate 2D milestone — Google OAuth cloud configuration
+
+Date: 2026-09-03
+Checkpoint: use the Git commit whose subject is `docs: record Google OAuth configuration`
+
+Goal: configure Posita's approved Google-side read-only authorization boundary
+without downloading credentials, connecting an account, or activating the app.
+
+Delivered:
+
+- Gmail API enabled only in `posita-mail-hub-2026`,
+- Google Auth Platform configured for an external audience in testing mode,
+- exact selected scopes for OpenID identity, verified email, and Gmail read-only,
+- one desktop OAuth client named `Posita macOS Desktop`,
+- machine-readable configuration facts that explicitly keep runtime configuration,
+  credential use, and live account connection false.
+
+Important decisions:
+
+- keep the consent audience in testing instead of publishing the app,
+- select no profile, compose, modify, send, delete, archive, label, broad Gmail,
+  Cloud Platform, or unrelated API scope,
+- do not download, copy, display, document, or commit the client ID or secret,
+- keep adding a test user, opening authorization, and connecting Gmail behind later
+  explicit approvals.
+
+Evidence: Google Cloud reported Gmail API as enabled, OAuth configuration as
+created, data-access changes as saved, and `Posita macOS Desktop` as an existing
+client. The repository passed 70 test files and 446 tests, strict typecheck,
+renderer security checks, and the production Electron build.
+
+Limitations: no client credential was downloaded or used, no user grant or refresh
+token exists, and no runtime composition, browser authorization, account connection,
+provider request, mailbox ingestion, AI service, billing activation, or mailbox
+mutation occurred.
+
 ## How future entries should be written
 
 For each material milestone, record:

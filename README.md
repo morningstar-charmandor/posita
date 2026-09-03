@@ -9,8 +9,8 @@ Public repository: [github.com/morningstar-charmandor/posita](https://github.com
 
 ## Current status
 
-Gate 2D's credential-free lifecycle foundation is complete and approved Google
-adapter implementation is in progress. Posita includes a Daily Brief,
+Gate 2D's credential-free lifecycle foundation and approved Google adapter set are
+complete but not activated. Posita includes a Daily Brief,
 topic timeline with source citations, original-message inspection, a unified
 classic mail view, and an editable draft flow. Realistic fixture data is seeded
 idempotently as independently authenticated AES-256-GCM records in a versioned
@@ -42,15 +42,18 @@ through separate prepare and execute IPC methods. Execution requires a five-minu
 typed confirmation bound to one operation, and pending journal state has a bounded
 safe-status projection. One validated read-only application-state query now
 renders pending, retry-required, recovery-required, and completed local-deletion
-outcomes. No other lifecycle command is exposed. Gmail and AI providers
-are not connected, no real OAuth credential exists, and sending is deliberately
-disabled.
+outcomes. No other lifecycle command is exposed. Gmail and AI providers are not
+connected, no user OAuth grant or refresh credential exists, and sending is
+deliberately disabled.
 
 Settings now includes a validated `google-gmail-readonly-identity-v2` connection-
 consent preview. It exactly discloses OpenID identity, verified email, and planned
 Gmail read-only access, plus the 90-day encrypted local window, inactive AI-provider
-boundary, and disconnect behavior. The connect action is intentionally disabled:
-no Google OAuth client, credential, browser flow, or live account is configured.
+boundary, and disconnect behavior. Google Cloud project `posita-mail-hub-2026` now
+has Gmail API, external testing consent with the exact reviewed scopes, and one
+`Posita macOS Desktop` client. Its credentials were not downloaded or used. The
+connect action remains disabled because no runtime client configuration, browser
+flow, user grant, or live account is composed.
 
 The trusted backend now defines a bounded provider-independent authorization
 session contract, deterministic fake, and real uncomposed Google desktop protocol
@@ -61,17 +64,17 @@ consume the session and require a fresh start. A separate uncomposed listener no
 binds one short-lived operating-system-selected `127.0.0.1` port, validates the
 host/path/state, bounds requests, and returns generic non-reflective browser copy.
 An exact-URL system-browser launcher has an injected Electron delegate and is tested
-without opening a browser. No production client configuration, startup composition,
-preload/IPC action, credential, account, browser action, or live provider request is
-present.
+without opening a browser. No production runtime configuration, startup composition,
+preload/IPC action, downloaded client credential, user grant, account, browser
+action, or live provider request is present.
 
 An unexposed trusted-main activation coordinator now joins those boundaries to the
 existing account-connection service. It starts callback waiting before browser
 handoff, keeps authorization URLs and callbacks out of renderer state, bounds
 non-consuming callback rejection, observes cancellation before code exchange, and
 fails closed if cleanup cannot be confirmed. This is deterministic composition only:
-it is not imported by startup and has no configured client, IPC/UI action, credential,
-account, browser action, or provider request.
+it is not imported by startup and has no runtime-configured client, IPC/UI action,
+user credential, account, browser action, or provider request.
 
 A trusted account-connection coordinator now composes that interface with the
 existing vault and encrypted account-state contracts in credential-free tests.
