@@ -2360,6 +2360,50 @@ browser authorization, Google provider request, ingestion, or mailbox mutation o
 The next milestone still requires explicit approval for production lifecycle/UI
 composition; real account authorization remains a later action-time confirmation.
 
+## Gate 2D milestone — Provider-inert Google production ownership
+
+Date: 2026-09-03
+Checkpoint: use the Git commit whose subject is `feat: compose inert Google provider lifecycle`
+
+Goal: establish one real trusted-main ownership graph for the approved Google
+components without opening authorization, accepting a credential, connecting an
+account, or starting provider work.
+
+Delivered:
+
+- one `composeGoogleProviderLifecycle` factory reusing the approved authorization,
+  callback, browser, connection, token, Gmail read, sync, revocation, disconnect,
+  retention, and lifecycle boundaries,
+- strict local client-ID loading at startup, with composition only when both valid
+  configuration and the existing file-backed projection worker are available,
+- an explicit zero-account lifecycle start that owns retention, confirmed-deletion
+  suspension, sync/token shutdown, and projection teardown without provider I/O,
+- asynchronous worker shutdown that drains accepted local operations before its
+  retained encryption context is destroyed,
+- structural checks that reject direct adapter wiring, automatic inventory-driven
+  sync, or connection activation from startup.
+
+Important decisions:
+
+- do not hand the existing startup inventory to the lifecycle owner yet,
+- expose neither connection nor disconnect through preload, IPC, or UI,
+- retain the previous standalone maintenance and worker-shutdown path as the
+  fail-closed fallback when configuration is missing or invalid,
+- add no dependency, schema migration, repository, state store, compatibility
+  implementation, credential, account, personal data, or mailbox mutation.
+
+Evidence: the production graph integration test starts against a real temporary
+file-backed encrypted runtime with zero accounts, returns the existing sample/empty
+state, records no browser handoff, and shuts down through the shared lifecycle. The
+complete repository verification passes 72 test files and 458 tests, strict
+typecheck, renderer security checks, local callback integration, and the production
+Electron build.
+
+Limitations: construction is ownership, not activation. No authorization browser,
+Google request, user grant, refresh/access token, real account, provider ingestion,
+AI service, or mailbox mutation occurred. A separately reviewed narrow connection/
+disconnect command and status surface is next.
+
 ## How future entries should be written
 
 For each material milestone, record:

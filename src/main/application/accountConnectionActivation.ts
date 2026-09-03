@@ -46,7 +46,8 @@ export class AccountConnectionActivationError extends Error {
 }
 
 /**
- * Trusted, unexposed coordinator for one complete desktop authorization handoff.
+ * Trusted coordinator for one complete desktop authorization handoff. Production
+ * constructs it but does not expose a command that can invoke it.
  * The authorization URL and callback stay in main and never become renderer data.
  */
 export class AccountConnectionActivationService {

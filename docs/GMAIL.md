@@ -11,8 +11,8 @@ for OpenID, verified email, and Gmail read-only, and one desktop client named
 data file and passes the strict loader. No client secret, credential bundle, user
 grant, refresh token, or access token was downloaded or used.
 Real desktop authorization protocol, read-only, idempotent revocation, and refresh-
-to-access-token adapters are implemented but uncomposed. This document does not
-authorize live mailbox access.
+to-access-token adapters are assembled inside one production graph that starts with
+zero accounts. This document does not authorize live mailbox access.
 
 Posita can now project its durable `live` installation mode through a bounded
 worker-backed application snapshot. That local read model is not Gmail access: it
@@ -50,14 +50,14 @@ and is not composed at startup. A real `GoogleDesktopAccountAuthorizationAdapter
 now implements S256 PKCE, cryptographic state, an exact `127.0.0.1` callback check,
 bounded code exchange, verified OpenID `sub`/email, and agreement with Gmail profile
 identity. Its loopback URI and HTTP transport are injected and deterministic in
-tests. It never opens a browser itself. The matching uncomposed loopback listener
+tests. It never opens a browser itself. The matching provider-inert loopback listener
 now binds one ephemeral IPv4 localhost port with strict host/path/state, header,
 request, queue, and five-minute lifetime bounds. Its browser response never reflects
 callback data. The separate system-browser launcher validates the entire exact
 Google URL and uses an injected Electron delegate; deterministic tests never invoke
-the OS. Production client configuration, credential persistence, account creation,
-preload/IPC command, enabled UI action, browser launch, and live provider request
-remain unimplemented.
+the OS. Production client configuration and provider-inert construction are complete;
+credential persistence, account creation, preload/IPC command, enabled UI action,
+browser launch, and live provider request remain inactive.
 
 The credential-free `AccountConnectionActivationService` now proves how these
 pieces must be used together without activating them. It begins through the existing
@@ -65,9 +65,9 @@ connection service, registers the callback waiter before browser handoff, retrie
 only the protocol adapter's non-consuming callback rejection up to a fixed limit,
 and completes through the existing vault-before-encrypted-state transaction. It
 cancels on browser/listener failure and reports uncertain cleanup distinctly. The
-authorization URL and callback never enter renderer data. This coordinator is not
-constructed by startup and has no preload, IPC, Settings action, configured client,
-credential, browser invocation, account, or provider request.
+authorization URL and callback never enter renderer data. This coordinator is
+constructed inside the provider-inert startup graph but has no preload, IPC,
+Settings action, credential, browser invocation, account, or provider request.
 
 Gate 2D also defines a credential-free `AccountConnectionService` above the
 authorization adapter. It verifies that the opaque Posita account has neither an
@@ -165,8 +165,9 @@ reviewed lifecycle composition. A single existing projection worker must own rea
 sync commits, account deletion, shutdown, and key erasure; the existing coordinator
 must remain the only provider I/O owner; and the lifecycle owner must replace the
 standalone retention/deletion/shutdown gates when activated. Adapter implementation
-is complete; credential configuration, account connection, production composition,
-and real ingestion remain separate approval gates.
+is complete. Strict client-ID configuration and the provider-inert production graph
+are complete; account authorization, a real credential, public commands, and real
+ingestion remain separate approval gates.
 
 The approved `GoogleOAuthRevoker` uses `POST https://oauth2.googleapis.com/revoke`
 with the account-scoped protected refresh token in the form body, never the URL.
@@ -213,8 +214,8 @@ desktop client identifier from the fixed `google-oauth-client.json` file in Posi
 absolute application-data directory. It refuses symlinks, loose POSIX permissions,
 oversized input, unknown fields, invalid identifiers, and any client secret. It does
 not search Git, the working directory, or environment variables. The real client ID
-now passes this loader from the owner-only application-data file, but the result is
-not yet wired to the authorization or access-token adapters.
+passes this loader from the owner-only application-data file and is supplied only to
+the provider-inert authorization and access-token adapters.
 
 ## Desktop OAuth flow
 
@@ -276,9 +277,9 @@ identity or cursor and do not implement authorization or synchronization.
 Gate 2D also defines the authorization-revoker interface used by account
 disconnect. Revocation must be idempotent: an already revoked or absent grant is
 success so a crash before journal advancement can retry safely. A real bounded
-Google revoker is implemented behind that interface and tested through injected
-deterministic HTTP, but it remains uncomposed. No Google request or credential is
-configured, and the orchestrator has no UI/IPC trigger.
+Google revoker is implemented behind that interface, tested through injected
+deterministic HTTP, and constructed inside the provider-inert graph. No Google request
+or user credential is active, and the orchestrator has no UI/IPC trigger.
 
 ## Normalized record and account isolation
 

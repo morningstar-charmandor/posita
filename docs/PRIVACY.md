@@ -5,10 +5,11 @@
 Posita currently contains deterministic sample mail only. Gate 2C stores that
 dataset as independently authenticated encrypted records and migrates existing
 fixture databases away from plaintext. Account-scoped retention, disconnect, and
-full local deletion are now tested at their credential-free boundaries. Real
-The one-way sample-to-live policy is now implemented as an unexposed schema-v10
-boundary, but real mailbox ingestion remains disabled until production sync
-lifecycle composition and separately approved provider activation are complete.
+full local deletion are now tested at their credential-free boundaries. The
+one-way sample-to-live policy is implemented as an unexposed schema-v10 boundary.
+The trusted production ownership graph is also assembled, but it starts with zero
+accounts and exposes no activation command. Real mailbox ingestion remains disabled
+until separately approved provider activation is complete.
 No real account exists.
 
 The canonical provider-mail contract validates sensitive normalized source data
@@ -17,9 +18,10 @@ that exact bounded shape. Schema v9 can persist it as independently authenticate
 encrypted message/thread records and advance the encrypted account cursor in the
 same transaction. Provider IDs, canonical IDs, addresses, subjects, bodies,
 labels, and attachment metadata are ciphertext; only opaque local record IDs,
-opaque account scope, and record kind remain queryable. The projection is empty
-and uncomposed from sync or providers; only its retention path runs in automatic
-maintenance. Existing sample messages remain fixture
+opaque account scope, and record kind remain queryable. The projection is empty.
+One shared worker is present in the provider-inert production graph, but startup
+supplies no account and performs no provider commit; only its retention and bounded
+local-read paths run automatically. Existing sample messages remain fixture
 compatibility records and are not assigned fabricated provider provenance. No
 personal mailbox data has passed through this path.
 
@@ -33,9 +35,9 @@ File-backed canonical projection operations use a short-lived worker rather than
 Electron main or the renderer. The adapter retains one trusted in-memory key copy,
 transfers a temporary copy into each worker, zeroes worker key buffers, serializes
 bounded operations, validates safe result schemas, and supports explicit teardown.
-Its read-only live-state operation is now composed at startup; provider commit,
-delete, and sync activation remain uncomposed, and it has processed deterministic
-records only.
+Its read-only live-state operation is composed at startup. Provider commit and
+account deletion are wired behind the inactive lifecycle graph, while sync activation
+has no public caller; the worker has processed deterministic records only.
 
 The live application-state response is intentionally smaller than a canonical
 message. It is limited to 50 newest summaries and 32 account scopes. It may
@@ -46,9 +48,9 @@ credential, key, or raw error. Canonical local IDs plus opaque account scope ret
 source provenance without exposing remote identifiers. Provider-account record v2
 adds a verified mailbox address and optional user label inside authenticated
 ciphertext. Only that human-facing identity—not the hidden provider subject—is
-included in the bounded status projection. The current renderer shows
-only safe status and counts; it does not render those summaries until source-detail UI
-and original-source behavior pass a separate review.
+included in the bounded status projection. The current renderer can show those
+bounded summaries, exact encrypted-local source detail, and a separately confirmed
+open-original action without exposing provider IDs.
 
 The credential-free source-detail worker query is separately bounded. It accepts
 only opaque canonical account/message IDs and returns exact found/missing state.
@@ -56,7 +58,7 @@ A found result may expose sender and recipients, subject, timestamps, read state
 safe attachment filename/type/size/inline metadata, visible encrypted account
 identity, and at most 128 KiB of plain text with explicit truncation. It excludes
 provider IDs, attachment/content IDs, provider HTML, labels, paths, keys, and raw
-failures. No preload, IPC, or renderer surface currently invokes this query.
+failures. One fixed validated preload/IPC/renderer path invokes this local-only query.
 
 The credential-free provider-mail lifecycle owner now suspends retention around
 sync batches and prevents new sync while disconnect or full local deletion is
@@ -82,17 +84,18 @@ The Google desktop client identifier is not a user token and is not accepted as 
 secret-bearing configuration object. Posita's inert configuration source reads only
 an exact versioned client identifier file from the app's local data directory. It
 refuses symbolic links, oversized or loosely permissioned files, unknown fields,
-and any client-secret field. The source is not production-composed, and no real
-identifier or credential is stored in the repository.
+and any client-secret field. The source feeds only the provider-inert trusted graph.
+The real identifier remains outside the repository, and no user credential has been
+received.
 
-The uncomposed access-token source now reads only one selected protected refresh
+The provider-inert access-token source reads only one selected protected refresh
 credential and exchanges it through a fixed bounded trusted-main endpoint adapter.
 Short-lived access tokens remain memory-only, are cached with an expiry margin,
 can be invalidated per account, and are cleared on teardown. Exact response
 validation refuses a scope outside the reviewed Gmail read-only permission. Tests
-use only conspicuous deterministic client/token values. No real client ID,
-credential, account, or network request is present in production composition or
-tests.
+use only conspicuous deterministic client/token values. Production receives the
+private client ID but no refresh credential or account, and performs no token or
+provider request.
 
 The deterministic fake protector is test-only. It demonstrates adapter behavior
 and makes plaintext-persistence assertions possible; it provides no security and
@@ -179,7 +182,7 @@ application layer: authorization revocation, refresh-credential deletion,
 encrypted provider-state deletion, account source/derived removal, and SQLite
 sanitization. It persists the next phase only after an idempotent action succeeds
 and retains a safe error on failure. A real Google revoker now exists but remains
-uncomposed: it obtains only the target token from the protected vault, sends it in
+provider-inert: it obtains only the target token from the protected vault, sends it in
 the fixed HTTPS request body, bounds the response, and treats Google's documented
 already-invalid token result as success. There is still no account, background
 resumer, or user trigger, so disconnect remains inactive.
@@ -262,7 +265,7 @@ is runtime validated as an exact shape, and the authorization control is disable
 no consent acceptance, configured OAuth client, credential, browser flow, or account record
 is created by viewing it.
 
-The authorization-session contract and real uncomposed Google protocol adapter
+The authorization-session contract and provider-inert Google protocol adapter
 remain main-process-only and explicitly mark
 its successful refresh credential as a value that must move directly into
 `SecretVault`. Its authorization URL, callback, provider subject, and credential
@@ -273,7 +276,7 @@ and consumes ambiguous exchanges so a code cannot be retried blindly. Determinis
 tests perform no external action; real credential handling still requires separate
 approval and end-to-end composition review.
 
-The uncomposed loopback listener keeps at most one bounded callback URL in trusted
+The provider-inert loopback listener keeps at most one bounded callback URL in trusted
 memory, listens only on an operating-system-selected `127.0.0.1` port, and verifies
 the exact Host, callback path, and cryptographic state before delivery. Wrong
 requests receive generic no-store responses; successful browser copy does not

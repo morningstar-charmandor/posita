@@ -102,8 +102,8 @@ export const inspectAccountConnectionConsistency = async (
 }
 
 /**
- * Trusted application coordinator. This service is intentionally not composed
- * into startup or IPC until live authorization is separately approved.
+ * Trusted application coordinator. Production constructs it behind the inactive
+ * Google composition boundary; it remains absent from preload and IPC.
  */
 export class AccountConnectionService {
   private pending?: PendingConnection

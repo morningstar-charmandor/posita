@@ -214,7 +214,8 @@ const parseMailboxAddress = (value: unknown): string => {
 
 /**
  * Real Google Authorization Code + PKCE protocol adapter with injected loopback
- * and HTTP boundaries. It remains uncomposed and cannot open a browser by itself.
+ * and HTTP boundaries. Production constructs it behind an inactive command boundary;
+ * it cannot open a browser by itself.
  */
 export class GoogleDesktopAccountAuthorizationAdapter implements AccountAuthorizationAdapter {
   private active?: ActiveSession

@@ -1049,3 +1049,27 @@
   later reviewed composition milestone. Actual local placement of the identifier,
   real authorization, token persistence, and account activation remain separate
   explicit gates.
+
+## ADR-052: Assemble the production Google graph with zero startup accounts
+
+- Status: accepted for Gate 2D production ownership
+- Context: the approved authorization, token, reader, sync, projection, disconnect,
+  retention, and teardown components were individually verified, but leaving them
+  separately uncomposed preserved duplicate standalone retention/shutdown ownership
+  and made the audited activation order easier to bypass later. The private client ID
+  is now locally available, while no user credential or account exists.
+- Decision: add one `composeGoogleProviderLifecycle` trusted-main factory that reuses
+  the existing components and the same `WorkerThreadMailSyncProjection`. When strict
+  client configuration and the file-backed worker are available, Electron startup
+  constructs the graph and calls its lifecycle owner with an explicit empty account
+  list. The lifecycle owner starts retention and owns confirmed-deletion suspension
+  plus shutdown/key teardown. It must not receive startup inventory, invoke connection,
+  open a browser, refresh a token, call Gmail, or resume disconnect until a separate
+  reviewed command is approved. Missing/invalid configuration retains the established
+  standalone retention and read-worker shutdown path.
+- Consequence: production now has one ownership root without activating Google.
+  Structural checks require every approved component, require the empty startup list,
+  and reject automatic inventory sync or connection invocation. The retained fallback
+  is intentional configuration fail-closed behavior, not a second provider lifecycle.
+  No dependency, schema migration, preload/IPC/UI capability, credential, account,
+  provider request, personal data, mailbox mutation, or automatic retry is added.

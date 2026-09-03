@@ -230,9 +230,9 @@ single-flight guard permits the same operation to share its promise and rejects 
 different concurrent operation for that account.
 
 The orchestrator is tested through an authorization-revoker interface. A bounded,
-idempotent `GoogleOAuthRevoker` now implements that interface, but remains
-uncomposed; there is no OAuth token, background resume scheduler, preload method,
-or UI trigger. The installation data key is not deleted for one account because
+idempotent `GoogleOAuthRevoker` implements that interface inside the provider-inert
+production graph; there is no OAuth token, background resume scheduler, preload
+method, or UI trigger. The installation data key is not deleted for one account because
 other accounts share it.
 
 ### Full local-data deletion orchestration
@@ -311,18 +311,18 @@ authorization preparation, verified callback completion, and cancellation behind
 provider-neutral application types. Inputs and outputs are exact, bounded, and
 versioned; the successful grant is trusted-main-only and never an IPC type. The
 deterministic fake proves one pending session, expiry, callback matching,
-cancellation, and typed failures without network access. The real uncomposed
-Google adapter implements S256 PKCE, state, exact loopback callback verification,
+cancellation, and typed failures without network access. The real Google adapter,
+constructed only inside the provider-inert production graph, implements S256 PKCE,
 bounded code exchange, and verified OpenID/Gmail identity agreement through
 injected infrastructure boundaries. The concrete loopback boundary listens only on
 one ephemeral IPv4 localhost port, prefilters exact host/path/state, bounds requests
 and lifetime, queues at most one callback, and returns copy that never reflects the
 authorization response. A separate system-browser boundary validates the complete
-Google authorization URL before invoking an injected Electron delegate. Neither is
-composed in `index.ts`, so the disabled consent UI cannot start authorization or
-open a browser.
+Google authorization URL before invoking an injected Electron delegate. Startup
+constructs these behind one factory but exposes no command, so the disabled consent
+UI cannot start authorization or open a browser.
 
-`AccountConnectionActivationService` is the uncomposed trusted-main sequence owner
+`AccountConnectionActivationService` is the provider-inert trusted-main sequence owner
 above those parts. It invokes the existing `AccountConnectionService`, registers
 callback waiting before browser handoff, keeps both authorization URL and callback
 out of renderer contracts, permits at most four non-consuming callback rejections,
@@ -330,8 +330,8 @@ and cancels the connection/listener when browser or callback delivery fails. A
 verified callback is the explicit completion boundary: after that point the existing
 authorization exchange and vault-before-encrypted-state persistence own the outcome
 instead of racing cancellation against a possibly committed credential. Cleanup
-failure is distinct recovery-required state. The coordinator has no startup, IPC,
-preload, renderer, configured-client, or real-browser composition.
+failure is distinct recovery-required state. Startup constructs the coordinator with
+the validated client ID, but it has no IPC, preload, renderer, or invoking command.
 
 The future desktop client identifier has one inert infrastructure source:
 `loadGoogleOAuthClientConfiguration`. It reads only `google-oauth-client.json` from
@@ -339,8 +339,8 @@ the absolute Posita application-data directory, refuses symbolic links and files
 readable by other users on POSIX platforms, caps input at 4 KiB, and accepts only
 the exact versioned `provider` and `clientId` fields. It explicitly rejects a client
 secret and does not search the repository, environment variables, or alternate
-locations. The result remains trusted-main-only and is not constructed by startup,
-preload, IPC, or renderer code.
+locations. The result remains trusted-main-only and is consumed by the single startup
+composition factory, never preload, IPC, or renderer code.
 
 `AccountConnectionService` is the next trusted application layer above that
 adapter. It validates begin output against the requested account, binds completion
@@ -386,7 +386,7 @@ does not revoke, reconnect, reconstruct, open a browser, or contact a provider.
 
 ## Gmail synchronization
 
-The uncomposed `GoogleMailReadAdapter` implements the approved initial 90-day
+The provider-inert `GoogleMailReadAdapter` implements the approved initial 90-day
 import followed by incremental history synchronization. It receives short-lived
 access tokens through an injected trusted-main boundary, uses only fixed Google
 HTTPS GET routes, caps response sizes and concurrent message reads, and emits the
@@ -395,19 +395,19 @@ opaque versioned cursor resumes full-list pages, history pages, and oversized
 history records. It maps expired authorization, revoked permission, quota,
 stale-history, malformed-response, cancellation, and temporary-provider failures
 to the existing typed application errors. Deterministic injected-HTTP tests cover
-this behavior without credentials or network use; production composition remains
-inactive.
+this behavior without credentials or network use; startup constructs it but supplies
+zero accounts.
 
-Its token boundary is now implemented by the uncomposed
+Its token boundary is implemented by the provider-inert
 `GoogleOAuthAccessTokenSource`. The source reads only the account-scoped refresh
 credential from `SecretVault`, exchanges it at the fixed Google token endpoint,
 and caches the short-lived access token only in trusted memory with a one-minute
 expiry margin. Refresh is single-flight per account, independently cancellable by
 waiters, bounded by time and response size, and explicitly invalidated on future
 disconnect or destroyed on shutdown. Exact response validation refuses any scope
-other than the reviewed full `gmail.readonly` URI. Client configuration remains an
-injected value with no production instance, and no token or error detail crosses
-IPC.
+other than the reviewed full `gmail.readonly` URI. Production injects the validated
+private client ID but no account or refresh credential, and no token or error detail
+crosses IPC.
 
 Sync operations remain idempotent, transactional at a batch boundary, resumable,
 quota-aware, and isolated per account.
@@ -511,8 +511,9 @@ then resumes both on completion or safe failure. The same owner implements the
 quiescence gate used before confirmed full deletion. Deletion composition can now
 destroy every retained worker-key context in its data-key phase, while normal
 shutdown settles sync and retention before destroying the projection key. This
-owner is application-only and uncomposed; it adds no provider polling schedule,
-account discovery, preload/IPC method, renderer status, or live adapter.
+owner is now the production retention/deletion/shutdown gate. Startup passes an
+explicit empty account list, so it adds no provider polling schedule, automatic
+account discovery, preload/IPC method, renderer command, or provider request.
 
 `ProviderMailSyncStatusService` is the single durable status writer for future
 lifecycle-owned sync. It reuses encrypted account sync state, preserves the last
@@ -522,18 +523,18 @@ record to idle. Typed failures map to one fixed disposition: retry allowed, retr
 later, reconnect required, review required, or cancelled. The policy is descriptive
 only; it never schedules provider work or exposes a mailbox command. The lifecycle
 owner fails closed before provider I/O when the status write cannot be established.
-Bootstrap composes the service in trusted main but still does not start the owner.
+Bootstrap composes the service in trusted main; the lifecycle owner starts with zero
+accounts and therefore writes no sync status.
 
-The final activation audit retains the current standalone retention scheduler and
-read-worker shutdown only while provider sync is inactive. Approved Google
-activation must reuse the same `WorkerThreadMailSyncProjection` for reads, commits,
-account deletion, shutdown, and key erasure; construct one coordinator and one
-lifecycle owner; then move retention start/stop, confirmed-deletion suspension, and
-normal shutdown under that owner together. Provider reads must arrive with an
-idempotent revoker and confirmed disconnect path so the product cannot enter a
-half-live state with no safe removal owner.
+`composeGoogleProviderLifecycle` implements the final activation audit with the same
+`WorkerThreadMailSyncProjection` for reads, commits, account deletion, and key erasure;
+one coordinator and lifecycle owner; and lifecycle-owned retention, confirmed-deletion
+suspension, and normal shutdown. It also constructs the idempotent revoker beside the
+reader. The standalone retention/read-worker shutdown path is retained only when the
+strict local configuration is missing or invalid. The graph starts with zero accounts,
+so this ownership transition does not activate provider access.
 
-`GoogleOAuthRevoker` is the first approved real adapter and remains uncomposed. It
+`GoogleOAuthRevoker` is the approved real adapter inside that inert graph. It
 implements the existing idempotent revocation contract, retrieves only the target
 account's refresh token from `SecretVault`, posts it in the body to the fixed Google
 HTTPS endpoint, and accepts only HTTP 200 or the documented `invalid_token` result

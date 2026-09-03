@@ -16,22 +16,22 @@ deliberate gate, not a failed implementation. The canonical provider-independent
 mail contract, credential-free sync coordinator, empty schema-v9 encrypted
 projection, and packaged file-backed projection worker are now verified. The
 coordinator-to-worker boundary is now integration-tested with the deterministic
-provider but remains uncomposed from the running product. Canonical provider-mail
+provider and assembled in a production graph that starts with zero accounts. Canonical provider-mail
 retention and journaled deletion are complete at their credential-free boundaries.
 The real Google revoker, read-only Gmail adapter, and protected refresh-to-access-
-token source are implemented but uncomposed; no production sync composition exists.
+token source are production-constructed but provider-inert; no startup sync occurs.
 The sample-to-live policy
 is now a durable, credential-free, unexposed schema-v10 boundary.
-Disconnect has no production composition or active user command. The final
+Disconnect is production-constructed but has no active user command. The final
 composition trace, trusted access-token slice, approved identity consent, and real
-uncomposed desktop authorization protocol, bounded loopback/browser boundaries,
+provider-inert desktop authorization protocol, bounded loopback/browser boundaries,
 and trusted connection-activation coordinator leave no smaller credential-free
 connection milestone. Activation now has an isolated Google Cloud project
 (`posita-mail-hub-2026`), Gmail API, external testing consent with the exact approved
-scopes, and a desktop client whose credentials remain unused. It still requires a
-reviewed lifecycle/UI composition that consumes the now-complete inert, secret-safe
-client-identifier configuration source. The real client ID is private, local, and
-loader-validated; no client secret, user grant, or token exists. Activation still requires
+scopes, and a desktop client whose credentials remain unused. One trusted-main
+composition now owns the full graph but receives an explicit empty startup account
+list. The real client ID is private, local, and loader-validated; no client secret,
+user grant, or token exists. Activation still requires a reviewed UI/IPC command,
 dedicated-account testing, and owner approval.
 
 No credential, provider connection, browser authorization, network request, Gmail
@@ -46,18 +46,18 @@ SDK, mailbox data, or model provider was used for this audit.
 | Encrypted private cache | Ready for current records | per-record AES-256-GCM, protected installation key, authenticated metadata, migrations, sanitization | Real records still require the provider-normalized schema below |
 | Provider account/sync state | Ready, empty | versioned encrypted account/cursor records plus production-composed lifecycle status writer and fixed retry dispositions | Can store future connection identity and truthful bounded sync state without starting provider work |
 | Consent | Approved, activation disabled | exact `google-gmail-readonly-identity-v2` projection of `openid`, `email`, and `gmail.readonly`; disabled Settings action | Viewing consent creates no authorization or account state |
-| Authorization session | Infrastructure-ready, uncomposed | bounded begin/complete/cancel contract, deterministic fake, S256 PKCE/state, exact callback verification, bounded exchange, verified identity, ephemeral IPv4 loopback, and exact-URL browser-delegate tests | Client configuration, persistence/UI composition, real browser action, and live requests are absent |
-| Connection persistence | Credential-free activation-ready, uncomposed | vault-before-state ordering, duplicate preflight, rollback, callback-before-browser sequencing, bounded callback retry, cancellation, and cleanup-failure tests | Not composed into production startup, preload, IPC, or UI |
+| Authorization session | Production-constructed, provider-inert | bounded begin/complete/cancel contract, deterministic fake, S256 PKCE/state, exact callback verification, bounded exchange, verified identity, ephemeral IPv4 loopback, and exact-URL browser-delegate tests | No command, browser action, or live request exists |
+| Connection persistence | Production-constructed, unexposed | vault-before-state ordering, duplicate preflight, rollback, callback-before-browser sequencing, bounded callback retry, cancellation, and cleanup-failure tests | No preload, IPC, or UI caller exists |
 | Connection consistency/recovery | Ready locally | presence-only diagnosis plus same-window one-use confirmed orphan discard | Never reconstructs a connection or contacts Google |
 | Retention | Ready | exact 90-day eviction, daily worker schedule, safe retry/status | Cleanup affects encrypted Posita data only |
 | Full local deletion | Ready | confirmed Settings command, durable recovery, keyless restart, cryptographic erasure | Removes local projection ciphertext; never deletes remote provider mail |
-| Account disconnect | Adapter-ready, inactive | journaled idempotent service plus real fixed-endpoint revoker with deterministic HTTP tests | Needs production lifecycle composition and separately reviewed user command |
+| Account disconnect | Production-constructed, inactive | journaled idempotent service plus real fixed-endpoint revoker with deterministic HTTP tests | Needs a separately reviewed user command and startup resume path |
 | Canonical provider mail model | Activation-ready, empty | exact validators, schema-v9 authenticated envelopes, opaque row IDs, packaged serial worker, fixed-window retention, journaled account deletion, lifecycle ordering, inventory, and durable status | Must remain empty until the paired Google activation plan is approved |
 | Sample/live boundary | Ready, unexposed | schema-v10 one-way mode, connected-pair gate, atomic sample removal, restart/no-reseed and retry tests | Must be invoked only by reviewed connection/sync composition |
 | Live application read model | Ready at credential-free presentation boundary | durable mode-aware query, encrypted human-readable account identity, bounded canonical recent-mail list and source detail, fixed validated IPC/preload, worker ownership, loading/missing/error/retry UI, and confirmed main-derived original-source handoff | Contains no live record until separately approved provider activation |
-| Sync coordinator | Lifecycle-owned, uncomposed | 90-day path, real worker integration, bounded concurrency, cancellation, retention exclusion, disconnect/deletion quiescence, key teardown, durable status, and explicit retry policy are tested | Needs a separately approved provider composition; no retry command is exposed |
-| Gmail read adapter | Ready, uncomposed | fixed read-only routes, versioned full/history cursors, bounded normalization, deletion events, safe failures, deterministic HTTP and coordinator integration tests | Trusted access-token source exists; client configuration and production lifecycle composition remain absent |
-| Google access-token source | Ready, uncomposed | protected account-scoped refresh read, fixed bounded token exchange, memory-only expiry cache, cancellation, invalidation, safe failures, deterministic tests | Requires client configuration and lifecycle-owned invalidation/teardown before activation |
+| Sync coordinator | Lifecycle-owned, zero-account startup | 90-day path, real worker integration, bounded concurrency, cancellation, retention exclusion, disconnect/deletion quiescence, key teardown, durable status, and explicit retry policy are tested | No retry or automatic inventory handoff is exposed |
+| Gmail read adapter | Production-constructed, provider-inert | fixed read-only routes, versioned full/history cursors, bounded normalization, deletion events, safe failures, deterministic HTTP and coordinator integration tests | No account or user credential is supplied |
+| Google access-token source | Production-constructed, provider-inert | protected account-scoped refresh read, fixed bounded token exchange, memory-only expiry cache, cancellation, invalidation, safe failures, deterministic tests | Private client ID is injected; no account credential or caller exists |
 | AI provider | Deferred | no model adapter, prompt, embedding, or model output path | Fixture summaries/drafts remain explicitly simulated |
 
 ## Blocking gaps before real mail
@@ -131,38 +131,35 @@ real account is accepted.
 
 ### 4. Real OAuth implementation and configuration
 
-The owner approved the exact identity-plus-read-only scope set and the credential-
-free protocol core. A separate explicit approval is still required before Posita
-may add or configure:
-
-- a Google installed-app OAuth client,
-- refresh-token persistence through production composition,
-- any dependency needed for those capabilities.
+The owner approved the exact identity-plus-read-only scope set, credential-free
+protocol core, installed-app client, private client-ID placement, and provider-inert
+production graph. Separate explicit approval is still required before Posita may
+expose a connection command, persist a real refresh token, or add any dependency.
 
 Secrets and personal mailbox data must never enter Git, fixtures, logs, renderer
 state, screenshots, tests, or portfolio assets.
 
 The accepted consent now uses Google OpenID `sub` as the hidden stable provider
 subject and requires its verified email to agree case-insensitively with Gmail
-`users.getProfile`. The uncomposed adapter refuses widened scopes, callback origin,
+`users.getProfile`. The provider-inert adapter refuses widened scopes, callback origin,
 path, or state drift, malformed identity, and ambiguous authorization-code replay.
 
 ## Final production-composition audit
 
-The credential-free activation preflight is complete. Production startup currently
-owns the retention scheduler and read-worker shutdown directly, which is correct
-while provider sync is inactive. Once Google activation is approved, those duties
-must move together under the existing `ProviderMailLifecycleOwner`; Posita must not
-run a second scheduler, sync owner, projection worker, or deletion gate.
+The credential-free activation preflight and provider-inert ownership transition are
+complete. When strict local configuration is available, production startup gives
+retention, deletion suspension, sync shutdown, token teardown, and projection-key
+teardown to the existing `ProviderMailLifecycleOwner`. It passes zero accounts and
+does not hand over startup inventory, so no provider work begins. Missing/invalid
+configuration retains the prior standalone maintenance path.
 
 Implement activation in this order, without skipping or splitting the safety pair:
 
-1. treat the deterministic-tested read-only Gmail adapter, idempotent revoker, and
-   access-token source as complete and uncomposed,
-2. treat the approved desktop OAuth/PKCE protocol, loopback/browser boundaries, and
-   credential-free connection activation sequence as complete and uncomposed; after
-   separate approval and client configuration, expose only the narrow reviewed UI/
-   IPC start/cancel/status boundary with no credentials in renderer or Git,
+1. treat the deterministic-tested read-only Gmail adapter, idempotent revoker, access-
+   token source, desktop OAuth/PKCE protocol, and lifecycle ownership as production-
+   constructed but provider-inert,
+2. after separate approval, expose only the narrow reviewed UI/IPC start/cancel/status
+   boundary with no credentials in renderer or Git,
 3. expose a separately confirmed disconnect path and keyless pending-disconnect
    startup resume before accepting the first real account,
 4. give one `WorkerThreadMailSyncProjection` instance to reads, sync commits,
@@ -184,8 +181,8 @@ mail model, second cursor store, generic IPC bridge, or renderer provider client
 - `ProviderMailMessageV1` and `ProviderMailThreadV1` are the only provider-ingestion
   contracts; exact validators reject unknown, unbounded, cross-account, and
   internally inconsistent normalized data.
-- `MailSyncCoordinator` is the single provider I/O owner at the application layer
-  and remains uncomposed from the running product.
+- `MailSyncCoordinator` is the single provider I/O owner inside the zero-account
+  production graph.
 - Deterministic tests prove the 90-day request boundary, per-account single-flight,
   bounded cross-account work, replay deduplication, remote-deletion tombstones,
   batch/cursor ordering, commit failure rollback, one complete atomic invalid-cursor
@@ -216,8 +213,8 @@ mail model, second cursor store, generic IPC bridge, or renderer provider client
   has already committed.
 - The current verified baseline is 71 test files and 456 tests plus strict TypeScript,
   renderer structure/security checks, and production Electron builds.
-- One inert client-identifier configuration source is complete; no dependency,
-  production composition, real identifier, credential,
+- One zero-account production graph is complete; no dependency, public capability,
+  credential,
   personal mailbox data, network action, privileged renderer capability, or mailbox mutation was
   added.
 
@@ -225,15 +222,15 @@ mail model, second cursor store, generic IPC bridge, or renderer provider client
 
 The owner approved the real read-only Google adapter, revoker, exact OpenID/email/
 Gmail-read-only consent, credential-free desktop authorization protocol core,
-uncomposed loopback/browser infrastructure, and trusted connection-activation
-sequencing.
+provider-inert loopback/browser infrastructure, trusted connection-activation
+sequencing, and zero-account production ownership.
 Those adapters and the prerequisite deletion-aware reconciliation are complete and
-uncomposed. The separately approved Google Cloud project, Gmail API, external testing
-consent, and desktop-client creation are complete. The client credential was not
-downloaded or used. The strict local configuration source contains only the real
-client ID in an owner-readable application-data file, passes validation, and is not
-composed. This approval does not authorize credential use, production runtime
-composition, connecting an account, real browser action, network
+production-constructed without a caller. The separately approved Google Cloud project, Gmail API, external testing
+consent, and desktop-client creation are complete. The client credential bundle and
+client secret were not downloaded or used. The strict local configuration source contains only the real
+client ID in an owner-readable application-data file, passes validation, and feeds
+only the inert graph. This approval does not authorize credential use, connecting an
+account, real browser action, network
 testing with Google, or ingesting mail; those remain later explicit gates.
 
 ## Original audit evidence

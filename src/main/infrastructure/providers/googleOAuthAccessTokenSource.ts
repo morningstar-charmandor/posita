@@ -204,7 +204,7 @@ const parseTokenResponse = (
 
 /**
  * Trusted-main, memory-only refresh-token exchange for the Gmail read adapter.
- * It is deliberately uncomposed until OAuth configuration and activation are approved.
+ * Production constructs it inside the provider-inert lifecycle composition.
  */
 export class GoogleOAuthAccessTokenSource implements GoogleAccessTokenSource {
   private readonly cache = new Map<string, CachedAccessToken>()

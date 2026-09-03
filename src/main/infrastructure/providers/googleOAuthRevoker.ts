@@ -100,8 +100,8 @@ const isInvalidTokenResponse = (value: unknown): boolean => {
 /**
  * Main-process-only Google OAuth revocation adapter.
  *
- * It is deliberately uncomposed until OAuth configuration and account connection
- * are separately approved. An absent or already invalid token is treated as the
+ * Production constructs it inside the provider-inert lifecycle composition. An
+ * absent or already invalid token is treated as the
  * idempotent success required by the disconnect journal.
  */
 export class GoogleOAuthRevoker implements AccountAuthorizationRevoker {

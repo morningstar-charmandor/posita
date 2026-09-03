@@ -15,45 +15,20 @@ and actions.
 
 **Product promise:** Your inboxes, understood as one.
 
-**Current stage:** Gate 2D Google adapter, trusted token boundary, exact identity
-consent, desktop authorization protocol, bounded loopback/browser infrastructure,
-trusted connection-activation sequencing, and a strict inert local client-identifier
-source complete but inactive,
-with a real
-SQLite path, OS-protected key hierarchy, authenticated mail and provider-account
-state, plus tested crash-resumable disconnect and full local-deletion orchestrators.
-Gmail and AI are not connected. Disconnect now has a real but uncomposed bounded
-Google revoker and no user trigger;
-full deletion now has a Settings & privacy flow, keyless startup recovery, and an
-operation-bound typed-confirmation gate. A separate read-only application-state
-boundary renders lifecycle and deleted outcomes. A provider-independent
-authorization-session contract and deterministic fake exist only in the trusted
-backend. A same-window Settings flow can now inspect and discard one-sided local
-connection state for sample accounts, while OAuth activation and real credential
-persistence remain unavailable. Automatic encrypted retention now runs at startup
-and on a bounded daily cadence in a worker, with truthful status in Settings.
-The Gate 2D readiness audit confirms that this local lifecycle foundation is ready
-at its current boundary. Canonical provider-independent message/thread contracts
-and one credential-free sync coordinator are now verified with deterministic
-fakes. An empty schema-v9 authenticated projection now proves atomic canonical
-message/thread and cursor persistence without exposing provider identity in
-queryable metadata. A packaged serial worker now proves that file-backed projection
-work stays off Electron main, while the automatic retention worker applies the
-fixed 90-day window to canonical ciphertext and repairs affected threads. The
-coordinator-to-worker path is now verified end to end with the deterministic
-provider. The one-way sample-to-live boundary is now verified in schema v10;
-live Gmail remains correctly blocked by OAuth client configuration and production
-lifecycle/UI composition. The uncomposed desktop
-adapter now proves S256 PKCE, callback state/origin validation, one-time bounded
-code exchange, and agreement between verified OpenID and Gmail profile identity
-using deterministic injected boundaries only.
-The concrete callback listener binds only an ephemeral IPv4 localhost port with
-strict state and resource limits; its copy reflects no callback data. The browser
-launcher verifies the entire reviewed Google request before an injected delegate,
-which remains fake in tests.
-One unexposed coordinator now proves callback-before-browser ordering, bounded
-callback rejection, pre-exchange cancellation, and fail-closed cleanup while
-retaining the existing vault-before-state transaction as the only persistence owner.
+**Current stage:** Gate 2D's secure local lifecycle and read-only Google foundation
+are complete at an intentionally inactive boundary. Posita has an encrypted SQLite
+cache, OS-protected key hierarchy, strict account-scoped contracts, crash-resumable
+disconnect and full local deletion, deterministic retention, and bounded local mail
+views. Its exact OpenID/email/Gmail-read-only consent, desktop PKCE protocol,
+localhost callback listener, browser validator, token source, Gmail reader, revoker,
+connection transaction, sync coordinator, and lifecycle owner now form one trusted
+production ownership graph. Startup supplies that graph with zero accounts, so it
+starts retention and owns safe teardown without opening a browser or contacting
+Google. The real desktop client ID is read only from an owner-readable application-
+data file and is absent from Git; no client secret, user grant, token, or real account
+exists. The next boundary is a separately reviewed narrow connection/disconnect
+command and status surface. Gmail and AI remain unconnected, and every visible mail
+item remains deterministic sample data.
 
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
 
@@ -133,9 +108,9 @@ existing source of truth before adding code, treat file size as a signal to revi
 responsibilities rather than a score, and document retained compatibility paths.
 Future mailbox work now has one exact account-scoped normalized source model and
 one tested sync owner so UI and AI features cannot quietly become alternate
-provider clients. The coordinator remains credential-free and uncomposed; this is
-verified contract behavior, not a claim that live sync has been implemented.
-Its schema-v9 projection also remains empty and uncomposed from sync. Opaque local row IDs,
+provider clients. The coordinator is production-constructed but receives no startup
+account or credential; this is verified ownership, not a claim that live sync works.
+Its schema-v9 projection also remains empty. Opaque local row IDs,
 authenticated ciphertext, and atomic cursor advancement prove the storage boundary
 without presenting fixture behavior as provider mail.
 File-backed reads and commits reuse that projection inside a bounded worker protocol;
@@ -278,8 +253,9 @@ At the current Gate 2D foundation checkpoint, Posita has:
   worker, with safe retry errors and real deleted-byte verification,
 - an exact read-only Gmail consent projection and accessible Settings preview with
   disabled activation and no OAuth state, credential, or live account,
-- a bounded trusted-main authorization-session contract and deterministic fake
-  with no production composition, browser action, network access, or live credential,
+- a bounded trusted-main authorization-session contract and deterministic fake,
+  production-constructed behind no public caller, browser action, network access,
+  or live credential,
 - a credential-free account-connection coordinator with duplicate preflight,
   vault-before-state ordering, ambiguous-write rollback, and explicit recovery failure,
 - a bounded read-only consistency diagnosis covering both one-sided failure states
@@ -328,26 +304,31 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - a production-composed encrypted sync-status service and exhaustive descriptive
   retry policy, with lifecycle tests proving syncing/success/failure/cancellation
   transitions and fail-closed refusal before provider work,
-- a real but uncomposed Google OAuth revoker with fixed endpoint/body handling,
+- a real provider-inert Google OAuth revoker with fixed endpoint/body handling,
   bounded responses, idempotent already-invalid behavior, and deterministic HTTP
   tests that never use a credential or network,
-- a matching uncomposed read-only Gmail adapter with fixed GET routes, injected
+- a matching provider-inert read-only Gmail adapter with fixed GET routes, injected
   short-lived access tokens, resumable full/history cursors, bounded response and
   concurrency limits, canonical account-scoped normalization, deletion events,
   and deterministic HTTP tests that use neither credentials nor the network,
-- a vault-backed, uncomposed refresh-to-access-token source with a fixed bounded
+- a vault-backed, provider-inert refresh-to-access-token source with a fixed bounded
   exchange, memory-only expiry cache, per-account single-flight, cancellation,
   invalidation, teardown, scope refusal, and deterministic tests that use no real
   client, credential, token, account, or network,
 - an exact consent-v2 projection for OpenID identity, verified email, and Gmail
-  read-only access, plus an uncomposed desktop authorization adapter with S256
+  read-only access, plus a provider-inert desktop authorization adapter with S256
   PKCE, state/callback verification, bounded exchange, verified identity agreement,
   replay-safe fresh-start failure behavior, and deterministic tests,
 - a local-only ephemeral OAuth callback listener with exact host/path/state and
-  resource limits plus an exact-URL system-browser boundary, both uncomposed and
+  resource limits plus an exact-URL system-browser boundary, both production-
+  constructed but inactive and
   tested without a real browser or provider request,
 - a trusted-main activation coordinator that sequences those boundaries with the
   existing account transaction while exposing neither authorization URL nor callback,
+- one provider-inert production factory that reuses those boundaries, starts the
+  lifecycle with zero accounts, keeps startup inventory out of sync, and owns
+  retention, deletion suspension, token cleanup, and worker teardown without a
+  browser or provider request,
 - a mode-aware worker-backed live snapshot capped at 50 canonical summaries and
   32 account scopes, with bodies, recipients, remote provider IDs, cursors,
   key material, paths, and raw failures excluded,
@@ -367,7 +348,7 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - an explicit compatibility boundary that keeps fixture `Message` records sample-
   only rather than fabricating provider identity,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 70 automated test files containing 446 passing tests,
+- 72 automated test files containing 458 passing tests,
 - a desktop visual and accessibility-tree check of the local-only Settings entry,
   sample-account controls, normal no-recovery-needed outcome, and automatic
   retention card with readable next/last status and Gmail non-mutation copy,
@@ -396,16 +377,15 @@ through fixed validated desktop boundaries with loading, missing/stale, safe-err
 retry, and explicit encrypted-local inspection. A separate two-step confirmed
 browser handoff derives the provider target only in trusted code and never claims
 Gmail navigation succeeded. Trusted startup account inventory and durable sync
-status are now composed inertly in trusted main, while the lifecycle owner remains
-unstarted. A final production-composition audit now records how activation will
-reuse one projection worker, coordinator, lifecycle owner, retention/deletion gate,
-and shutdown path, paired with read-only provider access and revocation. The
-approved adapter set and its trusted access-token source are now complete but
-uncomposed: the revoker, deletion-aware reconciliation foundation, bounded read-
-only Gmail adapter, vault-to-memory token exchange, desktop PKCE/state/identity
-protocol, local callback listener, and exact browser handoff are deterministic-
-tested without credentials or provider network use. The connection activation
-sequence is also verified without public composition. Provider batch v2 removes remote
+status are composed inertly in trusted main. One approved production factory now
+reuses the existing projection worker, coordinator, lifecycle owner, retention/
+deletion gate, and shutdown path, paired with read-only provider access and
+revocation. The owner starts with zero accounts, and the inventory is deliberately
+not handed to it. The revoker, deletion-aware reconciliation foundation, bounded
+read-only Gmail adapter, vault-to-memory token exchange, desktop PKCE/state/identity
+protocol, local callback listener, exact browser handoff, and connection sequence
+are deterministic-tested and production-constructed without credentials, public
+commands, browser action, or provider network use. Provider batch v2 removes remote
 deletions atomically and replaces a stale bounded window only after every page is
 available. OpenID identity scopes are now explicitly approved and transparently
 disclosed, and the loopback/browser infrastructure is complete but inert. The next
@@ -415,10 +395,9 @@ external testing consent with the exact reviewed identity/read-only scopes, and 
 downloaded nor used, preserving a clean separation between external infrastructure
 and runtime access. A fixed, owner-readable, symlink-refusing configuration source
 now validates the real client ID from Posita's private application-data file and
-rejects secrets or fallback search. The identifier is absent from Git and remains
-uncomposed. The next review is complete
-production lifecycle/UI activation. Real
-browser activation, credentials, live account connection, provider-network
+rejects secrets or fallback search. The identifier is absent from Git and feeds
+only the inactive graph. The next review is the narrow connection/disconnect UI
+and IPC boundary. Real browser activation, credentials, live account connection, provider-network
 testing, and production sync remain blocked behind explicit owner approval.
 
 Later evidence should include measured sync reliability, duplicate prevention,

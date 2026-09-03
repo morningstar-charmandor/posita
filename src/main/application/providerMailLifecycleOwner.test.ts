@@ -117,6 +117,7 @@ class FakeDisconnect implements ProviderMailDisconnectLifecycle {
 
 class FakeProjectionKey implements ProviderMailProjectionKeyLifecycle {
   failOnce = false
+  useAsyncShutdown = false
   constructor(private readonly events: string[]) {}
   destroyEncryptionContext(): void {
     this.events.push('projection:destroy-key')
@@ -124,6 +125,11 @@ class FakeProjectionKey implements ProviderMailProjectionKeyLifecycle {
       this.failOnce = false
       throw new Error('test-only projection teardown failure')
     }
+  }
+
+  async shutdown(): Promise<void> {
+    if (!this.useAsyncShutdown) return this.destroyEncryptionContext()
+    this.events.push('projection:shutdown')
   }
 }
 
@@ -326,6 +332,22 @@ describe('ProviderMailLifecycleOwner', () => {
       'sync:shutdown',
       'projection:destroy-key',
       'projection:destroy-key'
+    ])
+  })
+
+  it('awaits an asynchronous projection shutdown when the worker provides one', async () => {
+    const { owner, events, projectionKey } = harness('live')
+    await owner.start([])
+    events.length = 0
+    projectionKey.useAsyncShutdown = true
+
+    await owner.shutdown()
+    await owner.shutdown()
+    expect(events).toEqual([
+      'sync:suspend',
+      'retention:stop',
+      'sync:shutdown',
+      'projection:shutdown'
     ])
   })
 

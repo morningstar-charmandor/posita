@@ -38,6 +38,7 @@ export interface ProviderMailDisconnectLifecycle {
 
 export interface ProviderMailProjectionKeyLifecycle {
   destroyEncryptionContext(): void
+  shutdown?(): Promise<void>
 }
 
 export interface ProviderMailSyncStatusLifecycle {
@@ -118,8 +119,8 @@ const validateAccounts = (value: unknown, allowEmpty: boolean): SyncAccountReque
 
 /**
  * The sole trusted owner for coordinating provider sync with retention and
- * destructive local lifecycle work. It is credential-free and intentionally
- * uncomposed from Electron startup, preload, IPC, UI, and provider adapters.
+ * destructive local lifecycle work. Production startup now composes this owner
+ * provider-inert with zero accounts; no renderer command can invoke provider work.
  */
 export class ProviderMailLifecycleOwner {
   private state: LifecycleState = 'created'
@@ -276,7 +277,12 @@ export class ProviderMailLifecycleOwner {
       }
       try {
         if (!this.projectionKeyDestroyed) {
-          this.destroyEncryptionContext()
+          if (this.projectionKey.shutdown === undefined) {
+            this.destroyEncryptionContext()
+          } else {
+            await this.projectionKey.shutdown()
+            this.projectionKeyDestroyed = true
+          }
         }
       } catch (error) {
         teardownFailure ??= error

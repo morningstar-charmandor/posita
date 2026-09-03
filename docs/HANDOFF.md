@@ -11,15 +11,16 @@ next move. Technical details remain in their linked source documents.
 Posita has completed the **Gate 2D credential-free lifecycle foundation, Google
 desktop authorization protocol, bounded loopback/browser infrastructure, trusted
 connection-activation sequence, and an inert strict local client-identifier
-configuration source**. Exact identity consent is approved; the
+configuration source, plus a provider-inert production ownership graph**. Exact identity consent is approved; the
 owner has now created an isolated Google Cloud project named `Posita` with project
 ID `posita-mail-hub-2026`. Gmail API is enabled, external testing consent is
 configured for OpenID identity, verified email, and Gmail read-only, and one
 desktop client named `Posita macOS Desktop` exists. Its credentials were not
 downloaded, copied into the repository, or used. Its client ID is now stored only
 in the owner-readable local application-data file and passes Posita's strict loader;
-no client secret or credential bundle was downloaded. Runtime composition, browser
-authorization, account connection, and production activation remain inactive.
+no client secret or credential bundle was downloaded. The trusted runtime ownership
+graph is assembled and starts with zero accounts. Browser authorization, account
+connection, provider I/O, and public activation remain inactive.
 The product is a runnable Electron desktop prototype using React, strict TypeScript,
 and SQLite. All visible mail is deterministic sample data.
 
@@ -108,13 +109,14 @@ Implemented:
   trusted-main-only grants, and stable safe errors,
 - a deterministic credential-free authorization fake proving lifecycle and
   failure behavior without startup, preload, IPC, UI, browser, or network composition,
-- a real uncomposed Google desktop authorization protocol adapter proving PKCE,
+- a real Google desktop authorization protocol adapter, now constructed only inside
+  the provider-inert production graph, proving PKCE,
   state and loopback callback verification, bounded exchange, exact scopes, and
   verified OpenID/Gmail identity agreement through injected boundaries,
-- a real uncomposed ephemeral IPv4 loopback listener with exact host/path/state,
+- a real provider-inert ephemeral IPv4 loopback listener with exact host/path/state,
   request/lifetime/queue bounds, safe non-reflective browser responses, cancellation,
   and deterministic shutdown,
-- an uncomposed system-browser launcher that validates the exact reviewed Google
+- a provider-inert system-browser launcher that validates the exact reviewed Google
   authorization URL before an injected Electron delegate; tests never open the OS,
 - encrypted provider-account validation aligned to the reviewed string consent
   identity, with obsolete numeric simulated records rejected before persistence,
@@ -164,7 +166,8 @@ Implemented:
 - one exact versioned canonical provider-independent source-message/thread model
   with account-scoped provenance, recipient roles, normalized body forms, labels,
   read state, bounded attachment metadata, and strict unknown-field rejection,
-- one uncomposed credential-free sync coordinator with a 90-day initial request,
+- one credential-free sync coordinator constructed inside the zero-account production
+  graph, with a 90-day initial request,
   per-account single-flight, bounded cross-account concurrency, normalized-batch
   validation, account-scoped replay deduplication, atomic projection/cursor
   ordering, remote-deletion tombstones, one complete atomic bounded invalid-cursor
@@ -204,13 +207,13 @@ Implemented:
   encrypted account state, plus one fixed descriptive retry policy,
 - lifecycle fail-closed behavior that refuses provider work when the initial
   durable status write is unavailable, without scheduling an automatic retry,
-- a real but uncomposed Google OAuth revoker that reads only the selected protected
+- a real Google OAuth revoker in the provider-inert graph that reads only the selected protected
   token, uses the fixed HTTPS form-body endpoint, bounds time and response bytes,
   and treats only absent/HTTP-200/documented-invalid-token cases as success,
-- a real but uncomposed read-only Gmail adapter with injected short-lived token and
+- a real read-only Gmail adapter in that graph with injected short-lived token and
   HTTP boundaries, fixed GET routes, 90-day full sync, resumable history cursors,
   four-at-a-time message reads, bounded responses, and stable safe failures,
-- a real but uncomposed trusted-main access-token source that reads only one
+- a real provider-inert trusted-main access-token source that reads only one
   account-scoped protected refresh credential, uses Google's fixed bounded token
   exchange, caches bearer access only in memory with an expiry margin, coalesces
   per-account refresh, supports cancellation/invalidation/teardown, and refuses
@@ -225,6 +228,9 @@ Implemented:
 - a final production-composition audit proving that startup inventory, encrypted
   status, one sync coordinator, one projection worker, retention, deletion,
   disconnect, and shutdown have a coherent activation path without a second owner,
+- one production `composeGoogleProviderLifecycle` graph that constructs the approved
+  Google authorization, token, read, sync, disconnect, retention, and teardown owners;
+  startup passes an explicit empty account list, so construction cannot contact Google,
 - bounded startup outcomes for connected/live, interrupted sample activation,
   disconnected live-empty, and offline retry-required states without reseeding,
 - a mode-aware application-state query that preserves the exact fixture snapshot
@@ -276,34 +282,34 @@ Simulated or deliberately inactive:
   testing consent, and the `Posita macOS Desktop` client configured,
 - encrypted provider-account and sync-state tables contain no real account,
 - Google authorization revocation has a real fixed-endpoint adapter, exercised only
-  through injected deterministic HTTP and still uncomposed,
+  through injected deterministic HTTP and unreachable without a public command,
 - Google access-token refresh has a real fixed-endpoint adapter, exercised only
-  through an injected fake client ID and deterministic HTTP and still uncomposed,
+  through an injected fake token and deterministic HTTP; production constructs it
+  with the private client ID but supplies no account,
 - Google desktop authorization has a real PKCE/state/code/identity protocol adapter,
   exercised only through injected loopback and deterministic HTTP boundaries and
-  still uncomposed,
+  constructed in production without a caller,
 - loopback reception and the system-browser handoff have real bounded adapters,
   exercised only through local deterministic HTTP and a fake desktop delegate,
 - local deletion operates only on deterministic fixture-backed Posita data because
   no real account or credential exists,
 - account disconnect remains application-only and has no preload, IPC, or UI trigger,
 - Gmail connection consent is preview-only and its activation control is disabled,
-- authorization-session behavior has both a deterministic fake and real uncomposed
-  Google protocol adapter; neither is reachable from the renderer or startup,
-- account-connection persistence is exercised only through deterministic in-memory
-  collaborators and is not composed into production startup,
+- authorization-session behavior has both a deterministic fake and a production-
+  constructed Google protocol adapter; neither is reachable from the renderer,
+- account-connection persistence is deterministic-tested and constructed behind the
+  inactive production graph, with no public caller,
 - canonical provider-mail and sync behavior is exercised only through
   deterministic fakes, an encrypted SQLite proof, and file-backed workers;
   retention and the bounded read-only live-state query are composed at startup,
-  while source-detail is composed for bounded encrypted-local inspection and
-  ingestion/provider access remain uncomposed,
+  while source-detail is composed for bounded encrypted-local inspection and the
+  provider write path is reachable only inside the inactive zero-account graph,
 - the schema-v10 sample-to-live service is trusted-main-only and unexposed; it
   has been verified with deterministic connected state but has no production
   connection, sync-start, preload, IPC, or UI caller,
-- the provider-mail lifecycle owner is application-only and deterministic; trusted
-  inventory and status services are composed separately, and the Google adapter
-  exists independently, but the owner has no scheduler, Electron startup activation,
-  retry command, or provider composition,
+- the provider-mail lifecycle owner is production-composed and starts with zero
+  accounts; trusted inventory remains read-only and is not handed to sync, and there
+  is no retry command or public activation caller,
 - account consistency is not independently exposed; the recovery command uses it
   inside main without mutation or provider action,
 - local account recovery is active only for inconsistent local records and has no
@@ -312,9 +318,9 @@ Simulated or deliberately inactive:
 
 Not implemented:
 
-- a configured Google client, real system-browser authorization action, production-
-  composed message ingestion, or user-triggered/live disconnect,
-- production activation of the approved provider-mail lifecycle,
+- a real system-browser authorization action, activated message ingestion, or
+  user-triggered/live disconnect,
+- a reviewed UI/IPC command that may invoke connection or disconnect lifecycle work,
 - user-triggered account disconnect or any remote mailbox mutation control,
 - automatic pending-disconnect resume with a live idempotent revocation adapter,
 - a model provider, embeddings, classification, retrieval, or generation,
@@ -343,12 +349,11 @@ The owner-approved Google adapter set, deletion-aware reconciliation, trusted
 refresh-to-access-token boundary, exact identity consent, desktop authorization-
 code/PKCE protocol core, bounded loopback/browser infrastructure, and trusted-main
 connection activation sequence and secret-safe runtime configuration source are
-complete and uncomposed. No smaller credential-free connection slice remains. The
-next milestone is reviewed connection/disconnect lifecycle composition that consumes
-only the configuration source's bounded result.
+complete and assembled inside one provider-inert production graph. Startup passes
+zero accounts, so no automatic provider work occurs. The next milestone is a reviewed
+narrow connection/disconnect UI/IPC command and status surface.
 It must keep client configuration outside Git and expose no credential through
-renderer IPC. Using the configured identifier in production composition, downloading
-or using any user credential, production UI/IPC activation,
+renderer IPC. Downloading or using any user credential, production UI/IPC activation,
 opening a real authorization browser, and connecting a dedicated test account remain
 later, separate approvals. Current approval does not authorize those actions, live
 provider testing, or mailbox ingestion.
@@ -358,8 +363,8 @@ retention, account removal, disconnect, full local deletion, explicit confirmati
 safe status, full-deletion startup recovery, read-only lifecycle UI, and explicitly
 confirmed local deletion are complete at their current layers. Continue in this order:
 
-1. Keep pending disconnect visible but inactive until the completed idempotent
-   Google revoker can be composed with the full activation lifecycle.
+1. Keep pending disconnect visible but inactive until a reviewed command/resume path
+   can invoke the composed idempotent Google revoker.
 2. Treat the local recovery UI as complete at its current boundary. Do not add
    automatic startup repair; failed execution must continue to require fresh review.
 3. Treat automatic retention scheduling and its Settings status as complete at
@@ -375,9 +380,9 @@ confirmed local deletion are complete at their current layers. Continue in this 
    startup account inventory, durable lifecycle status, safe explicit sync-retry
    policy, and final production-composition audit are complete.
 5. Treat the approved Google authorization, loopback/browser infrastructure,
-   reader, revoker, access-token source, and strict local client-identifier source
-   as complete and uncomposed. Stop for owner approval before placing the real
-   identifier, UI/IPC or lifecycle composition,
+   reader, revoker, access-token source, strict local client-identifier source, and
+   zero-account production lifecycle graph as complete. Stop for owner approval
+   before UI/IPC exposure,
    real browser authorization, connection activation, network testing, or a live
    account.
 6. Keep real Gmail ingestion disabled until authorization activation is separately
@@ -418,19 +423,18 @@ plain text and safe metadata through the existing worker and a fixed validated
 trusted-main-frame preload/IPC/UI path without provider IDs or HTML. Open-original
 now resolves provider identity only inside the trusted worker/main boundary and
 requires explicit browser confirmation. The trusted startup inventory and encrypted
-sync-status service are now composed read-only/inert. The lifecycle owner writes
-status through that service in tests, but remains unstarted. The final composition
-audit is complete: activation must reuse one projection worker, coordinator,
-lifecycle owner, retention gate, and shutdown path. The approved revoker is now
-implemented and uncomposed. Provider batch v2 closes the remote-deletion and stale-
+sync-status service are composed read-only/inert. The lifecycle owner, approved Google
+adapters, one projection worker, coordinator, retention gate, disconnect service, and
+shutdown path are now assembled by one production factory. Startup passes zero accounts,
+so status writes, provider access, mode activation, and sync do not run. Provider batch
+v2 closes the remote-deletion and stale-
 cursor replacement gap, and the real bounded Gmail reader now emits that contract.
 The vault-backed memory-only access-token source now supplies the reader's trusted
 credential boundary without configuration or activation. The exact identity consent,
 bounded desktop authorization-code/PKCE protocol core, short-lived loopback/exact-
 browser boundaries, and trusted connection-activation sequence are now implemented
-with injected seams. The next milestone is separately approved client configuration
-and complete lifecycle/UI composition, not an automatic credential or account
-connection.
+with injected seams. The next milestone is a separately approved narrow lifecycle/UI
+command, not an automatic credential or account connection.
 The new presentation abstraction is `LiveMailSummaryList`; it consumes the existing
 `LiveMailSnapshotV2` without adding a parallel domain or data source. The other
 recent abstractions are the shared `LiveMailMessageDetailV1` and open-original
@@ -455,55 +459,65 @@ encrypted account-state repository and current live-status read model. The lifec
 owner depends on its narrow contract. No dependency, schema, compatibility path,
 duplicate state store, IPC/UI command, provider action, or intentional duplication
 was added.
-The final audit adds no abstraction or compatibility path. It retains the current
-standalone retention/read shutdown wiring only while provider sync is inactive and
-records the exact replacement order for activation in `docs/GATE_2D_READINESS.md`.
+The final audit added no abstraction or compatibility path. The subsequent approved
+composition replaces standalone retention/read shutdown ownership when strict local
+configuration is available and retains it only as the fail-closed fallback.
 The new infrastructure abstraction is `GoogleOAuthRevoker`; it implements the
 existing `AccountAuthorizationRevoker` contract with injected fetch and reuses the
 existing `SecretVault`. No dependency, schema, compatibility path, duplicate
-service, production composition, IPC/UI command, credential, account, network test,
+service, IPC/UI command, credential, account, network test,
 personal data, or intentional duplication was added.
 The matching infrastructure abstractions are `GoogleMailReadAdapter`, its narrow
 `GoogleAccessTokenSource`, and `googleMailNormalizer`; they implement the existing
 provider contract and canonical model rather than adding another sync owner or mail
-shape. No dependency, schema, compatibility path, production composition, OAuth
+shape. No dependency, schema, compatibility path, OAuth
 configuration, credential, account, real network test, personal data, mailbox
 mutation, or intentional duplication was added.
 The concrete `GoogleOAuthAccessTokenSource` implements that existing narrow token
 contract over `SecretVault`. It adds no token repository: access tokens remain only
 in its bounded memory cache, while refresh credentials remain exclusively in the
-vault. No dependency, schema, compatibility path, production composition, configured
-client, credential, browser action, account, network test, personal data, mailbox
+vault. No dependency, schema, compatibility path, credential, browser action,
+account, network test, personal data, mailbox
 mutation, or intentional duplication was added.
 The new `GoogleDesktopAccountAuthorizationAdapter` implements the existing
 provider-independent session contract with injected loopback and HTTP boundaries.
 It adds no parallel connection coordinator or token store. The 527-line module was
 reviewed as one cohesive bounded protocol boundary containing its validators and
-exchange steps; no dependency, schema, compatibility path, production composition,
-listener, browser action, configured client, credential, account, live request,
+exchange steps; no dependency, schema, compatibility path, browser action,
+credential, account, live request,
 personal data, mailbox mutation, or intentional duplication was added.
-The new `GoogleOAuthLoopbackRedirectServer` and `GoogleOAuthSystemBrowserLauncher`
+The `GoogleOAuthLoopbackRedirectServer` and `GoogleOAuthSystemBrowserLauncher`
 are narrow infrastructure boundaries around Node HTTP and Electron external-open.
 The shared `googleOAuthProtocol` policy is the single source of truth for exact
 authorization endpoint, loopback, client, state, PKCE, and scope validation. No
-dependency, schema, compatibility path, production composition, listener at
-startup, real browser action, configured client, credential, account, provider
+dependency, schema, compatibility path, listener at startup, real browser action,
+credential, account, provider
 request, personal data, mailbox mutation, or intentional duplication was added.
 The new `loadGoogleOAuthClientConfiguration` infrastructure source is the only
 client-identifier configuration path. It accepts one exact versioned owner-readable
 file from Posita application data, refuses symlinks, secrets, unknown fields, and
-fallback searches, and remains outside startup and public contracts. No dependency,
-schema, compatibility path, duplicate service, real identifier, credential, account,
+fallback searches, and returns only to trusted startup composition, never public contracts. No dependency,
+schema, compatibility path, duplicate service, credential, account,
 provider request, personal data, mailbox mutation, or intentional duplication was added.
 Private client-ID placement changes no source abstraction or compatibility path: it
 uses that existing loader, adds no dependency or tracked configuration, and leaves
-all production composition inactive.
+all provider actions inactive. `composeGoogleProviderLifecycle` is the single new
+ownership factory. It reuses the existing adapters, services, repository contracts,
+and worker; adds no parallel compatibility path; and deliberately starts the owner
+with zero accounts. The worker's asynchronous shutdown is awaited so accepted local
+reads settle before key destruction.
 The new `AccountConnectionActivationService` composes the existing connection,
 callback, and browser interfaces without adding a second persistence coordinator.
-It remains outside startup and public desktop contracts. No dependency, schema,
-compatibility path, IPC/UI surface, configured client, credential, account, real
+It is constructed by startup but remains outside public desktop contracts. No dependency, schema,
+compatibility path, IPC/UI surface, credential, account, real
 browser/provider action, personal data, mailbox mutation, or intentional duplication
 was added.
+The new `composeGoogleProviderLifecycle` module is the single production ownership
+root for the existing authorization, token, reader, sync, projection, disconnect,
+retention, and teardown abstractions. It adds no second repository, coordinator,
+worker, scheduler, compatibility path, dependency, schema, public command, credential,
+network request, or intentional duplication. The retained standalone retention and
+read-worker shutdown path is used only when strict client configuration is unavailable.
 
 ## How to resume
 

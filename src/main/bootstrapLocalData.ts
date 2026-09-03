@@ -30,6 +30,7 @@ import {
 import type { MailRepository } from './application/mailRepository'
 import type { ProviderMailSourceDetailSource } from './application/providerMailSourceDetail'
 import type { ProviderMailOriginalSourceLocatorSource } from './application/providerMailOriginalSource'
+import type { StorageSanitizer } from './application/storageSanitizer'
 import {
   ProviderMailStartupInventoryService,
   type ProviderMailStartupInventoryV1
@@ -78,7 +79,8 @@ export interface ReadyLocalDataRuntime extends LocalDataRuntimeBase {
   confirmationService: LocalActionConfirmationService
   deleteLocalDataService: DeleteLocalDataService
   mailDataModeService: MailDataModeService
-  providerMailReadWorker?: EncryptionContextDestroyer & { shutdown(): Promise<void> }
+  providerMailReadWorker?: WorkerThreadMailSyncProjection
+  storageSanitizer: StorageSanitizer
   providerMailSourceDetailSource?: ProviderMailSourceDetailSource
   providerMailOriginalSourceLocatorSource?: ProviderMailOriginalSourceLocatorSource
   providerMailStartupInventory: ProviderMailStartupInventoryV1
@@ -277,6 +279,7 @@ export const bootstrapLocalDataWithDependencies = async (
       confirmationService: confirmation,
       deleteLocalDataService: activeDeletion,
       mailDataModeService,
+      storageSanitizer,
       providerMailStartupInventory,
       providerMailSyncStatusService,
       ...(mailDataMode.mode === 'live' ? { providerMailSourceDetailSource: source } : {}),

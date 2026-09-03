@@ -1,6 +1,10 @@
 import { join } from 'node:path'
 import { app, BrowserWindow, shell } from 'electron'
 import { bootstrapLocalData } from './bootstrapLocalData'
+import {
+  composeGoogleProviderLifecycle,
+  type GoogleProviderLifecycleComposition
+} from './googleProviderLifecycleComposition'
 import { AccountLifecycleStatusService } from './application/accountLifecycleStatus'
 import { AccountConnectionRecoveryCommandService } from './application/accountConnectionRecoveryCommand'
 import { ApplicationStateService } from './application/applicationStateService'
@@ -12,6 +16,7 @@ import type { MailRepository } from './application/mailRepository'
 import { RetentionMaintenanceOwner } from './application/retentionMaintenanceOwner'
 import { registerApplicationIpc, type ApplicationIpcRegistration } from './ipc/applicationIpc'
 import { GmailExternalUrlOpener } from './infrastructure/external/gmailExternalUrlOpener'
+import { loadGoogleOAuthClientConfiguration } from './infrastructure/providers/googleOAuthClientConfiguration'
 
 const isTrustedExternalUrl = (candidate: string): boolean => {
   try {
@@ -63,6 +68,7 @@ let repository: MailRepository | undefined
 let applicationIpc: ApplicationIpcRegistration | undefined
 let retentionMaintenance: RetentionMaintenanceOwner | undefined
 let shutdownProviderMailRead: (() => Promise<void>) | undefined
+let googleProviderComposition: GoogleProviderLifecycleComposition | undefined
 let shutdownStarted = false
 
 app.on('before-quit', (event) => {
@@ -80,11 +86,14 @@ app.on('before-quit', (event) => {
   }
   event.preventDefault()
   shutdownStarted = true
-  void retentionMaintenance.stop().then(
-    () => shutdownProviderMailRead?.(),
-    () => shutdownProviderMailRead?.()
-  ).finally(() => {
-    applicationIpc?.dispose()
+  applicationIpc?.dispose()
+  const shutdown = googleProviderComposition === undefined
+    ? retentionMaintenance.stop().then(
+      () => shutdownProviderMailRead?.(),
+      () => shutdownProviderMailRead?.()
+    )
+    : googleProviderComposition.lifecycle.shutdown()
+  void shutdown.finally(() => {
     repository?.close()
     app.quit()
   })
@@ -114,6 +123,29 @@ app.whenReady().then(async () => {
       shutdownProviderMailRead = providerMailReadWorker === undefined
         ? undefined
         : () => providerMailReadWorker.shutdown()
+      const googleConfiguration = await loadGoogleOAuthClientConfiguration(
+        app.getPath('userData')
+      )
+      if (googleConfiguration.status === 'available' &&
+          providerMailReadWorker !== undefined) {
+        const composition = composeGoogleProviderLifecycle({
+          configuration: googleConfiguration.configuration,
+          secretVault: runtime.secretVault,
+          accountState: runtime.accountStateRepository,
+          accountLifecycle: runtime.accountLifecycleRepository,
+          accountDataRemoval: runtime.accountDataRemovalService,
+          mailDataMode: runtime.mailDataModeService,
+          projection: providerMailReadWorker,
+          storageSanitizer: runtime.storageSanitizer,
+          retention: retentionMaintenance,
+          syncStatus: runtime.providerMailSyncStatusService,
+          openExternal: (url, options) => shell.openExternal(url, options)
+        })
+        // Production ownership is now assembled, but provider I/O remains inert.
+        // A later reviewed command may pass an explicit account; startup may not.
+        await composition.lifecycle.start([])
+        googleProviderComposition = composition
+      }
       service = new ApplicationStateService(
         'ready',
         runtime.service,
@@ -124,7 +156,7 @@ app.whenReady().then(async () => {
         runtime.confirmationService,
         runtime.deleteLocalDataService,
         service,
-        retentionMaintenance
+        googleProviderComposition?.lifecycle ?? retentionMaintenance
       )
       accountConnectionRecovery = runtime.accountConnectionRecoveryCommandService
       liveMailMessageDetail = new LiveMailMessageDetailService(
@@ -154,7 +186,7 @@ app.whenReady().then(async () => {
   }
 
   openWindow()
-  retentionMaintenance?.start()
+  if (googleProviderComposition === undefined) retentionMaintenance?.start()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) openWindow()
   })

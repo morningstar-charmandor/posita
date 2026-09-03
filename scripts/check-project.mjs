@@ -217,6 +217,9 @@ if (!accountConnectionRecovery.includes('this.confirmations.consume(recoveryRequ
 
 const localDataBootstrap = await readText('src/main/bootstrapLocalData.ts')
 const mainIndex = await readText('src/main/index.ts')
+const googleProviderLifecycleComposition = await readText(
+  'src/main/googleProviderLifecycleComposition.ts'
+)
 const googleOAuthClientConfiguration = await readText(
   'src/main/infrastructure/providers/googleOAuthClientConfiguration.ts'
 )
@@ -290,19 +293,43 @@ if (localDataBootstrap.includes('GoogleDesktopAccountAuthorizationAdapter') ||
     mainIndex.includes('GoogleDesktopAccountAuthorizationAdapter') ||
     mainIndex.includes('GoogleOAuthLoopbackRedirectServer') ||
     mainIndex.includes('GoogleOAuthSystemBrowserLauncher')) {
-  fail('Google desktop authorization infrastructure must remain outside production composition')
+  fail('Google desktop authorization infrastructure must stay out of bootstrap and direct index wiring')
 }
 if (localDataBootstrap.includes('AccountConnectionService') ||
     mainIndex.includes('AccountConnectionService') ||
     localDataBootstrap.includes('AccountConnectionActivationService') ||
     mainIndex.includes('AccountConnectionActivationService')) {
-  fail('account connection must remain outside production composition before approval')
+  fail('account connection must stay behind the reviewed composition boundary')
 }
 if (localDataBootstrap.includes('MailSyncCoordinator') ||
     mainIndex.includes('MailSyncCoordinator') ||
     localDataBootstrap.includes('DeterministicFakeMailProviderAdapter') ||
     mainIndex.includes('DeterministicFakeMailProviderAdapter')) {
-  fail('provider mail sync must remain outside production composition before persistence review')
+  fail('provider mail sync must stay behind the reviewed composition boundary')
+}
+for (const required of [
+  'new GoogleDesktopAccountAuthorizationAdapter(',
+  'new AccountConnectionService(',
+  'new AccountConnectionActivationService(',
+  'new GoogleOAuthAccessTokenSource(',
+  'new GoogleMailReadAdapter(',
+  'new MailSyncCoordinator(',
+  'new GoogleOAuthRevoker(',
+  'new DisconnectAccountService(',
+  'new ProviderMailLifecycleOwner('
+]) {
+  if (!googleProviderLifecycleComposition.includes(required)) {
+    fail(`Google lifecycle composition is missing its reviewed owner: ${required}`)
+  }
+}
+if (!mainIndex.includes('loadGoogleOAuthClientConfiguration(') ||
+    !mainIndex.includes('composeGoogleProviderLifecycle({') ||
+    !mainIndex.includes('await composition.lifecycle.start([])')) {
+  fail('production Google composition must remain configuration-gated and provider-inert')
+}
+if (mainIndex.includes('lifecycle.start(runtime.providerMailStartupInventory.accounts)') ||
+    mainIndex.includes('connectionActivation.connect(')) {
+  fail('startup must not automatically sync or launch Google authorization')
 }
 if (!localDataBootstrap.includes('new AccountConnectionRecoveryService(') ||
     !localDataBootstrap.includes('new AccountConnectionRecoveryConfirmationService(') ||

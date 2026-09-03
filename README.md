@@ -12,8 +12,8 @@ Public repository: [github.com/morningstar-charmandor/posita](https://github.com
 Gate 2D's credential-free lifecycle foundation and approved Google adapter set are
 complete but not activated. A strict inert trusted-main source can now validate a
 desktop client identifier from one private application-data file. The real client ID
-is locally present and validated, but the source is not composed and no client secret,
-user credential, grant, token, or account is present. Posita includes
+is locally present, validated, and consumed only by a provider-inert trusted-main
+composition. No client secret, user credential, grant, token, or account is present. Posita includes
 a Daily Brief,
 topic timeline with source citations, original-message inspection, a unified
 classic mail view, and an editable draft flow. Realistic fixture data is seeded
@@ -41,7 +41,7 @@ compaction through interfaces and deterministic tests. A separate installation-w
 orchestrator now journals deletion of all refresh credentials, encrypted account
 state, mail records, SQLite remnants, the OS-protected data key, and its in-memory
 copy. Account disconnect remains non-user-triggerable because there is no live
-Google revoker. Full local deletion is now available under Settings & privacy
+disconnect command. Full local deletion is now available under Settings & privacy
 through separate prepare and execute IPC methods. Execution requires a five-minute
 typed confirmation bound to one operation, and pending journal state has a bounded
 safe-status projection. One validated read-only application-state query now
@@ -57,30 +57,30 @@ boundary, and disconnect behavior. Google Cloud project `posita-mail-hub-2026` n
 has Gmail API, external testing consent with the exact reviewed scopes, and one
 `Posita macOS Desktop` client. Its client ID is privately configured and validated
 locally; no client secret, credential bundle, user grant, or token was downloaded or
-used. The connect action remains disabled because no production composition, browser
-flow, user grant, or live account is composed.
+used. The connect action remains disabled because no public connection command,
+browser flow, user grant, or live account is active.
 
 The trusted backend now defines a bounded provider-independent authorization
-session contract, deterministic fake, and real uncomposed Google desktop protocol
+session contract, deterministic fake, and real Google desktop protocol
 adapter. The real adapter generates PKCE and state, verifies the exact loopback
 callback, exchanges one code through injected HTTP, and requires a verified OpenID
 subject/email to agree with Gmail profile identity. Ambiguous exchange failures
-consume the session and require a fresh start. A separate uncomposed listener now
+consume the session and require a fresh start. A separate bounded listener now
 binds one short-lived operating-system-selected `127.0.0.1` port, validates the
 host/path/state, bounds requests, and returns generic non-reflective browser copy.
 An exact-URL system-browser launcher has an injected Electron delegate and is tested
-without opening a browser. The local configuration source is inert and contains only
-the validated client ID. No production startup composition, preload/IPC action,
-client secret, user grant, account, browser
+without opening a browser. Production now constructs these boundaries inside one
+lifecycle graph and starts it with zero accounts. No preload/IPC action, client secret,
+user grant, account, browser
 action, or live provider request is present.
 
 An unexposed trusted-main activation coordinator now joins those boundaries to the
 existing account-connection service. It starts callback waiting before browser
 handoff, keeps authorization URLs and callbacks out of renderer state, bounds
 non-consuming callback rejection, observes cancellation before code exchange, and
-fails closed if cleanup cannot be confirmed. This is deterministic composition only:
-it is not imported by startup and has no runtime-configured client, IPC/UI action,
-user credential, account, browser action, or provider request.
+fails closed if cleanup cannot be confirmed. Startup constructs this coordinator but
+exposes no IPC/UI action that can invoke it; there is no user credential, account,
+browser action, or provider request.
 
 A trusted account-connection coordinator now composes that interface with the
 existing vault and encrypted account-state contracts in credential-free tests.
@@ -113,7 +113,7 @@ Startup now has one cancellable lifecycle-recovery owner. If a full deletion is
 journaled, it resumes through deletion-only SQLite and vault operations without
 loading or creating the encryption key. A completed marker keeps later restarts
 in `local-data-deleted` mode and prevents fixture reseeding. Pending account
-disconnect remains inactive because no live authorization revoker exists.
+disconnect remains inactive because no reviewed UI/IPC resume command exists.
 File-backed retention, fixture compatibility, disconnect, and deletion sanitization now run
 through one single-flight worker-thread adapter, keeping `VACUUM` and WAL
 checkpoint work off Electron's main event loop. Bounded in-memory tests retain an
@@ -140,8 +140,9 @@ through deterministic fakes. Schema v9 adds a credential-free authenticated
 SQLite projection that atomically stores canonical messages, threads, and the
 encrypted account cursor; source IDs and content remain ciphertext, while opaque
 local storage IDs enforce account isolation. The existing `Message` remains a
-sample-only view and receives no invented provider identity. The projection is
-empty and uncomposed from startup, IPC, UI, or Google. A packaged single-flight
+sample-only view and receives no invented provider identity. The empty projection
+is shared by the provider-inert production graph and local read surfaces, while
+remaining absent from IPC, UI, and provider payloads. A packaged single-flight
 worker adapter now keeps file-backed projection reads, decrypt/scan, encryption,
 and commits off Electron's main event loop, validates a bounded protocol, and
 erases its retained key context. All visible mail remains deterministic sample data.
@@ -151,20 +152,22 @@ Incremental tombstones remove remotely deleted cached messages and repair affect
 threads in the same transaction as cursor advancement. Invalid-cursor recovery
 collects the complete bounded 90-day window before one authoritative replacement,
 so incomplete recovery cannot partially erase the encrypted projection. This path
-is still deterministic, credential-free, and uncomposed.
+is now owned by the provider-inert production graph; startup supplies zero accounts,
+so it remains deterministic and performs no provider request.
 
 The inactive journaled disconnect service now requires that worker-backed
 projection remover in its local mail-data phase. If canonical deletion fails after
 sample data was already removed, retry resumes the same phase safely and repeats
-both idempotent actions. A real Google revoker now implements that contract but
-remains uncomposed; there is still no disconnect UI, credential, or provider account.
+both idempotent actions. The production graph now contains the real Google revoker,
+but there is still no disconnect UI, credential, or provider account.
 
 The existing automatic retention worker now applies the same exact 90-day cutoff
 to canonical provider messages by absolute `receivedAt`. It retains the boundary,
 removes empty provider threads, rewrites partially retained threads as authenticated
 ciphertext, preserves sync cursors, and completes or resumes SQLite sanitization.
-The canonical projection remains empty in the running product, and sync, Gmail,
-OAuth, credentials, preload, and UI activation remain uncomposed.
+The canonical projection remains empty in the running product. Sync, Gmail, and OAuth
+objects are assembled but start with zero accounts; credentials, preload, and UI
+activation remain absent.
 
 The credential-free sync coordinator is now also verified end to end against the
 real file-backed encrypted projection worker and deterministic provider. The
@@ -181,15 +184,16 @@ Compaction is safely retryable after the logical switch. This policy is verified
 with deterministic data only and does not activate OAuth, Gmail, sync, preload,
 IPC, or UI behavior.
 
-A credential-free provider-mail lifecycle owner now defines the missing runtime
-ordering without activating it. On startup, a bounded trusted account inventory
-enters live mode before initial sync and starts retention only after that sync
-settles. Later sync pauses retention; disconnect first prevents new sync and waits
+A credential-free provider-mail lifecycle owner now controls runtime ordering while
+remaining provider-inert. Startup explicitly passes zero accounts and lets it start
+retention without sync. Its verified future path enters live mode before initial sync
+and starts retention after that sync settles. Later sync pauses retention; disconnect
+first prevents new sync and waits
 for active provider work before local mutation; confirmed full deletion uses the
 same quiescence gate; shutdown settles both workers before erasing the projection
 worker's retained key. Offline startup returns a safe retry-required outcome and
-never restores samples. The owner remains outside Electron startup, IPC, UI, and
-Google composition.
+never restores samples. The owner is constructed by Electron startup, but no IPC,
+UI, or automatic inventory handoff can start provider work.
 
 Trusted startup now also composes a credential-free sync-status service over the
 existing encrypted account-state repository. The lifecycle owner records each
@@ -202,17 +206,18 @@ network request, or Gmail access is activated.
 
 The final production-composition audit confirms there is no smaller standalone
 credential-free milestone left. The approved read-only Gmail adapter and idempotent
-revoker are now complete and uncomposed. Future activation must reuse the existing projection worker,
+revoker are now assembled inside a zero-account production graph. Future activation
+must reuse the existing projection worker,
 sync coordinator, lifecycle owner, encrypted status, retention gate, deletion
 gate, and shutdown path. Credentials and connecting an account remain later,
 separate decisions.
 
-The first approved adapter slice is a real but uncomposed Google OAuth revoker.
+The first approved adapter slice is a real Google OAuth revoker in that inert graph.
 It reads one account-scoped refresh token only from the protected vault, sends it
 in a form-encoded body to Google's fixed HTTPS revocation endpoint, bounds the
 response, and treats only Google's documented `invalid_token` response as the
 required already-revoked success. It uses injected networking in tests, adds no
-dependency, and is not reachable from startup, IPC, UI, or a real account.
+dependency, and is not reachable from IPC, UI, or a real account.
 
 The matching `GoogleMailReadAdapter` now implements bounded 90-day full reads and
 resumable Gmail history reads behind the existing provider-independent coordinator.
@@ -222,16 +227,16 @@ MIME-body sizes, deterministic account-scoped IDs, provider-deletion tombstones,
 and typed redacted failures. It extracts canonical plain text—including HTML-only
 and separately stored MIME text—without retaining provider HTML or downloading
 binary attachment bodies. Deterministic injected HTTP tests exercise the adapter;
-it is not composed into startup, OAuth, IPC, UI, or a real account.
+startup constructs it but supplies no account, credential, IPC, UI, or provider request.
 
 The trusted-main `GoogleOAuthAccessTokenSource` now supplies the reader's refresh
-boundary without configuring or using OAuth. It reads only the selected
+boundary without using a grant. It reads only the selected
 account's protected refresh credential, posts it in a bounded form body to Google's
 fixed token endpoint, keeps the returned access token in memory with an expiry
 safety window, shares one cancellable refresh per account, refuses widened scopes,
-and exposes explicit invalidation and teardown. Its client ID and HTTP transport
-are injected only in deterministic tests; no real client, credential, token,
-account, or network request is present in the running product. Its exact returned-
+and exposes explicit invalidation and teardown. Production injects the private local
+client ID but never calls the source without an explicit account; no user credential,
+token, account, or network request is present in the running product. Its exact returned-
 scope check now matches the approved identity-plus-Gmail-read-only consent.
 
 The existing application-state query is now mode-aware. Sample installations keep
