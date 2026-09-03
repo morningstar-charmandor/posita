@@ -39,6 +39,8 @@
       ],
       "desktopOAuthClientCreated": true,
       "desktopOAuthClientName": "Posita macOS Desktop",
+      "desktopOAuthClientIdStoredLocally": true,
+      "desktopOAuthClientConfigurationValidated": true,
       "desktopOAuthClientCredentialsDownloaded": false,
       "credentialStoredInRepository": false,
       "productionRuntimeConfigured": false,

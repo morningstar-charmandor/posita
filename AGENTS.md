@@ -9,8 +9,9 @@ exists deeper in the tree.
 - Current milestone: Gate 2D Google desktop authorization, bounded loopback/browser,
   trusted connection activation, read, refresh, and revocation are credential-free
   complete; isolated Google Cloud/API/consent/desktop-client configuration is complete;
-  a strict inert local client-identifier configuration source is complete, while
-  credential placement/use and production composition remain inactive pending review.
+  a strict inert local client-identifier configuration source is complete and has
+  validated the private local client ID, while credential use and production
+  composition remain inactive pending review.
 - Current data: deterministic fixtures stored as authenticated encrypted records.
 - Encrypted provider-account and sync-state storage is implemented but empty.
 - A non-sensitive lifecycle journal and confirmed full local-deletion execution are implemented.
@@ -36,12 +37,13 @@ exists deeper in the tree.
 - An OS-protected credential vault is implemented but contains no real token.
 - A bounded refresh-to-access-token source now connects that vault contract to the
   Gmail reader contract in trusted main. A separate strict configuration source can
-  read only a future desktop client identifier from Posita's application-data folder,
+  read the desktop client identifier from Posita's private application-data file,
   but neither is production-composed and no real user credential has been received.
 - A versioned Gmail consent preview is visible in Settings and exactly discloses
   OpenID identity, verified email, and Gmail read-only access; OAuth activation
   remains unavailable. Google Cloud has matching testing consent and a desktop client,
-  but its credential was not downloaded, stored locally, or used.
+  whose client ID is privately configured locally; no client secret, credential bundle,
+  user grant, or token was downloaded or used.
 - Provider-independent authorization-session contracts and a deterministic fake
   are implemented but are not composed into startup, preload, IPC, or UI.
 - A real uncomposed Google desktop authorization adapter implements bounded PKCE,
@@ -110,13 +112,14 @@ exists deeper in the tree.
 - Sending mail is intentionally disabled.
 - The final production-composition audit and approved Google adapter/infrastructure/
   activation-coordinator set are complete. Isolated Google Cloud, Gmail API, external
-  testing consent, and desktop-client creation are complete. Credential download/use,
-  runtime configuration, UI/IPC exposure, and production activation remain unapproved.
+  testing consent, desktop-client creation, and private client-ID placement are complete.
+  Credential use, UI/IPC exposure, and production activation remain unapproved.
 - The owner approved exact OpenID/email/Gmail-read-only consent and the credential-
   free desktop OAuth protocol core, uncomposed loopback/browser boundaries, and
   unexposed trusted connection-activation sequencing, plus the isolated Google-side
-  testing configuration. Credential download/use, a real account, UI/IPC exposure,
-  production composition, ingestion, and live provider-network use remain unapproved.
+  testing configuration and private local client-ID placement. A client secret or
+  credential bundle, a real account, UI/IPC exposure, production composition,
+  ingestion, and live provider-network use remain unapproved.
 - Product promise: **Your inboxes, understood as one.**
 
 Do not imply that fixture-backed behavior is connected to real mail or AI.

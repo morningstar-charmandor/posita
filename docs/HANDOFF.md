@@ -16,7 +16,9 @@ owner has now created an isolated Google Cloud project named `Posita` with proje
 ID `posita-mail-hub-2026`. Gmail API is enabled, external testing consent is
 configured for OpenID identity, verified email, and Gmail read-only, and one
 desktop client named `Posita macOS Desktop` exists. Its credentials were not
-downloaded, copied into the repository, or used. Runtime composition, browser
+downloaded, copied into the repository, or used. Its client ID is now stored only
+in the owner-readable local application-data file and passes Posita's strict loader;
+no client secret or credential bundle was downloaded. Runtime composition, browser
 authorization, account connection, and production activation remain inactive.
 The product is a runnable Electron desktop prototype using React, strict TypeScript,
 and SQLite. All visible mail is deterministic sample data.
@@ -268,8 +270,8 @@ Simulated or deliberately inactive:
 
 - all accounts, people, topics, messages, summaries, and drafts are fixtures,
 - generated-looking summaries and drafts are not produced by an AI provider,
-- no OAuth client credential has been downloaded or stored locally, and no user
-  authorization grant or refresh credential exists,
+- the desktop client ID is privately configured locally, but no client secret,
+  credential bundle, user authorization grant, or refresh credential exists,
 - the isolated `posita-mail-hub-2026` Google Cloud project has Gmail API, external
   testing consent, and the `Posita macOS Desktop` client configured,
 - encrypted provider-account and sync-state tables contain no real account,
@@ -335,7 +337,8 @@ Not implemented:
 
 The isolated Google Cloud project `posita-mail-hub-2026`, Gmail API, external
 testing consent, exact approved scopes, and `Posita macOS Desktop` client are
-created and verified. No client credential was downloaded or used.
+created and verified. The client ID is privately configured and loader-validated;
+no client secret, credential bundle, user grant, or token was downloaded or used.
 The owner-approved Google adapter set, deletion-aware reconciliation, trusted
 refresh-to-access-token boundary, exact identity consent, desktop authorization-
 code/PKCE protocol core, bounded loopback/browser infrastructure, and trusted-main
@@ -344,8 +347,8 @@ complete and uncomposed. No smaller credential-free connection slice remains. Th
 next milestone is reviewed connection/disconnect lifecycle composition that consumes
 only the configuration source's bounded result.
 It must keep client configuration outside Git and expose no credential through
-renderer IPC. Placing or using the real client identifier, downloading or using any
-credential, production UI/IPC activation,
+renderer IPC. Using the configured identifier in production composition, downloading
+or using any user credential, production UI/IPC activation,
 opening a real authorization browser, and connecting a dedicated test account remain
 later, separate approvals. Current approval does not authorize those actions, live
 provider testing, or mailbox ingestion.
@@ -492,6 +495,9 @@ file from Posita application data, refuses symlinks, secrets, unknown fields, an
 fallback searches, and remains outside startup and public contracts. No dependency,
 schema, compatibility path, duplicate service, real identifier, credential, account,
 provider request, personal data, mailbox mutation, or intentional duplication was added.
+Private client-ID placement changes no source abstraction or compatibility path: it
+uses that existing loader, adds no dependency or tracked configuration, and leaves
+all production composition inactive.
 The new `AccountConnectionActivationService` composes the existing connection,
 callback, and browser interfaces without adding a second persistence coordinator.
 It remains outside startup and public desktop contracts. No dependency, schema,

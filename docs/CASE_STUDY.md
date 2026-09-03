@@ -414,8 +414,9 @@ external testing consent with the exact reviewed identity/read-only scopes, and 
 `Posita macOS Desktop` client configured. The client credential was neither
 downloaded nor used, preserving a clean separation between external infrastructure
 and runtime access. A fixed, owner-readable, symlink-refusing configuration source
-now validates only a future client identifier and rejects secrets or fallback search;
-it contains no real value and remains uncomposed. The next review is complete
+now validates the real client ID from Posita's private application-data file and
+rejects secrets or fallback search. The identifier is absent from Git and remains
+uncomposed. The next review is complete
 production lifecycle/UI activation. Real
 browser activation, credentials, live account connection, provider-network
 testing, and production sync remain blocked behind explicit owner approval.

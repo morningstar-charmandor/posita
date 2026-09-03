@@ -2320,6 +2320,46 @@ mailbox access occurred. The next milestone is reviewed connection/disconnect
 lifecycle composition; real identifier placement and account authorization remain
 separate explicit gates.
 
+## Gate 2D milestone — Private local Google client-ID placement
+
+Date: 2026-09-03
+Checkpoint: use the Git commit whose subject is `docs: record private Google client configuration`
+
+Goal: place only Posita's installed-desktop client ID in the approved local boundary
+without downloading Google's credential bundle, storing a client secret, changing
+Git-tracked configuration, or authorizing an account.
+
+Delivered:
+
+- one `google-oauth-client.json` file in Posita's macOS application-data directory,
+- owner-only `0600` permissions on a regular non-symlink file,
+- exact version, provider, and client-ID fields with no client-secret field,
+- successful validation through the production source module,
+- machine-readable state distinguishing local identifier availability from runtime
+  composition, credentials, and live account activation.
+
+Important decisions:
+
+- copy only the non-secret desktop client ID; do not download the broader Google
+  credential JSON or persist its client-secret field,
+- keep the local file outside the repository and never print its value in project
+  documentation or verification output,
+- leave authorization, preload/IPC, UI activation, provider network use, and sync
+  composition inactive behind their separate approval gates,
+- add no dependency, schema, compatibility path, source abstraction, account,
+  user token, personal mailbox data, AI path, or mailbox mutation.
+
+Evidence: the local file is a regular 120-byte file with mode `0600`; a temporary
+bundle of Posita's actual loader returned `available`; Git remained clean before
+this documentation checkpoint. Canonical repository verification remains 71 test
+files and 456 tests plus strict typecheck, renderer security checks, and production build.
+
+Limitations: the client ID is configuration, not proof of authorization. No client
+secret, downloaded credential bundle, user grant, refresh/access token, Gmail account,
+browser authorization, Google provider request, ingestion, or mailbox mutation occurred.
+The next milestone still requires explicit approval for production lifecycle/UI
+composition; real account authorization remains a later action-time confirmation.
+
 ## How future entries should be written
 
 For each material milestone, record:

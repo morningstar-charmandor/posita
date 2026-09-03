@@ -7,7 +7,9 @@ client ID or secret.
 An isolated Google Cloud project named `Posita` with project ID
 `posita-mail-hub-2026` now has Gmail API enabled, external testing consent configured
 for OpenID, verified email, and Gmail read-only, and one desktop client named
-`Posita macOS Desktop`. Its credentials were not downloaded or used.
+`Posita macOS Desktop`. Its client ID is stored only in Posita's private application-
+data file and passes the strict loader. No client secret, credential bundle, user
+grant, refresh token, or access token was downloaded or used.
 Real desktop authorization protocol, read-only, idempotent revocation, and refresh-
 to-access-token adapters are implemented but uncomposed. This document does not
 authorize live mailbox access.
@@ -210,8 +212,9 @@ The separate inert `loadGoogleOAuthClientConfiguration` boundary accepts only a
 desktop client identifier from the fixed `google-oauth-client.json` file in Posita's
 absolute application-data directory. It refuses symlinks, loose POSIX permissions,
 oversized input, unknown fields, invalid identifiers, and any client secret. It does
-not search Git, the working directory, or environment variables and is not yet wired
-to the authorization or access-token adapters.
+not search Git, the working directory, or environment variables. The real client ID
+now passes this loader from the owner-only application-data file, but the result is
+not yet wired to the authorization or access-token adapters.
 
 ## Desktop OAuth flow
 

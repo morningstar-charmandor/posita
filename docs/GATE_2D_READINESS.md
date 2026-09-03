@@ -30,7 +30,8 @@ connection milestone. Activation now has an isolated Google Cloud project
 (`posita-mail-hub-2026`), Gmail API, external testing consent with the exact approved
 scopes, and a desktop client whose credentials remain unused. It still requires a
 reviewed lifecycle/UI composition that consumes the now-complete inert, secret-safe
-client-identifier configuration source,
+client-identifier configuration source. The real client ID is private, local, and
+loader-validated; no client secret, user grant, or token exists. Activation still requires
 dedicated-account testing, and owner approval.
 
 No credential, provider connection, browser authorization, network request, Gmail
@@ -229,9 +230,10 @@ sequencing.
 Those adapters and the prerequisite deletion-aware reconciliation are complete and
 uncomposed. The separately approved Google Cloud project, Gmail API, external testing
 consent, and desktop-client creation are complete. The client credential was not
-downloaded or used. The strict local configuration source is complete but contains
-no real identifier and is not composed. This approval does not authorize credential
-download or use, production runtime composition, connecting an account, real browser action, network
+downloaded or used. The strict local configuration source contains only the real
+client ID in an owner-readable application-data file, passes validation, and is not
+composed. This approval does not authorize credential use, production runtime
+composition, connecting an account, real browser action, network
 testing with Google, or ingesting mail; those remain later explicit gates.
 
 ## Original audit evidence

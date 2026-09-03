@@ -11,8 +11,9 @@ Public repository: [github.com/morningstar-charmandor/posita](https://github.com
 
 Gate 2D's credential-free lifecycle foundation and approved Google adapter set are
 complete but not activated. A strict inert trusted-main source can now validate a
-future desktop client identifier from one private application-data file; it is not
-composed and no real identifier, credential, or account is present. Posita includes
+desktop client identifier from one private application-data file. The real client ID
+is locally present and validated, but the source is not composed and no client secret,
+user credential, grant, token, or account is present. Posita includes
 a Daily Brief,
 topic timeline with source citations, original-message inspection, a unified
 classic mail view, and an editable draft flow. Realistic fixture data is seeded
@@ -54,8 +55,9 @@ consent preview. It exactly discloses OpenID identity, verified email, and plann
 Gmail read-only access, plus the 90-day encrypted local window, inactive AI-provider
 boundary, and disconnect behavior. Google Cloud project `posita-mail-hub-2026` now
 has Gmail API, external testing consent with the exact reviewed scopes, and one
-`Posita macOS Desktop` client. Its credentials were not downloaded or used. The
-connect action remains disabled because no runtime client configuration, browser
+`Posita macOS Desktop` client. Its client ID is privately configured and validated
+locally; no client secret, credential bundle, user grant, or token was downloaded or
+used. The connect action remains disabled because no production composition, browser
 flow, user grant, or live account is composed.
 
 The trusted backend now defines a bounded provider-independent authorization
@@ -67,9 +69,9 @@ consume the session and require a fresh start. A separate uncomposed listener no
 binds one short-lived operating-system-selected `127.0.0.1` port, validates the
 host/path/state, bounds requests, and returns generic non-reflective browser copy.
 An exact-URL system-browser launcher has an injected Electron delegate and is tested
-without opening a browser. The local configuration source is inert and contains no
-real value. No production startup composition, preload/IPC action, downloaded client
-credential, user grant, account, browser
+without opening a browser. The local configuration source is inert and contains only
+the validated client ID. No production startup composition, preload/IPC action,
+client secret, user grant, account, browser
 action, or live provider request is present.
 
 An unexposed trusted-main activation coordinator now joins those boundaries to the
