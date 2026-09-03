@@ -277,7 +277,9 @@ if (localDataBootstrap.includes('GoogleDesktopAccountAuthorizationAdapter') ||
   fail('Google desktop authorization infrastructure must remain outside production composition')
 }
 if (localDataBootstrap.includes('AccountConnectionService') ||
-    mainIndex.includes('AccountConnectionService')) {
+    mainIndex.includes('AccountConnectionService') ||
+    localDataBootstrap.includes('AccountConnectionActivationService') ||
+    mainIndex.includes('AccountConnectionActivationService')) {
   fail('account connection must remain outside production composition before approval')
 }
 if (localDataBootstrap.includes('MailSyncCoordinator') ||

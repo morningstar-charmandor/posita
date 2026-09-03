@@ -2170,6 +2170,46 @@ listener. No dependency, schema migration, configured client, credential, accoun
 production composition, browser action, Google request, personal data, or mailbox
 mutation was added.
 
+## Gate 2D milestone — Trusted account-connection activation sequence
+
+Date: 2026-09-03
+Checkpoint: use the Git commit whose subject is `feat: sequence account connection activation`
+
+Goal: prove the complete trusted-main authorization-to-persistence sequence without
+configuring Google, opening a browser, exposing IPC/UI, or creating an account.
+
+Delivered:
+
+- one unexposed `AccountConnectionActivationService` over the existing account-
+  connection, callback-source, and exact-browser interfaces,
+- exact request validation and one active connection sequence,
+- callback waiting registered before browser handoff so a fast redirect cannot be
+  lost and neither privileged URL crosses the renderer boundary,
+- at most four retries for the protocol adapter's explicit non-consuming callback
+  rejection, with all other completion failures left to their existing owner,
+- cancellation while awaiting a callback and deterministic connection/listener
+  cleanup after browser or callback failure,
+- explicit non-retryable cleanup-review state when pending-session removal cannot
+  be confirmed,
+- a documented completion boundary preventing cancellation from racing token
+  exchange and vault/encrypted-state persistence.
+
+Important decisions:
+
+- reuse `AccountConnectionService` as the only credential/state transaction owner,
+- keep authorization URL, callback, and provider failures in trusted main,
+- bound only the rejection known to leave the authorization session usable,
+- keep the coordinator outside startup and public desktop contracts until real
+  client configuration and full lifecycle activation are separately approved.
+
+Evidence: 70 test files and 446 tests pass with strict typecheck, renderer security
+checks, local-only callback integration, and the production Electron build.
+
+Limitations: every boundary remains deterministic or local-only. No dependency,
+schema migration, configured client, credential, account, startup composition,
+preload/IPC/UI capability, real browser or Google request, personal data, or mailbox
+mutation was added.
+
 ## How future entries should be written
 
 For each material milestone, record:

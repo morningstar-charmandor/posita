@@ -276,6 +276,15 @@ reviewed Google HTTPS authorization request before calling an injected desktop
 delegate. Tests use a local-only listener and fake delegate; no real browser or
 provider request is performed.
 
+The unexposed activation coordinator retains only one launch and callback sequence
+in trusted memory. It does not return the Google authorization URL or local callback
+to the renderer. Cancellation is honored while waiting; once a verified callback
+starts code exchange, the established vault-before-encrypted-state transaction owns
+completion so cancellation cannot create ambiguous partial storage. Browser or
+callback failure triggers connection/listener cleanup, and an unconfirmed cleanup
+is reported explicitly rather than hidden. All current tests use deterministic
+values and create no credential or account.
+
 The credential-free account-connection coordinator now proves the only accepted
 cross-store write order: vault credential first, encrypted provider-account state
 second. It preflights both stores, refuses partially existing state, and performs

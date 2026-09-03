@@ -52,6 +52,16 @@ the OS. Production client configuration, credential persistence, account creatio
 preload/IPC command, enabled UI action, browser launch, and live provider request
 remain unimplemented.
 
+The credential-free `AccountConnectionActivationService` now proves how these
+pieces must be used together without activating them. It begins through the existing
+connection service, registers the callback waiter before browser handoff, retries
+only the protocol adapter's non-consuming callback rejection up to a fixed limit,
+and completes through the existing vault-before-encrypted-state transaction. It
+cancels on browser/listener failure and reports uncertain cleanup distinctly. The
+authorization URL and callback never enter renderer data. This coordinator is not
+constructed by startup and has no preload, IPC, Settings action, configured client,
+credential, browser invocation, account, or provider request.
+
 Gate 2D also defines a credential-free `AccountConnectionService` above the
 authorization adapter. It verifies that the opaque Posita account has neither an
 existing provider record nor refresh credential before authorization and again

@@ -6,9 +6,9 @@ exists deeper in the tree.
 
 ## Product state
 
-- Current milestone: Gate 2D Google desktop authorization protocol, bounded
-  loopback/browser infrastructure, read, refresh, and revocation adapters are
-  complete; production composition remains inactive pending an activation decision.
+- Current milestone: Gate 2D Google desktop authorization, bounded loopback/browser,
+  trusted connection activation, read, refresh, and revocation are credential-free
+  complete; production composition remains inactive pending a configuration decision.
 - Current data: deterministic fixtures stored as authenticated encrypted records.
 - Encrypted provider-account and sync-state storage is implemented but empty.
 - A non-sensitive lifecycle journal and confirmed full local-deletion execution are implemented.
@@ -49,6 +49,9 @@ exists deeper in the tree.
   browser launcher is implemented with an injected Electron boundary.
 - A credential-free account-connection coordinator proves authorization-to-vault-
   to-encrypted-state ordering and rollback, but it has no production composition.
+- A credential-free activation coordinator now composes connection begin, callback
+  waiting, exact browser handoff, bounded callback retry, completion, cancellation,
+  and cleanup behind trusted-main interfaces; it remains unexposed and unstarted.
 - A production-composed trusted-main sync-status service durably records syncing,
   success, cancellation, and typed failure state with one fixed safe retry policy;
   the inactive lifecycle owner uses its contract and fails closed before provider
@@ -101,13 +104,14 @@ exists deeper in the tree.
   projection composition, pending-disconnect scheduling, and model providers are
   not connected.
 - Sending mail is intentionally disabled.
-- The final production-composition audit and approved Google adapter/infrastructure
-  set are complete. OAuth client configuration, credential use, account connection,
-  UI/IPC exposure, and production activation remain unapproved.
+- The final production-composition audit and approved Google adapter/infrastructure/
+  activation-coordinator set are complete. OAuth client configuration, credential
+  use, UI/IPC exposure, and production activation remain unapproved.
 - The owner approved exact OpenID/email/Gmail-read-only consent and the credential-
-  free desktop OAuth protocol core plus uncomposed loopback/browser boundaries.
-  Credentials, account connection, UI/IPC exposure, production composition,
-  ingestion, and live provider-network use remain unapproved.
+  free desktop OAuth protocol core, uncomposed loopback/browser boundaries, and
+  unexposed trusted connection-activation sequencing. Credentials, a real account,
+  UI/IPC exposure, production composition, ingestion, and live provider-network use
+  remain unapproved.
 - Product promise: **Your inboxes, understood as one.**
 
 Do not imply that fixture-backed behavior is connected to real mail or AI.

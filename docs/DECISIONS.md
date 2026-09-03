@@ -999,3 +999,30 @@
   port in constrained environments. No dependency, schema migration, compatibility
   path, configured client, credential, account, real browser action, provider request,
   personal data, mailbox mutation, or intentional duplicate service is added.
+
+## ADR-050: Sequence connection activation in one trusted-main coordinator
+
+- Status: accepted for Gate 2D Google activation
+- Context: authorization, callback reception, exact browser handoff, and account
+  persistence were individually verified, but production wiring could still expose
+  an authorization URL to the renderer, open the browser before a callback waiter
+  exists, retry rejected callbacks forever, or leave an ambiguous pending session
+  after handoff failure. Composing startup or IPC remains outside the current gate.
+- Decision: add one unexposed `AccountConnectionActivationService` above the existing
+  `AccountConnectionService`, callback source, and browser boundary. Validate one
+  exact request, allow one activation, begin through the existing persistence owner,
+  register callback waiting before browser handoff, and keep authorization URL and
+  callback data in trusted main. Retry only `AUTHORIZATION_CALLBACK_REJECTED` up to
+  four deliveries because that error is explicitly non-consuming. Cancel the
+  connection/listener on browser or callback failure and make cleanup failure a
+  distinct non-retryable review state. Observe caller cancellation while waiting;
+  once a verified callback enters code exchange, let the existing authorization
+  and vault-before-encrypted-state transaction own completion rather than racing
+  cancellation against a possibly committed credential.
+- Consequence: the complete credential-free connection sequence is deterministic-
+  tested without adding a public capability or a second persistence owner. A future
+  narrow UI/IPC command can invoke this coordinator without receiving privileged
+  URLs or callbacks, but only after client configuration and full lifecycle review.
+  No dependency, schema migration, compatibility path, startup composition, IPC/UI
+  surface, configured client, credential, account, browser/provider action, personal
+  data, mailbox mutation, or intentional duplicate service is added.

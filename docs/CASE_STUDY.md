@@ -1,7 +1,7 @@
 # Posita Portfolio Case Study
 
 Status: evolving working draft  
-Last reviewed: 2026-09-02
+Last reviewed: 2026-09-03
 
 This document turns verified project history into a portfolio-ready narrative.
 It should remain honest about what is implemented, simulated, measured, and
@@ -16,8 +16,8 @@ and actions.
 **Product promise:** Your inboxes, understood as one.
 
 **Current stage:** Gate 2D Google adapter, trusted token boundary, exact identity
-consent, desktop authorization protocol, and bounded loopback/browser infrastructure
-complete but inactive,
+consent, desktop authorization protocol, bounded loopback/browser infrastructure,
+and trusted connection-activation sequencing complete but inactive,
 with a real
 SQLite path, OS-protected key hierarchy, authenticated mail and provider-account
 state, plus tested crash-resumable disconnect and full local-deletion orchestrators.
@@ -50,6 +50,9 @@ The concrete callback listener binds only an ephemeral IPv4 localhost port with
 strict state and resource limits; its copy reflects no callback data. The browser
 launcher verifies the entire reviewed Google request before an injected delegate,
 which remains fake in tests.
+One unexposed coordinator now proves callback-before-browser ordering, bounded
+callback rejection, pre-exchange cancellation, and fail-closed cleanup while
+retaining the existing vault-before-state transaction as the only persistence owner.
 
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
 
@@ -342,6 +345,8 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - a local-only ephemeral OAuth callback listener with exact host/path/state and
   resource limits plus an exact-URL system-browser boundary, both uncomposed and
   tested without a real browser or provider request,
+- a trusted-main activation coordinator that sequences those boundaries with the
+  existing account transaction while exposing neither authorization URL nor callback,
 - a mode-aware worker-backed live snapshot capped at 50 canonical summaries and
   32 account scopes, with bodies, recipients, remote provider IDs, cursors,
   key material, paths, and raw failures excluded,
@@ -361,7 +366,7 @@ At the current Gate 2D foundation checkpoint, Posita has:
 - an explicit compatibility boundary that keeps fixture `Message` records sample-
   only rather than fabricating provider identity,
 - keyboard-readable icon controls and a reduced-motion fallback,
-- 69 automated test files containing 437 passing tests,
+- 70 automated test files containing 446 passing tests,
 - a desktop visual and accessibility-tree check of the local-only Settings entry,
   sample-account controls, normal no-recovery-needed outcome, and automatic
   retention card with readable next/last status and Gmail non-mutation copy,
@@ -398,7 +403,8 @@ approved adapter set and its trusted access-token source are now complete but
 uncomposed: the revoker, deletion-aware reconciliation foundation, bounded read-
 only Gmail adapter, vault-to-memory token exchange, desktop PKCE/state/identity
 protocol, local callback listener, and exact browser handoff are deterministic-
-tested without credentials or provider network use. Provider batch v2 removes remote
+tested without credentials or provider network use. The connection activation
+sequence is also verified without public composition. Provider batch v2 removes remote
 deletions atomically and replaces a stale bounded window only after every page is
 available. OpenID identity scopes are now explicitly approved and transparently
 disclosed, and the loopback/browser infrastructure is complete but inert. The next

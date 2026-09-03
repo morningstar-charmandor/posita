@@ -322,6 +322,17 @@ Google authorization URL before invoking an injected Electron delegate. Neither 
 composed in `index.ts`, so the disabled consent UI cannot start authorization or
 open a browser.
 
+`AccountConnectionActivationService` is the uncomposed trusted-main sequence owner
+above those parts. It invokes the existing `AccountConnectionService`, registers
+callback waiting before browser handoff, keeps both authorization URL and callback
+out of renderer contracts, permits at most four non-consuming callback rejections,
+and cancels the connection/listener when browser or callback delivery fails. A
+verified callback is the explicit completion boundary: after that point the existing
+authorization exchange and vault-before-encrypted-state persistence own the outcome
+instead of racing cancellation against a possibly committed credential. Cleanup
+failure is distinct recovery-required state. The coordinator has no startup, IPC,
+preload, renderer, configured-client, or real-browser composition.
+
 `AccountConnectionService` is the next trusted application layer above that
 adapter. It validates begin output against the requested account, binds completion
 to the pending session, rejects pre-existing or one-sided vault/account-state

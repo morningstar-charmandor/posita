@@ -65,6 +65,14 @@ without opening a browser. No production client configuration, startup compositi
 preload/IPC action, credential, account, browser action, or live provider request is
 present.
 
+An unexposed trusted-main activation coordinator now joins those boundaries to the
+existing account-connection service. It starts callback waiting before browser
+handoff, keeps authorization URLs and callbacks out of renderer state, bounds
+non-consuming callback rejection, observes cancellation before code exchange, and
+fails closed if cleanup cannot be confirmed. This is deterministic composition only:
+it is not imported by startup and has no configured client, IPC/UI action, credential,
+account, browser action, or provider request.
+
 A trusted account-connection coordinator now composes that interface with the
 existing vault and encrypted account-state contracts in credential-free tests.
 It preflights duplicate or inconsistent state, stores a successful refresh grant

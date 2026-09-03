@@ -1,6 +1,6 @@
 # Posita Continuity Handoff
 
-Last reviewed: 2026-09-02
+Last reviewed: 2026-09-03
 
 This is the first document to read when Posita work continues in a new AI model,
 thread, chat, or development session. It records current state and the safest
@@ -9,11 +9,11 @@ next move. Technical details remain in their linked source documents.
 ## Current state
 
 Posita has completed the **Gate 2D credential-free lifecycle foundation, Google
-desktop authorization protocol core, and bounded loopback/browser infrastructure**.
-Exact identity consent is approved; the project is now at the client-configuration
-and production-activation decision. The product is a runnable Electron desktop
-prototype using React, strict TypeScript, and SQLite. All visible mail is
-deterministic sample data.
+desktop authorization protocol, bounded loopback/browser infrastructure, and
+trusted connection-activation sequence**. Exact identity consent is approved; the
+project is now at the real client-configuration and production-activation decision.
+The product is a runnable Electron desktop prototype using React, strict TypeScript,
+and SQLite. All visible mail is deterministic sample data.
 
 The canonical public source repository is
 `https://github.com/morningstar-charmandor/posita`. The local `main` branch is
@@ -113,6 +113,10 @@ Implemented:
 - a trusted credential-free account-connection coordinator that preflights vault
   and provider state, binds completion to its pending account/session, persists
   vault-before-encrypted-state, and rolls back both on ambiguous state failure,
+- an unexposed activation coordinator that registers callback waiting before exact
+  browser handoff, bounds non-consuming callback rejection, completes only through
+  that connection coordinator, observes pre-exchange cancellation, and makes
+  cleanup failure explicit,
 - stable duplicate, inconsistent-state, storage, invalid-provider-result, and
   cleanup-recovery failures without exposing the refresh grant,
 - a versioned read-only consistency result for absent, connected, credential-only,
@@ -322,13 +326,14 @@ Not implemented:
 
 The owner-approved Google adapter set, deletion-aware reconciliation, trusted
 refresh-to-access-token boundary, exact identity consent, desktop authorization-
-code/PKCE protocol core, and bounded loopback/browser infrastructure are complete
-and uncomposed. The next milestone requires a new explicit owner decision before
-configuring a real Google client or composing any UI/IPC/account lifecycle. After
-that decision, connection, disconnect, and the existing lifecycle must be composed
-as one reviewed activation. Current approval does not authorize credentials,
-account connection, production composition, real browser action, live provider
-testing, or mailbox ingestion.
+code/PKCE protocol core, bounded loopback/browser infrastructure, and trusted-main
+connection activation sequence are complete and uncomposed. No smaller credential-
+free connection slice remains. The next milestone requires a new explicit owner
+decision before configuring a real Google client or composing any UI/IPC/account
+lifecycle. After that decision, connection, disconnect, and the existing lifecycle
+must be composed as one reviewed activation. Current approval does not authorize
+credentials, account connection, production composition, real browser action,
+live provider testing, or mailbox ingestion.
 
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,
@@ -401,11 +406,12 @@ lifecycle owner, retention gate, and shutdown path. The approved revoker is now
 implemented and uncomposed. Provider batch v2 closes the remote-deletion and stale-
 cursor replacement gap, and the real bounded Gmail reader now emits that contract.
 The vault-backed memory-only access-token source now supplies the reader's trusted
-credential boundary without configuration or activation. The exact identity consent
-bounded desktop authorization-code/PKCE protocol core and short-lived loopback/
-exact-browser boundaries are now implemented with injected seams. The next
-milestone is separately approved client configuration and complete lifecycle/UI
-composition, not an automatic credential or account connection.
+credential boundary without configuration or activation. The exact identity consent,
+bounded desktop authorization-code/PKCE protocol core, short-lived loopback/exact-
+browser boundaries, and trusted connection-activation sequence are now implemented
+with injected seams. The next milestone is separately approved client configuration
+and complete lifecycle/UI composition, not an automatic credential or account
+connection.
 The new presentation abstraction is `LiveMailSummaryList`; it consumes the existing
 `LiveMailSnapshotV2` without adding a parallel domain or data source. The other
 recent abstractions are the shared `LiveMailMessageDetailV1` and open-original
@@ -464,6 +470,12 @@ authorization endpoint, loopback, client, state, PKCE, and scope validation. No
 dependency, schema, compatibility path, production composition, listener at
 startup, real browser action, configured client, credential, account, provider
 request, personal data, mailbox mutation, or intentional duplication was added.
+The new `AccountConnectionActivationService` composes the existing connection,
+callback, and browser interfaces without adding a second persistence coordinator.
+It remains outside startup and public desktop contracts. No dependency, schema,
+compatibility path, IPC/UI surface, configured client, credential, account, real
+browser/provider action, personal data, mailbox mutation, or intentional duplication
+was added.
 
 ## How to resume
 
@@ -483,7 +495,7 @@ request, personal data, mailbox mutation, or intentional duplication was added.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 69 test files, 437 tests, strict typecheck, structure
+- Current verified baseline: 70 test files, 446 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,
