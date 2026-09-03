@@ -19,8 +19,10 @@ desktop client named `Posita macOS Desktop` exists. Its credentials were not
 downloaded, copied into the repository, or used. Its client ID is now stored only
 in the owner-readable local application-data file and passes Posita's strict loader;
 no client secret or credential bundle was downloaded. The trusted runtime ownership
-graph is assembled and starts with zero accounts. Browser authorization, account
-connection, provider I/O, and public activation remain inactive.
+graph is assembled and starts with zero accounts. A validated prepare-only Settings,
+preload, and IPC path now reports whether that inert local composition is available,
+while returning no account identifier or authorization URL. Browser authorization,
+account connection, provider I/O, and public activation remain inactive.
 The product is a runnable Electron desktop prototype using React, strict TypeScript,
 and SQLite. All visible mail is deterministic sample data.
 
@@ -103,7 +105,7 @@ Implemented:
 - a reviewed `google-gmail-readonly-identity-v2` consent projection inside the
   existing read-only application state, with an accessible Settings preview for
   exact identity/read scopes, retention, encryption, AI inactivity, disconnect,
-  and disabled activation,
+  and a prepare-only readiness action that cannot start activation,
 - a bounded provider-independent authorization-session contract with exact
   read-only consent/scope, HTTPS launch, loopback callback, expiry, cancellation,
   trusted-main-only grants, and stable safe errors,
@@ -294,7 +296,9 @@ Simulated or deliberately inactive:
 - local deletion operates only on deterministic fixture-backed Posita data because
   no real account or credential exists,
 - account disconnect remains application-only and has no preload, IPC, or UI trigger,
-- Gmail connection consent is preview-only and its activation control is disabled,
+- Gmail connection consent now has a prepare-only local readiness action; it opens
+  no browser, creates no authorization session, and explicitly reports that Gmail
+  remains unconnected,
 - authorization-session behavior has both a deterministic fake and a production-
   constructed Google protocol adapter; neither is reachable from the renderer,
 - account-connection persistence is deterministic-tested and constructed behind the
@@ -320,7 +324,7 @@ Not implemented:
 
 - a real system-browser authorization action, activated message ingestion, or
   user-triggered/live disconnect,
-- a reviewed UI/IPC command that may invoke connection or disconnect lifecycle work,
+- a reviewed UI/IPC command that may invoke authorization or disconnect lifecycle work,
 - user-triggered account disconnect or any remote mailbox mutation control,
 - automatic pending-disconnect resume with a live idempotent revocation adapter,
 - a model provider, embeddings, classification, retrieval, or generation,
@@ -350,8 +354,9 @@ refresh-to-access-token boundary, exact identity consent, desktop authorization-
 code/PKCE protocol core, bounded loopback/browser infrastructure, and trusted-main
 connection activation sequence and secret-safe runtime configuration source are
 complete and assembled inside one provider-inert production graph. Startup passes
-zero accounts, so no automatic provider work occurs. The next milestone is a reviewed
-narrow connection/disconnect UI/IPC command and status surface.
+zero accounts, so no automatic provider work occurs. The prepare-only UI/IPC/status
+surface is complete and cannot invoke authorization. The next milestone is a
+separately reviewed authorization execution command paired with usable disconnect.
 It must keep client configuration outside Git and expose no credential through
 renderer IPC. Downloading or using any user credential, production UI/IPC activation,
 opening a real authorization browser, and connecting a dedicated test account remain
@@ -518,6 +523,14 @@ retention, and teardown abstractions. It adds no second repository, coordinator,
 worker, scheduler, compatibility path, dependency, schema, public command, credential,
 network request, or intentional duplication. The retained standalone retention and
 read-worker shutdown path is used only when strict client configuration is unavailable.
+The new `GoogleAccountConnectionPreflightService` is a read-only capability over
+that existing composition availability. Its fixed public result carries reviewed
+consent metadata and safe notices only; it cannot expose an account ID, authorization
+URL, callback, or credential, and it cannot call the activation coordinator. The
+preload client, renderer data source, and Settings panel reuse the same versioned
+contract. No dependency, schema, repository, compatibility path, authorization
+session, browser action, account, credential, provider request, or mailbox mutation
+was added.
 
 ## How to resume
 
@@ -537,7 +550,7 @@ read-worker shutdown path is used only when strict client configuration is unava
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 71 test files, 456 tests, strict typecheck, structure
+- Current verified baseline: 75 test files, 468 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,

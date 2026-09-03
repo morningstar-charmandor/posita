@@ -17,6 +17,7 @@ import { RetentionMaintenanceOwner } from './application/retentionMaintenanceOwn
 import { registerApplicationIpc, type ApplicationIpcRegistration } from './ipc/applicationIpc'
 import { GmailExternalUrlOpener } from './infrastructure/external/gmailExternalUrlOpener'
 import { loadGoogleOAuthClientConfiguration } from './infrastructure/providers/googleOAuthClientConfiguration'
+import { GoogleAccountConnectionPreflightService } from './application/googleAccountConnectionPreflight'
 
 const isTrustedExternalUrl = (candidate: string): boolean => {
   try {
@@ -105,6 +106,7 @@ app.whenReady().then(async () => {
   let accountConnectionRecovery = new AccountConnectionRecoveryCommandService()
   let liveMailMessageDetail = new LiveMailMessageDetailService()
   let openProviderMailOriginal = new OpenProviderMailOriginalService()
+  let googleAccountConnectionPreflight = new GoogleAccountConnectionPreflightService()
 
   try {
     const runtime = await bootstrapLocalData(
@@ -145,6 +147,7 @@ app.whenReady().then(async () => {
         // A later reviewed command may pass an explicit account; startup may not.
         await composition.lifecycle.start([])
         googleProviderComposition = composition
+        googleAccountConnectionPreflight = new GoogleAccountConnectionPreflightService(true)
       }
       service = new ApplicationStateService(
         'ready',
@@ -178,7 +181,8 @@ app.whenReady().then(async () => {
     liveMailMessageDetail,
     openProviderMailOriginal,
     localDataDeletion,
-    accountConnectionRecovery
+    accountConnectionRecovery,
+    googleAccountConnectionPreflight
   })
   const openWindow = (): void => {
     const window = createWindow()

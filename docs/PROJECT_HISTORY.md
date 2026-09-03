@@ -2404,6 +2404,27 @@ Google request, user grant, refresh/access token, real account, provider ingesti
 AI service, or mailbox mutation occurred. A separately reviewed narrow connection/
 disconnect command and status surface is next.
 
+## Gate 2D milestone — Prepare-only Gmail connection boundary
+
+Date: 2026-09-03
+Checkpoint: use the Git commit whose subject is `feat: add Gmail connection preflight`
+
+Goal: make the next Gmail step visible and testable without authorizing Google or
+implying that a mailbox is connected.
+
+Delivered one exact prepare-only shared contract, trusted-main service, validated
+IPC/preload client, renderer data source, and accessible Settings experience with
+loading, success, safe error, and retry behavior. The result states that no browser
+opened, no account connected, and no credential or mail data was received. Connected
+accounts truthfully remain empty and disconnect is unavailable.
+
+Evidence: 75 test files and 468 tests pass with strict typecheck, structure/security
+checks, local callback integration, and the production Electron build. No dependency,
+schema, credential, account, provider call, personal data, or mailbox mutation was added.
+
+Limitations: this milestone cannot start authorization. A separately approved
+execution command and usable disconnect path must precede any real account connection.
+
 ## How future entries should be written
 
 For each material milestone, record:

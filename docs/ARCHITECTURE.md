@@ -303,8 +303,11 @@ phases rather than interrupting `VACUUM` midway.
 The same ready-state query carries the immutable `google-gmail-readonly-identity-v2`
 consent projection. It contains reviewed public copy and capability metadata only:
 no client ID, authorization URL, state, verifier, token, account identity, or
-command. Settings renders that projection and keeps authorization disabled. This
-avoids a second consent source of truth or a premature privileged IPC method.
+execution command. Settings renders that projection and keeps authorization absent.
+A separate exact prepare-only request crosses preload/IPC to a trusted-main
+readiness service. Its fixed result reports only composition availability, reviewed
+consent metadata, and explicit non-activation notices. It cannot call the activation
+coordinator or return an account ID, URL, callback, credential, or provider payload.
 
 The next internal boundary is `AccountAuthorizationAdapter`. It owns provider
 authorization preparation, verified callback completion, and cancellation behind
@@ -319,8 +322,8 @@ one ephemeral IPv4 localhost port, prefilters exact host/path/state, bounds requ
 and lifetime, queues at most one callback, and returns copy that never reflects the
 authorization response. A separate system-browser boundary validates the complete
 Google authorization URL before invoking an injected Electron delegate. Startup
-constructs these behind one factory but exposes no command, so the disabled consent
-UI cannot start authorization or open a browser.
+constructs these behind one factory but exposes no execution command, so the
+prepare-only consent UI cannot start authorization or open a browser.
 
 `AccountConnectionActivationService` is the provider-inert trusted-main sequence owner
 above those parts. It invokes the existing `AccountConnectionService`, registers

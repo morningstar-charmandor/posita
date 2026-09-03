@@ -9,6 +9,9 @@ import type {
   ApplicationStateChangedEventV1,
   ApplicationStateV1,
   GoogleConnectConsentV1,
+  GoogleAccountConnectionPreflightErrorCodeV1,
+  GoogleAccountConnectionPreflightErrorV1,
+  GoogleAccountConnectionPreflightV1,
   LifecycleOperationStatusV1,
   LifecycleStatusSnapshotV1,
   ExecuteLocalDataDeletionRequestV1,
@@ -30,6 +33,8 @@ import type {
   PrepareLocalDataDeletionResponseV1,
   PrepareAccountConnectionRecoveryRequestV1,
   PrepareAccountConnectionRecoveryResponseV1,
+  PrepareGoogleAccountConnectionRequestV1,
+  PrepareGoogleAccountConnectionResponseV1,
   RetentionMaintenanceRunV1,
   RetentionMaintenanceStatusV1
 } from './contracts'
@@ -37,6 +42,7 @@ import {
   ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_TEXT,
   ACCOUNT_CONNECTION_RECOVERY_CONSEQUENCES,
   DELETE_LOCAL_DATA_CONFIRMATION_TEXT,
+  GOOGLE_ACCOUNT_CONNECTION_PREFLIGHT_NOTICES,
   GOOGLE_CONNECT_CONSENT,
   LOCAL_DATA_DELETION_CONSEQUENCES,
   POSITA_PROTOCOL_VERSION,
@@ -599,4 +605,53 @@ export const isExecuteAccountConnectionRecoveryResponse = (
     ? hasOnlyKeys(value, ['ok', 'value']) && isAccountConnectionRecoveryResult(value.value)
     : hasOnlyKeys(value, ['ok', 'error']) &&
       isAccountConnectionRecoveryError(value.error)
+}
+
+export const isPrepareGoogleAccountConnectionRequest = (
+  value: unknown
+): value is PrepareGoogleAccountConnectionRequestV1 =>
+  isRecord(value) && hasOnlyKeys(value, ['version', 'action']) &&
+  value.version === POSITA_PROTOCOL_VERSION &&
+  value.action === 'prepare-google-account-connection'
+
+const connectionPreflightErrorCodes: readonly GoogleAccountConnectionPreflightErrorCodeV1[] = [
+  'INVALID_REQUEST', 'UNTRUSTED_SENDER', 'CONNECTION_UNAVAILABLE', 'PROTOCOL_ERROR'
+]
+
+const isGoogleAccountConnectionPreflightError = (
+  value: unknown
+): value is GoogleAccountConnectionPreflightErrorV1 =>
+  isRecord(value) && hasOnlyKeys(value, ['version', 'code', 'message', 'retryable']) &&
+  value.version === POSITA_PROTOCOL_VERSION &&
+  isOneOf(value.code, connectionPreflightErrorCodes) &&
+  isBoundedString(value.message, 240) && isBoolean(value.retryable)
+
+const isGoogleAccountConnectionPreflight = (
+  value: unknown
+): value is GoogleAccountConnectionPreflightV1 =>
+  isRecord(value) && hasOnlyKeys(value, [
+    'version', 'action', 'provider', 'status', 'consentVersion',
+    'requestedScopes', 'notices', 'nextStep'
+  ]) && value.version === POSITA_PROTOCOL_VERSION &&
+  value.action === 'prepare-google-account-connection' && value.provider === 'google' &&
+  value.status === 'authorization-not-started' &&
+  value.consentVersion === GOOGLE_CONNECT_CONSENT.consentVersion &&
+  Array.isArray(value.requestedScopes) &&
+  value.requestedScopes.length === GOOGLE_CONNECT_CONSENT.requestedScopes.length &&
+  value.requestedScopes.every((scope, index) =>
+    scope === GOOGLE_CONNECT_CONSENT.requestedScopes[index]) &&
+  Array.isArray(value.notices) &&
+  value.notices.length === GOOGLE_ACCOUNT_CONNECTION_PREFLIGHT_NOTICES.length &&
+  value.notices.every((notice, index) =>
+    notice === GOOGLE_ACCOUNT_CONNECTION_PREFLIGHT_NOTICES[index]) &&
+  value.nextStep === 'explicit-google-authorization-required'
+
+export const isPrepareGoogleAccountConnectionResponse = (
+  value: unknown
+): value is PrepareGoogleAccountConnectionResponseV1 => {
+  if (!isRecord(value) || typeof value.ok !== 'boolean') return false
+  return value.ok
+    ? hasOnlyKeys(value, ['ok', 'value']) && isGoogleAccountConnectionPreflight(value.value)
+    : hasOnlyKeys(value, ['ok', 'error']) &&
+      isGoogleAccountConnectionPreflightError(value.error)
 }

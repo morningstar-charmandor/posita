@@ -12,6 +12,7 @@ import { LocalDataSettingsDialog } from '../settings/LocalDataSettingsDialog'
 import type {
   AccountConnectionRecoveryDataSource
 } from '../../application/accountConnectionRecoveryDataSource'
+import type { GoogleAccountConnectionPreflightDataSource } from '../../application/googleAccountConnectionPreflightDataSource'
 
 type CenterView = { kind: 'home' } | { kind: 'topic'; topicId: string } | { kind: 'classic' }
 
@@ -168,12 +169,14 @@ function WorkspaceContent({
   retention,
   deletionDataSource,
   recoveryDataSource,
+  googleConnectionPreflightDataSource,
   onLocalDataDeleted
 }: {
   connectConsent: GoogleConnectConsentV1
   retention: RetentionMaintenanceStatusV1
   deletionDataSource: LocalDataDeletionDataSource
   recoveryDataSource: AccountConnectionRecoveryDataSource
+  googleConnectionPreflightDataSource: GoogleAccountConnectionPreflightDataSource
   onLocalDataDeleted: () => void
 }): React.JSX.Element {
   const dataset = useMailDataset()
@@ -205,6 +208,7 @@ function WorkspaceContent({
           accounts={dataset.accounts}
           dataSource={deletionDataSource}
           recoveryDataSource={recoveryDataSource}
+          googleConnectionPreflightDataSource={googleConnectionPreflightDataSource}
           onClose={() => setSettingsOpen(false)}
           onDeleted={onLocalDataDeleted}
         />
@@ -219,6 +223,7 @@ export function Workspace({
   retention,
   deletionDataSource,
   recoveryDataSource,
+  googleConnectionPreflightDataSource,
   onLocalDataDeleted
 }: {
   dataset: MailDataset
@@ -226,6 +231,7 @@ export function Workspace({
   retention: RetentionMaintenanceStatusV1
   deletionDataSource: LocalDataDeletionDataSource
   recoveryDataSource: AccountConnectionRecoveryDataSource
+  googleConnectionPreflightDataSource: GoogleAccountConnectionPreflightDataSource
   onLocalDataDeleted: () => void
 }): React.JSX.Element {
   return (
@@ -235,6 +241,7 @@ export function Workspace({
         retention={retention}
         deletionDataSource={deletionDataSource}
         recoveryDataSource={recoveryDataSource}
+        googleConnectionPreflightDataSource={googleConnectionPreflightDataSource}
         onLocalDataDeleted={onLocalDataDeleted}
       />
     </MailDatasetContext.Provider>

@@ -221,6 +221,10 @@ h1 { font-family: Georgia, 'Times New Roman', serif; font-weight: 500; letter-sp
 .consent-disclosures strong { color: #4e554e; font-size: 9.5px; }
 .consent-disclosures small { color: var(--muted); font-size: 8.5px; line-height: 1.45; }
 .consent-version { color: var(--muted); font-size: 8.5px; text-align: center; }
+.consent-status ul { grid-column: 2; display: grid; gap: 3px; margin: 3px 0 0; padding-left: 14px; color: var(--muted); font-size: 8.5px; }
+.consent-disconnect { display: grid; gap: 6px; padding-top: 13px; border-top: 1px solid var(--line); }
+.consent-disconnect h3 { margin: 0; color: #4e554e; font-size: 10px; }
+.consent-disconnect p { color: var(--muted); font-size: 8.5px; line-height: 1.45; }
 .consent-footnote { color: var(--muted); font-size: 8.5px; line-height: 1.45; text-align: center; }
 .connection-recovery { gap: 16px; }
 .recovery-account-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }

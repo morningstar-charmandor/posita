@@ -24,6 +24,11 @@ export const GOOGLE_CONNECT_SCOPES = Object.freeze([
   'email',
   'https://www.googleapis.com/auth/gmail.readonly'
 ] as const)
+export const GOOGLE_ACCOUNT_CONNECTION_PREFLIGHT_NOTICES = Object.freeze([
+  'No browser was opened.',
+  'No Google account was connected.',
+  'No credential or mailbox data was received.'
+] as const)
 export const GOOGLE_CONNECT_CONSENT = Object.freeze({
   version: POSITA_PROTOCOL_VERSION,
   consentVersion: 'google-gmail-readonly-identity-v2',
@@ -76,7 +81,8 @@ export const IPC_CHANNELS = Object.freeze({
   prepareLocalDataDeletion: 'posita:local-data:prepare-deletion:v1',
   executeLocalDataDeletion: 'posita:local-data:execute-deletion:v1',
   prepareAccountConnectionRecovery: 'posita:account-connection:prepare-recovery:v1',
-  executeAccountConnectionRecovery: 'posita:account-connection:execute-recovery:v1'
+  executeAccountConnectionRecovery: 'posita:account-connection:execute-recovery:v1',
+  prepareGoogleAccountConnection: 'posita:google-account:prepare-connection:v1'
 })
 
 export interface LoadApplicationStateRequestV1 {
@@ -371,6 +377,39 @@ export type PrepareAccountConnectionRecoveryResponseV1 =
 export type ExecuteAccountConnectionRecoveryResponseV1 =
   AccountConnectionRecoveryResponseV1<AccountConnectionRecoveryResultV1>
 
+export interface PrepareGoogleAccountConnectionRequestV1 {
+  version: typeof POSITA_PROTOCOL_VERSION
+  action: 'prepare-google-account-connection'
+}
+
+export interface GoogleAccountConnectionPreflightV1 {
+  version: typeof POSITA_PROTOCOL_VERSION
+  action: 'prepare-google-account-connection'
+  provider: 'google'
+  status: 'authorization-not-started'
+  consentVersion: typeof GOOGLE_CONNECT_CONSENT.consentVersion
+  requestedScopes: typeof GOOGLE_CONNECT_SCOPES
+  notices: typeof GOOGLE_ACCOUNT_CONNECTION_PREFLIGHT_NOTICES
+  nextStep: 'explicit-google-authorization-required'
+}
+
+export type GoogleAccountConnectionPreflightErrorCodeV1 =
+  | 'INVALID_REQUEST'
+  | 'UNTRUSTED_SENDER'
+  | 'CONNECTION_UNAVAILABLE'
+  | 'PROTOCOL_ERROR'
+
+export interface GoogleAccountConnectionPreflightErrorV1 {
+  version: typeof POSITA_PROTOCOL_VERSION
+  code: GoogleAccountConnectionPreflightErrorCodeV1
+  message: string
+  retryable: boolean
+}
+
+export type PrepareGoogleAccountConnectionResponseV1 =
+  | { ok: true; value: GoogleAccountConnectionPreflightV1 }
+  | { ok: false; error: GoogleAccountConnectionPreflightErrorV1 }
+
 export interface PositaDesktopApi {
   platform: string
   prototypeMode: true
@@ -394,4 +433,5 @@ export interface PositaDesktopApi {
   executeAccountConnectionRecovery(
     request: ExecuteAccountConnectionRecoveryRequestV1
   ): Promise<ExecuteAccountConnectionRecoveryResponseV1>
+  prepareGoogleAccountConnection(): Promise<PrepareGoogleAccountConnectionResponseV1>
 }

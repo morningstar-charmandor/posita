@@ -57,8 +57,10 @@ boundary, and disconnect behavior. Google Cloud project `posita-mail-hub-2026` n
 has Gmail API, external testing consent with the exact reviewed scopes, and one
 `Posita macOS Desktop` client. Its client ID is privately configured and validated
 locally; no client secret, credential bundle, user grant, or token was downloaded or
-used. The connect action remains disabled because no public connection command,
-browser flow, user grant, or live account is active.
+used. Settings can now run a prepare-only local readiness check through a narrow,
+validated desktop command. That check opens no browser, creates no authorization
+session, receives no credential, and connects no account. There is no public
+Continue-to-Google command, user grant, or live account.
 
 The trusted backend now defines a bounded provider-independent authorization
 session contract, deterministic fake, and real Google desktop protocol
@@ -70,16 +72,18 @@ binds one short-lived operating-system-selected `127.0.0.1` port, validates the
 host/path/state, bounds requests, and returns generic non-reflective browser copy.
 An exact-URL system-browser launcher has an injected Electron delegate and is tested
 without opening a browser. Production now constructs these boundaries inside one
-lifecycle graph and starts it with zero accounts. No preload/IPC action, client secret,
-user grant, account, browser
-action, or live provider request is present.
+lifecycle graph and starts it with zero accounts. The only public Google-account
+action is the prepare-only local readiness check; it cannot invoke the activation
+coordinator. No client secret, user grant, account, browser action, or live provider
+request is present.
 
 An unexposed trusted-main activation coordinator now joins those boundaries to the
 existing account-connection service. It starts callback waiting before browser
 handoff, keeps authorization URLs and callbacks out of renderer state, bounds
 non-consuming callback rejection, observes cancellation before code exchange, and
 fails closed if cleanup cannot be confirmed. Startup constructs this coordinator but
-exposes no IPC/UI action that can invoke it; there is no user credential, account,
+exposes no IPC/UI action that can invoke it; the preflight remains read-only and
+separate. There is no user credential, account,
 browser action, or provider request.
 
 A trusted account-connection coordinator now composes that interface with the

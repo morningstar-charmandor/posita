@@ -18,7 +18,9 @@ import {
   type PrepareLocalDataDeletionRequestV1,
   type PrepareLocalDataDeletionResponseV1,
   type PrepareAccountConnectionRecoveryRequestV1,
-  type PrepareAccountConnectionRecoveryResponseV1
+  type PrepareAccountConnectionRecoveryResponseV1,
+  type PrepareGoogleAccountConnectionRequestV1,
+  type PrepareGoogleAccountConnectionResponseV1
 } from '../../shared/contracts'
 import {
   isLiveMailMessageDetailRequestV1,
@@ -34,6 +36,7 @@ import {
   isLoadApplicationStateResponse,
   isPrepareLocalDataDeletionResponse,
   isPrepareAccountConnectionRecoveryResponse,
+  isPrepareGoogleAccountConnectionResponse,
   isOpenLiveMailOriginalRequest,
   isOpenLiveMailOriginalResponse
 } from '../../shared/validation'
@@ -42,6 +45,7 @@ import type { LocalDataDeletionCommandService } from '../application/localDataDe
 import type { AccountConnectionRecoveryCommandService } from '../application/accountConnectionRecoveryCommand'
 import type { LiveMailMessageDetailService } from '../application/liveMailMessageDetailService'
 import type { OpenProviderMailOriginalService } from '../application/openProviderMailOriginal'
+import type { GoogleAccountConnectionPreflightService } from '../application/googleAccountConnectionPreflight'
 
 type TrustPredicate = (event: IpcMainInvokeEvent) => boolean
 
@@ -323,6 +327,38 @@ export const createExecuteAccountConnectionRecoveryHandler = (
     : recoveryErrorResponse('PROTOCOL_ERROR', 'Posita returned an invalid recovery response.')
 }
 
+export const createPrepareGoogleAccountConnectionHandler = (
+  service: Pick<GoogleAccountConnectionPreflightService, 'prepare'>,
+  isTrusted: TrustPredicate
+) => (
+  event: IpcMainInvokeEvent,
+  request: unknown
+): PrepareGoogleAccountConnectionResponseV1 => {
+  if (!isTrusted(event)) {
+    return {
+      ok: false,
+      error: {
+        version: POSITA_PROTOCOL_VERSION,
+        code: 'UNTRUSTED_SENDER',
+        message: 'This window is not allowed to prepare a Gmail connection.',
+        retryable: false
+      }
+    }
+  }
+  const response = service.prepare(request)
+  return isPrepareGoogleAccountConnectionResponse(response)
+    ? response
+    : {
+        ok: false,
+        error: {
+          version: POSITA_PROTOCOL_VERSION,
+          code: 'PROTOCOL_ERROR',
+          message: 'Posita returned an invalid Gmail connection preparation response.',
+          retryable: false
+        }
+      }
+}
+
 export interface ApplicationIpcRegistration {
   allowWindow(window: BrowserWindow): void
   notifyApplicationStateChanged(): void
@@ -335,6 +371,7 @@ export interface ApplicationIpcServices {
   openProviderMailOriginal: OpenProviderMailOriginalService
   localDataDeletion: LocalDataDeletionCommandService
   accountConnectionRecovery: AccountConnectionRecoveryCommandService
+  googleAccountConnectionPreflight: GoogleAccountConnectionPreflightService
 }
 
 export const registerApplicationIpc = (services: ApplicationIpcServices): ApplicationIpcRegistration => {
@@ -374,6 +411,10 @@ export const registerApplicationIpc = (services: ApplicationIpcServices): Applic
     isTrusted,
     recoveryAuthorization
   )
+  const prepareGoogleConnection = createPrepareGoogleAccountConnectionHandler(
+    services.googleAccountConnectionPreflight,
+    isTrusted
+  )
   ipcMain.handle(
     IPC_CHANNELS.loadApplicationState,
     (event, request: LoadApplicationStateRequestV1) => handler(event, request)
@@ -403,6 +444,11 @@ export const registerApplicationIpc = (services: ApplicationIpcServices): Applic
     IPC_CHANNELS.executeAccountConnectionRecovery,
     (event, request: ExecuteAccountConnectionRecoveryRequestV1) =>
       executeRecovery(event, request)
+  )
+  ipcMain.handle(
+    IPC_CHANNELS.prepareGoogleAccountConnection,
+    (event, request: PrepareGoogleAccountConnectionRequestV1) =>
+      prepareGoogleConnection(event, request)
   )
 
   return {
@@ -434,6 +480,7 @@ export const registerApplicationIpc = (services: ApplicationIpcServices): Applic
       ipcMain.removeHandler(IPC_CHANNELS.executeLocalDataDeletion)
       ipcMain.removeHandler(IPC_CHANNELS.prepareAccountConnectionRecovery)
       ipcMain.removeHandler(IPC_CHANNELS.executeAccountConnectionRecovery)
+      ipcMain.removeHandler(IPC_CHANNELS.prepareGoogleAccountConnection)
       trustedWindows.clear()
       deletionAuthorization.clear()
       recoveryAuthorization.clear()

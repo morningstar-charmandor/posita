@@ -31,7 +31,8 @@ connection milestone. Activation now has an isolated Google Cloud project
 scopes, and a desktop client whose credentials remain unused. One trusted-main
 composition now owns the full graph but receives an explicit empty startup account
 list. The real client ID is private, local, and loader-validated; no client secret,
-user grant, or token exists. Activation still requires a reviewed UI/IPC command,
+user grant, or token exists. A prepare-only UI/IPC readiness command is complete;
+activation still requires a reviewed authorization-execution command,
 dedicated-account testing, and owner approval.
 
 No credential, provider connection, browser authorization, network request, Gmail
@@ -45,7 +46,7 @@ SDK, mailbox data, or model provider was used for this audit.
 | Credential vault | Ready, empty | OS-backed fail-closed protector and `SecretVault`; deterministic fake tests | A future refresh token has a protected account-scoped destination |
 | Encrypted private cache | Ready for current records | per-record AES-256-GCM, protected installation key, authenticated metadata, migrations, sanitization | Real records still require the provider-normalized schema below |
 | Provider account/sync state | Ready, empty | versioned encrypted account/cursor records plus production-composed lifecycle status writer and fixed retry dispositions | Can store future connection identity and truthful bounded sync state without starting provider work |
-| Consent | Approved, activation disabled | exact `google-gmail-readonly-identity-v2` projection of `openid`, `email`, and `gmail.readonly`; disabled Settings action | Viewing consent creates no authorization or account state |
+| Consent and local preflight | Approved, activation absent | exact `google-gmail-readonly-identity-v2` projection plus a validated prepare-only Settings/IPC readiness result | Viewing or preparing creates no authorization session, browser action, credential, or account state |
 | Authorization session | Production-constructed, provider-inert | bounded begin/complete/cancel contract, deterministic fake, S256 PKCE/state, exact callback verification, bounded exchange, verified identity, ephemeral IPv4 loopback, and exact-URL browser-delegate tests | No command, browser action, or live request exists |
 | Connection persistence | Production-constructed, unexposed | vault-before-state ordering, duplicate preflight, rollback, callback-before-browser sequencing, bounded callback retry, cancellation, and cleanup-failure tests | No preload, IPC, or UI caller exists |
 | Connection consistency/recovery | Ready locally | presence-only diagnosis plus same-window one-use confirmed orphan discard | Never reconstructs a connection or contacts Google |
@@ -134,7 +135,7 @@ real account is accepted.
 The owner approved the exact identity-plus-read-only scope set, credential-free
 protocol core, installed-app client, private client-ID placement, and provider-inert
 production graph. Separate explicit approval is still required before Posita may
-expose a connection command, persist a real refresh token, or add any dependency.
+expose an authorization-execution command, persist a real refresh token, or add any dependency.
 
 Secrets and personal mailbox data must never enter Git, fixtures, logs, renderer
 state, screenshots, tests, or portfolio assets.

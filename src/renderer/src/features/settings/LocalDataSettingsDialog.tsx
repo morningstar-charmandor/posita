@@ -16,6 +16,7 @@ import type {
   AccountConnectionRecoveryDataSource
 } from '../../application/accountConnectionRecoveryDataSource'
 import type { LocalDataDeletionDataSource } from '../../application/localDataDeletionDataSource'
+import type { GoogleAccountConnectionPreflightDataSource } from '../../application/googleAccountConnectionPreflightDataSource'
 import { AccountConnectionRecoveryPanel } from './AccountConnectionRecoveryPanel'
 import { GmailConnectConsentPanel } from './GmailConnectConsentPanel'
 import { RetentionMaintenanceStatusPanel } from './RetentionMaintenanceStatusPanel'
@@ -41,6 +42,7 @@ export interface LocalDataSettingsDialogProps {
   accounts: Account[]
   dataSource: LocalDataDeletionDataSource
   recoveryDataSource: AccountConnectionRecoveryDataSource
+  googleConnectionPreflightDataSource: GoogleAccountConnectionPreflightDataSource
   onClose(): void
   onDeleted(): void
 }
@@ -51,6 +53,7 @@ export function LocalDataSettingsDialog({
   accounts,
   dataSource,
   recoveryDataSource,
+  googleConnectionPreflightDataSource,
   onClose,
   onDeleted
 }: LocalDataSettingsDialogProps): React.JSX.Element {
@@ -204,6 +207,7 @@ export function LocalDataSettingsDialog({
         {state.kind === 'connect-consent' && (
           <GmailConnectConsentPanel
             consent={connectConsent}
+            dataSource={googleConnectionPreflightDataSource}
             onBack={() => setState({ kind: 'overview' })}
           />
         )}

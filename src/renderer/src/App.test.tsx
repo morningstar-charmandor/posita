@@ -7,6 +7,7 @@ import {
   ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_TEXT,
   ACCOUNT_CONNECTION_RECOVERY_CONSEQUENCES,
   DELETE_LOCAL_DATA_CONFIRMATION_TEXT,
+  GOOGLE_ACCOUNT_CONNECTION_PREFLIGHT_NOTICES,
   GOOGLE_CONNECT_CONSENT,
   LOCAL_DATA_DELETION_CONSEQUENCES
 } from '@shared/contracts'
@@ -339,8 +340,8 @@ describe('Posita vertical slice', () => {
     expect(dialog).toHaveTextContent('A rolling 90-day local window')
     expect(dialog).toHaveTextContent('No AI provider is connected')
     expect(dialog).toHaveTextContent('google-gmail-readonly-identity-v2')
-    expect(screen.getByRole('button', { name: 'Connect Gmail unavailable in this build' }))
-      .toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Prepare Gmail connection' })).toBeEnabled()
+    expect(screen.queryByRole('button', { name: /Continue to Google/i })).not.toBeInTheDocument()
   })
 
   it('shows truthful automatic encrypted retention status in privacy settings', async () => {
@@ -561,5 +562,75 @@ describe('Posita vertical slice', () => {
     expect(status).toHaveTextContent('No recovery is needed for Work')
     expect(status).toHaveTextContent('Gmail remains unconnected in this sample build')
     expect(executeRecovery).not.toHaveBeenCalled()
+  })
+
+  it('prepares Gmail locally without starting authorization or implying a connection', async () => {
+    const prepare = vi.fn().mockResolvedValue({
+      ok: true,
+      value: {
+        version: 1,
+        action: 'prepare-google-account-connection',
+        provider: 'google',
+        status: 'authorization-not-started',
+        consentVersion: GOOGLE_CONNECT_CONSENT.consentVersion,
+        requestedScopes: GOOGLE_CONNECT_CONSENT.requestedScopes,
+        notices: GOOGLE_ACCOUNT_CONNECTION_PREFLIGHT_NOTICES,
+        nextStep: 'explicit-google-authorization-required'
+      }
+    })
+    render(<App
+      dataSource={dataSource}
+      googleConnectionPreflightDataSource={{ prepare }}
+    />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Settings & privacy' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Review Gmail connection…' }))
+    expect(screen.getByText('No Gmail accounts are connected. Disconnect becomes available only for a verified connection.'))
+      .toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Disconnect unavailable' })).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: 'Prepare Gmail connection' }))
+
+    const prepared = await screen.findByText('Ready for a later Google authorization step')
+    const status = prepared.closest('[role="status"]')
+    expect(status).not.toBeNull()
+    for (const notice of GOOGLE_ACCOUNT_CONNECTION_PREFLIGHT_NOTICES) {
+      expect(status).toHaveTextContent(notice)
+    }
+    expect(prepare).toHaveBeenCalledTimes(1)
+    expect(screen.queryByRole('button', { name: /Continue to Google/i })).not.toBeInTheDocument()
+  })
+
+  it('shows a safe Gmail preparation error and permits an explicit retry', async () => {
+    const prepare = vi.fn()
+      .mockRejectedValueOnce(new Error('private diagnostic'))
+      .mockResolvedValueOnce({
+        ok: true,
+        value: {
+          version: 1,
+          action: 'prepare-google-account-connection',
+          provider: 'google',
+          status: 'authorization-not-started',
+          consentVersion: GOOGLE_CONNECT_CONSENT.consentVersion,
+          requestedScopes: GOOGLE_CONNECT_CONSENT.requestedScopes,
+          notices: GOOGLE_ACCOUNT_CONNECTION_PREFLIGHT_NOTICES,
+          nextStep: 'explicit-google-authorization-required'
+        }
+      })
+    render(<App
+      dataSource={dataSource}
+      googleConnectionPreflightDataSource={{ prepare }}
+    />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Settings & privacy' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Review Gmail connection…' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Prepare Gmail connection' }))
+
+    const error = await screen.findByRole('alert')
+    expect(error).toHaveTextContent('Posita could not contact the local connection preparation service.')
+    expect(error).not.toHaveTextContent('private diagnostic')
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
+
+    expect(await screen.findByText('Ready for a later Google authorization step')).toBeInTheDocument()
+    expect(prepare).toHaveBeenCalledTimes(2)
   })
 })

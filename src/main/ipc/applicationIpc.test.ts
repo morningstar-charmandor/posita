@@ -6,6 +6,7 @@ import {
   ACCOUNT_CONNECTION_RECOVERY_CONSEQUENCES,
   GOOGLE_CONNECT_CONSENT
 } from '../../shared/contracts'
+import { GOOGLE_ACCOUNT_CONNECTION_PREFLIGHT_NOTICES } from '../../shared/contracts'
 import { AccountLifecycleStatusService } from '../application/accountLifecycleStatus'
 import type { AccountLifecycleRepository } from '../application/accountLifecycle'
 import { ApplicationStateService } from '../application/applicationStateService'
@@ -23,6 +24,7 @@ import {
   createOpenLiveMailOriginalHandler,
   createPrepareLocalDataDeletionHandler,
   createPrepareAccountConnectionRecoveryHandler,
+  createPrepareGoogleAccountConnectionHandler,
   LocalDataDeletionIpcAuthorization
 } from './applicationIpc'
 
@@ -35,6 +37,39 @@ const repository: MailRepository = {
 }
 const service = new MailApplicationService(repository, {
   now: () => new Date('2026-08-24T05:30:00.000Z')
+})
+
+describe('Gmail connection preparation IPC handler', () => {
+  const result = {
+    version: 1 as const,
+    action: 'prepare-google-account-connection' as const,
+    provider: 'google' as const,
+    status: 'authorization-not-started' as const,
+    consentVersion: GOOGLE_CONNECT_CONSENT.consentVersion,
+    requestedScopes: GOOGLE_CONNECT_CONSENT.requestedScopes,
+    notices: GOOGLE_ACCOUNT_CONNECTION_PREFLIGHT_NOTICES,
+    nextStep: 'explicit-google-authorization-required' as const
+  }
+
+  it('rejects untrusted senders before preparation', () => {
+    const prepare = createPrepareGoogleAccountConnectionHandler(
+      { prepare: () => ({ ok: true, value: result }) },
+      () => false
+    )
+    expect(prepare(event, { version: 1, action: result.action })).toMatchObject({
+      ok: false,
+      error: { code: 'UNTRUSTED_SENDER' }
+    })
+  })
+
+  it('returns only the exact validated preflight result', () => {
+    const prepare = createPrepareGoogleAccountConnectionHandler(
+      { prepare: () => ({ ok: true, value: result }) },
+      () => true
+    )
+    expect(prepare(event, { version: 1, action: result.action }))
+      .toEqual({ ok: true, value: result })
+  })
 })
 
 describe('account-connection recovery IPC handlers', () => {

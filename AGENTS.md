@@ -11,8 +11,9 @@ exists deeper in the tree.
   complete; isolated Google Cloud/API/consent/desktop-client configuration is complete;
   a strict inert local client-identifier configuration source is complete and has
   validated the private local client ID. The trusted Google connection/sync/disconnect
-  graph is production-composed but starts with zero accounts; credential use and
-  public UI/IPC activation remain inactive pending review.
+  graph is production-composed but starts with zero accounts. A narrow public
+  prepare-only UI/IPC preflight can confirm local readiness without starting
+  authorization; credential use and authorization activation remain inactive.
 - Current data: deterministic fixtures stored as authenticated encrypted records.
 - Encrypted provider-account and sync-state storage is implemented but empty.
 - A non-sensitive lifecycle journal and confirmed full local-deletion execution are implemented.
@@ -42,9 +43,10 @@ exists deeper in the tree.
   read the desktop client identifier from Posita's private application-data file,
   and both are constructed only inside the provider-inert production graph. No real
   user credential has been received.
-- A versioned Gmail consent preview is visible in Settings and exactly discloses
+- A versioned Gmail consent preview and prepare-only local readiness action are
+  visible in Settings and exactly disclose
   OpenID identity, verified email, and Gmail read-only access; OAuth activation
-  remains unavailable. Google Cloud has matching testing consent and a desktop client,
+  remains unavailable; no Continue-to-Google action exists. Google Cloud has matching testing consent and a desktop client,
   whose client ID is privately configured locally; no client secret, credential bundle,
   user grant, or token was downloaded or used.
 - Provider-independent authorization-session contracts and a deterministic fake

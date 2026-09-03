@@ -452,3 +452,10 @@ The worker-backed canonical detail boundary is also composed with deterministic
 data only. Real mail remains blocked until production lifecycle composition and sync,
 the undocumented Gmail web route is revalidated, and the remaining provider
 activation gates pass.
+
+The connection experience now demonstrates the same gated approach in the product:
+Settings can verify local readiness through a prepare-only command, while explicitly
+showing that no browser opened, no Gmail account connected, and no credential or mail
+data was received. The boundary includes loading, safe failure, and retry behavior,
+but deliberately provides no authorization action. This is portfolio evidence of a
+security constraint made legible in the interface, not evidence of live Gmail access.

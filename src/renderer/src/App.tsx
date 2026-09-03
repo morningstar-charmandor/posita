@@ -24,6 +24,10 @@ import {
   type OpenLiveMailOriginalDataSource
 } from './application/openLiveMailOriginalDataSource'
 import { Workspace } from './features/workspace/Workspace'
+import {
+  desktopGoogleAccountConnectionPreflightDataSource,
+  type GoogleAccountConnectionPreflightDataSource
+} from './application/googleAccountConnectionPreflightDataSource'
 
 type LoadState =
   | { status: 'loading' }
@@ -34,6 +38,7 @@ export interface AppProps {
   dataSource?: ApplicationStateDataSource
   deletionDataSource?: LocalDataDeletionDataSource
   recoveryDataSource?: AccountConnectionRecoveryDataSource
+  googleConnectionPreflightDataSource?: GoogleAccountConnectionPreflightDataSource
   liveMailMessageDetailDataSource?: LiveMailMessageDetailDataSource
   openLiveMailOriginalDataSource?: OpenLiveMailOriginalDataSource
 }
@@ -42,6 +47,7 @@ export function App({
   dataSource = desktopApplicationStateDataSource,
   deletionDataSource = desktopLocalDataDeletionDataSource,
   recoveryDataSource = desktopAccountConnectionRecoveryDataSource,
+  googleConnectionPreflightDataSource = desktopGoogleAccountConnectionPreflightDataSource,
   liveMailMessageDetailDataSource = desktopLiveMailMessageDetailDataSource,
   openLiveMailOriginalDataSource = desktopOpenLiveMailOriginalDataSource
 }: AppProps): React.JSX.Element {
@@ -169,6 +175,7 @@ export function App({
         retention={state.application.retention}
         deletionDataSource={deletionDataSource}
         recoveryDataSource={recoveryDataSource}
+        googleConnectionPreflightDataSource={googleConnectionPreflightDataSource}
         onLocalDataDeleted={() => setState({
           status: 'loaded',
           application: { version: POSITA_PROTOCOL_VERSION, mode: 'local-data-deleted' }

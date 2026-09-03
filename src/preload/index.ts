@@ -12,6 +12,7 @@ import {
 } from './accountConnectionRecoveryClient'
 import { createLoadLiveMailMessageDetailClient } from './liveMailMessageDetailClient'
 import { createOpenLiveMailOriginalClient } from './openLiveMailOriginalClient'
+import { createPrepareGoogleAccountConnectionClient } from './googleAccountConnectionPreflightClient'
 
 const loadApplicationState = createLoadApplicationStateClient((request) =>
   ipcRenderer.invoke(IPC_CHANNELS.loadApplicationState, request))
@@ -32,6 +33,12 @@ const loadLiveMailMessageDetail = createLoadLiveMailMessageDetailClient((request
   ipcRenderer.invoke(IPC_CHANNELS.loadLiveMailMessageDetail, request))
 const openLiveMailOriginal = createOpenLiveMailOriginalClient((request) =>
   ipcRenderer.invoke(IPC_CHANNELS.openLiveMailOriginal, request))
+const prepareGoogleAccountConnectionClient = createPrepareGoogleAccountConnectionClient((request) =>
+  ipcRenderer.invoke(IPC_CHANNELS.prepareGoogleAccountConnection, request))
+const prepareGoogleAccountConnection = () => prepareGoogleAccountConnectionClient({
+  version: 1,
+  action: 'prepare-google-account-connection'
+})
 
 const api: PositaDesktopApi = Object.freeze({
   platform: process.platform,
@@ -43,7 +50,8 @@ const api: PositaDesktopApi = Object.freeze({
   prepareLocalDataDeletion,
   executeLocalDataDeletion,
   prepareAccountConnectionRecovery,
-  executeAccountConnectionRecovery
+  executeAccountConnectionRecovery,
+  prepareGoogleAccountConnection
 })
 
 contextBridge.exposeInMainWorld('posita', api)

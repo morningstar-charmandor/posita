@@ -36,6 +36,9 @@ const requiredFiles = [
   'src/shared/providerMail.ts',
   'src/main/application/mailSync.ts',
   'src/main/application/mailSyncCoordinator.ts',
+  'src/main/application/googleAccountConnectionPreflight.ts',
+  'src/preload/googleAccountConnectionPreflightClient.ts',
+  'src/renderer/src/application/googleAccountConnectionPreflightDataSource.ts',
   'src/main/infrastructure/providers/deterministicFakeMailSync.ts'
 ]
 
@@ -168,6 +171,12 @@ const accountConnectionRecoveryPanel = await readText(
 const gmailConsentPanel = await readText(
   'src/renderer/src/features/settings/GmailConnectConsentPanel.tsx'
 )
+const googleAccountConnectionPreflight = await readText(
+  'src/main/application/googleAccountConnectionPreflight.ts'
+)
+const googleAccountConnectionPreflightClient = await readText(
+  'src/preload/googleAccountConnectionPreflightClient.ts'
+)
 if (!sharedContracts.includes("consentVersion: 'google-gmail-readonly-identity-v2'") ||
     !sharedContracts.includes("'openid'") ||
     !sharedContracts.includes("'email'") ||
@@ -177,9 +186,20 @@ if (!sharedContracts.includes("consentVersion: 'google-gmail-readonly-identity-v
 if (!applicationStateService.includes('connectConsent: GOOGLE_CONNECT_CONSENT')) {
   fail('Gmail consent must use the existing read-only application-state projection')
 }
-if (!gmailConsentPanel.includes('Connect Gmail unavailable in this build') ||
-    !gmailConsentPanel.includes('disabled')) {
-  fail('Gmail authorization must remain visibly inactive before approval')
+if (!gmailConsentPanel.includes('Prepare Gmail connection') ||
+    !gmailConsentPanel.includes('Continuing to Google remains a separate explicit decision.') ||
+    !gmailConsentPanel.includes('No Gmail accounts are connected.') ||
+    gmailConsentPanel.includes('Continue to Google')) {
+  fail('Gmail UI must remain prepare-only and visibly separate from authorization')
+}
+if (!googleAccountConnectionPreflight.includes("status: 'authorization-not-started'") ||
+    !googleAccountConnectionPreflight.includes("nextStep: 'explicit-google-authorization-required'") ||
+    googleAccountConnectionPreflight.includes('AccountConnectionActivationService') ||
+    googleAccountConnectionPreflight.includes('authorizationUrl') ||
+    googleAccountConnectionPreflight.includes('accountId') ||
+    googleAccountConnectionPreflightClient.includes('authorizationUrl') ||
+    googleAccountConnectionPreflightClient.includes('accountId')) {
+  fail('Gmail connection preflight must not expose or start authorization')
 }
 if (!canonicalProviderMail.includes('interface ProviderMailMessageV1') ||
     !canonicalProviderMail.includes('interface ProviderMailThreadV1') ||

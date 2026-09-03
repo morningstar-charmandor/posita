@@ -26,8 +26,11 @@ Settings now renders a credential-free consent preview identified as
 existing validated read-only application-state response and requests `openid`,
 `email`, and `gmail.readonly`. It explains that identity scopes establish the
 hidden stable Google subject and verified mailbox address but do not permit mail
-mutation. Its activation button is disabled. It creates no authorization state,
-PKCE verifier, browser navigation, token, provider account, or consent receipt.
+mutation. A prepare-only local readiness button uses an exact validated desktop
+command and reports that no browser opened, account connected, or credential/mail
+data was received. It creates no authorization state, PKCE verifier, browser
+navigation, token, provider account, or consent receipt, and no Continue-to-Google
+action exists.
 
 Normal startup now performs a credential-free, trusted-main inventory over at most
 eight local account scopes. It compares encrypted provider-account presence with
@@ -56,8 +59,9 @@ request, queue, and five-minute lifetime bounds. Its browser response never refl
 callback data. The separate system-browser launcher validates the entire exact
 Google URL and uses an injected Electron delegate; deterministic tests never invoke
 the OS. Production client configuration and provider-inert construction are complete;
-credential persistence, account creation, preload/IPC command, enabled UI action,
-browser launch, and live provider request remain inactive.
+credential persistence, account creation, authorization-execution IPC/UI action,
+browser launch, and live provider request remain inactive. The public prepare-only
+IPC path is read-only and cannot invoke this infrastructure.
 
 The credential-free `AccountConnectionActivationService` now proves how these
 pieces must be used together without activating them. It begins through the existing

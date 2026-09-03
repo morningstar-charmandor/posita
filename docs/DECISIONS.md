@@ -1073,3 +1073,23 @@
   is intentional configuration fail-closed behavior, not a second provider lifecycle.
   No dependency, schema migration, preload/IPC/UI capability, credential, account,
   provider request, personal data, mailbox mutation, or automatic retry is added.
+
+## ADR-053: Expose connection readiness without exposing authorization
+
+- Status: accepted for Gate 2D connection preparation
+- Context: the provider-inert Google graph is available in trusted main, but a
+  public authorization command would immediately cross into browser, credential,
+  and real-account work. The interface still needs an honest next step and a
+  testable boundary before that separate action is approved.
+- Decision: expose one versioned prepare-only command through exact preload and IPC
+  validation. Trusted main reports only fixed consent metadata, local composition
+  readiness, and explicit notices that no browser opened, no account connected, and
+  no credential or mail data was received. Return no account ID, authorization URL,
+  callback, provider payload, or execution handle. The Settings surface presents
+  loading, success, safe error, and retry states, shows that connected accounts are
+  empty, and offers no Continue-to-Google control.
+- Consequence: people and agents can verify the local connection boundary without
+  accidentally starting OAuth or mistaking preparation for a live Gmail account.
+  Structural checks keep this service independent of the activation coordinator.
+  No dependency, schema, repository, compatibility path, credential, browser action,
+  account, provider request, personal data, or mailbox mutation is added.
