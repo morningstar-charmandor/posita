@@ -26,8 +26,9 @@ Disconnect has no production composition or active user command. The final
 composition trace, trusted access-token slice, approved identity consent, and real
 uncomposed desktop authorization protocol, bounded loopback/browser boundaries,
 and trusted connection-activation coordinator leave no smaller credential-free
-connection milestone. Activation still
-requires production client configuration, reviewed lifecycle/UI composition,
+connection milestone. Activation now has an isolated Google Cloud project
+(`posita-mail-hub-2026`) but still requires Gmail API, consent, and desktop-client
+configuration, reviewed lifecycle/UI composition,
 dedicated-account testing, and owner approval.
 
 No credential, provider connection, browser authorization, network request, Gmail
@@ -223,7 +224,9 @@ Gmail-read-only consent, credential-free desktop authorization protocol core,
 uncomposed loopback/browser infrastructure, and trusted connection-activation
 sequencing.
 Those adapters and the prerequisite deletion-aware reconciliation are complete and
-uncomposed. This approval does not authorize credential configuration, production
+uncomposed. The separately approved Google Cloud project creation is complete, but
+Gmail API, consent, and desktop-client configuration remain inactive. This approval
+does not authorize credential creation or use, production
 composition, connecting an account, real browser action, network
 testing with Google, or ingesting mail; those remain later explicit gates.
 

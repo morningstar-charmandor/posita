@@ -3,6 +3,9 @@
 ## Current status
 
 Gmail is not connected and Posita does not yet contain a Google OAuth client ID.
+An isolated Google Cloud project named `Posita` with project ID
+`posita-mail-hub-2026` now exists, but Gmail API, OAuth consent, and desktop-client
+configuration remain inactive.
 Real desktop authorization protocol, read-only, idempotent revocation, and refresh-
 to-access-token adapters are implemented but uncomposed. This document does not
 authorize live mailbox access.

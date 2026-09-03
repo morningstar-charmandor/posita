@@ -11,7 +11,10 @@ next move. Technical details remain in their linked source documents.
 Posita has completed the **Gate 2D credential-free lifecycle foundation, Google
 desktop authorization protocol, bounded loopback/browser infrastructure, and
 trusted connection-activation sequence**. Exact identity consent is approved; the
-project is now at the real client-configuration and production-activation decision.
+owner has now created an isolated Google Cloud project named `Posita` with project
+ID `posita-mail-hub-2026`. The Gmail API, OAuth consent configuration, desktop
+OAuth client, credential use, and production activation remain inactive and require
+their next explicit approval.
 The product is a runnable Electron desktop prototype using React, strict TypeScript,
 and SQLite. All visible mail is deterministic sample data.
 
@@ -263,6 +266,8 @@ Simulated or deliberately inactive:
 - all accounts, people, topics, messages, summaries, and drafts are fixtures,
 - generated-looking summaries and drafts are not produced by an AI provider,
 - no OAuth credential has been created or stored,
+- the isolated `posita-mail-hub-2026` Google Cloud project exists, but its Gmail
+  API, OAuth consent, and desktop client are not configured,
 - encrypted provider-account and sync-state tables contain no real account,
 - Google authorization revocation has a real fixed-endpoint adapter, exercised only
   through injected deterministic HTTP and still uncomposed,
@@ -324,16 +329,18 @@ Not implemented:
 
 ## Next recommended milestone
 
+The isolated Google Cloud project `posita-mail-hub-2026` is created and verified.
 The owner-approved Google adapter set, deletion-aware reconciliation, trusted
 refresh-to-access-token boundary, exact identity consent, desktop authorization-
 code/PKCE protocol core, bounded loopback/browser infrastructure, and trusted-main
 connection activation sequence are complete and uncomposed. No smaller credential-
-free connection slice remains. The next milestone requires a new explicit owner
-decision before configuring a real Google client or composing any UI/IPC/account
-lifecycle. After that decision, connection, disconnect, and the existing lifecycle
-must be composed as one reviewed activation. Current approval does not authorize
-credentials, account connection, production composition, real browser action,
-live provider testing, or mailbox ingestion.
+free connection slice remains. The next external milestone is to enable only the
+Gmail API, configure the approved identity/read-only consent, and create a Google
+desktop OAuth client after a fresh action-time approval. Client credentials must
+remain outside Git. Production UI/IPC/lifecycle composition and connecting a
+dedicated test account remain later, separate approvals. Current approval does not
+authorize credential creation or use, account connection, production composition,
+real browser authorization, live provider testing, or mailbox ingestion.
 
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,

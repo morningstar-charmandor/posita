@@ -7,7 +7,7 @@
     "repository": "https://github.com/morningstar-charmandor/posita",
     "repositoryVisibility": "public",
     "canonicalBranch": "main",
-    "currentMilestone": "gate-2d-credential-free-account-connection-activation-complete-real-configuration-next",
+    "currentMilestone": "gate-2d-google-cloud-project-created-oauth-client-configuration-next",
     "dataMode": "deterministic-sample-with-inert-activation-ready-encrypted-provider-foundation",
     "mailSendingEnabled": false
   },
@@ -24,6 +24,17 @@
     "featurePrefix": "codex/",
     "promotionGate": "npm run verify",
     "sharedHistoryRewriteAllowed": false
+  },
+  "externalConfiguration": {
+    "googleCloud": {
+      "projectName": "Posita",
+      "projectId": "posita-mail-hub-2026",
+      "gmailApiEnabled": false,
+      "oauthConsentConfigured": false,
+      "desktopOAuthClientCreated": false,
+      "credentialStoredInRepository": false,
+      "liveAccountConnected": false
+    }
   },
   "entrypoints": {
     "main": "src/main/index.ts",

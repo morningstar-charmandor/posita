@@ -2210,6 +2210,39 @@ schema migration, configured client, credential, account, startup composition,
 preload/IPC/UI capability, real browser or Google request, personal data, or mailbox
 mutation was added.
 
+## Gate 2D milestone — Isolated Google Cloud project
+
+Date: 2026-09-03
+Checkpoint: use the Git commit whose subject is `docs: record Posita Google Cloud project`
+
+Goal: give Posita a dedicated Google Cloud configuration boundary without creating
+an OAuth client, storing a credential, connecting Gmail, or changing the running app.
+
+Delivered:
+
+- one Google Cloud project named `Posita` with immutable project ID
+  `posita-mail-hub-2026`,
+- machine-readable configuration state distinguishing the project container from
+  Gmail API, consent, desktop-client, credential, and live-account activation,
+- continuity and portfolio records that preserve the exact next approval gate.
+
+Important decisions:
+
+- isolate Posita from unrelated Google Cloud work in its own project,
+- record only the non-secret project name and ID; do not record the Google account,
+  project number, browser session, or future client secret,
+- keep billing/free-trial activation optional and unused,
+- require a fresh action-time approval before enabling Gmail API and creating the
+  persistent desktop OAuth client.
+
+Evidence: the Google Cloud dashboard displayed project name `Posita` and project ID
+`posita-mail-hub-2026`. The repository passed 70 test files and 446 tests, strict
+typecheck, renderer security checks, and the production Electron build.
+
+Limitations: Gmail API is disabled, OAuth consent is not configured, no desktop
+OAuth client or credential exists, and no browser authorization, account connection,
+provider request, mailbox ingestion, AI service, or mailbox mutation occurred.
+
 ## How future entries should be written
 
 For each material milestone, record:

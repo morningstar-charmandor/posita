@@ -408,9 +408,14 @@ sequence is also verified without public composition. Provider batch v2 removes 
 deletions atomically and replaces a stale bounded window only after every page is
 available. OpenID identity scopes are now explicitly approved and transparently
 disclosed, and the loopback/browser infrastructure is complete but inert. The next
-decision is whether to configure a Google desktop client and review one complete
-production lifecycle/UI activation. Real browser activation, credentials, live
-account connection, provider-network
+decision is now narrower: an isolated Google Cloud project named `Posita` has been
+created with project ID `posita-mail-hub-2026`, while Gmail API, OAuth consent, and
+desktop-client configuration remain deliberately inactive. This separates external
+infrastructure ownership from credential use and gives future agents an exact,
+non-secret checkpoint. The next approval is whether to enable the Gmail API,
+configure the already reviewed identity/read-only consent, and create the desktop
+client; complete production lifecycle/UI activation remains a later review. Real
+browser activation, credentials, live account connection, provider-network
 testing, and production sync remain blocked behind explicit owner approval.
 
 Later evidence should include measured sync reliability, duplicate prevention,
