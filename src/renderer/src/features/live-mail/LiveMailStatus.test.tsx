@@ -36,6 +36,47 @@ const openOriginalDataSource = {
 }
 
 describe('LiveMailStatus source inspection', () => {
+  it('exposes explicit sync retry only for a connected account needing attention', async () => {
+    const retrySync = vi.fn(async () => ({
+      ok: true as const,
+      value: {
+        version: 1 as const,
+        accountId: 'account-1',
+        provider: 'google' as const,
+        status: 'synced' as const,
+        mode: 'initial' as const,
+        batchesCommitted: 1,
+        insertedMessages: 2,
+        updatedMessages: 0,
+        replayedMessages: 0
+      }
+    }))
+    const reload = vi.fn()
+    render(<LiveMailStatus
+      snapshot={{
+        ...snapshot,
+        status: 'attention-required',
+        accounts: [{ ...snapshot.accounts[0]!, status: 'attention-required' }],
+        messages: []
+      }}
+      onReload={reload}
+      detailDataSource={{ loadMessageDetail: vi.fn() }}
+      openOriginalDataSource={openOriginalDataSource}
+      googleAccountDataSource={{
+        prepare: vi.fn(), connect: vi.fn(), cancel: vi.fn(), retrySync,
+        prepareDisconnect: vi.fn(), executeDisconnect: vi.fn()
+      }}
+    />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retry Gmail sync' }))
+    await waitFor(() => expect(reload).toHaveBeenCalledOnce())
+    expect(retrySync).toHaveBeenCalledExactlyOnceWith({
+      version: 1,
+      action: 'retry-google-account-sync',
+      accountId: 'account-1'
+    })
+  })
+
   it('shows a bounded summary and loads its plain-text source on request', async () => {
     const loadMessageDetail = vi.fn(async () => ({
       ok: true as const,

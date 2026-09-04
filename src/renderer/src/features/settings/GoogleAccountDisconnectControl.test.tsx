@@ -33,7 +33,7 @@ describe('GoogleAccountDisconnectControl', () => {
       accountId="account-1"
       accountLabel="owner@example.test"
       dataSource={{
-        prepare: vi.fn(), connect: vi.fn(), cancel: vi.fn(),
+        prepare: vi.fn(), connect: vi.fn(), cancel: vi.fn(), retrySync: vi.fn(),
         prepareDisconnect, executeDisconnect
       }}
       onDisconnected={disconnected}

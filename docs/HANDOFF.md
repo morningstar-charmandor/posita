@@ -47,9 +47,10 @@ and live-empty UI with attention required; no credential or message content was 
 The narrowest standards-backed suspected cause is that Google's refresh response may include
 an optional `id_token` for the granted `openid` scope, while Posita rejected that allow-listed
 field. A bounded accept-and-discard compatibility fix is implemented with deterministic tests;
-raw tokens were not logged, so live confirmation remains pending. The next step requires an
-owner decision between a confirmed disconnect/reconnect exercise and a separately reviewed
-explicit sync-retry capability. Do not bypass the single sync owner with ad-hoc provider calls.
+raw tokens were not logged, so live confirmation remains pending. The owner approved both a
+narrow manual retry capability and, only if needed afterward, the existing confirmed disconnect/
+reconnect fallback. The manual retry is now fully implemented and delegates only to the single
+sync lifecycle owner; it has not yet been exercised live.
 The product is a runnable Electron desktop prototype using React, strict TypeScript,
 and SQLite. The current installation is live-empty and shows no provider mail; deterministic
 sample data remains only in repository fixtures and sample-mode tests.
@@ -342,6 +343,8 @@ Simulated or deliberately inactive:
   durably removed sample rows before the failed initial sync,
 - the provider-mail lifecycle owner is production-composed and starts with zero
   accounts; trusted inventory remains read-only and is not handed to automatic sync,
+- a public account-scoped sync retry rechecks complete connection state and the fixed
+  durable retry policy, refuses overlap, and returns only safe aggregate results,
 - account consistency is not independently exposed; the recovery command uses it
   inside main without mutation or provider action,
 - local account recovery remains only for inconsistent local records; the current real
@@ -351,7 +354,7 @@ Simulated or deliberately inactive:
 Not implemented:
 
 - live provider-ingestion evidence,
-- a public provider sync retry or pending-disconnect startup scheduling,
+- pending-disconnect startup scheduling or automatic provider sync,
 - any remote mailbox mutation control,
 - automatic pending-disconnect resume with a live idempotent revocation adapter,
 - a model provider, embeddings, classification, retrieval, or generation,
@@ -374,22 +377,21 @@ Not implemented:
 
 The owner-approved connection completed and left one internally consistent protected account
 in durable live mode. Initial read-only sync stored no provider mail and recorded only
-`PROVIDER_UNAVAILABLE`. A read-only trusted diagnostic confirmed no cursor, no successful sync,
-and no pending lifecycle cleanup. Google and OpenID documentation establish that `id_token`
-may appear on refresh for an `openid` grant; Posita's previous refresh parser rejected that
-optional field. The bounded accept-and-discard fix is deterministic-tested, but the actual
-failure cause remains an inference until live retry succeeds. Stop for the owner's decision:
-either use the existing confirmed disconnect and reconnect flow to verify the fix, or separately
-approve designing a narrow explicit sync-retry command. Do not call Gmail outside the single
-trusted sync coordinator.
+`PROVIDER_UNAVAILABLE`. Google and OpenID documentation establish that `id_token` may appear
+on refresh for an `openid` grant; Posita's previous parser rejected that optional field. The
+bounded accept-and-discard fix and ADR-057's policy-gated manual retry command are now fully
+verified. The next step is one controlled live click on **Retry Gmail sync**. Inspect only
+aggregate encrypted-local state afterward. If it succeeds, record counts/status without copying
+mail content. If it still fails, preserve the safe state and diagnose through typed boundaries;
+use the approved disconnect/reconnect fallback only when the result shows it is necessary.
 
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,
 safe status, full-deletion startup recovery, read-only lifecycle UI, and explicitly
 confirmed local deletion are complete at their current layers. Continue in this order:
 
-1. Keep pending disconnect visible but inactive until a reviewed command/resume path
-   can invoke the composed idempotent Google revoker.
+1. Run the approved manual sync retry once through the visible account control; do not
+   use a diagnostic provider request or an automatic startup handoff.
 2. Treat the local recovery UI as complete at its current boundary. Do not add
    automatic startup repair; failed execution must continue to require fresh review.
 3. Treat automatic retention scheduling and its Settings status as complete at
@@ -406,11 +408,10 @@ confirmed local deletion are complete at their current layers. Continue in this 
    policy, and final production-composition audit are complete.
 5. Treat the approved Google authorization, loopback/browser infrastructure,
    reader, revoker, access-token source, strict local client-credential source, and
-   zero-account production lifecycle graph as complete. The paired connection and
-   disconnect UI/IPC boundary is also verified. Stop for the person's direct account
-   choice and Google consent before treating any browser result as authorization.
-6. Keep real Gmail ingestion inactive until the person completes the exact approved
-   consent with a dedicated test account and Posita verifies the resulting local state.
+   zero-account startup lifecycle graph as complete. Connection, retry, and confirmed
+   disconnect UI/IPC boundaries are verified; only retry still needs live evidence.
+6. Keep all provider work explicit. If retry fails, inspect safe status before deciding
+   whether the approved typed-confirmation disconnect/reconnect fallback is warranted.
 
 Do not solve encrypted search casually. Any index must avoid becoming a second
 plaintext mailbox. Record the selected search tradeoff in `docs/DECISIONS.md`.
@@ -582,7 +583,7 @@ credential, personal data, provider request, or mailbox mutation was added.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 83 test files, 505 tests, strict typecheck, structure
+- Current verified baseline: 86 test files, 518 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,

@@ -21,7 +21,8 @@ exists deeper in the tree.
   durable live mode. Initial sync safely recorded `PROVIDER_UNAVAILABLE`; no provider
   mail was stored. The likely protocol mismatch is an optional OpenID `id_token` in the
   refresh response; a bounded accept-and-discard compatibility fix is implemented and
-  awaits a separately approved live retry path.
+  a separately approved explicit sync-retry command is now fully verified. Live
+  execution of that command remains pending.
 - Current data: the local installation is live-empty; deterministic fixtures remain
   repository/test assets but were atomically removed from the live installation.
 - Encrypted provider-account and sync-state storage contains one real connected account.
@@ -80,6 +81,10 @@ exists deeper in the tree.
   success, cancellation, and typed failure state with one fixed safe retry policy;
   the inactive lifecycle owner uses its contract and fails closed before provider
   work when status persistence is unavailable.
+- An explicit account-scoped Gmail sync-retry UI/preload/IPC command is production-
+  composed. It accepts only a complete connection with a durable failure whose fixed
+  policy permits retry, refuses overlap, exposes no cursor or provider payload, and
+  delegates provider work only to the existing lifecycle owner.
 - Read-only account-connection consistency inspection distinguishes absent,
   connected, credential-only, and provider-state-only states without automatic repair.
 - A confirmed discard-only policy and one-use durable confirmation producer for

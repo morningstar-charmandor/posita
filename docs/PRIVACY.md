@@ -17,7 +17,9 @@ labels, and attachment metadata are ciphertext; only opaque local record IDs,
 opaque account scope, and record kind remain queryable. The projection remains empty.
 One shared worker handled the approved initial sync attempt through the trusted
 coordinator; no provider commit occurred. Startup still does not automatically resume
-sync; only retention and bounded local-read paths run automatically. Existing sample messages remain fixture
+sync; only retention and bounded local-read paths run automatically. A user-invoked retry
+can run only for one complete account with a durable retry-allowed failure and returns no
+cursor, credential, provider identifier, or mail payload through IPC. Existing sample messages remain fixture
 compatibility records and are not assigned fabricated provider provenance. No
 personal mailbox data has passed through this path.
 

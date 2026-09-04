@@ -26,6 +26,8 @@ import {
   type CancelGoogleAccountConnectionRequestV1,
   type CancelGoogleAccountConnectionResponseV1,
   type GoogleAccountConnectionErrorV1,
+  type RetryGoogleAccountSyncRequestV1,
+  type RetryGoogleAccountSyncResponseV1,
   type PrepareGoogleAccountDisconnectRequestV1,
   type PrepareGoogleAccountDisconnectResponseV1,
   type ExecuteGoogleAccountDisconnectRequestV1,
@@ -50,6 +52,7 @@ import {
   isPrepareGoogleAccountConnectionResponse,
   isConnectGoogleAccountResponse,
   isCancelGoogleAccountConnectionResponse,
+  isRetryGoogleAccountSyncResponse,
   isPrepareGoogleAccountDisconnectResponse,
   isExecuteGoogleAccountDisconnectResponse,
   isExecuteGoogleAccountDisconnectRequest,
@@ -64,6 +67,7 @@ import type { OpenProviderMailOriginalService } from '../application/openProvide
 import type { GoogleAccountConnectionPreflightService } from '../application/googleAccountConnectionPreflight'
 import type { GoogleAccountConnectionCommandService } from '../application/googleAccountConnectionCommand'
 import type { GoogleAccountDisconnectCommandService } from '../application/googleAccountDisconnectCommand'
+import type { GoogleAccountSyncRetryCommandService } from '../application/googleAccountSyncRetryCommand'
 
 type TrustPredicate = (event: IpcMainInvokeEvent) => boolean
 
@@ -431,6 +435,38 @@ export const createCancelGoogleAccountConnectionHandler = (
   return isCancelGoogleAccountConnectionResponse(response) ? response : connectionProtocolError()
 }
 
+export const createRetryGoogleAccountSyncHandler = (
+  service: Pick<GoogleAccountSyncRetryCommandService, 'execute'>,
+  isTrusted: TrustPredicate
+) => async (
+  event: IpcMainInvokeEvent,
+  request: unknown
+): Promise<RetryGoogleAccountSyncResponseV1> => {
+  if (!isTrusted(event)) {
+    return {
+      ok: false,
+      error: {
+        version: POSITA_PROTOCOL_VERSION,
+        code: 'UNTRUSTED_SENDER',
+        message: 'This window is not allowed to retry Gmail synchronization.',
+        retryable: false
+      }
+    }
+  }
+  const response = await service.execute(request)
+  return isRetryGoogleAccountSyncResponse(response)
+    ? response
+    : {
+        ok: false,
+        error: {
+          version: POSITA_PROTOCOL_VERSION,
+          code: 'PROTOCOL_ERROR',
+          message: 'Posita returned an invalid Gmail synchronization response.',
+          retryable: false
+        }
+      }
+}
+
 export class GoogleAccountDisconnectIpcAuthorization {
   private readonly challenges = new Map<string, { senderId: number; operationId: string; accountId: string; expiresAtMs: number }>()
 
@@ -530,6 +566,7 @@ export interface ApplicationIpcServices {
   accountConnectionRecovery: AccountConnectionRecoveryCommandService
   googleAccountConnectionPreflight: GoogleAccountConnectionPreflightService
   googleAccountConnectionCommand: GoogleAccountConnectionCommandService
+  googleAccountSyncRetryCommand: GoogleAccountSyncRetryCommandService
   googleAccountDisconnectCommand: GoogleAccountDisconnectCommandService
 }
 
@@ -580,6 +617,10 @@ export const registerApplicationIpc = (services: ApplicationIpcServices): Applic
   )
   const cancelGoogleAccountConnection = createCancelGoogleAccountConnectionHandler(
     services.googleAccountConnectionCommand,
+    isTrusted
+  )
+  const retryGoogleAccountSync = createRetryGoogleAccountSyncHandler(
+    services.googleAccountSyncRetryCommand,
     isTrusted
   )
   const disconnectAuthorization = new GoogleAccountDisconnectIpcAuthorization()
@@ -638,6 +679,10 @@ export const registerApplicationIpc = (services: ApplicationIpcServices): Applic
       cancelGoogleAccountConnection(event, request)
   )
   ipcMain.handle(
+    IPC_CHANNELS.retryGoogleAccountSync,
+    (event, request: RetryGoogleAccountSyncRequestV1) => retryGoogleAccountSync(event, request)
+  )
+  ipcMain.handle(
     IPC_CHANNELS.prepareGoogleAccountDisconnect,
     (event, request: PrepareGoogleAccountDisconnectRequestV1) =>
       prepareGoogleAccountDisconnect(event, request)
@@ -681,6 +726,7 @@ export const registerApplicationIpc = (services: ApplicationIpcServices): Applic
       ipcMain.removeHandler(IPC_CHANNELS.prepareGoogleAccountConnection)
       ipcMain.removeHandler(IPC_CHANNELS.connectGoogleAccount)
       ipcMain.removeHandler(IPC_CHANNELS.cancelGoogleAccountConnection)
+      ipcMain.removeHandler(IPC_CHANNELS.retryGoogleAccountSync)
       ipcMain.removeHandler(IPC_CHANNELS.prepareGoogleAccountDisconnect)
       ipcMain.removeHandler(IPC_CHANNELS.executeGoogleAccountDisconnect)
       trustedWindows.clear()

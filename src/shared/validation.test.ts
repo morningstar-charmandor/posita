@@ -24,7 +24,9 @@ import {
   isPrepareLocalDataDeletionResponse,
   isPrepareAccountConnectionRecoveryRequest,
   isPrepareAccountConnectionRecoveryResponse,
-  isRetentionMaintenanceStatus
+  isRetentionMaintenanceStatus,
+  isRetryGoogleAccountSyncRequest,
+  isRetryGoogleAccountSyncResponse
 } from './validation'
 
 describe('shared contract validation', () => {
@@ -42,6 +44,35 @@ describe('shared contract validation', () => {
     expect(isLoadApplicationStateRequest({ version: 1 })).toBe(true)
     expect(isLoadApplicationStateRequest({ version: 2 })).toBe(false)
     expect(isLoadApplicationStateRequest({ version: 1, channel: 'arbitrary' })).toBe(false)
+  })
+
+  it('accepts only an exact cursor-free Gmail sync retry contract', () => {
+    const request = {
+      version: 1,
+      action: 'retry-google-account-sync',
+      accountId: 'account-work-1'
+    }
+    expect(isRetryGoogleAccountSyncRequest(request)).toBe(true)
+    expect(isRetryGoogleAccountSyncRequest({ ...request, force: true })).toBe(false)
+    const response = {
+      ok: true,
+      value: {
+        version: 1,
+        accountId: 'account-work-1',
+        provider: 'google',
+        status: 'synced',
+        mode: 'initial',
+        batchesCommitted: 1,
+        insertedMessages: 2,
+        updatedMessages: 0,
+        replayedMessages: 0
+      }
+    }
+    expect(isRetryGoogleAccountSyncResponse(response)).toBe(true)
+    expect(isRetryGoogleAccountSyncResponse({
+      ...response,
+      value: { ...response.value, cursor: 'private-cursor' }
+    })).toBe(false)
   })
 
   it('accepts only exact open-original commands and safe URL-free responses', () => {

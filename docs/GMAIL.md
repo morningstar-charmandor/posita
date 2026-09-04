@@ -91,7 +91,8 @@ authorization URL and callback never enter renderer data. This coordinator is
 constructed inside the startup graph and is reachable only through the exact
 trusted-window connection command. Browser invocation, loopback callback, credential
 exchange, account activation, and one provider read attempt have occurred under explicit
-consent; no provider mail was stored and a live sync retry remains unverified.
+consent; no provider mail was stored. A narrow explicit sync-retry command is now
+deterministic-tested and production-composed, while its live result remains unverified.
 
 Gate 2D also defines a credential-free `AccountConnectionService` above the
 authorization adapter. It verifies that the opaque Posita account has neither an

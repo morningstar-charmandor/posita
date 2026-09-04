@@ -41,6 +41,9 @@ import type {
   ConnectGoogleAccountResponseV1,
   CancelGoogleAccountConnectionRequestV1,
   CancelGoogleAccountConnectionResponseV1,
+  RetryGoogleAccountSyncRequestV1,
+  RetryGoogleAccountSyncResponseV1,
+  GoogleAccountSyncRetryErrorCodeV1,
   PrepareGoogleAccountDisconnectRequestV1,
   PrepareGoogleAccountDisconnectResponseV1,
   ExecuteGoogleAccountDisconnectRequestV1,
@@ -683,6 +686,13 @@ export const isCancelGoogleAccountConnectionRequest = (
   value.version === POSITA_PROTOCOL_VERSION &&
   value.action === 'cancel-google-account-connection'
 
+export const isRetryGoogleAccountSyncRequest = (
+  value: unknown
+): value is RetryGoogleAccountSyncRequestV1 =>
+  isRecord(value) && hasOnlyKeys(value, ['version', 'action', 'accountId']) &&
+  value.version === POSITA_PROTOCOL_VERSION &&
+  value.action === 'retry-google-account-sync' && isOperationId(value.accountId)
+
 const googleConnectionErrorCodes: readonly GoogleAccountConnectionErrorCodeV1[] = [
   'INVALID_REQUEST', 'UNTRUSTED_SENDER', 'CONNECTION_UNAVAILABLE',
   'CONNECTION_IN_PROGRESS', 'AUTHORIZATION_DECLINED', 'AUTHORIZATION_FAILED',
@@ -734,6 +744,41 @@ export const isCancelGoogleAccountConnectionResponse = (
       (value.value.status === 'cancellation-requested' ||
         value.value.status === 'no-connection-in-progress')
     : hasOnlyKeys(value, ['ok', 'error']) && isGoogleAccountConnectionError(value.error))
+
+const googleSyncRetryErrorCodes: readonly GoogleAccountSyncRetryErrorCodeV1[] = [
+  'INVALID_REQUEST', 'UNTRUSTED_SENDER', 'SYNC_UNAVAILABLE', 'ACCOUNT_NOT_CONNECTED',
+  'CONNECTION_RECOVERY_REQUIRED', 'SYNC_IN_PROGRESS', 'SYNC_RETRY_NOT_ALLOWED',
+  'SYNC_FAILED', 'PROTOCOL_ERROR'
+]
+
+const isGoogleAccountSyncRetryError = (value: unknown): boolean =>
+  isRecord(value) && hasOnlyKeys(value, ['version', 'code', 'message', 'retryable']) &&
+  value.version === POSITA_PROTOCOL_VERSION &&
+  isOneOf(value.code, googleSyncRetryErrorCodes) &&
+  isBoundedString(value.message, 240) && isBoolean(value.retryable)
+
+const isSafeSyncCount = (value: unknown): boolean =>
+  Number.isSafeInteger(value) && (value as number) >= 0 && (value as number) <= 5_000
+
+const isRetryGoogleAccountSyncResult = (value: unknown): boolean => {
+  if (!isRecord(value) || !hasOnlyKeys(value, [
+    'version', 'accountId', 'provider', 'status', 'mode', 'batchesCommitted',
+    'insertedMessages', 'updatedMessages', 'replayedMessages'
+  ]) || value.version !== POSITA_PROTOCOL_VERSION || !isOperationId(value.accountId) ||
+      value.provider !== 'google' || value.status !== 'synced' ||
+      (value.mode !== 'initial' && value.mode !== 'incremental' &&
+        value.mode !== 'bounded-resync')) return false
+  return [
+    value.batchesCommitted, value.insertedMessages, value.updatedMessages, value.replayedMessages
+  ].every(isSafeSyncCount)
+}
+
+export const isRetryGoogleAccountSyncResponse = (
+  value: unknown
+): value is RetryGoogleAccountSyncResponseV1 =>
+  isRecord(value) && typeof value.ok === 'boolean' && (value.ok
+    ? hasOnlyKeys(value, ['ok', 'value']) && isRetryGoogleAccountSyncResult(value.value)
+    : hasOnlyKeys(value, ['ok', 'error']) && isGoogleAccountSyncRetryError(value.error))
 
 const isIsoTimestamp = (value: unknown): value is string =>
   typeof value === 'string' && value.length <= 64 && Number.isFinite(Date.parse(value))

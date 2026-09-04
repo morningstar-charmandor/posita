@@ -1156,5 +1156,23 @@
   oversized, unknown, and scope-widened responses exactly as before.
 - Consequence: Posita becomes compatible with the documented OpenID refresh shape
   without adding a token store, identity path, dependency, IPC field, or renderer
-  capability. Live verification still requires a separately approved retry route;
-  until then, the causal diagnosis remains evidence-backed but not provider-confirmed.
+  capability. ADR-057 now supplies the separately approved retry route; until that
+  command succeeds live, the causal diagnosis remains evidence-backed but not provider-confirmed.
+
+## ADR-057: Expose one policy-gated manual Gmail sync retry
+
+- Status: accepted for Gate 2D live-sync recovery
+- Context: the connected account is complete and its initial read-only sync recorded a
+  retry-allowed `PROVIDER_UNAVAILABLE` state. Disconnecting and repeating OAuth would be
+  destructive local recovery for a failure that the fixed sync policy already classifies
+  as manually retryable. An ad-hoc Gmail request would bypass the single lifecycle owner.
+- Decision: expose one exact account-scoped retry request through semantic UI, validated
+  preload, trusted-main-frame IPC, and a trusted command service. Main must recheck complete
+  credential/provider state, require a durable error whose fixed policy is `retry-allowed`,
+  refuse overlap, and delegate only to `ProviderMailLifecycleOwner.syncAccounts`. The result
+  may expose bounded aggregate counts but never a cursor, token, provider ID, payload, or raw
+  error. Startup remains zero-account and performs no automatic sync.
+- Consequence: Posita can recover a retryable read failure without revoking a valid grant or
+  introducing a second provider owner, dependency, schema, polling loop, or compatibility
+  path. Reconnect-required, delayed, review-required, absent, inconsistent, malformed, and
+  already-running states fail closed. Live execution remains a distinct approved action.

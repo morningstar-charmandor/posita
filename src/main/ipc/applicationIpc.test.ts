@@ -27,6 +27,7 @@ import {
   createPrepareGoogleAccountConnectionHandler,
   createConnectGoogleAccountHandler,
   createCancelGoogleAccountConnectionHandler,
+  createRetryGoogleAccountSyncHandler,
   createPrepareGoogleAccountDisconnectHandler,
   createExecuteGoogleAccountDisconnectHandler,
   GoogleAccountDisconnectIpcAuthorization,
@@ -116,6 +117,59 @@ describe('Google account connection IPC handlers', () => {
     expect(cancel(event, {})).toEqual({
       ok: true,
       value: { version: 1, status: 'cancellation-requested' }
+    })
+  })
+})
+
+describe('Google account sync retry IPC handler', () => {
+  const request = {
+    version: 1 as const,
+    action: 'retry-google-account-sync' as const,
+    accountId: 'account-work-1'
+  }
+  const result = {
+    version: 1 as const,
+    accountId: request.accountId,
+    provider: 'google' as const,
+    status: 'synced' as const,
+    mode: 'initial' as const,
+    batchesCommitted: 1,
+    insertedMessages: 2,
+    updatedMessages: 0,
+    replayedMessages: 0
+  }
+
+  it('rejects untrusted senders before invoking provider work', async () => {
+    let called = false
+    const handler = createRetryGoogleAccountSyncHandler({
+      execute: async () => {
+        called = true
+        return { ok: true, value: result }
+      }
+    }, () => false)
+
+    await expect(handler(event, request)).resolves.toMatchObject({
+      ok: false,
+      error: { code: 'UNTRUSTED_SENDER', retryable: false }
+    })
+    expect(called).toBe(false)
+  })
+
+  it('returns only an exact bounded cursor-free result', async () => {
+    const handler = createRetryGoogleAccountSyncHandler({
+      execute: async () => ({ ok: true, value: result })
+    }, () => true)
+    await expect(handler(event, request)).resolves.toEqual({ ok: true, value: result })
+
+    const widened = createRetryGoogleAccountSyncHandler({
+      execute: async () => ({
+        ok: true,
+        value: { ...result, cursor: 'forbidden' }
+      } as never)
+    }, () => true)
+    await expect(widened(event, request)).resolves.toMatchObject({
+      ok: false,
+      error: { code: 'PROTOCOL_ERROR', retryable: false }
     })
   })
 })

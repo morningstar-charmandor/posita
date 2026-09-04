@@ -15,7 +15,8 @@ desktop client credential pair from one private application-data file. The real 
 and rotated secret are locally present, validated, absent from Git, and consumed only by a
 trusted-main composition. The refresh credential is OS-protected and the account/sync
 state is encrypted. Initial read-only sync failed safely before storing provider mail,
-leaving this installation live-empty and requiring review. Posita includes
+leaving this installation live-empty. A narrow explicit retry control now reuses the
+single trusted sync owner only for connected accounts with an approved retry state. Posita includes
 a Daily Brief,
 topic timeline with source citations, original-message inspection, a unified
 classic mail view, and an editable draft flow. Realistic fixture data is seeded
@@ -64,8 +65,10 @@ access tokens remain memory-only and no provider mail has been stored.
 Settings first runs a non-activating local readiness check, then offers a
 separate explicit Continue-to-Google command. The trusted command owns the opaque
 account ID, cancellation, authorization, encrypted persistence, initial sync, and
-rollback. A connected account has a typed-confirmation disconnect control. The approved
-connection completed, but initial sync recorded a safe error and stored no live mail.
+rollback. A connected account has a typed-confirmation disconnect control and, only when
+its durable policy allows, an explicit Gmail sync-retry control. The approved connection
+completed, but initial sync recorded a safe error and stored no live mail; the new retry
+command has not yet been exercised live.
 
 The trusted backend now defines a bounded provider-independent authorization
 session contract, deterministic fake, and real Google desktop protocol
@@ -203,8 +206,9 @@ first prevents new sync and waits
 for active provider work before local mutation; confirmed full deletion uses the
 same quiescence gate; shutdown settles both workers before erasing the projection
 worker's retained key. Offline startup returns a safe retry-required outcome and
-never restores samples. The owner is constructed by Electron startup, but no IPC,
-UI, or automatic inventory handoff can start provider work.
+never restores samples. The owner is constructed by Electron startup; only explicit
+connection or policy-gated retry IPC can start provider work. No automatic inventory
+handoff or polling exists.
 
 Trusted startup now also composes a credential-free sync-status service over the
 existing encrypted account-state repository. The lifecycle owner records each
@@ -212,23 +216,24 @@ account as syncing before provider work, persists the new cursor and success tim
 after a valid result, returns cancellation to idle, and records typed safe failures.
 A fixed policy distinguishes immediate manual retry, delayed retry, reconnect,
 review, and cancellation; it does not schedule work. If status persistence is
-unavailable, provider work does not start. No retry command, provider, credential,
-network request, or Gmail access is activated.
+unavailable, provider work does not start. The explicit account-scoped retry command
+accepts only the policy's immediate-manual-retry states, refuses overlap, and delegates
+to this owner without exposing cursors or provider payloads. It performs no automatic work.
 
 The final production-composition audit confirms there is no smaller standalone
 credential-free milestone left. The approved read-only Gmail adapter and idempotent
 revoker are now assembled inside a zero-account production graph. Future activation
 must reuse the existing projection worker,
 sync coordinator, lifecycle owner, encrypted status, retention gate, deletion
-gate, and shutdown path. Credentials and connecting an account remain later,
-separate decisions.
+gate, and shutdown path. One owner-approved account now uses that exact path.
 
 The first approved adapter slice is a real Google OAuth revoker in that inert graph.
 It reads one account-scoped refresh token only from the protected vault, sends it
 in a form-encoded body to Google's fixed HTTPS revocation endpoint, bounds the
 response, and treats only Google's documented `invalid_token` response as the
 required already-revoked success. It uses injected networking in tests, adds no
-dependency, and is not reachable from IPC, UI, or a real account.
+dependency. It is reachable only through the confirmed disconnect command and has not
+yet been exercised live.
 
 The matching `GoogleMailReadAdapter` now implements bounded 90-day full reads and
 resumable Gmail history reads behind the existing provider-independent coordinator.
@@ -237,8 +242,9 @@ source, opaque versioned cursors, four-at-a-time message reads, bounded response
 MIME-body sizes, deterministic account-scoped IDs, provider-deletion tombstones,
 and typed redacted failures. It extracts canonical plain text—including HTML-only
 and separately stored MIME text—without retaining provider HTML or downloading
-binary attachment bodies. Deterministic injected HTTP tests exercise the adapter;
-startup constructs it but supplies no account, credential, IPC, UI, or provider request.
+binary attachment bodies. Deterministic injected HTTP tests exercise the adapter. Startup
+constructs it with no automatic account request; explicit connection and policy-gated retry
+reuse it through the lifecycle owner.
 
 The trusted-main `GoogleOAuthAccessTokenSource` now supplies the reader's refresh
 boundary without using a grant. It reads only the selected

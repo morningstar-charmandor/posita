@@ -29,8 +29,9 @@ Google. The real desktop client ID and rotated secret are read only from an owne
 application-data file and are absent from Git, preload, IPC, renderer, and logs. One
 owner-approved account is connected with its refresh credential OS-protected and identity/
 sync state encrypted. The installation is live-empty: initial sync stored no provider mail
-and recorded a safe attention state. AI remains unconnected, and no fixture is presented as
-live Gmail.
+and recorded a safe attention state. A policy-gated manual retry now preserves the valid
+connection and reuses the single lifecycle owner without exposing provider details. AI remains
+unconnected, and no fixture is presented as live Gmail.
 
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
 
@@ -522,13 +523,14 @@ return an `id_token` when `openid` was granted, while Posita's refresh parser re
 allow-listed optional field. ADR-056 accepts only a bounded opaque value and discards it; the
 authorization-code identity remains authoritative and access tokens remain memory-only.
 
-Evidence: deterministic tests now cover accepting/discarding the optional field, rejecting
-malformed values and unknown fields, and retaining scope-widening rejection. The causal link is
-still an inference because raw provider tokens were intentionally not logged. Live verification
-requires either a confirmed disconnect/reconnect exercise or a separately reviewed sync-retry
-command. No ad-hoc provider call is used because one trusted sync coordinator owns all Gmail I/O.
-The complete gate passes 83 test files and 505 tests, strict typecheck, renderer security/
-structure checks, localhost callback integration, and the production build.
+Evidence: deterministic tests cover accepting/discarding the optional field, rejecting malformed
+values and unknown fields, and retaining scope-widening rejection. ADR-057 adds a separately
+reviewed retry command that validates complete connection state, accepts only the fixed policy's
+retry-allowed failures, refuses overlap, and returns aggregate counts without cursors or payloads.
+No ad-hoc provider call is used because one trusted sync coordinator owns all Gmail I/O. The
+complete gate passes 86 test files and 518 tests, strict typecheck, renderer security/structure
+checks, localhost callback integration, and the production build.
 
 Limitations: no provider mail, cursor, successful sync, AI provider, or mailbox mutation is
-claimed. The protected account remains connected and requires the owner's next-step decision.
+claimed. The protected account remains connected; the new retry command is verified but not yet
+executed against Gmail.

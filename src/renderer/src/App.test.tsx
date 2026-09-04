@@ -171,7 +171,7 @@ describe('Posita vertical slice', () => {
     expect(await screen.findByRole('heading', { name: 'No live mail is cached' }))
       .toBeInTheDocument()
     expect(screen.getByText(/will not restore deterministic samples/i)).toBeInTheDocument()
-    expect(screen.getByText(/Provider sync retry, AI generation, and sending/i))
+    expect(screen.getByText(/AI generation and sending remain unavailable/i))
       .toBeInTheDocument()
     expect(screen.queryByText('Confirm Pulse scope with Rahul')).not.toBeInTheDocument()
   })
@@ -584,6 +584,7 @@ describe('Posita vertical slice', () => {
         prepare,
         connect: vi.fn(),
         cancel: vi.fn(),
+        retrySync: vi.fn(),
         prepareDisconnect: vi.fn(),
         executeDisconnect: vi.fn()
       }}
@@ -628,6 +629,7 @@ describe('Posita vertical slice', () => {
         prepare,
         connect: vi.fn(),
         cancel: vi.fn(),
+        retrySync: vi.fn(),
         prepareDisconnect: vi.fn(),
         executeDisconnect: vi.fn()
       }}
@@ -671,6 +673,7 @@ describe('Posita vertical slice', () => {
         prepare,
         connect,
         cancel,
+        retrySync: vi.fn(),
         prepareDisconnect: vi.fn(),
         executeDisconnect: vi.fn()
       }}

@@ -2559,6 +2559,36 @@ not a raw-response-confirmed cause. No provider mail or successful cursor exists
 requires an owner decision between confirmed disconnect/reconnect and a new reviewed sync-retry
 capability. No AI provider or mailbox mutation is involved.
 
+## 2026-09-04 — Policy-gated manual Gmail sync retry
+
+Goal: retry the connected account's safe read failure without revoking a valid grant, bypassing
+the single sync owner, widening renderer authority, or introducing automatic provider work.
+
+Delivered:
+
+- recorded ADR-057 and added one exact versioned account-scoped retry contract,
+- added a trusted command that rechecks complete credential/provider state and requires a durable
+  failure whose fixed disposition is `retry-allowed`,
+- refused absent, inconsistent, malformed, delayed, reconnect-required, review-required,
+  non-error, and overlapping states before provider work,
+- delegated the only permitted read to `ProviderMailLifecycleOwner.syncAccounts`, preserving its
+  retention suspension, status persistence, cancellation, worker, and teardown ownership,
+- exposed only bounded aggregate counts; cursor, token, provider identifiers, payloads, and raw
+  failures remain unavailable across IPC,
+- added a validated preload client, trusted-main-frame IPC handler, renderer data source, semantic
+  live-account control, loading/error/retry states, and a local reload only after success,
+- added no dependency, schema, provider client, polling loop, automatic startup behavior, or
+  compatibility path.
+
+Verification: `npm run verify` passes 86 test files and 518 tests, strict TypeScript, renderer
+structure/security checks, localhost callback integration, and the production Electron build.
+The first sandboxed run could not bind the existing loopback tests (`EPERM`); the identical gate
+passed with the required ephemeral-localhost permission.
+
+Limitations: the command is production-composed but has not yet been executed live. No successful
+sync, cursor, provider mail, AI provider, or mailbox mutation is claimed. The approved destructive
+disconnect/reconnect fallback remains unnecessary unless the controlled retry still fails.
+
 ## How future entries should be written
 
 For each material milestone, record:

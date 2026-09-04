@@ -9,6 +9,7 @@ import { OpenOriginalConfirmation } from './OpenOriginalConfirmation'
 import { LiveMailSummaryList } from './LiveMailSummaryList'
 import type { GoogleAccountConnectionPreflightDataSource } from '../../application/googleAccountConnectionPreflightDataSource'
 import { GoogleAccountDisconnectControl } from '../settings/GoogleAccountDisconnectControl'
+import { GoogleAccountSyncRetryControl } from './GoogleAccountSyncRetryControl'
 
 const statusCopy: Record<LiveMailSnapshotV2['status'], {
   title: string
@@ -143,15 +144,25 @@ export function LiveMailStatus({
                     <small>{account.displayIdentity.mailboxAddress}</small>
                   )}
               </span>
-              <strong>{accountStatusLabel[account.status]}</strong>
-              {googleAccountDataSource && <GoogleAccountDisconnectControl
-                accountId={account.accountId}
-                accountLabel={account.displayIdentity.status === 'available'
-                  ? account.displayIdentity.displayLabel ?? account.displayIdentity.mailboxAddress
-                  : 'this Google account'}
-                dataSource={googleAccountDataSource}
-                onDisconnected={onReload}
-              />}
+              <div className="live-mail-account-actions">
+                <strong>{accountStatusLabel[account.status]}</strong>
+                {googleAccountDataSource &&
+                  (account.status === 'offline' || account.status === 'attention-required') && (
+                    <GoogleAccountSyncRetryControl
+                      accountId={account.accountId}
+                      dataSource={googleAccountDataSource}
+                      onSynced={onReload}
+                    />
+                  )}
+                {googleAccountDataSource && <GoogleAccountDisconnectControl
+                  accountId={account.accountId}
+                  accountLabel={account.displayIdentity.status === 'available'
+                    ? account.displayIdentity.displayLabel ?? account.displayIdentity.mailboxAddress
+                    : 'this Google account'}
+                  dataSource={googleAccountDataSource}
+                  onDisconnected={onReload}
+                />}
+              </div>
             </li>
           ))}
         </ul>
@@ -227,7 +238,7 @@ export function LiveMailStatus({
       <button className="startup-retry" onClick={onReload}>
         <RefreshCw size={15} /> Reload local status
       </button>
-      <small>Provider sync retry, AI generation, and sending are unavailable in this build.</small>
+      <small>AI generation and sending remain unavailable in this build.</small>
     </main>
   )
 }

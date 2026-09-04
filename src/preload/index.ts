@@ -21,6 +21,7 @@ import {
   createExecuteGoogleAccountDisconnectClient,
   createPrepareGoogleAccountDisconnectClient
 } from './googleAccountDisconnectClient'
+import { createRetryGoogleAccountSyncClient } from './googleAccountSyncRetryClient'
 
 const loadApplicationState = createLoadApplicationStateClient((request) =>
   ipcRenderer.invoke(IPC_CHANNELS.loadApplicationState, request))
@@ -64,6 +65,8 @@ const prepareGoogleAccountDisconnect = createPrepareGoogleAccountDisconnectClien
   ipcRenderer.invoke(IPC_CHANNELS.prepareGoogleAccountDisconnect, request))
 const executeGoogleAccountDisconnect = createExecuteGoogleAccountDisconnectClient((request) =>
   ipcRenderer.invoke(IPC_CHANNELS.executeGoogleAccountDisconnect, request))
+const retryGoogleAccountSync = createRetryGoogleAccountSyncClient((request) =>
+  ipcRenderer.invoke(IPC_CHANNELS.retryGoogleAccountSync, request))
 
 const api: PositaDesktopApi = Object.freeze({
   platform: process.platform,
@@ -79,6 +82,7 @@ const api: PositaDesktopApi = Object.freeze({
   prepareGoogleAccountConnection,
   connectGoogleAccount,
   cancelGoogleAccountConnection,
+  retryGoogleAccountSync,
   prepareGoogleAccountDisconnect,
   executeGoogleAccountDisconnect
 })

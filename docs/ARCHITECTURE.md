@@ -342,7 +342,7 @@ verified callback is the explicit completion boundary: after that point the exis
 authorization exchange and vault-before-encrypted-state persistence own the outcome
 instead of racing cancellation against a possibly committed credential. Cleanup
 failure is distinct recovery-required state. Startup constructs the coordinator with
-the validated client ID, but it has no IPC, preload, renderer, or invoking command.
+the validated client credential pair; only the reviewed connection command invokes it.
 
 The desktop client credential pair has one inert infrastructure source:
 `loadGoogleOAuthClientConfiguration`. It reads only `google-oauth-client.json` from
@@ -487,7 +487,9 @@ recent-mail list with visible human account identity, unread and attachment cues
 and direct selection of the exact encrypted local source. It never displays opaque
 account scope, remote provider identity, or full body content in the list. The
 open-original path remains a separate confirmed capability. Reload re-queries local
-state only and never starts provider sync.
+state only. A distinct explicit retry control appears only for offline or attention
+states; trusted main rechecks the complete connection and durable retry policy before
+delegating one account-scoped read to the lifecycle owner.
 
 The canonical source-detail boundary now has one exact version-1 request keyed by
 opaque Posita account and canonical message ID. The same serialized file worker
@@ -525,7 +527,8 @@ destroy every retained worker-key context in its data-key phase, while normal
 shutdown settles sync and retention before destroying the projection key. This
 owner is now the production retention/deletion/shutdown gate. Startup passes an
 explicit empty account list, so it adds no provider polling schedule, automatic
-account discovery, preload/IPC method, renderer command, or provider request.
+account discovery, or provider request. The separately invoked retry IPC command uses
+this same owner and never creates its own provider client or scheduling loop.
 
 `ProviderMailSyncStatusService` is the single durable status writer for future
 lifecycle-owned sync. It reuses encrypted account sync state, preserves the last

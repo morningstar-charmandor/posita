@@ -13,6 +13,7 @@ encrypted projection, read surfaces, and disconnect orchestration contracts.
 
 **Live Gmail authorization has been exercised; ingestion has not succeeded.** The narrow
 connection, cancellation, and confirmed disconnect command boundary is implemented;
+an explicit policy-gated sync retry is also implemented and awaiting one live exercise;
 the canonical provider-independent
 mail contract, credential-free sync coordinator, empty schema-v9 encrypted
 projection, and packaged file-backed projection worker are now verified. The
@@ -57,10 +58,10 @@ evidence is recorded separately and contains no committed credential or mailbox 
 | Account disconnect | Confirmed command implemented, not live-tested | five-minute same-window typed challenge, opaque durable intent audit, journaled idempotent service, and real fixed-endpoint revoker tests | Revokes Posita and removes its local data; never mutates Gmail mail |
 | Canonical provider mail model | Activated but empty | exact validators, schema-v9 authenticated envelopes, worker ownership, and zero live records after the attempt | A verified retry may populate only through the sync coordinator |
 | Sample/live boundary | Live-verified | durable live marker, zero sample rows, connected-pair gate tests | Samples were atomically removed and will not reseed |
-| Live application read model | Live-empty attention verified | durable mode-aware query shows the protected account and zero summaries without exposing private storage detail | Reload remains local-only; no sync retry is exposed |
-| Sync coordinator | Lifecycle-owned, zero-account startup | 90-day path, real worker integration, bounded concurrency, cancellation, retention exclusion, disconnect/deletion quiescence, key teardown, durable status, and explicit retry policy are tested | No retry or automatic inventory handoff is exposed |
+| Live application read model | Live-empty attention verified | durable mode-aware query shows the protected account and zero summaries without exposing private storage detail | Reload remains local-only; explicit retry is a separate command |
+| Sync coordinator | Lifecycle-owned, zero-account startup | 90-day path, real worker integration, bounded concurrency, cancellation, retention exclusion, disconnect/deletion quiescence, key teardown, durable status, and explicit retry policy are tested | Manual retry delegates to this owner; no automatic inventory handoff exists |
 | Gmail read adapter | Live attempt, no stored mail | fixed read-only routes, safe `PROVIDER_UNAVAILABLE` state, deterministic HTTP tests | No cursor or provider-mail record exists |
-| Google access-token source | Live attempt plus compatibility fix | protected refresh read, memory-only access token, bounded optional refresh `id_token` accept-and-discard | Live retry is needed to confirm the suspected mismatch |
+| Google access-token source | Live attempt plus compatibility fix | protected refresh read, memory-only access token, bounded optional refresh `id_token` accept-and-discard | Explicit live retry is ready to confirm or disprove the suspected mismatch |
 | AI provider | Deferred | no model adapter, prompt, embedding, or model output path | Fixture summaries/drafts remain explicitly simulated |
 
 ## Blocking gaps before real mail
@@ -90,7 +91,7 @@ pending sanitization is resumed. The inactive journaled disconnect removes the
 selected account's canonical records after fixture removal and retries the phase
 idempotently. Installation-wide deletion removes all schema-v9 ciphertext keylessly.
 
-### 2. Keep the lifecycle-owned sync boundary inactive until activation review
+### 2. Keep manual sync inside the lifecycle-owned boundary
 
 One trusted coordinator now owns the provider boundary and proves, with a
 deterministic fake:
@@ -234,8 +235,9 @@ rotation and private placement. The strict local configuration source contains o
 exact version-2 client ID and secret in an owner-readable application-data file, passes
 validation, and feeds only the inert graph. No downloaded credential bundle is retained.
 The owner later explicitly approved connecting the test account. Authorization completed,
-but initial read-only sync stored no mail. A further live retry or disconnect remains a
-separate decision; this approval never covers mailbox mutation.
+but initial read-only sync stored no mail. The owner then approved both a narrow manual
+retry and the existing confirmed disconnect/reconnect fallback. The retry implementation
+is verified but not yet live-executed; none of these approvals covers mailbox mutation.
 
 ## Original audit evidence
 

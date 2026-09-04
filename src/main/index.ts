@@ -21,6 +21,7 @@ import { loadGoogleOAuthClientConfiguration } from './infrastructure/providers/g
 import { GoogleAccountConnectionPreflightService } from './application/googleAccountConnectionPreflight'
 import { GoogleAccountConnectionCommandService } from './application/googleAccountConnectionCommand'
 import { GoogleAccountDisconnectCommandService } from './application/googleAccountDisconnectCommand'
+import { GoogleAccountSyncRetryCommandService } from './application/googleAccountSyncRetryCommand'
 import { inspectAccountConnectionConsistency } from './application/accountConnection'
 
 const isTrustedExternalUrl = (candidate: string): boolean => {
@@ -112,6 +113,7 @@ app.whenReady().then(async () => {
   let openProviderMailOriginal = new OpenProviderMailOriginalService()
   let googleAccountConnectionPreflight = new GoogleAccountConnectionPreflightService()
   let googleAccountConnectionCommand = new GoogleAccountConnectionCommandService()
+  let googleAccountSyncRetryCommand = new GoogleAccountSyncRetryCommandService()
   let googleAccountDisconnectCommand = new GoogleAccountDisconnectCommandService()
 
   try {
@@ -159,14 +161,20 @@ app.whenReady().then(async () => {
           composition.lifecycle,
           randomUUID
         )
+        const connectionConsistency = {
+          inspect: (accountId: string) => inspectAccountConnectionConsistency(
+            accountId,
+            runtime.secretVault,
+            runtime.accountStateRepository
+          )
+        }
+        googleAccountSyncRetryCommand = new GoogleAccountSyncRetryCommandService(
+          connectionConsistency,
+          runtime.accountStateRepository,
+          composition.lifecycle
+        )
         googleAccountDisconnectCommand = new GoogleAccountDisconnectCommandService(
-          {
-            inspect: (accountId) => inspectAccountConnectionConsistency(
-              accountId,
-              runtime.secretVault,
-              runtime.accountStateRepository
-            )
-          },
+          connectionConsistency,
           composition.lifecycle,
           runtime.googleAccountDisconnectAuditRepository,
           systemClock,
@@ -208,6 +216,7 @@ app.whenReady().then(async () => {
     accountConnectionRecovery,
     googleAccountConnectionPreflight,
     googleAccountConnectionCommand,
+    googleAccountSyncRetryCommand,
     googleAccountDisconnectCommand
   })
   const openWindow = (): void => {
