@@ -11,9 +11,10 @@ exists deeper in the tree.
   complete; isolated Google Cloud/API/consent/desktop-client configuration is complete;
   a strict inert local client-identifier configuration source is complete and has
   validated the private local client ID. The trusted Google connection/sync/disconnect
-  graph is production-composed but starts with zero accounts. A narrow public
-  prepare-only UI/IPC preflight can confirm local readiness without starting
-  authorization; credential use and authorization activation remain inactive.
+  graph is production-composed and starts with zero accounts. Explicit public
+  connection, cancellation, and confirmed disconnect UI/IPC commands are verified.
+  No real authorization, credential,
+  provider request, account, or live mail has been used.
 - Current data: deterministic fixtures stored as authenticated encrypted records.
 - Encrypted provider-account and sync-state storage is implemented but empty.
 - A non-sensitive lifecycle journal and confirmed full local-deletion execution are implemented.
@@ -26,9 +27,9 @@ exists deeper in the tree.
   synchronous adapter remains only for bounded in-memory tests and legacy migration.
 - Fixture and canonical provider-mail account removal are implemented in the
   inactive disconnect orchestrator's journaled mail-data phase.
-- Disconnect orchestration has a real Google revoker plus deterministic
-  fakes. The revoker is now inside the provider-inert production graph, but there is
-  no disconnect UI/IPC trigger.
+- Disconnect orchestration has a real Google revoker plus deterministic fakes.
+  A same-window five-minute typed-confirmation flow now invokes it, records only
+  opaque confirmation intent, and never mutates the remote mailbox.
 - Full local-data deletion is composed at startup and available through a narrow
   confirmed Settings & privacy flow; it affects Posita data only.
 - New full deletion requires a bounded typed confirmation; safe lifecycle status,
@@ -43,10 +44,11 @@ exists deeper in the tree.
   read the desktop client identifier from Posita's private application-data file,
   and both are constructed only inside the provider-inert production graph. No real
   user credential has been received.
-- A versioned Gmail consent preview and prepare-only local readiness action are
+- A versioned Gmail consent preview and local readiness action are
   visible in Settings and exactly disclose
-  OpenID identity, verified email, and Gmail read-only access; OAuth activation
-  remains unavailable; no Continue-to-Google action exists. Google Cloud has matching testing consent and a desktop client,
+  OpenID identity, verified email, and Gmail read-only access. A separate explicit
+  Continue-to-Google action can invoke the trusted command and can be cancelled
+  while pending. Google Cloud has matching testing consent and a desktop client,
   whose client ID is privately configured locally; no client secret, credential bundle,
   user grant, or token was downloaded or used.
 - Provider-independent authorization-session contracts and a deterministic fake
@@ -62,8 +64,8 @@ exists deeper in the tree.
   to-encrypted-state ordering and rollback inside the inactive production graph.
 - A credential-free activation coordinator now composes connection begin, callback
   waiting, exact browser handoff, bounded callback retry, completion, cancellation,
-  and cleanup behind trusted-main interfaces. Production constructs it, but it remains
-  unexposed and has no active session.
+  and cleanup behind trusted-main interfaces. Production exposes it only through
+  the explicit validated trusted-window command; startup creates no active session.
 - A production-composed trusted-main sync-status service durably records syncing,
   success, cancellation, and typed failure state with one fixed safe retry policy;
   the inactive lifecycle owner uses its contract and fails closed before provider
@@ -114,20 +116,21 @@ exists deeper in the tree.
   reports one-sided state as recovery-required; it does not start sync.
 - The real read-only Gmail adapter, idempotent revoker, memory-only access-token
   source, canonical projection worker, sync coordinator, and lifecycle owner are
-  assembled in one production graph. Startup supplies zero accounts; Gmail,
-  pending-disconnect scheduling, connection commands, and model providers remain inactive.
+  assembled in one production graph. Startup supplies zero accounts; Gmail and
+  model providers remain inactive until an explicit user command.
 - Sending mail is intentionally disabled.
 - The final production-composition audit and approved Google adapter/infrastructure/
   activation-coordinator set are complete. Isolated Google Cloud, Gmail API, external
   testing consent, desktop-client creation, private client-ID placement, and a
-  provider-inert production ownership graph are complete. Credential use, UI/IPC
-  exposure, and provider activation remain unapproved.
+  provider-inert production ownership graph are complete. The narrow connection,
+  cancellation, and confirmed disconnect UI/IPC exposure is approved and implemented;
+  credential use and provider activation have not occurred.
 - The owner approved exact OpenID/email/Gmail-read-only consent and the credential-
   free desktop OAuth protocol core, provider-inert loopback/browser boundaries, and
-  unexposed trusted connection-activation sequencing, plus the isolated Google-side
-  testing configuration and private local client-ID placement. A client secret or
-  credential bundle, a real account, UI/IPC exposure, ingestion, and live provider-
-  network use remain unapproved.
+  trusted connection-activation sequencing, plus the isolated Google-side testing
+  configuration, private local client-ID placement, and narrow paired UI commands.
+  A client secret or credential bundle, real account, ingestion, and live provider-
+  network use have not occurred.
 - Product promise: **Your inboxes, understood as one.**
 
 Do not imply that fixture-backed behavior is connected to real mail or AI.

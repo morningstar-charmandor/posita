@@ -171,7 +171,7 @@ describe('Posita vertical slice', () => {
     expect(await screen.findByRole('heading', { name: 'No live mail is cached' }))
       .toBeInTheDocument()
     expect(screen.getByText(/will not restore deterministic samples/i)).toBeInTheDocument()
-    expect(screen.getByText(/Gmail connection, provider sync retry, AI generation/i))
+    expect(screen.getByText(/Provider sync retry, AI generation, and sending/i))
       .toBeInTheDocument()
     expect(screen.queryByText('Confirm Pulse scope with Rahul')).not.toBeInTheDocument()
   })
@@ -580,7 +580,13 @@ describe('Posita vertical slice', () => {
     })
     render(<App
       dataSource={dataSource}
-      googleConnectionPreflightDataSource={{ prepare }}
+      googleConnectionPreflightDataSource={{
+        prepare,
+        connect: vi.fn(),
+        cancel: vi.fn(),
+        prepareDisconnect: vi.fn(),
+        executeDisconnect: vi.fn()
+      }}
     />)
 
     fireEvent.click(await screen.findByRole('button', { name: 'Settings & privacy' }))
@@ -590,14 +596,14 @@ describe('Posita vertical slice', () => {
     expect(screen.getByRole('button', { name: 'Disconnect unavailable' })).toBeDisabled()
     fireEvent.click(screen.getByRole('button', { name: 'Prepare Gmail connection' }))
 
-    const prepared = await screen.findByText('Ready for a later Google authorization step')
+    const prepared = await screen.findByText('Ready to continue to Google')
     const status = prepared.closest('[role="status"]')
     expect(status).not.toBeNull()
     for (const notice of GOOGLE_ACCOUNT_CONNECTION_PREFLIGHT_NOTICES) {
       expect(status).toHaveTextContent(notice)
     }
     expect(prepare).toHaveBeenCalledTimes(1)
-    expect(screen.queryByRole('button', { name: /Continue to Google/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Continue to Google' })).toBeEnabled()
   })
 
   it('shows a safe Gmail preparation error and permits an explicit retry', async () => {
@@ -618,7 +624,13 @@ describe('Posita vertical slice', () => {
       })
     render(<App
       dataSource={dataSource}
-      googleConnectionPreflightDataSource={{ prepare }}
+      googleConnectionPreflightDataSource={{
+        prepare,
+        connect: vi.fn(),
+        cancel: vi.fn(),
+        prepareDisconnect: vi.fn(),
+        executeDisconnect: vi.fn()
+      }}
     />)
 
     fireEvent.click(await screen.findByRole('button', { name: 'Settings & privacy' }))
@@ -630,7 +642,49 @@ describe('Posita vertical slice', () => {
     expect(error).not.toHaveTextContent('private diagnostic')
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
 
-    expect(await screen.findByText('Ready for a later Google authorization step')).toBeInTheDocument()
+    expect(await screen.findByText('Ready to continue to Google')).toBeInTheDocument()
     expect(prepare).toHaveBeenCalledTimes(2)
+  })
+
+  it('starts Google authorization only after explicit continuation and exposes cancellation', async () => {
+    const prepare = vi.fn().mockResolvedValue({
+      ok: true,
+      value: {
+        version: 1,
+        action: 'prepare-google-account-connection',
+        provider: 'google',
+        status: 'authorization-not-started',
+        consentVersion: GOOGLE_CONNECT_CONSENT.consentVersion,
+        requestedScopes: GOOGLE_CONNECT_CONSENT.requestedScopes,
+        notices: GOOGLE_ACCOUNT_CONNECTION_PREFLIGHT_NOTICES,
+        nextStep: 'explicit-google-authorization-required'
+      }
+    })
+    const connect = vi.fn((): Promise<never> => new Promise(() => undefined))
+    const cancel = vi.fn().mockResolvedValue({
+      ok: true,
+      value: { version: 1, status: 'cancellation-requested' }
+    })
+    render(<App
+      dataSource={dataSource}
+      googleConnectionPreflightDataSource={{
+        prepare,
+        connect,
+        cancel,
+        prepareDisconnect: vi.fn(),
+        executeDisconnect: vi.fn()
+      }}
+    />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Settings & privacy' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Review Gmail connection…' }))
+    expect(connect).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Prepare Gmail connection' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Continue to Google' }))
+
+    expect(await screen.findByText('Waiting for Google authorization…')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel connection' }))
+    await waitFor(() => expect(cancel).toHaveBeenCalledTimes(1))
+    expect(connect).toHaveBeenCalledTimes(1)
   })
 })

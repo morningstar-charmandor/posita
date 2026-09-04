@@ -25,6 +25,11 @@ import {
   createPrepareLocalDataDeletionHandler,
   createPrepareAccountConnectionRecoveryHandler,
   createPrepareGoogleAccountConnectionHandler,
+  createConnectGoogleAccountHandler,
+  createCancelGoogleAccountConnectionHandler,
+  createPrepareGoogleAccountDisconnectHandler,
+  createExecuteGoogleAccountDisconnectHandler,
+  GoogleAccountDisconnectIpcAuthorization,
   LocalDataDeletionIpcAuthorization
 } from './applicationIpc'
 
@@ -69,6 +74,129 @@ describe('Gmail connection preparation IPC handler', () => {
     )
     expect(prepare(event, { version: 1, action: result.action }))
       .toEqual({ ok: true, value: result })
+  })
+})
+
+describe('Google account connection IPC handlers', () => {
+  const connected = {
+    version: 1 as const,
+    accountId: 'account-1',
+    provider: 'google' as const,
+    mailboxAddress: 'owner@example.test',
+    connectedAt: '2026-09-03T12:00:00.000Z',
+    status: 'connected-and-synced' as const
+  }
+
+  it('rejects an untrusted sender before authorization can start', async () => {
+    let called = false
+    const handler = createConnectGoogleAccountHandler({
+      connect: async () => { called = true; return { ok: true, value: connected } }
+    }, () => false)
+
+    await expect(handler(event, {
+      version: 1,
+      action: 'connect-google-account',
+      consentVersion: GOOGLE_CONNECT_CONSENT.consentVersion
+    })).resolves.toMatchObject({ ok: false, error: { code: 'UNTRUSTED_SENDER' } })
+    expect(called).toBe(false)
+  })
+
+  it('returns exact trusted connection and cancellation results', async () => {
+    const connect = createConnectGoogleAccountHandler({
+      connect: async () => ({ ok: true, value: connected })
+    }, () => true)
+    const cancel = createCancelGoogleAccountConnectionHandler({
+      cancel: () => ({
+        ok: true,
+        value: { version: 1, status: 'cancellation-requested' }
+      })
+    }, () => true)
+
+    await expect(connect(event, {})).resolves.toEqual({ ok: true, value: connected })
+    expect(cancel(event, {})).toEqual({
+      ok: true,
+      value: { version: 1, status: 'cancellation-requested' }
+    })
+  })
+})
+
+describe('Google account disconnect IPC handlers', () => {
+  it('binds the confirmation to the trusted window that prepared it', async () => {
+    const first = { sender: { id: 1 } } as IpcMainInvokeEvent
+    const second = { sender: { id: 2 } } as IpcMainInvokeEvent
+    const challenge = {
+      version: 1 as const,
+      confirmationId: 'confirmation-1',
+      operationId: 'operation-1',
+      action: 'disconnect-google-account' as const,
+      accountId: 'account-1',
+      requiredText: 'DISCONNECT GMAIL' as const,
+      expiresAt: '2099-09-03T12:05:00.000Z',
+      consequences: [
+        'Revokes Posita’s Google authorization for this account.',
+        'Removes its credential, encrypted account state, cursor, and cached mail from Posita.',
+        'Does not delete or change messages in Gmail.'
+      ] as const
+    }
+    const authorization = new GoogleAccountDisconnectIpcAuthorization()
+    const prepare = createPrepareGoogleAccountDisconnectHandler(
+      { prepare: async () => ({ ok: true, value: challenge }) },
+      () => true,
+      authorization
+    )
+    await prepare(first, {})
+    const execute = createExecuteGoogleAccountDisconnectHandler(
+      { execute: async () => ({
+        ok: true,
+        value: { version: 1, operationId: 'operation-1', accountId: 'account-1', status: 'disconnected' }
+      }) },
+      () => true,
+      authorization
+    )
+    const request = {
+      version: 1,
+      confirmationId: 'confirmation-1',
+      operationId: 'operation-1',
+      action: 'disconnect-google-account',
+      accountId: 'account-1',
+      enteredText: 'DISCONNECT GMAIL'
+    }
+
+    await expect(execute(second, request)).resolves.toMatchObject({
+      ok: false,
+      error: { code: 'CONFIRMATION_NOT_FOUND' }
+    })
+    await expect(execute(first, request)).resolves.toMatchObject({ ok: true })
+  })
+
+  it('revokes a disconnect confirmation when its window closes', () => {
+    const first = { sender: { id: 1 } } as IpcMainInvokeEvent
+    const authorization = new GoogleAccountDisconnectIpcAuthorization()
+    authorization.record(first, {
+      version: 1,
+      confirmationId: 'confirmation-1',
+      operationId: 'operation-1',
+      action: 'disconnect-google-account',
+      accountId: 'account-1',
+      requiredText: 'DISCONNECT GMAIL',
+      expiresAt: '2099-09-03T12:05:00.000Z',
+      consequences: [
+        'Revokes Posita’s Google authorization for this account.',
+        'Removes its credential, encrypted account state, cursor, and cached mail from Posita.',
+        'Does not delete or change messages in Gmail.'
+      ]
+    })
+
+    authorization.revokeSender(1)
+
+    expect(authorization.authorize(first, {
+      version: 1,
+      confirmationId: 'confirmation-1',
+      operationId: 'operation-1',
+      action: 'disconnect-google-account',
+      accountId: 'account-1',
+      enteredText: 'DISCONNECT GMAIL'
+    })).toBe(false)
   })
 })
 

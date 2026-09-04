@@ -1,6 +1,6 @@
 # Posita Continuity Handoff
 
-Last reviewed: 2026-09-03
+Last reviewed: 2026-09-04
 
 This is the first document to read when Posita work continues in a new AI model,
 thread, chat, or development session. It records current state and the safest
@@ -19,10 +19,14 @@ desktop client named `Posita macOS Desktop` exists. Its credentials were not
 downloaded, copied into the repository, or used. Its client ID is now stored only
 in the owner-readable local application-data file and passes Posita's strict loader;
 no client secret or credential bundle was downloaded. The trusted runtime ownership
-graph is assembled and starts with zero accounts. A validated prepare-only Settings,
-preload, and IPC path now reports whether that inert local composition is available,
-while returning no account identifier or authorization URL. Browser authorization,
-account connection, provider I/O, and public activation remain inactive.
+graph is assembled and starts with zero accounts. A validated Settings/preload/IPC
+path now separates local preparation from an explicit cancellable Continue-to-Google
+command. Trusted main creates the opaque account ID, performs authorization and
+initial activation, and attempts journaled disconnect rollback if activation fails.
+A paired five-minute, same-window typed-confirmation disconnect removes Posita's
+authorization and local account data without changing Gmail. These commands are
+implemented and verified, but no browser authorization, credential, account, provider
+request, or live mail has been used. The complete localhost-enabled suite passes.
 The product is a runnable Electron desktop prototype using React, strict TypeScript,
 and SQLite. All visible mail is deterministic sample data.
 
@@ -295,14 +299,14 @@ Simulated or deliberately inactive:
   exercised only through local deterministic HTTP and a fake desktop delegate,
 - local deletion operates only on deterministic fixture-backed Posita data because
   no real account or credential exists,
-- account disconnect remains application-only and has no preload, IPC, or UI trigger,
-- Gmail connection consent now has a prepare-only local readiness action; it opens
-  no browser, creates no authorization session, and explicitly reports that Gmail
-  remains unconnected,
+- account disconnect has exact preload/IPC/UI triggers guarded by a short-lived,
+  same-window typed confirmation and an opaque durable confirmation-intent record,
+- Gmail connection consent separates non-activating preparation from an explicit
+  cancellable Continue-to-Google action; neither has been used with a real account,
 - authorization-session behavior has both a deterministic fake and a production-
   constructed Google protocol adapter; neither is reachable from the renderer,
-- account-connection persistence is deterministic-tested and constructed behind the
-  inactive production graph, with no public caller,
+- account-connection persistence is deterministic-tested and reachable only through
+  the explicit trusted-window command,
 - canonical provider-mail and sync behavior is exercised only through
   deterministic fakes, an encrypted SQLite proof, and file-backed workers;
   retention and the bounded read-only live-state query are composed at startup,
@@ -312,8 +316,7 @@ Simulated or deliberately inactive:
   has been verified with deterministic connected state but has no production
   connection, sync-start, preload, IPC, or UI caller,
 - the provider-mail lifecycle owner is production-composed and starts with zero
-  accounts; trusted inventory remains read-only and is not handed to sync, and there
-  is no retry command or public activation caller,
+  accounts; trusted inventory remains read-only and is not handed to automatic sync,
 - account consistency is not independently exposed; the recovery command uses it
   inside main without mutation or provider action,
 - local account recovery is active only for inconsistent local records and has no
@@ -322,10 +325,9 @@ Simulated or deliberately inactive:
 
 Not implemented:
 
-- a real system-browser authorization action, activated message ingestion, or
-  user-triggered/live disconnect,
-- a reviewed UI/IPC command that may invoke authorization or disconnect lifecycle work,
-- user-triggered account disconnect or any remote mailbox mutation control,
+- completed real-account authorization and live provider-ingestion evidence,
+- automatic provider sync retry or pending-disconnect startup scheduling,
+- any remote mailbox mutation control,
 - automatic pending-disconnect resume with a live idempotent revocation adapter,
 - a model provider, embeddings, classification, retrieval, or generation,
 - automatic pending-disconnect lifecycle scheduling,
@@ -345,23 +347,14 @@ Not implemented:
 
 ## Next recommended milestone
 
-The isolated Google Cloud project `posita-mail-hub-2026`, Gmail API, external
-testing consent, exact approved scopes, and `Posita macOS Desktop` client are
-created and verified. The client ID is privately configured and loader-validated;
-no client secret, credential bundle, user grant, or token was downloaded or used.
-The owner-approved Google adapter set, deletion-aware reconciliation, trusted
-refresh-to-access-token boundary, exact identity consent, desktop authorization-
-code/PKCE protocol core, bounded loopback/browser infrastructure, and trusted-main
-connection activation sequence and secret-safe runtime configuration source are
-complete and assembled inside one provider-inert production graph. Startup passes
-zero accounts, so no automatic provider work occurs. The prepare-only UI/IPC/status
-surface is complete and cannot invoke authorization. The next milestone is a
-separately reviewed authorization execution command paired with usable disconnect.
-It must keep client configuration outside Git and expose no credential through
-renderer IPC. Downloading or using any user credential, production UI/IPC activation,
-opening a real authorization browser, and connecting a dedicated test account remain
-later, separate approvals. Current approval does not authorize those actions, live
-provider testing, or mailbox ingestion.
+The narrow authorization execution and usable disconnect commands are verified
+without a dependency, schema migration, compatibility path, secret, account, or
+provider request. All 82 test files and 488 tests pass, including the real localhost
+callback tests, together with strict typechecking, renderer structure/security checks,
+and the production build. The next step is the Git checkpoint and promotion through
+`staging` to `main`. The following separately observable action is dedicated test-
+account authorization; the person must choose the account and approve Google's exact
+read-only consent.
 
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,
@@ -386,13 +379,11 @@ confirmed local deletion are complete at their current layers. Continue in this 
    policy, and final production-composition audit are complete.
 5. Treat the approved Google authorization, loopback/browser infrastructure,
    reader, revoker, access-token source, strict local client-identifier source, and
-   zero-account production lifecycle graph as complete. Stop for owner approval
-   before UI/IPC exposure,
-   real browser authorization, connection activation, network testing, or a live
-   account.
-6. Keep real Gmail ingestion disabled until authorization activation is separately
-   approved and the remaining lifecycle activation
-   and consent gates pass.
+   zero-account production lifecycle graph as complete. The paired connection and
+   disconnect UI/IPC boundary is also verified. Stop for the person's direct account
+   choice and Google consent before treating any browser result as authorization.
+6. Keep real Gmail ingestion inactive until the person completes the exact approved
+   consent with a dedicated test account and Posita verifies the resulting local state.
 
 Do not solve encrypted search casually. Any index must avoid becoming a second
 plaintext mailbox. Record the selected search tradeoff in `docs/DECISIONS.md`.
@@ -437,9 +428,10 @@ cursor replacement gap, and the real bounded Gmail reader now emits that contrac
 The vault-backed memory-only access-token source now supplies the reader's trusted
 credential boundary without configuration or activation. The exact identity consent,
 bounded desktop authorization-code/PKCE protocol core, short-lived loopback/exact-
-browser boundaries, and trusted connection-activation sequence are now implemented
-with injected seams. The next milestone is a separately approved narrow lifecycle/UI
-command, not an automatic credential or account connection.
+browser boundaries, trusted connection-activation sequence, and paired confirmed
+disconnect command are now implemented and fully verified with injected seams. The
+next milestone is a person-completed dedicated-account authorization exercise, not
+an automatic credential or account connection.
 The new presentation abstraction is `LiveMailSummaryList`; it consumes the existing
 `LiveMailSnapshotV2` without adding a parallel domain or data source. The other
 recent abstractions are the shared `LiveMailMessageDetailV1` and open-original
@@ -511,17 +503,16 @@ ownership factory. It reuses the existing adapters, services, repository contrac
 and worker; adds no parallel compatibility path; and deliberately starts the owner
 with zero accounts. The worker's asynchronous shutdown is awaited so accepted local
 reads settle before key destruction.
-The new `AccountConnectionActivationService` composes the existing connection,
+The `AccountConnectionActivationService` composes the existing connection,
 callback, and browser interfaces without adding a second persistence coordinator.
-It is constructed by startup but remains outside public desktop contracts. No dependency, schema,
-compatibility path, IPC/UI surface, credential, account, real
-browser/provider action, personal data, mailbox mutation, or intentional duplication
-was added.
+It is reachable only through the fixed trusted-window connection command. The new
+public command adds no dependency, schema, compatibility path, credential, account,
+real browser/provider action, personal data, mailbox mutation, or intentional duplication.
 The new `composeGoogleProviderLifecycle` module is the single production ownership
 root for the existing authorization, token, reader, sync, projection, disconnect,
 retention, and teardown abstractions. It adds no second repository, coordinator,
-worker, scheduler, compatibility path, dependency, schema, public command, credential,
-network request, or intentional duplication. The retained standalone retention and
+worker, scheduler, compatibility path, dependency, schema, credential, network
+request, or intentional duplication. The retained standalone retention and
 read-worker shutdown path is used only when strict client configuration is unavailable.
 The new `GoogleAccountConnectionPreflightService` is a read-only capability over
 that existing composition availability. Its fixed public result carries reviewed
@@ -531,6 +522,14 @@ preload client, renderer data source, and Settings panel reuse the same versione
 contract. No dependency, schema, repository, compatibility path, authorization
 session, browser action, account, credential, provider request, or mailbox mutation
 was added.
+
+The new `GoogleAccountConnectionCommandService` reuses the single activation and
+lifecycle owners, generates account scope in trusted main, and attempts journaled
+disconnect rollback before exposing an activation failure. The paired
+`GoogleAccountDisconnectCommandService` reuses the existing consistency inspector,
+lifecycle owner, and `audit_events` table with exact same-window typed confirmation.
+No dependency, schema migration, compatibility path, duplicate repository/service,
+credential, personal data, provider request, or mailbox mutation was added.
 
 ## How to resume
 
@@ -550,7 +549,7 @@ was added.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 75 test files, 468 tests, strict typecheck, structure
+- Current verified baseline: 82 test files, 488 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,

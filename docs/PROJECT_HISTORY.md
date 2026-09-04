@@ -2425,6 +2425,35 @@ schema, credential, account, provider call, personal data, or mailbox mutation w
 Limitations: this milestone cannot start authorization. A separately approved
 execution command and usable disconnect path must precede any real account connection.
 
+## Gate 2D milestone — Paired Google connection and confirmed disconnect
+
+Date: 2026-09-04
+Checkpoint: use the Git commit whose subject is `feat: activate Google account lifecycle`
+
+Goal: expose the already reviewed desktop authorization sequence only with an
+equally usable, explicit account-disconnect path, while preserving the renderer,
+credential, audit, and mailbox-mutation boundaries.
+
+Delivered one exact connection/cancellation contract through trusted-window IPC,
+with the opaque account ID generated in main, authorization and initial lifecycle
+activation owned by the existing coordinator, and journaled disconnect rollback
+after an activation failure. Added a five-minute, same-window `DISCONNECT GMAIL`
+challenge, opaque intent audit in the existing audit table, the existing idempotent
+revocation/local-removal lifecycle handoff, and accessible Settings/live-status UI.
+Retryable disconnect failures retain their challenge; an unconfirmed activation
+rollback keeps an immediate disconnect control visible.
+
+Evidence: all 82 test files and 488 tests pass, including the real localhost callback
+tests, together with strict typechecking, structure/security checks, and the
+production Electron build.
+
+Limitations: no browser authorization, credential, Google request, real account,
+mail ingestion, or mailbox mutation occurred. No dependency, schema migration,
+compatibility path, second lifecycle owner, secret, or personal data was added. The
+next action after the Git checkpoint is for the user to select a dedicated test
+account in Google's browser and approve the exact read-only consent for the separate
+live authorization exercise.
+
 ## How future entries should be written
 
 For each material milestone, record:

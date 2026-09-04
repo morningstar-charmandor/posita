@@ -20,7 +20,18 @@ import {
   type PrepareAccountConnectionRecoveryRequestV1,
   type PrepareAccountConnectionRecoveryResponseV1,
   type PrepareGoogleAccountConnectionRequestV1,
-  type PrepareGoogleAccountConnectionResponseV1
+  type PrepareGoogleAccountConnectionResponseV1,
+  type ConnectGoogleAccountRequestV1,
+  type ConnectGoogleAccountResponseV1,
+  type CancelGoogleAccountConnectionRequestV1,
+  type CancelGoogleAccountConnectionResponseV1,
+  type GoogleAccountConnectionErrorV1,
+  type PrepareGoogleAccountDisconnectRequestV1,
+  type PrepareGoogleAccountDisconnectResponseV1,
+  type ExecuteGoogleAccountDisconnectRequestV1,
+  type ExecuteGoogleAccountDisconnectResponseV1,
+  type GoogleAccountDisconnectChallengeV1,
+  type GoogleAccountDisconnectErrorV1
 } from '../../shared/contracts'
 import {
   isLiveMailMessageDetailRequestV1,
@@ -37,6 +48,11 @@ import {
   isPrepareLocalDataDeletionResponse,
   isPrepareAccountConnectionRecoveryResponse,
   isPrepareGoogleAccountConnectionResponse,
+  isConnectGoogleAccountResponse,
+  isCancelGoogleAccountConnectionResponse,
+  isPrepareGoogleAccountDisconnectResponse,
+  isExecuteGoogleAccountDisconnectResponse,
+  isExecuteGoogleAccountDisconnectRequest,
   isOpenLiveMailOriginalRequest,
   isOpenLiveMailOriginalResponse
 } from '../../shared/validation'
@@ -46,6 +62,8 @@ import type { AccountConnectionRecoveryCommandService } from '../application/acc
 import type { LiveMailMessageDetailService } from '../application/liveMailMessageDetailService'
 import type { OpenProviderMailOriginalService } from '../application/openProviderMailOriginal'
 import type { GoogleAccountConnectionPreflightService } from '../application/googleAccountConnectionPreflight'
+import type { GoogleAccountConnectionCommandService } from '../application/googleAccountConnectionCommand'
+import type { GoogleAccountDisconnectCommandService } from '../application/googleAccountDisconnectCommand'
 
 type TrustPredicate = (event: IpcMainInvokeEvent) => boolean
 
@@ -359,6 +377,145 @@ export const createPrepareGoogleAccountConnectionHandler = (
       }
 }
 
+const connectionProtocolError = (): { ok: false; error: GoogleAccountConnectionErrorV1 } => ({
+  ok: false,
+  error: {
+    version: POSITA_PROTOCOL_VERSION,
+    code: 'PROTOCOL_ERROR',
+    message: 'Posita returned an invalid Google account response.',
+    retryable: false
+  }
+})
+
+export const createConnectGoogleAccountHandler = (
+  service: Pick<GoogleAccountConnectionCommandService, 'connect'>,
+  isTrusted: TrustPredicate
+) => async (
+  event: IpcMainInvokeEvent,
+  request: unknown
+): Promise<ConnectGoogleAccountResponseV1> => {
+  if (!isTrusted(event)) {
+    return {
+      ok: false,
+      error: {
+        version: POSITA_PROTOCOL_VERSION,
+        code: 'UNTRUSTED_SENDER',
+        message: 'This window is not allowed to connect a Google account.',
+        retryable: false
+      }
+    }
+  }
+  const response = await service.connect(request)
+  return isConnectGoogleAccountResponse(response) ? response : connectionProtocolError()
+}
+
+export const createCancelGoogleAccountConnectionHandler = (
+  service: Pick<GoogleAccountConnectionCommandService, 'cancel'>,
+  isTrusted: TrustPredicate
+) => (
+  event: IpcMainInvokeEvent,
+  request: unknown
+): CancelGoogleAccountConnectionResponseV1 => {
+  if (!isTrusted(event)) {
+    return {
+      ok: false,
+      error: {
+        version: POSITA_PROTOCOL_VERSION,
+        code: 'UNTRUSTED_SENDER',
+        message: 'This window is not allowed to cancel a Google account connection.',
+        retryable: false
+      }
+    }
+  }
+  const response = service.cancel(request)
+  return isCancelGoogleAccountConnectionResponse(response) ? response : connectionProtocolError()
+}
+
+export class GoogleAccountDisconnectIpcAuthorization {
+  private readonly challenges = new Map<string, { senderId: number; operationId: string; accountId: string; expiresAtMs: number }>()
+
+  record(event: IpcMainInvokeEvent, challenge: GoogleAccountDisconnectChallengeV1): void {
+    this.challenges.set(challenge.confirmationId, {
+      senderId: event.sender.id,
+      operationId: challenge.operationId,
+      accountId: challenge.accountId,
+      expiresAtMs: Date.parse(challenge.expiresAt)
+    })
+  }
+
+  authorize(event: IpcMainInvokeEvent, request: ExecuteGoogleAccountDisconnectRequestV1): boolean {
+    const challenge = this.challenges.get(request.confirmationId)
+    return challenge !== undefined && challenge.senderId === event.sender.id &&
+      challenge.operationId === request.operationId && challenge.accountId === request.accountId &&
+      challenge.expiresAtMs >= Date.now()
+  }
+
+  release(confirmationId: string): void { this.challenges.delete(confirmationId) }
+  revokeSender(senderId: number): void {
+    for (const [confirmationId, challenge] of this.challenges) {
+      if (challenge.senderId === senderId) this.challenges.delete(confirmationId)
+    }
+  }
+  clear(): void { this.challenges.clear() }
+}
+
+const disconnectSenderError = (): { ok: false; error: GoogleAccountDisconnectErrorV1 } => ({
+  ok: false,
+  error: {
+    version: POSITA_PROTOCOL_VERSION,
+    code: 'UNTRUSTED_SENDER',
+    message: 'This window is not allowed to disconnect a Google account.',
+    retryable: false
+  }
+})
+
+export const createPrepareGoogleAccountDisconnectHandler = (
+  service: Pick<GoogleAccountDisconnectCommandService, 'prepare'>,
+  isTrusted: TrustPredicate,
+  authorization: GoogleAccountDisconnectIpcAuthorization
+) => async (
+  event: IpcMainInvokeEvent,
+  request: unknown
+): Promise<PrepareGoogleAccountDisconnectResponseV1> => {
+  if (!isTrusted(event)) return disconnectSenderError()
+  const response = await service.prepare(request)
+  if (!isPrepareGoogleAccountDisconnectResponse(response)) {
+    return { ok: false, error: { ...connectionProtocolError().error, code: 'PROTOCOL_ERROR' } }
+  }
+  if (response.ok) authorization.record(event, response.value)
+  return response
+}
+
+export const createExecuteGoogleAccountDisconnectHandler = (
+  service: Pick<GoogleAccountDisconnectCommandService, 'execute'>,
+  isTrusted: TrustPredicate,
+  authorization: GoogleAccountDisconnectIpcAuthorization
+) => async (
+  event: IpcMainInvokeEvent,
+  request: unknown
+): Promise<ExecuteGoogleAccountDisconnectResponseV1> => {
+  if (!isTrusted(event)) return disconnectSenderError()
+  if (!isExecuteGoogleAccountDisconnectRequest(request) ||
+      !authorization.authorize(event, request)) {
+    return {
+      ok: false,
+      error: {
+        version: POSITA_PROTOCOL_VERSION,
+        code: 'CONFIRMATION_NOT_FOUND',
+        message: 'The disconnect confirmation is not available to this window.',
+        retryable: false
+      }
+    }
+  }
+  const response = await service.execute(request)
+  if (!isExecuteGoogleAccountDisconnectResponse(response)) {
+    authorization.release(request.confirmationId)
+    return { ok: false, error: { ...connectionProtocolError().error, code: 'PROTOCOL_ERROR' } }
+  }
+  if (response.ok || !response.error.retryable) authorization.release(request.confirmationId)
+  return response
+}
+
 export interface ApplicationIpcRegistration {
   allowWindow(window: BrowserWindow): void
   notifyApplicationStateChanged(): void
@@ -372,6 +529,8 @@ export interface ApplicationIpcServices {
   localDataDeletion: LocalDataDeletionCommandService
   accountConnectionRecovery: AccountConnectionRecoveryCommandService
   googleAccountConnectionPreflight: GoogleAccountConnectionPreflightService
+  googleAccountConnectionCommand: GoogleAccountConnectionCommandService
+  googleAccountDisconnectCommand: GoogleAccountDisconnectCommandService
 }
 
 export const registerApplicationIpc = (services: ApplicationIpcServices): ApplicationIpcRegistration => {
@@ -415,6 +574,25 @@ export const registerApplicationIpc = (services: ApplicationIpcServices): Applic
     services.googleAccountConnectionPreflight,
     isTrusted
   )
+  const connectGoogleAccount = createConnectGoogleAccountHandler(
+    services.googleAccountConnectionCommand,
+    isTrusted
+  )
+  const cancelGoogleAccountConnection = createCancelGoogleAccountConnectionHandler(
+    services.googleAccountConnectionCommand,
+    isTrusted
+  )
+  const disconnectAuthorization = new GoogleAccountDisconnectIpcAuthorization()
+  const prepareGoogleAccountDisconnect = createPrepareGoogleAccountDisconnectHandler(
+    services.googleAccountDisconnectCommand,
+    isTrusted,
+    disconnectAuthorization
+  )
+  const executeGoogleAccountDisconnect = createExecuteGoogleAccountDisconnectHandler(
+    services.googleAccountDisconnectCommand,
+    isTrusted,
+    disconnectAuthorization
+  )
   ipcMain.handle(
     IPC_CHANNELS.loadApplicationState,
     (event, request: LoadApplicationStateRequestV1) => handler(event, request)
@@ -450,6 +628,25 @@ export const registerApplicationIpc = (services: ApplicationIpcServices): Applic
     (event, request: PrepareGoogleAccountConnectionRequestV1) =>
       prepareGoogleConnection(event, request)
   )
+  ipcMain.handle(
+    IPC_CHANNELS.connectGoogleAccount,
+    (event, request: ConnectGoogleAccountRequestV1) => connectGoogleAccount(event, request)
+  )
+  ipcMain.handle(
+    IPC_CHANNELS.cancelGoogleAccountConnection,
+    (event, request: CancelGoogleAccountConnectionRequestV1) =>
+      cancelGoogleAccountConnection(event, request)
+  )
+  ipcMain.handle(
+    IPC_CHANNELS.prepareGoogleAccountDisconnect,
+    (event, request: PrepareGoogleAccountDisconnectRequestV1) =>
+      prepareGoogleAccountDisconnect(event, request)
+  )
+  ipcMain.handle(
+    IPC_CHANNELS.executeGoogleAccountDisconnect,
+    (event, request: ExecuteGoogleAccountDisconnectRequestV1) =>
+      executeGoogleAccountDisconnect(event, request)
+  )
 
   return {
     allowWindow(window) {
@@ -459,6 +656,7 @@ export const registerApplicationIpc = (services: ApplicationIpcServices): Applic
         trustedWindows.delete(id)
         deletionAuthorization.revokeSender(id)
         recoveryAuthorization.revokeSender(id)
+        disconnectAuthorization.revokeSender(id)
       })
     },
     notifyApplicationStateChanged() {
@@ -481,9 +679,14 @@ export const registerApplicationIpc = (services: ApplicationIpcServices): Applic
       ipcMain.removeHandler(IPC_CHANNELS.prepareAccountConnectionRecovery)
       ipcMain.removeHandler(IPC_CHANNELS.executeAccountConnectionRecovery)
       ipcMain.removeHandler(IPC_CHANNELS.prepareGoogleAccountConnection)
+      ipcMain.removeHandler(IPC_CHANNELS.connectGoogleAccount)
+      ipcMain.removeHandler(IPC_CHANNELS.cancelGoogleAccountConnection)
+      ipcMain.removeHandler(IPC_CHANNELS.prepareGoogleAccountDisconnect)
+      ipcMain.removeHandler(IPC_CHANNELS.executeGoogleAccountDisconnect)
       trustedWindows.clear()
       deletionAuthorization.clear()
       recoveryAuthorization.clear()
+      disconnectAuthorization.clear()
     }
   }
 }

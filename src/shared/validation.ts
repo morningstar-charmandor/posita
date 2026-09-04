@@ -12,6 +12,8 @@ import type {
   GoogleAccountConnectionPreflightErrorCodeV1,
   GoogleAccountConnectionPreflightErrorV1,
   GoogleAccountConnectionPreflightV1,
+  GoogleAccountConnectionErrorCodeV1,
+  GoogleAccountConnectionErrorV1,
   LifecycleOperationStatusV1,
   LifecycleStatusSnapshotV1,
   ExecuteLocalDataDeletionRequestV1,
@@ -35,6 +37,15 @@ import type {
   PrepareAccountConnectionRecoveryResponseV1,
   PrepareGoogleAccountConnectionRequestV1,
   PrepareGoogleAccountConnectionResponseV1,
+  ConnectGoogleAccountRequestV1,
+  ConnectGoogleAccountResponseV1,
+  CancelGoogleAccountConnectionRequestV1,
+  CancelGoogleAccountConnectionResponseV1,
+  PrepareGoogleAccountDisconnectRequestV1,
+  PrepareGoogleAccountDisconnectResponseV1,
+  ExecuteGoogleAccountDisconnectRequestV1,
+  ExecuteGoogleAccountDisconnectResponseV1,
+  GoogleAccountDisconnectErrorCodeV1,
   RetentionMaintenanceRunV1,
   RetentionMaintenanceStatusV1
 } from './contracts'
@@ -43,6 +54,8 @@ import {
   ACCOUNT_CONNECTION_RECOVERY_CONSEQUENCES,
   DELETE_LOCAL_DATA_CONFIRMATION_TEXT,
   GOOGLE_ACCOUNT_CONNECTION_PREFLIGHT_NOTICES,
+  GOOGLE_ACCOUNT_DISCONNECT_CONFIRMATION_TEXT,
+  GOOGLE_ACCOUNT_DISCONNECT_CONSEQUENCES,
   GOOGLE_CONNECT_CONSENT,
   LOCAL_DATA_DELETION_CONSEQUENCES,
   POSITA_PROTOCOL_VERSION,
@@ -655,3 +668,133 @@ export const isPrepareGoogleAccountConnectionResponse = (
     : hasOnlyKeys(value, ['ok', 'error']) &&
       isGoogleAccountConnectionPreflightError(value.error)
 }
+
+export const isConnectGoogleAccountRequest = (
+  value: unknown
+): value is ConnectGoogleAccountRequestV1 =>
+  isRecord(value) && hasOnlyKeys(value, ['version', 'action', 'consentVersion']) &&
+  value.version === POSITA_PROTOCOL_VERSION && value.action === 'connect-google-account' &&
+  value.consentVersion === GOOGLE_CONNECT_CONSENT.consentVersion
+
+export const isCancelGoogleAccountConnectionRequest = (
+  value: unknown
+): value is CancelGoogleAccountConnectionRequestV1 =>
+  isRecord(value) && hasOnlyKeys(value, ['version', 'action']) &&
+  value.version === POSITA_PROTOCOL_VERSION &&
+  value.action === 'cancel-google-account-connection'
+
+const googleConnectionErrorCodes: readonly GoogleAccountConnectionErrorCodeV1[] = [
+  'INVALID_REQUEST', 'UNTRUSTED_SENDER', 'CONNECTION_UNAVAILABLE',
+  'CONNECTION_IN_PROGRESS', 'AUTHORIZATION_DECLINED', 'AUTHORIZATION_FAILED',
+  'CONNECTION_FAILED', 'PROTOCOL_ERROR'
+]
+
+const isGoogleAccountConnectionError = (
+  value: unknown
+): value is GoogleAccountConnectionErrorV1 =>
+  isRecord(value) && hasOnlyKeys(value, ['version', 'code', 'message', 'retryable']) &&
+  value.version === POSITA_PROTOCOL_VERSION &&
+  isOneOf(value.code, googleConnectionErrorCodes) &&
+  isBoundedString(value.message, 240) && isBoolean(value.retryable)
+
+const isConnectedGoogleAccount = (value: unknown): boolean => {
+  if (!isRecord(value)) return false
+  const syncError = value.syncErrorCode === undefined ? [] : ['syncErrorCode']
+  return hasOnlyKeys(value, [
+    'version', 'accountId', 'provider', 'mailboxAddress', 'connectedAt', 'status', ...syncError
+  ]) && value.version === POSITA_PROTOCOL_VERSION &&
+    typeof value.accountId === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(value.accountId) &&
+    value.provider === 'google' && typeof value.mailboxAddress === 'string' &&
+    value.mailboxAddress.length <= 320 && /^[^\s@]+@[^\s@]+$/.test(value.mailboxAddress) &&
+    typeof value.connectedAt === 'string' && value.connectedAt.length <= 64 &&
+    Number.isFinite(Date.parse(value.connectedAt)) &&
+    (value.status === 'connected-and-synced' ||
+      value.status === 'connected-sync-retry-required' ||
+      value.status === 'connected-needs-review') &&
+    (value.syncErrorCode === undefined || isBoundedString(value.syncErrorCode, 64)) &&
+    (value.status === 'connected-and-synced'
+      ? value.syncErrorCode === undefined
+      : value.syncErrorCode !== undefined)
+}
+
+export const isConnectGoogleAccountResponse = (
+  value: unknown
+): value is ConnectGoogleAccountResponseV1 =>
+  isRecord(value) && typeof value.ok === 'boolean' && (value.ok
+    ? hasOnlyKeys(value, ['ok', 'value']) && isConnectedGoogleAccount(value.value)
+    : hasOnlyKeys(value, ['ok', 'error']) && isGoogleAccountConnectionError(value.error))
+
+export const isCancelGoogleAccountConnectionResponse = (
+  value: unknown
+): value is CancelGoogleAccountConnectionResponseV1 =>
+  isRecord(value) && typeof value.ok === 'boolean' && (value.ok
+    ? hasOnlyKeys(value, ['ok', 'value']) && isRecord(value.value) &&
+      hasOnlyKeys(value.value, ['version', 'status']) &&
+      value.value.version === POSITA_PROTOCOL_VERSION &&
+      (value.value.status === 'cancellation-requested' ||
+        value.value.status === 'no-connection-in-progress')
+    : hasOnlyKeys(value, ['ok', 'error']) && isGoogleAccountConnectionError(value.error))
+
+const isIsoTimestamp = (value: unknown): value is string =>
+  typeof value === 'string' && value.length <= 64 && Number.isFinite(Date.parse(value))
+
+export const isPrepareGoogleAccountDisconnectRequest = (
+  value: unknown
+): value is PrepareGoogleAccountDisconnectRequestV1 =>
+  isRecord(value) && hasOnlyKeys(value, ['version', 'action', 'accountId']) &&
+  value.version === POSITA_PROTOCOL_VERSION && value.action === 'disconnect-google-account' &&
+  isOperationId(value.accountId)
+
+export const isExecuteGoogleAccountDisconnectRequest = (
+  value: unknown
+): value is ExecuteGoogleAccountDisconnectRequestV1 =>
+  isRecord(value) && hasOnlyKeys(value, [
+    'version', 'confirmationId', 'operationId', 'action', 'accountId', 'enteredText'
+  ]) && value.version === POSITA_PROTOCOL_VERSION &&
+  isOperationId(value.confirmationId) && isOperationId(value.operationId) &&
+  value.confirmationId !== value.operationId &&
+  value.action === 'disconnect-google-account' && isOperationId(value.accountId) &&
+  typeof value.enteredText === 'string' && value.enteredText.length <= 64
+
+const disconnectErrorCodes: readonly GoogleAccountDisconnectErrorCodeV1[] = [
+  'INVALID_REQUEST', 'UNTRUSTED_SENDER', 'DISCONNECT_UNAVAILABLE',
+  'ACCOUNT_NOT_CONNECTED', 'CONFIRMATION_NOT_FOUND', 'CONFIRMATION_EXPIRED',
+  'CONFIRMATION_TEXT_MISMATCH', 'DISCONNECT_FAILED', 'PROTOCOL_ERROR'
+]
+
+const isDisconnectError = (value: unknown): boolean =>
+  isRecord(value) && hasOnlyKeys(value, ['version', 'code', 'message', 'retryable']) &&
+  value.version === POSITA_PROTOCOL_VERSION && isOneOf(value.code, disconnectErrorCodes) &&
+  isBoundedString(value.message, 240) && isBoolean(value.retryable)
+
+const isDisconnectChallenge = (value: unknown): boolean =>
+  isRecord(value) && hasOnlyKeys(value, [
+    'version', 'confirmationId', 'operationId', 'action', 'accountId',
+    'requiredText', 'expiresAt', 'consequences'
+  ]) && value.version === POSITA_PROTOCOL_VERSION &&
+  isOperationId(value.confirmationId) && isOperationId(value.operationId) &&
+  value.confirmationId !== value.operationId && value.action === 'disconnect-google-account' &&
+  isOperationId(value.accountId) &&
+  value.requiredText === GOOGLE_ACCOUNT_DISCONNECT_CONFIRMATION_TEXT &&
+  isIsoTimestamp(value.expiresAt) && Array.isArray(value.consequences) &&
+  value.consequences.length === GOOGLE_ACCOUNT_DISCONNECT_CONSEQUENCES.length &&
+  value.consequences.every((item, index) =>
+    item === GOOGLE_ACCOUNT_DISCONNECT_CONSEQUENCES[index])
+
+export const isPrepareGoogleAccountDisconnectResponse = (
+  value: unknown
+): value is PrepareGoogleAccountDisconnectResponseV1 =>
+  isRecord(value) && typeof value.ok === 'boolean' && (value.ok
+    ? hasOnlyKeys(value, ['ok', 'value']) && isDisconnectChallenge(value.value)
+    : hasOnlyKeys(value, ['ok', 'error']) && isDisconnectError(value.error))
+
+export const isExecuteGoogleAccountDisconnectResponse = (
+  value: unknown
+): value is ExecuteGoogleAccountDisconnectResponseV1 =>
+  isRecord(value) && typeof value.ok === 'boolean' && (value.ok
+    ? hasOnlyKeys(value, ['ok', 'value']) && isRecord(value.value) &&
+      hasOnlyKeys(value.value, ['version', 'operationId', 'accountId', 'status']) &&
+      value.value.version === POSITA_PROTOCOL_VERSION &&
+      isOperationId(value.value.operationId) && isOperationId(value.value.accountId) &&
+      value.value.status === 'disconnected'
+    : hasOnlyKeys(value, ['ok', 'error']) && isDisconnectError(value.error))

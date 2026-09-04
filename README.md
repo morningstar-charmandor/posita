@@ -10,7 +10,7 @@ Public repository: [github.com/morningstar-charmandor/posita](https://github.com
 ## Current status
 
 Gate 2D's credential-free lifecycle foundation and approved Google adapter set are
-complete but not activated. A strict inert trusted-main source can now validate a
+complete but have not been used with a real account. A strict trusted-main source validates a
 desktop client identifier from one private application-data file. The real client ID
 is locally present, validated, and consumed only by a provider-inert trusted-main
 composition. No client secret, user credential, grant, token, or account is present. Posita includes
@@ -40,8 +40,8 @@ revocation, credential deletion, provider-state deletion, local-data removal, an
 compaction through interfaces and deterministic tests. A separate installation-wide
 orchestrator now journals deletion of all refresh credentials, encrypted account
 state, mail records, SQLite remnants, the OS-protected data key, and its in-memory
-copy. Account disconnect remains non-user-triggerable because there is no live
-disconnect command. Full local deletion is now available under Settings & privacy
+copy. Account disconnect is exposed through a short-lived, same-window typed
+confirmation and an opaque durable intent audit. Full local deletion is available under Settings & privacy
 through separate prepare and execute IPC methods. Execution requires a five-minute
 typed confirmation bound to one operation, and pending journal state has a bounded
 safe-status projection. One validated read-only application-state query now
@@ -57,10 +57,11 @@ boundary, and disconnect behavior. Google Cloud project `posita-mail-hub-2026` n
 has Gmail API, external testing consent with the exact reviewed scopes, and one
 `Posita macOS Desktop` client. Its client ID is privately configured and validated
 locally; no client secret, credential bundle, user grant, or token was downloaded or
-used. Settings can now run a prepare-only local readiness check through a narrow,
-validated desktop command. That check opens no browser, creates no authorization
-session, receives no credential, and connects no account. There is no public
-Continue-to-Google command, user grant, or live account.
+used. Settings first runs a non-activating local readiness check, then offers a
+separate explicit Continue-to-Google command. The trusted command owns the opaque
+account ID, cancellation, authorization, encrypted persistence, initial sync, and
+rollback. A connected account has a typed-confirmation disconnect control. No user
+grant, real account, provider request, or live mail has yet been used.
 
 The trusted backend now defines a bounded provider-independent authorization
 session contract, deterministic fake, and real Google desktop protocol
@@ -71,19 +72,19 @@ consume the session and require a fresh start. A separate bounded listener now
 binds one short-lived operating-system-selected `127.0.0.1` port, validates the
 host/path/state, bounds requests, and returns generic non-reflective browser copy.
 An exact-URL system-browser launcher has an injected Electron delegate and is tested
-without opening a browser. Production now constructs these boundaries inside one
-lifecycle graph and starts it with zero accounts. The only public Google-account
-action is the prepare-only local readiness check; it cannot invoke the activation
-coordinator. No client secret, user grant, account, browser action, or live provider
-request is present.
+without opening a browser. Production constructs these boundaries inside one
+lifecycle graph and starts it with zero accounts. Exact validated connection and
+cancellation IPC can invoke the activation coordinator only after the user chooses
+Continue to Google. No client secret, user grant, account, browser action, or live
+provider request is present.
 
-An unexposed trusted-main activation coordinator now joins those boundaries to the
+A trusted-main activation coordinator joins those boundaries to the
 existing account-connection service. It starts callback waiting before browser
 handoff, keeps authorization URLs and callbacks out of renderer state, bounds
 non-consuming callback rejection, observes cancellation before code exchange, and
-fails closed if cleanup cannot be confirmed. Startup constructs this coordinator but
-exposes no IPC/UI action that can invoke it; the preflight remains read-only and
-separate. There is no user credential, account,
+fails closed if cleanup cannot be confirmed. A fixed UI/IPC command invokes it only
+after explicit preparation, and a paired confirmed disconnect remains available.
+There is no user credential, account,
 browser action, or provider request.
 
 A trusted account-connection coordinator now composes that interface with the
@@ -159,19 +160,19 @@ so incomplete recovery cannot partially erase the encrypted projection. This pat
 is now owned by the provider-inert production graph; startup supplies zero accounts,
 so it remains deterministic and performs no provider request.
 
-The inactive journaled disconnect service now requires that worker-backed
+The journaled disconnect service requires that worker-backed
 projection remover in its local mail-data phase. If canonical deletion fails after
 sample data was already removed, retry resumes the same phase safely and repeats
-both idempotent actions. The production graph now contains the real Google revoker,
-but there is still no disconnect UI, credential, or provider account.
+both idempotent actions. The production graph contains the real Google revoker and
+an explicit confirmed disconnect UI. No credential or provider account exists.
 
 The existing automatic retention worker now applies the same exact 90-day cutoff
 to canonical provider messages by absolute `receivedAt`. It retains the boundary,
 removes empty provider threads, rewrites partially retained threads as authenticated
 ciphertext, preserves sync cursors, and completes or resumes SQLite sanitization.
 The canonical projection remains empty in the running product. Sync, Gmail, and OAuth
-objects are assembled but start with zero accounts; credentials, preload, and UI
-activation remain absent.
+objects are assembled and start with zero accounts; the explicit preload/UI
+activation path is implemented but has received no credential or account.
 
 The credential-free sync coordinator is now also verified end to end against the
 real file-backed encrypted projection worker and deterministic provider. The

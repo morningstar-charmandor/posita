@@ -11,8 +11,9 @@ retention, full local deletion, account removal, connection consistency, confirm
 orphan recovery, startup inventory, durable sync status, provider-independent sync,
 encrypted projection, read surfaces, and disconnect orchestration contracts.
 
-**Live Gmail authorization and ingestion are not ready to activate.** This is a
-deliberate gate, not a failed implementation. The canonical provider-independent
+**Live Gmail authorization and ingestion have not yet been exercised.** The narrow
+connection, cancellation, and confirmed disconnect command boundary is implemented;
+the canonical provider-independent
 mail contract, credential-free sync coordinator, empty schema-v9 encrypted
 projection, and packaged file-backed projection worker are now verified. The
 coordinator-to-worker boundary is now integration-tested with the deterministic
@@ -31,9 +32,9 @@ connection milestone. Activation now has an isolated Google Cloud project
 scopes, and a desktop client whose credentials remain unused. One trusted-main
 composition now owns the full graph but receives an explicit empty startup account
 list. The real client ID is private, local, and loader-validated; no client secret,
-user grant, or token exists. A prepare-only UI/IPC readiness command is complete;
-activation still requires a reviewed authorization-execution command,
-dedicated-account testing, and owner approval.
+user grant, or token exists. Preparation remains non-activating, while a separate
+explicit execution command and paired disconnect are now present. Final full-suite
+verification and dedicated-account testing remain before claiming live readiness.
 
 No credential, provider connection, browser authorization, network request, Gmail
 SDK, mailbox data, or model provider was used for this audit.
@@ -46,13 +47,13 @@ SDK, mailbox data, or model provider was used for this audit.
 | Credential vault | Ready, empty | OS-backed fail-closed protector and `SecretVault`; deterministic fake tests | A future refresh token has a protected account-scoped destination |
 | Encrypted private cache | Ready for current records | per-record AES-256-GCM, protected installation key, authenticated metadata, migrations, sanitization | Real records still require the provider-normalized schema below |
 | Provider account/sync state | Ready, empty | versioned encrypted account/cursor records plus production-composed lifecycle status writer and fixed retry dispositions | Can store future connection identity and truthful bounded sync state without starting provider work |
-| Consent and local preflight | Approved, activation absent | exact `google-gmail-readonly-identity-v2` projection plus a validated prepare-only Settings/IPC readiness result | Viewing or preparing creates no authorization session, browser action, credential, or account state |
+| Consent and local preflight | Approved | exact `google-gmail-readonly-identity-v2` projection plus a validated non-activating Settings/IPC readiness result | Viewing or preparing creates no authorization session, browser action, credential, or account state |
 | Authorization session | Production-constructed, provider-inert | bounded begin/complete/cancel contract, deterministic fake, S256 PKCE/state, exact callback verification, bounded exchange, verified identity, ephemeral IPv4 loopback, and exact-URL browser-delegate tests | No command, browser action, or live request exists |
-| Connection persistence | Production-constructed, unexposed | vault-before-state ordering, duplicate preflight, rollback, callback-before-browser sequencing, bounded callback retry, cancellation, and cleanup-failure tests | No preload, IPC, or UI caller exists |
+| Connection persistence | Explicit command implemented, not live-tested | vault-before-state ordering, main-generated account ID, callback-before-browser sequencing, cancellation, lifecycle activation, and journaled rollback tests | Only a trusted-window Continue-to-Google action can invoke it; no credential crosses IPC |
 | Connection consistency/recovery | Ready locally | presence-only diagnosis plus same-window one-use confirmed orphan discard | Never reconstructs a connection or contacts Google |
 | Retention | Ready | exact 90-day eviction, daily worker schedule, safe retry/status | Cleanup affects encrypted Posita data only |
 | Full local deletion | Ready | confirmed Settings command, durable recovery, keyless restart, cryptographic erasure | Removes local projection ciphertext; never deletes remote provider mail |
-| Account disconnect | Production-constructed, inactive | journaled idempotent service plus real fixed-endpoint revoker with deterministic HTTP tests | Needs a separately reviewed user command and startup resume path |
+| Account disconnect | Confirmed command implemented, not live-tested | five-minute same-window typed challenge, opaque durable intent audit, journaled idempotent service, and real fixed-endpoint revoker tests | Revokes Posita and removes its local data; never mutates Gmail mail |
 | Canonical provider mail model | Activation-ready, empty | exact validators, schema-v9 authenticated envelopes, opaque row IDs, packaged serial worker, fixed-window retention, journaled account deletion, lifecycle ordering, inventory, and durable status | Must remain empty until the paired Google activation plan is approved |
 | Sample/live boundary | Ready, unexposed | schema-v10 one-way mode, connected-pair gate, atomic sample removal, restart/no-reseed and retry tests | Must be invoked only by reviewed connection/sync composition |
 | Live application read model | Ready at credential-free presentation boundary | durable mode-aware query, encrypted human-readable account identity, bounded canonical recent-mail list and source detail, fixed validated IPC/preload, worker ownership, loading/missing/error/retry UI, and confirmed main-derived original-source handoff | Contains no live record until separately approved provider activation |

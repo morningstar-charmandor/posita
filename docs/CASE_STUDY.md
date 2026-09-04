@@ -1,7 +1,7 @@
 # Posita Portfolio Case Study
 
 Status: evolving working draft  
-Last reviewed: 2026-09-03
+Last reviewed: 2026-09-04
 
 This document turns verified project history into a portfolio-ready narrative.
 It should remain honest about what is implemented, simulated, measured, and
@@ -16,7 +16,8 @@ and actions.
 **Product promise:** Your inboxes, understood as one.
 
 **Current stage:** Gate 2D's secure local lifecycle and read-only Google foundation
-are complete at an intentionally inactive boundary. Posita has an encrypted SQLite
+now include an explicit connection/cancellation command paired with a confirmed
+disconnect boundary. Posita has an encrypted SQLite
 cache, OS-protected key hierarchy, strict account-scoped contracts, crash-resumable
 disconnect and full local deletion, deterministic retention, and bounded local mail
 views. Its exact OpenID/email/Gmail-read-only consent, desktop PKCE protocol,
@@ -26,9 +27,9 @@ production ownership graph. Startup supplies that graph with zero accounts, so i
 starts retention and owns safe teardown without opening a browser or contacting
 Google. The real desktop client ID is read only from an owner-readable application-
 data file and is absent from Git; no client secret, user grant, token, or real account
-exists. The next boundary is a separately reviewed narrow connection/disconnect
-command and status surface. Gmail and AI remain unconnected, and every visible mail
-item remains deterministic sample data.
+exists. The paired commands pass the complete 82-file, 488-test verification suite;
+dedicated-account testing remains. Gmail and AI remain unconnected, and every
+visible mail item remains deterministic sample data.
 
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
 
@@ -251,11 +252,12 @@ At the current Gate 2D foundation checkpoint, Posita has:
   deletion operation no longer needs the authorization binding,
 - file-backed WAL checkpointing and SQLite compaction in one packaged single-flight
   worker, with safe retry errors and real deleted-byte verification,
-- an exact read-only Gmail consent projection and accessible Settings preview with
-  disabled activation and no OAuth state, credential, or live account,
+- an exact read-only Gmail consent projection and accessible Settings flow with
+  separated preparation, explicit cancellable activation, confirmed disconnect,
+  and no OAuth state or credential in renderer data,
 - a bounded trusted-main authorization-session contract and deterministic fake,
-  production-constructed behind no public caller, browser action, network access,
-  or live credential,
+  production-constructed behind one exact public command but not yet exercised with
+  a browser, provider network, or live credential,
 - a credential-free account-connection coordinator with duplicate preflight,
   vault-before-state ordering, ambiguous-write rollback, and explicit recovery failure,
 - a bounded read-only consistency diagnosis covering both one-sided failure states
@@ -396,9 +398,10 @@ downloaded nor used, preserving a clean separation between external infrastructu
 and runtime access. A fixed, owner-readable, symlink-refusing configuration source
 now validates the real client ID from Posita's private application-data file and
 rejects secrets or fallback search. The identifier is absent from Git and feeds
-only the inactive graph. The next review is the narrow connection/disconnect UI
-and IPC boundary. Real browser activation, credentials, live account connection, provider-network
-testing, and production sync remain blocked behind explicit owner approval.
+only the trusted graph. The narrow connection/disconnect UI and IPC boundary is now
+implemented with a same-window typed confirmation and activation rollback. Real
+browser activation, credentials, live account connection, provider-network testing,
+and production sync remain unperformed and must be reported separately.
 
 Later evidence should include measured sync reliability, duplicate prevention,
 citation correctness, draft usefulness, correction rate, and time to attention.
@@ -454,8 +457,9 @@ the undocumented Gmail web route is revalidated, and the remaining provider
 activation gates pass.
 
 The connection experience now demonstrates the same gated approach in the product:
-Settings can verify local readiness through a prepare-only command, while explicitly
-showing that no browser opened, no Gmail account connected, and no credential or mail
-data was received. The boundary includes loading, safe failure, and retry behavior,
-but deliberately provides no authorization action. This is portfolio evidence of a
-security constraint made legible in the interface, not evidence of live Gmail access.
+Settings verifies local readiness before revealing a separate Continue-to-Google
+action, keeps authorization cancellable, and exposes a typed-confirmation disconnect
+for every connected account. Trusted main—not the UI—creates account identity, owns
+credential persistence and initial sync, and attempts journaled rollback if activation
+fails. This is portfolio evidence of a security constraint made legible in the
+interface, not evidence of live Gmail access; no real account has yet been connected.

@@ -12,7 +12,9 @@ data file and passes the strict loader. No client secret, credential bundle, use
 grant, refresh token, or access token was downloaded or used.
 Real desktop authorization protocol, read-only, idempotent revocation, and refresh-
 to-access-token adapters are assembled inside one production graph that starts with
-zero accounts. This document does not authorize live mailbox access.
+zero accounts. Explicit connection, cancellation, and confirmed disconnect commands
+are implemented, but none has been used with a real account. This document does not
+by itself authorize live mailbox access.
 
 Posita can now project its durable `live` installation mode through a bounded
 worker-backed application snapshot. That local read model is not Gmail access: it
@@ -26,11 +28,10 @@ Settings now renders a credential-free consent preview identified as
 existing validated read-only application-state response and requests `openid`,
 `email`, and `gmail.readonly`. It explains that identity scopes establish the
 hidden stable Google subject and verified mailbox address but do not permit mail
-mutation. A prepare-only local readiness button uses an exact validated desktop
-command and reports that no browser opened, account connected, or credential/mail
-data was received. It creates no authorization state, PKCE verifier, browser
-navigation, token, provider account, or consent receipt, and no Continue-to-Google
-action exists.
+mutation. A local readiness button uses an exact validated desktop command and
+reports that no browser opened, account connected, or credential/mail data was
+received. After readiness succeeds, a separate explicit Continue-to-Google action
+may start the trusted flow and remains cancellable while authorization is pending.
 
 Normal startup now performs a credential-free, trusted-main inventory over at most
 eight local account scopes. It compares encrypted provider-account presence with
@@ -58,10 +59,10 @@ now binds one ephemeral IPv4 localhost port with strict host/path/state, header,
 request, queue, and five-minute lifetime bounds. Its browser response never reflects
 callback data. The separate system-browser launcher validates the entire exact
 Google URL and uses an injected Electron delegate; deterministic tests never invoke
-the OS. Production client configuration and provider-inert construction are complete;
-credential persistence, account creation, authorization-execution IPC/UI action,
-browser launch, and live provider request remain inactive. The public prepare-only
-IPC path is read-only and cannot invoke this infrastructure.
+the OS. Production client configuration and construction are complete; credential
+persistence, account creation, browser launch, and live provider request have not
+occurred. The public preparation path stays read-only; only its separate explicit
+connection command can invoke this infrastructure.
 
 The credential-free `AccountConnectionActivationService` now proves how these
 pieces must be used together without activating them. It begins through the existing
@@ -70,8 +71,9 @@ only the protocol adapter's non-consuming callback rejection up to a fixed limit
 and completes through the existing vault-before-encrypted-state transaction. It
 cancels on browser/listener failure and reports uncertain cleanup distinctly. The
 authorization URL and callback never enter renderer data. This coordinator is
-constructed inside the provider-inert startup graph but has no preload, IPC,
-Settings action, credential, browser invocation, account, or provider request.
+constructed inside the startup graph and is reachable only through the exact
+trusted-window connection command. No credential, browser invocation, account, or
+provider request has yet occurred.
 
 Gate 2D also defines a credential-free `AccountConnectionService` above the
 authorization adapter. It verifies that the opaque Posita account has neither an
@@ -283,7 +285,8 @@ disconnect. Revocation must be idempotent: an already revoked or absent grant is
 success so a crash before journal advancement can retry safely. A real bounded
 Google revoker is implemented behind that interface, tested through injected
 deterministic HTTP, and constructed inside the provider-inert graph. No Google request
-or user credential is active, and the orchestrator has no UI/IPC trigger.
+or user credential is active. The exact confirmed UI/IPC trigger now invokes this
+same orchestrator without exposing provider identity or credentials.
 
 ## Normalized record and account isolation
 

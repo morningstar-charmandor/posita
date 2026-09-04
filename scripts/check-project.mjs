@@ -37,6 +37,8 @@ const requiredFiles = [
   'src/main/application/mailSync.ts',
   'src/main/application/mailSyncCoordinator.ts',
   'src/main/application/googleAccountConnectionPreflight.ts',
+  'src/main/application/googleAccountConnectionCommand.ts',
+  'src/main/application/googleAccountDisconnectCommand.ts',
   'src/preload/googleAccountConnectionPreflightClient.ts',
   'src/renderer/src/application/googleAccountConnectionPreflightDataSource.ts',
   'src/main/infrastructure/providers/deterministicFakeMailSync.ts'
@@ -177,6 +179,15 @@ const googleAccountConnectionPreflight = await readText(
 const googleAccountConnectionPreflightClient = await readText(
   'src/preload/googleAccountConnectionPreflightClient.ts'
 )
+const googleAccountConnectionCommand = await readText(
+  'src/main/application/googleAccountConnectionCommand.ts'
+)
+const googleAccountDisconnectCommand = await readText(
+  'src/main/application/googleAccountDisconnectCommand.ts'
+)
+const googleAccountDisconnectControl = await readText(
+  'src/renderer/src/features/settings/GoogleAccountDisconnectControl.tsx'
+)
 if (!sharedContracts.includes("consentVersion: 'google-gmail-readonly-identity-v2'") ||
     !sharedContracts.includes("'openid'") ||
     !sharedContracts.includes("'email'") ||
@@ -187,10 +198,12 @@ if (!applicationStateService.includes('connectConsent: GOOGLE_CONNECT_CONSENT'))
   fail('Gmail consent must use the existing read-only application-state projection')
 }
 if (!gmailConsentPanel.includes('Prepare Gmail connection') ||
-    !gmailConsentPanel.includes('Continuing to Google remains a separate explicit decision.') ||
+    !gmailConsentPanel.includes('Continue to Google') ||
+    !gmailConsentPanel.includes('Cancel connection') ||
     !gmailConsentPanel.includes('No Gmail accounts are connected.') ||
-    gmailConsentPanel.includes('Continue to Google')) {
-  fail('Gmail UI must remain prepare-only and visibly separate from authorization')
+    !googleAccountDisconnectControl.includes('GOOGLE_ACCOUNT_DISCONNECT_CONFIRMATION_TEXT') ||
+    !googleAccountDisconnectControl.includes('state.enteredText !== GOOGLE_ACCOUNT_DISCONNECT_CONFIRMATION_TEXT')) {
+  fail('Gmail activation must remain explicit, cancellable, read-only, and paired with disconnect')
 }
 if (!googleAccountConnectionPreflight.includes("status: 'authorization-not-started'") ||
     !googleAccountConnectionPreflight.includes("nextStep: 'explicit-google-authorization-required'") ||
@@ -200,6 +213,16 @@ if (!googleAccountConnectionPreflight.includes("status: 'authorization-not-start
     googleAccountConnectionPreflightClient.includes('authorizationUrl') ||
     googleAccountConnectionPreflightClient.includes('accountId')) {
   fail('Gmail connection preflight must not expose or start authorization')
+}
+if (!googleAccountConnectionCommand.includes('this.activation.connect({') ||
+    !googleAccountConnectionCommand.includes('this.lifecycle.activateConnectedAccount({') ||
+    !googleAccountConnectionCommand.includes('this.active.abort()') ||
+    googleAccountConnectionCommand.includes('authorizationUrl') ||
+    googleAccountConnectionCommand.includes('refreshToken') ||
+    !googleAccountDisconnectCommand.includes('this.audit.save({') ||
+    !googleAccountDisconnectCommand.includes('this.lifecycle.disconnectAccount({') ||
+    !googleAccountDisconnectCommand.includes('GOOGLE_ACCOUNT_DISCONNECT_CONFIRMATION_TEXT')) {
+  fail('Google account commands must preserve trusted activation, cancellation, audit, and disconnect ownership')
 }
 if (!canonicalProviderMail.includes('interface ProviderMailMessageV1') ||
     !canonicalProviderMail.includes('interface ProviderMailThreadV1') ||

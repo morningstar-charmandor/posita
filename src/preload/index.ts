@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
-import { IPC_CHANNELS, type PositaDesktopApi } from '../shared/contracts'
+import { GOOGLE_CONNECT_CONSENT, IPC_CHANNELS, type PositaDesktopApi } from '../shared/contracts'
 import { createLoadApplicationStateClient } from './loadApplicationStateClient'
 import { createApplicationStateChangedClient } from './applicationStateChangedClient'
 import {
@@ -13,6 +13,14 @@ import {
 import { createLoadLiveMailMessageDetailClient } from './liveMailMessageDetailClient'
 import { createOpenLiveMailOriginalClient } from './openLiveMailOriginalClient'
 import { createPrepareGoogleAccountConnectionClient } from './googleAccountConnectionPreflightClient'
+import {
+  createCancelGoogleAccountConnectionClient,
+  createConnectGoogleAccountClient
+} from './googleAccountConnectionCommandClient'
+import {
+  createExecuteGoogleAccountDisconnectClient,
+  createPrepareGoogleAccountDisconnectClient
+} from './googleAccountDisconnectClient'
 
 const loadApplicationState = createLoadApplicationStateClient((request) =>
   ipcRenderer.invoke(IPC_CHANNELS.loadApplicationState, request))
@@ -39,6 +47,23 @@ const prepareGoogleAccountConnection = () => prepareGoogleAccountConnectionClien
   version: 1,
   action: 'prepare-google-account-connection'
 })
+const connectGoogleAccountClient = createConnectGoogleAccountClient((request) =>
+  ipcRenderer.invoke(IPC_CHANNELS.connectGoogleAccount, request))
+const connectGoogleAccount = () => connectGoogleAccountClient({
+  version: 1,
+  action: 'connect-google-account',
+  consentVersion: GOOGLE_CONNECT_CONSENT.consentVersion
+})
+const cancelGoogleAccountConnectionClient = createCancelGoogleAccountConnectionClient((request) =>
+  ipcRenderer.invoke(IPC_CHANNELS.cancelGoogleAccountConnection, request))
+const cancelGoogleAccountConnection = () => cancelGoogleAccountConnectionClient({
+  version: 1,
+  action: 'cancel-google-account-connection'
+})
+const prepareGoogleAccountDisconnect = createPrepareGoogleAccountDisconnectClient((request) =>
+  ipcRenderer.invoke(IPC_CHANNELS.prepareGoogleAccountDisconnect, request))
+const executeGoogleAccountDisconnect = createExecuteGoogleAccountDisconnectClient((request) =>
+  ipcRenderer.invoke(IPC_CHANNELS.executeGoogleAccountDisconnect, request))
 
 const api: PositaDesktopApi = Object.freeze({
   platform: process.platform,
@@ -51,7 +76,11 @@ const api: PositaDesktopApi = Object.freeze({
   executeLocalDataDeletion,
   prepareAccountConnectionRecovery,
   executeAccountConnectionRecovery,
-  prepareGoogleAccountConnection
+  prepareGoogleAccountConnection,
+  connectGoogleAccount,
+  cancelGoogleAccountConnection,
+  prepareGoogleAccountDisconnect,
+  executeGoogleAccountDisconnect
 })
 
 contextBridge.exposeInMainWorld('posita', api)

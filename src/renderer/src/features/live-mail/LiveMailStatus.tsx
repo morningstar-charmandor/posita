@@ -7,6 +7,8 @@ import type { LiveMailMessageDetailDataSource } from '../../application/liveMail
 import type { OpenLiveMailOriginalDataSource } from '../../application/openLiveMailOriginalDataSource'
 import { OpenOriginalConfirmation } from './OpenOriginalConfirmation'
 import { LiveMailSummaryList } from './LiveMailSummaryList'
+import type { GoogleAccountConnectionPreflightDataSource } from '../../application/googleAccountConnectionPreflightDataSource'
+import { GoogleAccountDisconnectControl } from '../settings/GoogleAccountDisconnectControl'
 
 const statusCopy: Record<LiveMailSnapshotV2['status'], {
   title: string
@@ -48,6 +50,7 @@ export interface LiveMailStatusProps {
   onReload: () => void
   detailDataSource: LiveMailMessageDetailDataSource
   openOriginalDataSource: OpenLiveMailOriginalDataSource
+  googleAccountDataSource?: GoogleAccountConnectionPreflightDataSource
 }
 
 type DetailState =
@@ -61,7 +64,8 @@ export function LiveMailStatus({
   snapshot,
   onReload,
   detailDataSource,
-  openOriginalDataSource
+  openOriginalDataSource,
+  googleAccountDataSource
 }: LiveMailStatusProps): React.JSX.Element {
   const [detail, setDetail] = useState<DetailState>({ status: 'idle' })
   const sequence = useRef(0)
@@ -140,6 +144,14 @@ export function LiveMailStatus({
                   )}
               </span>
               <strong>{accountStatusLabel[account.status]}</strong>
+              {googleAccountDataSource && <GoogleAccountDisconnectControl
+                accountId={account.accountId}
+                accountLabel={account.displayIdentity.status === 'available'
+                  ? account.displayIdentity.displayLabel ?? account.displayIdentity.mailboxAddress
+                  : 'this Google account'}
+                dataSource={googleAccountDataSource}
+                onDisconnected={onReload}
+              />}
             </li>
           ))}
         </ul>
@@ -215,7 +227,7 @@ export function LiveMailStatus({
       <button className="startup-retry" onClick={onReload}>
         <RefreshCw size={15} /> Reload local status
       </button>
-      <small>Gmail connection, provider sync retry, AI generation, and sending are unavailable in this build.</small>
+      <small>Provider sync retry, AI generation, and sending are unavailable in this build.</small>
     </main>
   )
 }

@@ -155,6 +155,7 @@ export function App({
           onReload={retry}
           detailDataSource={liveMailMessageDetailDataSource}
           openOriginalDataSource={openLiveMailOriginalDataSource}
+          googleAccountDataSource={googleConnectionPreflightDataSource}
         />
         <LifecycleNotice
           lifecycle={state.application.lifecycle}
@@ -176,6 +177,7 @@ export function App({
         deletionDataSource={deletionDataSource}
         recoveryDataSource={recoveryDataSource}
         googleConnectionPreflightDataSource={googleConnectionPreflightDataSource}
+        onConnectionChanged={retry}
         onLocalDataDeleted={() => setState({
           status: 'loaded',
           application: { version: POSITA_PROTOCOL_VERSION, mode: 'local-data-deleted' }

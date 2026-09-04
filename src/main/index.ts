@@ -1,4 +1,5 @@
 import { join } from 'node:path'
+import { randomUUID } from 'node:crypto'
 import { app, BrowserWindow, shell } from 'electron'
 import { bootstrapLocalData } from './bootstrapLocalData'
 import {
@@ -18,6 +19,9 @@ import { registerApplicationIpc, type ApplicationIpcRegistration } from './ipc/a
 import { GmailExternalUrlOpener } from './infrastructure/external/gmailExternalUrlOpener'
 import { loadGoogleOAuthClientConfiguration } from './infrastructure/providers/googleOAuthClientConfiguration'
 import { GoogleAccountConnectionPreflightService } from './application/googleAccountConnectionPreflight'
+import { GoogleAccountConnectionCommandService } from './application/googleAccountConnectionCommand'
+import { GoogleAccountDisconnectCommandService } from './application/googleAccountDisconnectCommand'
+import { inspectAccountConnectionConsistency } from './application/accountConnection'
 
 const isTrustedExternalUrl = (candidate: string): boolean => {
   try {
@@ -107,6 +111,8 @@ app.whenReady().then(async () => {
   let liveMailMessageDetail = new LiveMailMessageDetailService()
   let openProviderMailOriginal = new OpenProviderMailOriginalService()
   let googleAccountConnectionPreflight = new GoogleAccountConnectionPreflightService()
+  let googleAccountConnectionCommand = new GoogleAccountConnectionCommandService()
+  let googleAccountDisconnectCommand = new GoogleAccountDisconnectCommandService()
 
   try {
     const runtime = await bootstrapLocalData(
@@ -148,6 +154,24 @@ app.whenReady().then(async () => {
         await composition.lifecycle.start([])
         googleProviderComposition = composition
         googleAccountConnectionPreflight = new GoogleAccountConnectionPreflightService(true)
+        googleAccountConnectionCommand = new GoogleAccountConnectionCommandService(
+          composition.connectionActivation,
+          composition.lifecycle,
+          randomUUID
+        )
+        googleAccountDisconnectCommand = new GoogleAccountDisconnectCommandService(
+          {
+            inspect: (accountId) => inspectAccountConnectionConsistency(
+              accountId,
+              runtime.secretVault,
+              runtime.accountStateRepository
+            )
+          },
+          composition.lifecycle,
+          runtime.googleAccountDisconnectAuditRepository,
+          systemClock,
+          randomUUID
+        )
       }
       service = new ApplicationStateService(
         'ready',
@@ -182,7 +206,9 @@ app.whenReady().then(async () => {
     openProviderMailOriginal,
     localDataDeletion,
     accountConnectionRecovery,
-    googleAccountConnectionPreflight
+    googleAccountConnectionPreflight,
+    googleAccountConnectionCommand,
+    googleAccountDisconnectCommand
   })
   const openWindow = (): void => {
     const window = createWindow()

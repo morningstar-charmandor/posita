@@ -36,8 +36,8 @@ Electron main or the renderer. The adapter retains one trusted in-memory key cop
 transfers a temporary copy into each worker, zeroes worker key buffers, serializes
 bounded operations, validates safe result schemas, and supports explicit teardown.
 Its read-only live-state operation is composed at startup. Provider commit and
-account deletion are wired behind the inactive lifecycle graph, while sync activation
-has no public caller; the worker has processed deterministic records only.
+account deletion are wired behind the lifecycle graph; sync activation can follow
+only the explicit connection command. The worker has processed deterministic records only.
 
 The live application-state response is intentionally smaller than a canonical
 message. It is limited to 50 newest summaries and 32 account scopes. It may
@@ -286,7 +286,7 @@ reviewed Google HTTPS authorization request before calling an injected desktop
 delegate. Tests use a local-only listener and fake delegate; no real browser or
 provider request is performed.
 
-The unexposed activation coordinator retains only one launch and callback sequence
+The activation coordinator retains only one launch and callback sequence
 in trusted memory. It does not return the Google authorization URL or local callback
 to the renderer. Cancellation is honored while waiting; once a verified callback
 starts code exchange, the established vault-before-encrypted-state transaction owns
@@ -294,6 +294,15 @@ completion so cancellation cannot create ambiguous partial storage. Browser or
 callback failure triggers connection/listener cleanup, and an unconfirmed cleanup
 is reported explicitly rather than hidden. All current tests use deterministic
 values and create no credential or account.
+
+The public connection command remains a narrow trusted-window capability: it creates
+the opaque account ID in main, returns no authorization URL or credential, and is
+cancellable while the browser callback is pending. If initial activation fails, it
+attempts the existing journaled disconnect as rollback. The paired disconnect flow
+requires a five-minute same-window challenge and exact typed text; only opaque
+confirmation, operation, account, and timestamp values enter the existing audit log.
+It revokes Posita's authorization and deletes Posita's protected local projection,
+but never deletes or changes Gmail messages.
 
 The credential-free account-connection coordinator now proves the only accepted
 cross-store write order: vault credential first, encrypted provider-account state

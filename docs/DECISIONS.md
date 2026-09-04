@@ -1093,3 +1093,27 @@
   Structural checks keep this service independent of the activation coordinator.
   No dependency, schema, repository, compatibility path, credential, browser action,
   account, provider request, personal data, or mailbox mutation is added.
+
+## ADR-054: Pair explicit Google connection with confirmed disconnect
+
+- Status: accepted for Gate 2D private-alpha activation
+- Context: the prepare-only boundary proved local readiness, but exposing OAuth
+  without a usable disconnect would leave a newly granted account without an
+  equivalent user-controlled exit. The renderer must also never select provider
+  identity, receive an authorization URL, or handle credentials.
+- Decision: expose one zero-argument, explicit Continue-to-Google command and one
+  cancellation command through exact trusted-window IPC. Trusted main generates the
+  opaque Posita account ID, runs the existing bounded activation coordinator, and
+  starts lifecycle activation. If initial activation fails, it invokes the journaled
+  disconnect path as rollback; an unconfirmed rollback leaves a visible disconnect
+  control instead of hiding the connection. Disconnect requires a five-minute,
+  account- and operation-bound same-window challenge and the exact phrase
+  `DISCONNECT GMAIL`. Persist only opaque confirmation intent in the existing audit
+  table before calling the idempotent lifecycle disconnect. Never return tokens,
+  authorization URLs, provider subjects, remote IDs, or raw failures to the renderer.
+- Consequence: connection and exit are one reviewed capability boundary. Successful
+  disconnect revokes Posita's grant and removes its protected credential, encrypted
+  provider state, cursor, and cached mail, but never deletes or changes Gmail mail.
+  Retryable failures retain the in-process challenge and lifecycle journal. No new
+  dependency, schema migration, compatibility path, second lifecycle owner, mailbox
+  mutation, credential, account, or provider request is introduced by implementation.

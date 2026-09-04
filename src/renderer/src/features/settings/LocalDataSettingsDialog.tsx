@@ -43,6 +43,7 @@ export interface LocalDataSettingsDialogProps {
   dataSource: LocalDataDeletionDataSource
   recoveryDataSource: AccountConnectionRecoveryDataSource
   googleConnectionPreflightDataSource: GoogleAccountConnectionPreflightDataSource
+  onConnectionChanged(): void
   onClose(): void
   onDeleted(): void
 }
@@ -54,6 +55,7 @@ export function LocalDataSettingsDialog({
   dataSource,
   recoveryDataSource,
   googleConnectionPreflightDataSource,
+  onConnectionChanged,
   onClose,
   onDeleted
 }: LocalDataSettingsDialogProps): React.JSX.Element {
@@ -208,6 +210,7 @@ export function LocalDataSettingsDialog({
           <GmailConnectConsentPanel
             consent={connectConsent}
             dataSource={googleConnectionPreflightDataSource}
+            onConnected={onConnectionChanged}
             onBack={() => setState({ kind: 'overview' })}
           />
         )}

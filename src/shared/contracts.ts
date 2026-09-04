@@ -29,6 +29,12 @@ export const GOOGLE_ACCOUNT_CONNECTION_PREFLIGHT_NOTICES = Object.freeze([
   'No Google account was connected.',
   'No credential or mailbox data was received.'
 ] as const)
+export const GOOGLE_ACCOUNT_DISCONNECT_CONFIRMATION_TEXT = 'DISCONNECT GMAIL' as const
+export const GOOGLE_ACCOUNT_DISCONNECT_CONSEQUENCES = Object.freeze([
+  'Revokes Posita’s Google authorization for this account.',
+  'Removes its credential, encrypted account state, cursor, and cached mail from Posita.',
+  'Does not delete or change messages in Gmail.'
+] as const)
 export const GOOGLE_CONNECT_CONSENT = Object.freeze({
   version: POSITA_PROTOCOL_VERSION,
   consentVersion: 'google-gmail-readonly-identity-v2',
@@ -82,7 +88,11 @@ export const IPC_CHANNELS = Object.freeze({
   executeLocalDataDeletion: 'posita:local-data:execute-deletion:v1',
   prepareAccountConnectionRecovery: 'posita:account-connection:prepare-recovery:v1',
   executeAccountConnectionRecovery: 'posita:account-connection:execute-recovery:v1',
-  prepareGoogleAccountConnection: 'posita:google-account:prepare-connection:v1'
+  prepareGoogleAccountConnection: 'posita:google-account:prepare-connection:v1',
+  connectGoogleAccount: 'posita:google-account:connect:v1',
+  cancelGoogleAccountConnection: 'posita:google-account:cancel-connection:v1',
+  prepareGoogleAccountDisconnect: 'posita:google-account:prepare-disconnect:v1',
+  executeGoogleAccountDisconnect: 'posita:google-account:execute-disconnect:v1'
 })
 
 export interface LoadApplicationStateRequestV1 {
@@ -410,6 +420,116 @@ export type PrepareGoogleAccountConnectionResponseV1 =
   | { ok: true; value: GoogleAccountConnectionPreflightV1 }
   | { ok: false; error: GoogleAccountConnectionPreflightErrorV1 }
 
+export interface ConnectGoogleAccountRequestV1 {
+  version: typeof POSITA_PROTOCOL_VERSION
+  action: 'connect-google-account'
+  consentVersion: typeof GOOGLE_CONNECT_CONSENT.consentVersion
+}
+
+export interface ConnectedGoogleAccountV1 {
+  version: typeof POSITA_PROTOCOL_VERSION
+  accountId: string
+  provider: 'google'
+  mailboxAddress: string
+  connectedAt: string
+  status: 'connected-and-synced' | 'connected-sync-retry-required' | 'connected-needs-review'
+  syncErrorCode?: string
+}
+
+export type GoogleAccountConnectionErrorCodeV1 =
+  | 'INVALID_REQUEST'
+  | 'UNTRUSTED_SENDER'
+  | 'CONNECTION_UNAVAILABLE'
+  | 'CONNECTION_IN_PROGRESS'
+  | 'AUTHORIZATION_DECLINED'
+  | 'AUTHORIZATION_FAILED'
+  | 'CONNECTION_FAILED'
+  | 'PROTOCOL_ERROR'
+
+export interface GoogleAccountConnectionErrorV1 {
+  version: typeof POSITA_PROTOCOL_VERSION
+  code: GoogleAccountConnectionErrorCodeV1
+  message: string
+  retryable: boolean
+}
+
+export type ConnectGoogleAccountResponseV1 =
+  | { ok: true; value: ConnectedGoogleAccountV1 }
+  | { ok: false; error: GoogleAccountConnectionErrorV1 }
+
+export interface CancelGoogleAccountConnectionRequestV1 {
+  version: typeof POSITA_PROTOCOL_VERSION
+  action: 'cancel-google-account-connection'
+}
+
+export interface CancelGoogleAccountConnectionResultV1 {
+  version: typeof POSITA_PROTOCOL_VERSION
+  status: 'cancellation-requested' | 'no-connection-in-progress'
+}
+
+export type CancelGoogleAccountConnectionResponseV1 =
+  | { ok: true; value: CancelGoogleAccountConnectionResultV1 }
+  | { ok: false; error: GoogleAccountConnectionErrorV1 }
+
+export interface PrepareGoogleAccountDisconnectRequestV1 {
+  version: typeof POSITA_PROTOCOL_VERSION
+  action: 'disconnect-google-account'
+  accountId: string
+}
+
+export interface GoogleAccountDisconnectChallengeV1 {
+  version: typeof POSITA_PROTOCOL_VERSION
+  confirmationId: string
+  operationId: string
+  action: 'disconnect-google-account'
+  accountId: string
+  requiredText: typeof GOOGLE_ACCOUNT_DISCONNECT_CONFIRMATION_TEXT
+  expiresAt: string
+  consequences: typeof GOOGLE_ACCOUNT_DISCONNECT_CONSEQUENCES
+}
+
+export interface ExecuteGoogleAccountDisconnectRequestV1 {
+  version: typeof POSITA_PROTOCOL_VERSION
+  confirmationId: string
+  operationId: string
+  action: 'disconnect-google-account'
+  accountId: string
+  enteredText: string
+}
+
+export interface GoogleAccountDisconnectResultV1 {
+  version: typeof POSITA_PROTOCOL_VERSION
+  operationId: string
+  accountId: string
+  status: 'disconnected'
+}
+
+export type GoogleAccountDisconnectErrorCodeV1 =
+  | 'INVALID_REQUEST'
+  | 'UNTRUSTED_SENDER'
+  | 'DISCONNECT_UNAVAILABLE'
+  | 'ACCOUNT_NOT_CONNECTED'
+  | 'CONFIRMATION_NOT_FOUND'
+  | 'CONFIRMATION_EXPIRED'
+  | 'CONFIRMATION_TEXT_MISMATCH'
+  | 'DISCONNECT_FAILED'
+  | 'PROTOCOL_ERROR'
+
+export interface GoogleAccountDisconnectErrorV1 {
+  version: typeof POSITA_PROTOCOL_VERSION
+  code: GoogleAccountDisconnectErrorCodeV1
+  message: string
+  retryable: boolean
+}
+
+export type PrepareGoogleAccountDisconnectResponseV1 =
+  | { ok: true; value: GoogleAccountDisconnectChallengeV1 }
+  | { ok: false; error: GoogleAccountDisconnectErrorV1 }
+
+export type ExecuteGoogleAccountDisconnectResponseV1 =
+  | { ok: true; value: GoogleAccountDisconnectResultV1 }
+  | { ok: false; error: GoogleAccountDisconnectErrorV1 }
+
 export interface PositaDesktopApi {
   platform: string
   prototypeMode: true
@@ -434,4 +554,12 @@ export interface PositaDesktopApi {
     request: ExecuteAccountConnectionRecoveryRequestV1
   ): Promise<ExecuteAccountConnectionRecoveryResponseV1>
   prepareGoogleAccountConnection(): Promise<PrepareGoogleAccountConnectionResponseV1>
+  connectGoogleAccount(): Promise<ConnectGoogleAccountResponseV1>
+  cancelGoogleAccountConnection(): Promise<CancelGoogleAccountConnectionResponseV1>
+  prepareGoogleAccountDisconnect(
+    request: PrepareGoogleAccountDisconnectRequestV1
+  ): Promise<PrepareGoogleAccountDisconnectResponseV1>
+  executeGoogleAccountDisconnect(
+    request: ExecuteGoogleAccountDisconnectRequestV1
+  ): Promise<ExecuteGoogleAccountDisconnectResponseV1>
 }

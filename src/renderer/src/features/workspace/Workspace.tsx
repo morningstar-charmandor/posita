@@ -170,6 +170,7 @@ function WorkspaceContent({
   deletionDataSource,
   recoveryDataSource,
   googleConnectionPreflightDataSource,
+  onConnectionChanged,
   onLocalDataDeleted
 }: {
   connectConsent: GoogleConnectConsentV1
@@ -177,6 +178,7 @@ function WorkspaceContent({
   deletionDataSource: LocalDataDeletionDataSource
   recoveryDataSource: AccountConnectionRecoveryDataSource
   googleConnectionPreflightDataSource: GoogleAccountConnectionPreflightDataSource
+  onConnectionChanged: () => void
   onLocalDataDeleted: () => void
 }): React.JSX.Element {
   const dataset = useMailDataset()
@@ -209,6 +211,7 @@ function WorkspaceContent({
           dataSource={deletionDataSource}
           recoveryDataSource={recoveryDataSource}
           googleConnectionPreflightDataSource={googleConnectionPreflightDataSource}
+          onConnectionChanged={onConnectionChanged}
           onClose={() => setSettingsOpen(false)}
           onDeleted={onLocalDataDeleted}
         />
@@ -224,6 +227,7 @@ export function Workspace({
   deletionDataSource,
   recoveryDataSource,
   googleConnectionPreflightDataSource,
+  onConnectionChanged,
   onLocalDataDeleted
 }: {
   dataset: MailDataset
@@ -232,6 +236,7 @@ export function Workspace({
   deletionDataSource: LocalDataDeletionDataSource
   recoveryDataSource: AccountConnectionRecoveryDataSource
   googleConnectionPreflightDataSource: GoogleAccountConnectionPreflightDataSource
+  onConnectionChanged: () => void
   onLocalDataDeleted: () => void
 }): React.JSX.Element {
   return (
@@ -242,6 +247,7 @@ export function Workspace({
         deletionDataSource={deletionDataSource}
         recoveryDataSource={recoveryDataSource}
         googleConnectionPreflightDataSource={googleConnectionPreflightDataSource}
+        onConnectionChanged={onConnectionChanged}
         onLocalDataDeleted={onLocalDataDeleted}
       />
     </MailDatasetContext.Provider>

@@ -309,6 +309,14 @@ readiness service. Its fixed result reports only composition availability, revie
 consent metadata, and explicit non-activation notices. It cannot call the activation
 coordinator or return an account ID, URL, callback, credential, or provider payload.
 
+After successful preparation, a separate zero-argument trusted-window command may
+invoke the activation coordinator. Trusted main generates the opaque account ID;
+authorization URLs, callbacks, provider subjects, and credentials never cross IPC.
+The command owns cancellation, initial lifecycle activation, and journaled disconnect
+rollback when activation fails. A paired disconnect command uses a short-lived
+same-window typed challenge and writes only opaque confirmation intent to the existing
+audit table before invoking the single lifecycle owner.
+
 The next internal boundary is `AccountAuthorizationAdapter`. It owns provider
 authorization preparation, verified callback completion, and cancellation behind
 provider-neutral application types. Inputs and outputs are exact, bounded, and
@@ -322,8 +330,8 @@ one ephemeral IPv4 localhost port, prefilters exact host/path/state, bounds requ
 and lifetime, queues at most one callback, and returns copy that never reflects the
 authorization response. A separate system-browser boundary validates the complete
 Google authorization URL before invoking an injected Electron delegate. Startup
-constructs these behind one factory but exposes no execution command, so the
-prepare-only consent UI cannot start authorization or open a browser.
+constructs these behind one factory. Only the explicit post-preparation connection
+command can start authorization or open the validated browser target.
 
 `AccountConnectionActivationService` is the provider-inert trusted-main sequence owner
 above those parts. It invokes the existing `AccountConnectionService`, registers
