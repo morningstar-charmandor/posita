@@ -41,8 +41,10 @@ cause as incomplete client-secret configuration. Posita discarded the provider's
 text description and stored no grant, credential, account, provider mail, or live mail.
 The new client-configuration implementation passes 83 test files and 504 tests,
 strict typecheck, renderer structure/security checks, localhost callback integration,
-and the production build. The next step is a fresh runtime readiness check followed by
-an action-time owner decision before starting another Google authorization attempt.
+and the production build. A clean updated runtime also completed the local preparation
+check and displayed `Ready to continue to Google` while truthfully retaining zero browser
+session, account, user credential, and mailbox data. The next step is an action-time owner
+decision before starting another Google authorization attempt.
 The product is a runnable Electron desktop prototype using React, strict TypeScript,
 and SQLite. All visible mail is deterministic sample data.
 
@@ -373,7 +375,7 @@ configured client's secret requirement, the owner approved a one-time secret rot
 private placement. Posita now loads an exact version-2 client ID/secret pair only from its
 owner-readable application-data file and submits the secret only in trusted-main token
 requests. Legacy version 1 fails closed. All 83 test files and 504 tests pass with the full
-verification gate. Start the updated app and confirm local readiness; stop for a separate
+verification gate. The updated app has confirmed local readiness; stop for a separate
 action-time owner decision immediately before a fresh Google authorization attempt because
 success may store a protected refresh credential, activate live mode, and begin read-only sync.
 

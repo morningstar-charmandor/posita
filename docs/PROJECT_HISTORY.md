@@ -2519,6 +2519,9 @@ Delivered:
 
 Verification: `npm run verify` passes 83 test files and 504 tests, strict TypeScript,
 renderer structure/security checks, localhost callback integration, and production build.
+The updated production composition was then launched cleanly: Settings completed its
+non-activating local preparation and displayed `Ready to continue to Google`, while also
+confirming that no browser, account, credential, or mailbox data existed.
 
 Limitations: deterministic tests use only conspicuous fake client values. The private real
 client pair is outside Git and never crosses preload, IPC, renderer, or logs. No user grant,

@@ -498,6 +498,9 @@ Evidence: loader tests cover version 2, permissions, symlink refusal, malformed 
 input; authorization and refresh tests verify that the deterministic secret appears only in
 the fixed token request body. `npm run verify` passes 83 test files and 504 tests, strict
 typecheck, renderer structure/security checks, localhost integration, and production build.
+In a clean updated runtime, Settings also completed the non-activating preparation and
+displayed `Ready to continue to Google` while explicitly reporting zero browser session,
+account, credential, and mailbox data.
 
 Limitations: this milestone configures an application credential, not a user grant. No real
 account, refresh token, provider read, live mail, AI provider, or mailbox mutation is claimed.
