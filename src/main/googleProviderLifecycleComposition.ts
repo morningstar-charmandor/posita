@@ -18,7 +18,7 @@ import type { SecretVault } from './application/secretVault'
 import type { StorageSanitizer } from './application/storageSanitizer'
 import { GoogleDesktopAccountAuthorizationAdapter } from './infrastructure/providers/googleDesktopAccountAuthorizationAdapter'
 import { GoogleMailReadAdapter } from './infrastructure/providers/googleMailReadAdapter'
-import type { GoogleOAuthClientConfigurationV1 } from './infrastructure/providers/googleOAuthClientConfiguration'
+import type { GoogleOAuthClientConfigurationV2 } from './infrastructure/providers/googleOAuthClientConfiguration'
 import { GoogleOAuthAccessTokenSource } from './infrastructure/providers/googleOAuthAccessTokenSource'
 import { GoogleOAuthLoopbackRedirectServer } from './infrastructure/providers/googleOAuthLoopbackRedirectServer'
 import { GoogleOAuthRevoker } from './infrastructure/providers/googleOAuthRevoker'
@@ -29,7 +29,7 @@ import {
 import type { WorkerThreadMailSyncProjection } from './infrastructure/sqlite/workerThreadMailSyncProjection'
 
 export interface GoogleProviderLifecycleCompositionDependencies {
-  configuration: GoogleOAuthClientConfigurationV1
+  configuration: GoogleOAuthClientConfigurationV2
   secretVault: SecretVault
   accountState: AccountStateRepository
   accountLifecycle: AccountLifecycleRepository
@@ -58,6 +58,7 @@ export const composeGoogleProviderLifecycle = (
   const loopback = new GoogleOAuthLoopbackRedirectServer()
   const authorization = new GoogleDesktopAccountAuthorizationAdapter(
     dependencies.configuration.clientId,
+    dependencies.configuration.clientSecret,
     loopback
   )
   const connection = new AccountConnectionService(

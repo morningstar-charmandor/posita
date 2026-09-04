@@ -8,6 +8,7 @@ import {
 } from './googleOAuthClientConfiguration'
 
 const clientId = '123456789-posita.apps.googleusercontent.com'
+const clientSecret = 'GOCSPX-deterministic-test-secret'
 const directories: string[] = []
 
 const createDirectory = async (): Promise<string> => {
@@ -33,13 +34,18 @@ afterEach(async () => {
 })
 
 describe('loadGoogleOAuthClientConfiguration', () => {
-  it('loads one exact owner-readable client identifier from application data', async () => {
+  it('loads one exact owner-readable client credential pair from application data', async () => {
     const directory = await createDirectory()
-    await writeConfiguration(directory, { version: 1, provider: 'google', clientId })
+    await writeConfiguration(directory, {
+      version: 2,
+      provider: 'google',
+      clientId,
+      clientSecret
+    })
 
     await expect(loadGoogleOAuthClientConfiguration(directory)).resolves.toEqual({
       status: 'available',
-      configuration: { version: 1, provider: 'google', clientId }
+      configuration: { version: 2, provider: 'google', clientId, clientSecret }
     })
   })
 
@@ -60,7 +66,12 @@ describe('loadGoogleOAuthClientConfiguration', () => {
 
   it('rejects group-readable or world-readable files on macOS', async () => {
     const directory = await createDirectory()
-    await writeConfiguration(directory, { version: 1, provider: 'google', clientId }, 0o644)
+    await writeConfiguration(directory, {
+      version: 2,
+      provider: 'google',
+      clientId,
+      clientSecret
+    }, 0o644)
 
     await expect(loadGoogleOAuthClientConfiguration(directory, 'darwin')).resolves.toEqual({
       status: 'invalid',
@@ -71,9 +82,12 @@ describe('loadGoogleOAuthClientConfiguration', () => {
   it('refuses symlinks even when their target is valid and private', async () => {
     const directory = await createDirectory()
     const target = join(directory, 'target.json')
-    await writeFile(target, JSON.stringify({ version: 1, provider: 'google', clientId }), {
-      mode: 0o600
-    })
+    await writeFile(target, JSON.stringify({
+      version: 2,
+      provider: 'google',
+      clientId,
+      clientSecret
+    }), { mode: 0o600 })
     await symlink(target, join(directory, GOOGLE_OAUTH_CLIENT_CONFIGURATION_FILE))
 
     const result = await loadGoogleOAuthClientConfiguration(directory)
@@ -81,15 +95,33 @@ describe('loadGoogleOAuthClientConfiguration', () => {
   })
 
   it.each([
-    ['extra secret field', {
+    ['legacy secret-free version', {
       version: 1,
       provider: 'google',
-      clientId,
-      clientSecret: 'must-not-enter-posita-config'
+      clientId
     }],
-    ['wrong provider', { version: 1, provider: 'example', clientId }],
-    ['invalid client id', { version: 1, provider: 'google', clientId: 'not-a-client-id' }],
-    ['unknown version', { version: 2, provider: 'google', clientId }]
+    ['wrong provider', { version: 2, provider: 'example', clientId, clientSecret }],
+    ['invalid client id', {
+      version: 2,
+      provider: 'google',
+      clientId: 'not-a-client-id',
+      clientSecret
+    }],
+    ['missing client secret', { version: 2, provider: 'google', clientId }],
+    ['invalid client secret', {
+      version: 2,
+      provider: 'google',
+      clientId,
+      clientSecret: 'contains whitespace'
+    }],
+    ['unknown field', {
+      version: 2,
+      provider: 'google',
+      clientId,
+      clientSecret,
+      extra: true
+    }],
+    ['unknown version', { version: 3, provider: 'google', clientId, clientSecret }]
   ])('rejects %s', async (_label, value) => {
     const directory = await createDirectory()
     await writeConfiguration(directory, value)

@@ -6,6 +6,8 @@ import {
 } from './googleOAuthAccessTokenSource'
 
 const clientId = '123456789-posita.apps.googleusercontent.com'
+const clientSecret = 'GOCSPX-deterministic-test-secret'
+const configuration = { clientId, clientSecret }
 const response = (status: number, body?: unknown): Response => new Response(
   body === undefined ? null : JSON.stringify(body),
   { status }
@@ -26,7 +28,7 @@ describe('GoogleOAuthAccessTokenSource', () => {
   it('returns absent when no protected refresh credential exists without network access', async () => {
     const secrets = vault(undefined)
     const fetchRequest = vi.fn<GoogleAccessTokenFetch>()
-    const source = new GoogleOAuthAccessTokenSource(secrets, { clientId }, fetchRequest)
+    const source = new GoogleOAuthAccessTokenSource(secrets, configuration, fetchRequest)
 
     await expect(source.getAccessToken('account-work-1', signal())).resolves.toBeUndefined()
     expect(secrets.get).toHaveBeenCalledWith('oauth.google.account-work-1.refresh-token')
@@ -36,7 +38,7 @@ describe('GoogleOAuthAccessTokenSource', () => {
   it('posts the protected refresh token only in the fixed form body and caches the access token', async () => {
     const secrets = vault('refresh token/+')
     const fetchRequest = vi.fn<GoogleAccessTokenFetch>(async () => tokenResponse())
-    const source = new GoogleOAuthAccessTokenSource(secrets, { clientId }, fetchRequest)
+    const source = new GoogleOAuthAccessTokenSource(secrets, configuration, fetchRequest)
 
     await expect(source.getAccessToken('account-work-1', signal()))
       .resolves.toBe('short-lived-access-token')
@@ -53,7 +55,8 @@ describe('GoogleOAuthAccessTokenSource', () => {
         'content-type': 'application/x-www-form-urlencoded',
         accept: 'application/json'
       },
-      body: `client_id=${clientId}&refresh_token=refresh+token%2F%2B&grant_type=refresh_token`,
+      body: `client_id=${clientId}&client_secret=${clientSecret}` +
+        '&refresh_token=refresh+token%2F%2B&grant_type=refresh_token',
       redirect: 'error'
     })
     expect(init.signal).toBeInstanceOf(AbortSignal)
@@ -67,7 +70,7 @@ describe('GoogleOAuthAccessTokenSource', () => {
       .mockResolvedValueOnce(tokenResponse('second-token', 3_600))
     const source = new GoogleOAuthAccessTokenSource(
       vault('test-refresh-token'),
-      { clientId },
+      configuration,
       fetchRequest,
       { now: () => now }
     )
@@ -83,9 +86,9 @@ describe('GoogleOAuthAccessTokenSource', () => {
     const fetchRequest = vi.fn<GoogleAccessTokenFetch>(() => new Promise((resolve) => {
       finish = resolve
     }))
-    const source = new GoogleOAuthAccessTokenSource(vault('test-refresh-token'), {
-      clientId
-    }, fetchRequest)
+    const source = new GoogleOAuthAccessTokenSource(
+      vault('test-refresh-token'), configuration, fetchRequest
+    )
     const first = new AbortController()
     const second = new AbortController()
     const firstResult = source.getAccessToken('account-work-1', first.signal)
@@ -101,7 +104,7 @@ describe('GoogleOAuthAccessTokenSource', () => {
   it('maps an invalid grant to reconnect-required authorization expiry', async () => {
     const source = new GoogleOAuthAccessTokenSource(
       vault('expired-refresh-token'),
-      { clientId },
+      configuration,
       async () => response(400, { error: 'invalid_grant' })
     )
 
@@ -115,14 +118,14 @@ describe('GoogleOAuthAccessTokenSource', () => {
   it('returns stable failures for storage, transport, quota, and malformed success', async () => {
     const storage = new GoogleOAuthAccessTokenSource({
       get: async () => { throw new Error('private-storage-detail') }
-    }, { clientId })
+    }, configuration)
     await expect(storage.getAccessToken('account-work-1', signal())).rejects.toMatchObject({
       code: 'ACCESS_TOKEN_STORAGE_FAILED',
       retryable: true
     })
 
     const offline = new GoogleOAuthAccessTokenSource(
-      vault('test-refresh-token'), { clientId },
+      vault('test-refresh-token'), configuration,
       async () => { throw new Error('private-network-detail') }
     )
     await expect(offline.getAccessToken('account-work-1', signal())).rejects.toMatchObject({
@@ -131,7 +134,7 @@ describe('GoogleOAuthAccessTokenSource', () => {
     })
 
     const quota = new GoogleOAuthAccessTokenSource(
-      vault('test-refresh-token'), { clientId }, async () => response(429, { error: 'quota' })
+      vault('test-refresh-token'), configuration, async () => response(429, { error: 'quota' })
     )
     await expect(quota.getAccessToken('account-work-1', signal())).rejects.toMatchObject({
       code: 'ACCESS_TOKEN_PROVIDER_UNAVAILABLE',
@@ -139,7 +142,7 @@ describe('GoogleOAuthAccessTokenSource', () => {
     })
 
     const temporaryHtmlFailure = new GoogleOAuthAccessTokenSource(
-      vault('test-refresh-token'), { clientId },
+      vault('test-refresh-token'), configuration,
       async () => new Response('<html>temporary</html>', { status: 503 })
     )
     await expect(temporaryHtmlFailure.getAccessToken('account-work-1', signal()))
@@ -149,7 +152,7 @@ describe('GoogleOAuthAccessTokenSource', () => {
       })
 
     const malformed = new GoogleOAuthAccessTokenSource(
-      vault('test-refresh-token'), { clientId },
+      vault('test-refresh-token'), configuration,
       async () => response(200, { access_token: 'token', expires_in: '3600' })
     )
     await expect(malformed.getAccessToken('account-work-1', signal())).rejects.toMatchObject({
@@ -160,7 +163,7 @@ describe('GoogleOAuthAccessTokenSource', () => {
 
   it('rejects scope widening and oversized responses', async () => {
     const widened = new GoogleOAuthAccessTokenSource(
-      vault('test-refresh-token'), { clientId }, async () => response(200, {
+      vault('test-refresh-token'), configuration, async () => response(200, {
         access_token: 'token',
         expires_in: 3_600,
         scope: 'https://www.googleapis.com/auth/gmail.modify',
@@ -173,7 +176,7 @@ describe('GoogleOAuthAccessTokenSource', () => {
     })
 
     const oversized = new GoogleOAuthAccessTokenSource(
-      vault('test-refresh-token'), { clientId },
+      vault('test-refresh-token'), configuration,
       async () => new Response('x'.repeat(16 * 1024 + 1), { status: 200 })
     )
     await expect(oversized.getAccessToken('account-work-1', signal())).rejects.toMatchObject({
@@ -187,7 +190,7 @@ describe('GoogleOAuthAccessTokenSource', () => {
       .mockResolvedValueOnce(tokenResponse('first-token'))
       .mockResolvedValueOnce(tokenResponse('second-token'))
     const source = new GoogleOAuthAccessTokenSource(
-      vault('test-refresh-token'), { clientId }, fetchRequest
+      vault('test-refresh-token'), configuration, fetchRequest
     )
 
     await expect(source.getAccessToken('account-work-1', signal())).resolves.toBe('first-token')
@@ -204,10 +207,16 @@ describe('GoogleOAuthAccessTokenSource', () => {
   it('rejects invalid account and configuration boundaries before reading protected state', async () => {
     const secrets = vault('test-refresh-token')
     expect(() => new GoogleOAuthAccessTokenSource(secrets, {
-      clientId: 'not-a-desktop-client-id'
+      clientId: 'not-a-desktop-client-id',
+      clientSecret
     })).toThrow(expect.objectContaining({ code: 'INVALID_ACCESS_TOKEN_REQUEST' }))
 
-    const source = new GoogleOAuthAccessTokenSource(secrets, { clientId })
+    expect(() => new GoogleOAuthAccessTokenSource(secrets, {
+      clientId,
+      clientSecret: 'invalid secret'
+    })).toThrow(expect.objectContaining({ code: 'INVALID_ACCESS_TOKEN_REQUEST' }))
+
+    const source = new GoogleOAuthAccessTokenSource(secrets, configuration)
     await expect(source.getAccessToken('../work', signal())).rejects.toMatchObject({
       code: 'INVALID_ACCESS_TOKEN_REQUEST'
     })

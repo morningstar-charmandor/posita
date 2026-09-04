@@ -3,13 +3,13 @@
 ## Current status
 
 Gmail is not connected and Posita's repository does not contain a Google OAuth
-client ID or secret.
+client ID, secret, user credential, or token.
 An isolated Google Cloud project named `Posita` with project ID
 `posita-mail-hub-2026` now has Gmail API enabled, external testing consent configured
 for OpenID, verified email, and Gmail read-only, and one desktop client named
-`Posita macOS Desktop`. Its client ID is stored only in Posita's private application-
-data file and passes the strict loader. No client secret, credential bundle, user
-grant, refresh token, or access token was downloaded or used.
+`Posita macOS Desktop`. Its client ID and rotated secret are stored only in Posita's
+owner-readable private application-data file and pass the strict version-2 loader.
+No credential bundle is retained, and no user grant, refresh token, or access token exists.
 Real desktop authorization protocol, read-only, idempotent revocation, and refresh-
 to-access-token adapters are assembled inside one production graph that starts with
 zero accounts. Explicit connection, cancellation, and confirmed disconnect commands
@@ -224,13 +224,13 @@ and exposes account invalidation plus teardown. Missing or `invalid_grant`
 authorization is distinct from retryable storage/provider failure. Deterministic
 tests use conspicuous tokens and no network.
 
-The separate inert `loadGoogleOAuthClientConfiguration` boundary accepts only a
-desktop client identifier from the fixed `google-oauth-client.json` file in Posita's
-absolute application-data directory. It refuses symlinks, loose POSIX permissions,
-oversized input, unknown fields, invalid identifiers, and any client secret. It does
-not search Git, the working directory, or environment variables. The real client ID
-passes this loader from the owner-only application-data file and is supplied only to
-the provider-inert authorization and access-token adapters.
+The separate inert `loadGoogleOAuthClientConfiguration` boundary accepts only an
+exact version-2 desktop client ID and secret from the fixed `google-oauth-client.json`
+file in Posita's absolute application-data directory. It refuses symlinks, loose
+POSIX permissions, oversized input, unknown fields, legacy version-1 input, and
+invalid values. It does not search Git, the working directory, environment variables,
+or fallback locations. The private pair passes this loader from the owner-only file
+and is supplied only to the provider-inert authorization and access-token adapters.
 
 ## Desktop OAuth flow
 

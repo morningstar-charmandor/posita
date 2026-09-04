@@ -80,13 +80,13 @@ supported Linux desktops it uses the selected secret store. Posita fails closed
 when asynchronous encryption is unavailable and rejects Linux `basic_text` and
 `unknown` backends.
 
-The Google desktop client identifier is not a user token and is not accepted as a
-secret-bearing configuration object. Posita's inert configuration source reads only
-an exact versioned client identifier file from the app's local data directory. It
-refuses symbolic links, oversized or loosely permissioned files, unknown fields,
-and any client-secret field. The source feeds only the provider-inert trusted graph.
-The real identifier remains outside the repository, and no user credential has been
-received.
+The Google desktop client credential pair is application configuration, not a user
+authorization grant. Posita's inert configuration source reads only an exact version-2
+credential file from the app's local data directory. It refuses symbolic links,
+oversized or loosely permissioned files, unknown fields, legacy version-1 input, and
+invalid client identifiers or secrets. The source feeds only the provider-inert trusted
+graph. The real values remain outside the repository, preload, renderer, IPC, and logs;
+no user credential has been received.
 
 The provider-inert access-token source reads only one selected protected refresh
 credential and exchanges it through a fixed bounded trusted-main endpoint adapter.
@@ -94,7 +94,7 @@ Short-lived access tokens remain memory-only, are cached with an expiry margin,
 can be invalidated per account, and are cleared on teardown. Exact response
 validation refuses a scope outside the reviewed Gmail read-only permission. Tests
 use only conspicuous deterministic client/token values. Production receives the
-private client ID but no refresh credential or account, and performs no token or
+private client credential pair but no refresh credential or account, and performs no token or
 provider request.
 
 The deterministic fake protector is test-only. It demonstrates adapter behavior

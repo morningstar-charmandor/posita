@@ -18,6 +18,7 @@ import type { GoogleOAuthRedirectUriSource } from './googleOAuthLoopbackRedirect
 import {
   GOOGLE_AUTHORIZATION_ENDPOINT,
   GOOGLE_OAUTH_CLIENT_ID_PATTERN,
+  GOOGLE_OAUTH_CLIENT_SECRET_PATTERN,
   isExactGoogleLoopbackRedirect,
   parseBoundedGoogleOAuthUrl,
   safelyEqualGoogleOAuthValue
@@ -281,6 +282,7 @@ export class GoogleDesktopAccountAuthorizationAdapter implements AccountAuthoriz
 
   constructor(
     private readonly clientId: string,
+    private readonly clientSecret: string,
     private readonly redirects: GoogleOAuthRedirectUriSource,
     private readonly fetchRequest: GoogleAccountAuthorizationFetch = (url, init) =>
       fetch(url, init),
@@ -291,6 +293,7 @@ export class GoogleDesktopAccountAuthorizationAdapter implements AccountAuthoriz
     private readonly timeoutMs = DEFAULT_TIMEOUT_MS
   ) {
     if (!GOOGLE_OAUTH_CLIENT_ID_PATTERN.test(clientId) ||
+        !GOOGLE_OAUTH_CLIENT_SECRET_PATTERN.test(clientSecret) ||
         !Number.isSafeInteger(timeoutMs) || timeoutMs < 1_000 || timeoutMs > 60_000 ||
         !Number.isFinite(clock.now().getTime())) throw invalidRequest()
   }
@@ -500,6 +503,7 @@ export class GoogleDesktopAccountAuthorizationAdapter implements AccountAuthoriz
       },
       body: new URLSearchParams({
         client_id: this.clientId,
+        client_secret: this.clientSecret,
         code,
         code_verifier: session.verifier,
         redirect_uri: session.redirectUri,

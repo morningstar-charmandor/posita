@@ -40,9 +40,10 @@ describe('composeGoogleProviderLifecycle', () => {
     )
     const composition = composeGoogleProviderLifecycle({
       configuration: {
-        version: 1,
+        version: 2,
         provider: 'google',
-        clientId: '123456789-posita.apps.googleusercontent.com'
+        clientId: '123456789-posita.apps.googleusercontent.com',
+        clientSecret: 'GOCSPX-deterministic-test-secret'
       },
       secretVault: runtime.secretVault,
       accountState: runtime.accountStateRepository,

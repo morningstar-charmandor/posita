@@ -164,6 +164,7 @@ describe('GoogleOAuthLoopbackRedirectServer', () => {
     const fetchRequest = vi.fn(async () => responses.shift()!)
     const adapter = new GoogleDesktopAccountAuthorizationAdapter(
       '123456789-posita.apps.googleusercontent.com',
+      'GOCSPX-deterministic-test-secret',
       listener,
       fetchRequest,
       { now: () => new Date('2026-09-02T12:00:00.000Z') },

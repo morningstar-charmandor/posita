@@ -31,8 +31,8 @@ connection milestone. Activation now has an isolated Google Cloud project
 (`posita-mail-hub-2026`), Gmail API, external testing consent with the exact approved
 scopes, and a desktop client whose credentials remain unused. One trusted-main
 composition now owns the full graph but receives an explicit empty startup account
-list. The real client ID is private, local, and loader-validated; no client secret,
-user grant, or token exists. Preparation remains non-activating, while a separate
+list. The real client ID and rotated secret are private, local, and loader-validated;
+no user grant or token exists. Preparation remains non-activating, while a separate
 explicit execution command and paired disconnect are now present. Final full-suite
 verification and dedicated-account testing remain before claiming live readiness.
 
@@ -59,7 +59,7 @@ SDK, mailbox data, or model provider was used for this audit.
 | Live application read model | Ready at credential-free presentation boundary | durable mode-aware query, encrypted human-readable account identity, bounded canonical recent-mail list and source detail, fixed validated IPC/preload, worker ownership, loading/missing/error/retry UI, and confirmed main-derived original-source handoff | Contains no live record until separately approved provider activation |
 | Sync coordinator | Lifecycle-owned, zero-account startup | 90-day path, real worker integration, bounded concurrency, cancellation, retention exclusion, disconnect/deletion quiescence, key teardown, durable status, and explicit retry policy are tested | No retry or automatic inventory handoff is exposed |
 | Gmail read adapter | Production-constructed, provider-inert | fixed read-only routes, versioned full/history cursors, bounded normalization, deletion events, safe failures, deterministic HTTP and coordinator integration tests | No account or user credential is supplied |
-| Google access-token source | Production-constructed, provider-inert | protected account-scoped refresh read, fixed bounded token exchange, memory-only expiry cache, cancellation, invalidation, safe failures, deterministic tests | Private client ID is injected; no account credential or caller exists |
+| Google access-token source | Production-constructed, provider-inert | protected account-scoped refresh read, fixed bounded token exchange, memory-only expiry cache, cancellation, invalidation, safe failures, deterministic tests | Private client ID and secret are injected in trusted main; no account credential or caller exists |
 | AI provider | Deferred | no model adapter, prompt, embedding, or model output path | Fixture summaries/drafts remain explicitly simulated |
 
 ## Blocking gaps before real mail
@@ -228,10 +228,11 @@ provider-inert loopback/browser infrastructure, trusted connection-activation
 sequencing, and zero-account production ownership.
 Those adapters and the prerequisite deletion-aware reconciliation are complete and
 production-constructed without a caller. The separately approved Google Cloud project, Gmail API, external testing
-consent, and desktop-client creation are complete. The client credential bundle and
-client secret were not downloaded or used. The strict local configuration source contains only the real
-client ID in an owner-readable application-data file, passes validation, and feeds
-only the inert graph. This approval does not authorize credential use, connecting an
+consent, and desktop-client creation are complete. The owner approved one client-secret
+rotation and private placement. The strict local configuration source contains only the
+exact version-2 client ID and secret in an owner-readable application-data file, passes
+validation, and feeds only the inert graph. No downloaded credential bundle is retained.
+This approval does not authorize connecting an
 account, real browser action, network
 testing with Google, or ingesting mail; those remain later explicit gates.
 

@@ -10,15 +10,16 @@ next move. Technical details remain in their linked source documents.
 
 Posita has completed the **Gate 2D credential-free lifecycle foundation, Google
 desktop authorization protocol, bounded loopback/browser infrastructure, trusted
-connection-activation sequence, and an inert strict local client-identifier
+connection-activation sequence, and an inert strict local client-credential
 configuration source, plus a provider-inert production ownership graph**. Exact identity consent is approved; the
 owner has now created an isolated Google Cloud project named `Posita` with project
 ID `posita-mail-hub-2026`. Gmail API is enabled, external testing consent is
 configured for OpenID identity, verified email, and Gmail read-only, and one
 desktop client named `Posita macOS Desktop` exists. Its credential bundle was not
-downloaded or copied into the repository. Its client ID is now stored only
-in the owner-readable local application-data file and passes Posita's strict loader;
-no client secret or credential bundle was downloaded. The trusted runtime ownership
+retained or copied into the repository. Its client ID and newly rotated secret are
+stored only in the owner-readable local application-data file and pass Posita's strict
+version-2 loader. The one-time value was transferred through the system clipboard,
+which was immediately cleared; no downloaded credential bundle is retained. The trusted runtime ownership
 graph is assembled and starts with zero accounts. A validated Settings/preload/IPC
 path now separates local preparation from an explicit cancellable Continue-to-Google
 command. Trusted main creates the opaque account ID, performs authorization and
@@ -38,10 +39,10 @@ endpoints. Fresh owner-approved retries reached Google's token endpoint, which r
 `invalid_request`; a bounded non-reflective classifier then identified the specific
 cause as incomplete client-secret configuration. Posita discarded the provider's free-
 text description and stored no grant, credential, account, provider mail, or live mail.
-The complete verification passes 83 test files and 501 tests, strict typecheck, renderer
-structure/security checks, localhost callback integration, and the production build.
-The next step requires an explicit owner decision before adding a private client-secret
-configuration source or using the secret.
+The new client-configuration implementation passes 83 test files and 504 tests,
+strict typecheck, renderer structure/security checks, localhost callback integration,
+and the production build. The next step is a fresh runtime readiness check followed by
+an action-time owner decision before starting another Google authorization attempt.
 The product is a runnable Electron desktop prototype using React, strict TypeScript,
 and SQLite. All visible mail is deterministic sample data.
 
@@ -297,8 +298,8 @@ Simulated or deliberately inactive:
 
 - all accounts, people, topics, messages, summaries, and drafts are fixtures,
 - generated-looking summaries and drafts are not produced by an AI provider,
-- the desktop client ID is privately configured locally; no client secret, user
-  authorization grant, or refresh credential is configured or stored,
+- the desktop client ID and rotated secret are privately configured locally; no user
+  authorization grant or refresh credential is configured or stored,
 - the isolated `posita-mail-hub-2026` Google Cloud project has Gmail API, external
   testing consent, and the `Posita macOS Desktop` client configured,
 - encrypted provider-account and sync-state tables contain no real account,
@@ -306,7 +307,7 @@ Simulated or deliberately inactive:
   through injected deterministic HTTP and unreachable without a public command,
 - Google access-token refresh has a real fixed-endpoint adapter, exercised only
   through an injected fake token and deterministic HTTP; production constructs it
-  with the private client ID but supplies no account,
+  with the private client credential pair but supplies no account,
 - Google desktop authorization has a real PKCE/state/code/identity protocol adapter,
   exercised only through injected loopback and deterministic HTTP boundaries and
   constructed in production without a caller,
@@ -342,7 +343,7 @@ Simulated or deliberately inactive:
 
 Not implemented:
 
-- a private client-secret configuration source and completed real-account authorization,
+- completed real-account authorization and evidence from a private-client-secret retry,
 - live provider-ingestion evidence,
 - automatic provider sync retry or pending-disconnect startup scheduling,
 - any remote mailbox mutation control,
@@ -365,14 +366,16 @@ Not implemented:
 
 ## Next recommended milestone
 
-The owner-approved live exercise has now verified the browser, exact loopback callback,
-and token-endpoint handoff without storing a credential or account. Callback compatibility
-is closed with bounded allow-listed metadata. The token endpoint consistently reports that
-this configured desktop client requires a client secret. Posita now maps only recognized
-OAuth error kinds and parameter names to fixed copy, discarding all provider descriptions.
-All 83 test files and 501 tests pass with the full verification gate. Stop here until the
-owner explicitly approves a private client-secret source and use. Do not repeat consent or
-add the secret to the existing client-ID-only JSON shape without that decision.
+The owner-approved live exercise verified the browser, exact loopback callback, and
+token-endpoint handoff without storing a user credential or account. Callback compatibility
+is closed with bounded allow-listed metadata. After the token endpoint identified the
+configured client's secret requirement, the owner approved a one-time secret rotation and
+private placement. Posita now loads an exact version-2 client ID/secret pair only from its
+owner-readable application-data file and submits the secret only in trusted-main token
+requests. Legacy version 1 fails closed. All 83 test files and 504 tests pass with the full
+verification gate. Start the updated app and confirm local readiness; stop for a separate
+action-time owner decision immediately before a fresh Google authorization attempt because
+success may store a protected refresh credential, activate live mode, and begin read-only sync.
 
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,
@@ -396,7 +399,7 @@ confirmed local deletion are complete at their current layers. Continue in this 
    startup account inventory, durable lifecycle status, safe explicit sync-retry
    policy, and final production-composition audit are complete.
 5. Treat the approved Google authorization, loopback/browser infrastructure,
-   reader, revoker, access-token source, strict local client-identifier source, and
+   reader, revoker, access-token source, strict local client-credential source, and
    zero-account production lifecycle graph as complete. The paired connection and
    disconnect UI/IPC boundary is also verified. Stop for the person's direct account
    choice and Google consent before treating any browser result as authorization.
@@ -514,15 +517,15 @@ authorization endpoint, loopback, client, state, PKCE, and scope validation. No
 dependency, schema, compatibility path, listener at startup, real browser action,
 credential, account, provider
 request, personal data, mailbox mutation, or intentional duplication was added.
-The new `loadGoogleOAuthClientConfiguration` infrastructure source is the only
-client-identifier configuration path. It accepts one exact versioned owner-readable
-file from Posita application data, refuses symlinks, secrets, unknown fields, and
-fallback searches, and returns only to trusted startup composition, never public contracts. No dependency,
-schema, compatibility path, duplicate service, credential, account,
-provider request, personal data, mailbox mutation, or intentional duplication was added.
-Private client-ID placement changes no source abstraction or compatibility path: it
-uses that existing loader, adds no dependency or tracked configuration, and leaves
-all provider actions inactive. `composeGoogleProviderLifecycle` is the single new
+The existing `loadGoogleOAuthClientConfiguration` infrastructure source remains the only
+client-credential configuration path. Its exact version-2 owner-readable file contains
+the desktop client ID and secret, refuses symlinks, unknown fields, legacy version 1,
+and fallback searches, and returns only to trusted startup composition, never public contracts.
+The same pair feeds only the authorization-code and refresh-token requests in trusted main.
+No dependency, schema migration, compatibility path, duplicate service, user credential,
+account, provider request, personal data, mailbox mutation, or intentional duplication was added.
+Private placement uses that existing loader and leaves all provider actions inactive.
+`composeGoogleProviderLifecycle` is the single new
 ownership factory. It reuses the existing adapters, services, repository contracts,
 and worker; adds no parallel compatibility path; and deliberately starts the owner
 with zero accounts. The worker's asynchronous shutdown is awaited so accepted local
@@ -573,7 +576,7 @@ credential, personal data, provider request, or mailbox mutation was added.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 83 test files, 501 tests, strict typecheck, structure
+- Current verified baseline: 83 test files, 504 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,

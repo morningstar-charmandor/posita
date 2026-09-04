@@ -11,6 +11,7 @@ import {
 import type { GoogleOAuthRedirectUriSource } from './googleOAuthLoopbackRedirectServer'
 
 const clientId = '123456789-posita.apps.googleusercontent.com'
+const clientSecret = 'GOCSPX-deterministic-test-secret'
 const redirectUri = 'http://127.0.0.1:49152/oauth/google/callback'
 const request: BeginAccountAuthorizationRequestV1 = {
   version: 1,
@@ -64,6 +65,7 @@ const createHarness = (
   const redirects = createRedirects(prepared)
   const adapter = new GoogleDesktopAccountAuthorizationAdapter(
     clientId,
+    clientSecret,
     redirects,
     fetchRequest,
     { now: () => now },
@@ -145,6 +147,7 @@ describe('GoogleDesktopAccountAuthorizationAdapter', () => {
       'https://gmail.googleapis.com/gmail/v1/users/me/profile'
     ])
     expect(calls[0]?.[1].body).toContain('code=code-%2F%2B')
+    expect(calls[0]?.[1].body).toContain(`client_secret=${clientSecret}`)
     expect(calls[0]?.[1].body).toContain('code_verifier=')
     expect(calls[0]?.[1].body).toContain(`redirect_uri=${encodeURIComponent(redirectUri)}`)
     expect(calls[0]?.[0]).not.toContain('code')
@@ -400,7 +403,10 @@ describe('GoogleDesktopAccountAuthorizationAdapter', () => {
     expect(redirects.release).toHaveBeenCalledWith(launch.sessionId)
 
     expect(() => new GoogleDesktopAccountAuthorizationAdapter(
-      'invalid-client', createRedirects()
+      'invalid-client', clientSecret, createRedirects()
+    )).toThrow(expect.objectContaining({ code: 'INVALID_AUTHORIZATION_REQUEST' }))
+    expect(() => new GoogleDesktopAccountAuthorizationAdapter(
+      clientId, 'invalid secret', createRedirects()
     )).toThrow(expect.objectContaining({ code: 'INVALID_AUTHORIZATION_REQUEST' }))
 
     const invalidRedirect = createHarness([], 'http://localhost:49152/oauth/google/callback')

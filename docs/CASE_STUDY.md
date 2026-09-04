@@ -25,10 +25,10 @@ localhost callback listener, browser validator, token source, Gmail reader, revo
 connection transaction, sync coordinator, and lifecycle owner now form one trusted
 production ownership graph. Startup supplies that graph with zero accounts, so it
 starts retention and owns safe teardown without opening a browser or contacting
-Google. The real desktop client ID is read only from an owner-readable application-
-data file and is absent from Git; no client secret, user grant, token, or real account
-exists. The paired commands pass the complete 82-file, 488-test verification suite;
-dedicated-account testing remains. Gmail and AI remain unconnected, and every
+Google. The real desktop client ID and rotated secret are read only from an owner-readable
+application-data file and are absent from Git, preload, IPC, renderer, and logs; no user
+grant, token, or real account exists. The client-configuration change passes the complete
+83-file, 504-test verification suite; a fresh dedicated-account retry remains. Gmail and AI remain unconnected, and every
 visible mail item remains deterministic sample data.
 
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
@@ -467,8 +467,8 @@ used progressively narrower, non-reflective diagnostics to identify an incomplet
 client-secret configuration. The diagnostic parser returns only fixed messages for
 allow-listed OAuth categories and parameter names; provider descriptions are discarded.
 This is verified fail-closed integration evidence, not evidence of a connected mailbox.
-No grant, account, or mail was stored, and adding the private secret remains a separate
-owner-approved step.
+No grant, account, or mail was stored. The owner later approved rotating the required
+secret and placing it only in Posita's private application-data file.
 
 The connection experience now demonstrates the same gated approach in the product:
 Settings verifies local readiness before revealing a separate Continue-to-Google
@@ -477,3 +477,28 @@ for every connected account. Trusted main—not the UI—creates account identit
 credential persistence and initial sync, and attempts journaled rollback if activation
 fails. This is portfolio evidence of a security constraint made legible in the
 interface, not evidence of live Gmail access; no real account has yet been connected.
+
+### Private desktop-client completion without widening trust
+
+Google's live token response showed that the configured desktop client required its
+client secret even though the prior design deliberately accepted only the public client
+identifier. Posita treated the provider evidence as an architectural correction, not a
+reason to add an environment-variable or repository fallback. The existing fixed-file
+loader was upgraded to an exact version-2 ID/secret pair, still capped, owner-readable,
+symlink-refusing, unknown-field-rejecting, and trusted-main-only. Both initial code exchange
+and later access-token refresh use the pair only in bounded form bodies. Structural checks
+explicitly reject client configuration in production renderer and preload code.
+
+The owner rotated the client secret in Google Cloud and approved its one-time local transfer.
+The secret was written atomically to Posita's private application-data file with owner-only
+permissions, the clipboard was immediately cleared, and no downloaded credential bundle is
+retained. The repository contains only conspicuous deterministic test values.
+
+Evidence: loader tests cover version 2, permissions, symlink refusal, malformed and legacy
+input; authorization and refresh tests verify that the deterministic secret appears only in
+the fixed token request body. `npm run verify` passes 83 test files and 504 tests, strict
+typecheck, renderer structure/security checks, localhost integration, and production build.
+
+Limitations: this milestone configures an application credential, not a user grant. No real
+account, refresh token, provider read, live mail, AI provider, or mailbox mutation is claimed.
+The next live authorization still requires an action-time owner decision.

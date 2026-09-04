@@ -1,16 +1,20 @@
 import { constants } from 'node:fs'
 import { open } from 'node:fs/promises'
 import { isAbsolute, join } from 'node:path'
-import { GOOGLE_OAUTH_CLIENT_ID_PATTERN } from './googleOAuthProtocol'
+import {
+  GOOGLE_OAUTH_CLIENT_ID_PATTERN,
+  GOOGLE_OAUTH_CLIENT_SECRET_PATTERN
+} from './googleOAuthProtocol'
 
 export const GOOGLE_OAUTH_CLIENT_CONFIGURATION_FILE = 'google-oauth-client.json'
 const MAX_CONFIGURATION_BYTES = 4_096
-const ALLOWED_KEYS = ['version', 'provider', 'clientId'] as const
+const ALLOWED_KEYS = ['version', 'provider', 'clientId', 'clientSecret'] as const
 
-export interface GoogleOAuthClientConfigurationV1 {
-  version: 1
+export interface GoogleOAuthClientConfigurationV2 {
+  version: 2
   provider: 'google'
   clientId: string
+  clientSecret: string
 }
 
 export type GoogleOAuthClientConfigurationFailureCode =
@@ -22,7 +26,7 @@ export type GoogleOAuthClientConfigurationFailureCode =
 
 export type GoogleOAuthClientConfigurationLoadResult =
   | { status: 'missing' }
-  | { status: 'available'; configuration: GoogleOAuthClientConfigurationV1 }
+  | { status: 'available'; configuration: GoogleOAuthClientConfigurationV2 }
   | { status: 'invalid'; code: GoogleOAuthClientConfigurationFailureCode }
 
 const invalid = (
@@ -32,7 +36,7 @@ const invalid = (
 const isNodeError = (value: unknown): value is NodeJS.ErrnoException =>
   value instanceof Error && 'code' in value
 
-const parseConfiguration = (text: string): GoogleOAuthClientConfigurationV1 | undefined => {
+const parseConfiguration = (text: string): GoogleOAuthClientConfigurationV2 | undefined => {
   let value: unknown
   try {
     value = JSON.parse(text)
@@ -44,18 +48,21 @@ const parseConfiguration = (text: string): GoogleOAuthClientConfigurationV1 | un
   const keys = Object.keys(record)
   if (keys.length !== ALLOWED_KEYS.length ||
       !keys.every((key) => ALLOWED_KEYS.includes(key as (typeof ALLOWED_KEYS)[number])) ||
-      record.version !== 1 || record.provider !== 'google' ||
+      record.version !== 2 || record.provider !== 'google' ||
       typeof record.clientId !== 'string' ||
-      !GOOGLE_OAUTH_CLIENT_ID_PATTERN.test(record.clientId)) return undefined
+      !GOOGLE_OAUTH_CLIENT_ID_PATTERN.test(record.clientId) ||
+      typeof record.clientSecret !== 'string' ||
+      !GOOGLE_OAUTH_CLIENT_SECRET_PATTERN.test(record.clientSecret)) return undefined
   return {
-    version: 1,
+    version: 2,
     provider: 'google',
-    clientId: record.clientId
+    clientId: record.clientId,
+    clientSecret: record.clientSecret
   }
 }
 
 /**
- * Loads the one local-only Google desktop client identifier from Posita's
+ * Loads the one local-only Google desktop client credential pair from Posita's
  * application-data directory. The file is never searched for in the repository,
  * and its contents are never returned to renderer contracts or logs.
  */

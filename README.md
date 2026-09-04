@@ -10,10 +10,10 @@ Public repository: [github.com/morningstar-charmandor/posita](https://github.com
 ## Current status
 
 Gate 2D's credential-free lifecycle foundation and approved Google adapter set are
-complete but have not been used with a real account. A strict trusted-main source validates a
-desktop client identifier from one private application-data file. The real client ID
-is locally present, validated, and consumed only by a provider-inert trusted-main
-composition. No client secret, user credential, grant, token, or account is present. Posita includes
+complete but have not been used to connect a real account. A strict trusted-main source validates a
+desktop client credential pair from one private application-data file. The real client ID
+and rotated secret are locally present, validated, absent from Git, and consumed only by a
+provider-inert trusted-main composition. No user credential, grant, token, or account is present. Posita includes
 a Daily Brief,
 topic timeline with source citations, original-message inspection, a unified
 classic mail view, and an editable draft flow. Realistic fixture data is seeded
@@ -55,9 +55,10 @@ consent preview. It exactly discloses OpenID identity, verified email, and plann
 Gmail read-only access, plus the 90-day encrypted local window, inactive AI-provider
 boundary, and disconnect behavior. Google Cloud project `posita-mail-hub-2026` now
 has Gmail API, external testing consent with the exact reviewed scopes, and one
-`Posita macOS Desktop` client. Its client ID is privately configured and validated
-locally; no client secret, credential bundle, user grant, or token was downloaded or
-used. Settings first runs a non-activating local readiness check, then offers a
+`Posita macOS Desktop` client. Its client ID and rotated secret are privately configured
+and validated locally in an owner-readable file; neither is committed or exposed to
+the renderer. No credential bundle is retained, and no user grant or token exists.
+Settings first runs a non-activating local readiness check, then offers a
 separate explicit Continue-to-Google command. The trusted command owns the opaque
 account ID, cancellation, authorization, encrypted persistence, initial sync, and
 rollback. A connected account has a typed-confirmation disconnect control. No user
@@ -75,8 +76,8 @@ An exact-URL system-browser launcher has an injected Electron delegate and is te
 without opening a browser. Production constructs these boundaries inside one
 lifecycle graph and starts it with zero accounts. Exact validated connection and
 cancellation IPC can invoke the activation coordinator only after the user chooses
-Continue to Google. No client secret, user grant, account, browser action, or live
-provider request is present.
+Continue to Google. The private client secret is configured but no user grant,
+account, browser action from the updated runtime, or live provider request is present.
 
 A trusted-main activation coordinator joins those boundaries to the
 existing account-connection service. It starts callback waiting before browser
@@ -240,7 +241,7 @@ account's protected refresh credential, posts it in a bounded form body to Googl
 fixed token endpoint, keeps the returned access token in memory with an expiry
 safety window, shares one cancellable refresh per account, refuses widened scopes,
 and exposes explicit invalidation and teardown. Production injects the private local
-client ID but never calls the source without an explicit account; no user credential,
+client credential pair but never calls the source without an explicit account; no user credential,
 token, account, or network request is present in the running product. Its exact returned-
 scope check now matches the approved identity-plus-Gmail-read-only consent.
 

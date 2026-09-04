@@ -1117,3 +1117,25 @@
   Retryable failures retain the in-process challenge and lifecycle journal. No new
   dependency, schema migration, compatibility path, second lifecycle owner, mailbox
   mutation, credential, account, or provider request is introduced by implementation.
+
+## ADR-055: Extend the fixed local Google client configuration with its required secret
+
+- Status: accepted for Gate 2D live authorization retry
+- Context: owner-approved live consent proved the browser, callback, and token-endpoint
+  handoff, but Google's token endpoint consistently rejected this installed-desktop
+  client because its client secret was absent. The earlier secret-free assumption in
+  ADR-051 no longer matches the configured client or observed provider requirement.
+- Decision: supersede ADR-051's version-1 shape with one exact version-2
+  `google-oauth-client.json` containing `provider`, `clientId`, and `clientSecret` in
+  Posita's owner-readable application-data directory. Reuse the same bounded,
+  symlink-refusing, no-fallback loader; reject legacy version 1 and unknown fields.
+  Pass the secret only inside trusted main in the authorization-code and refresh-token
+  form bodies. Never return, log, commit, or expose either client credential through
+  preload, IPC, or renderer code. The owner approved rotating the Google secret and
+  placing it directly in this private file; the clipboard was cleared immediately and
+  no downloaded credential bundle is retained.
+- Consequence: Posita can retry the exact approved desktop OAuth flow without adding a
+  dependency, repository secret, second configuration path, or new provider owner.
+  Existing version-1 local configuration intentionally fails closed until explicitly
+  migrated; there is no compatibility fallback. This decision does not itself authorize
+  a user grant, account activation, Gmail read, or mailbox mutation.

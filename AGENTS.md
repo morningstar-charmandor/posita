@@ -9,14 +9,14 @@ exists deeper in the tree.
 - Current milestone: Gate 2D Google desktop authorization, bounded loopback/browser,
   trusted connection activation, read, refresh, and revocation are credential-free
   complete; isolated Google Cloud/API/consent/desktop-client configuration is complete;
-  a strict inert local client-identifier configuration source is complete and has
-  validated the private local client ID. The trusted Google connection/sync/disconnect
+  a strict inert local client-credential configuration source is complete and has
+  validated the private local desktop client ID and secret. The trusted Google connection/sync/disconnect
   graph is production-composed and starts with zero accounts. Explicit public
   connection, cancellation, and confirmed disconnect UI/IPC commands are verified.
   Owner-approved live consent has verified the browser, exact loopback callback,
   and token-endpoint handoff. Google reports that this desktop client requires a
-  client secret; no grant, credential, account, provider mail read, or live mail
-  has been stored. Private client-secret configuration awaits explicit approval.
+  client secret. The owner approved a one-time rotation and private local placement;
+  no grant, user credential, account, provider mail read, or live mail has been stored.
 - Current data: deterministic fixtures stored as authenticated encrypted records.
 - Encrypted provider-account and sync-state storage is implemented but empty.
 - A non-sensitive lifecycle journal and confirmed full local-deletion execution are implemented.
@@ -43,7 +43,7 @@ exists deeper in the tree.
 - An OS-protected credential vault is implemented but contains no real token.
 - A bounded refresh-to-access-token source now connects that vault contract to the
   Gmail reader contract in trusted main. A separate strict configuration source can
-  read the desktop client identifier from Posita's private application-data file,
+  read the desktop client credential pair from Posita's private application-data file,
   and both are constructed only inside the provider-inert production graph. No real
   user credential has been received.
 - A versioned Gmail consent preview and local readiness action are
@@ -51,8 +51,8 @@ exists deeper in the tree.
   OpenID identity, verified email, and Gmail read-only access. A separate explicit
   Continue-to-Google action can invoke the trusted command and can be cancelled
   while pending. Google Cloud has matching testing consent and a desktop client,
-  whose client ID is privately configured locally. No client secret, user grant,
-  or token is configured or stored.
+  whose client ID and secret are privately configured locally and remain trusted-main-only.
+  No user grant or token is configured or stored.
 - Provider-independent authorization-session contracts and a deterministic fake
   are implemented but are not composed into startup, preload, IPC, or UI.
 - A real provider-inert Google desktop authorization adapter implements bounded PKCE,
@@ -131,9 +131,10 @@ exists deeper in the tree.
 - The owner approved exact OpenID/email/Gmail-read-only consent and the credential-
   free desktop OAuth protocol core, provider-inert loopback/browser boundaries, and
   trusted connection-activation sequencing, plus the isolated Google-side testing
-  configuration, private local client-ID placement, and narrow paired UI commands.
-  The live token endpoint identified a required client secret. No client secret,
-  real account, ingestion, or provider mail read has occurred.
+  configuration, private local client-credential placement, and narrow paired UI
+  commands. The live token endpoint identified a required client secret; the owner
+  approved rotating and storing it only in the owner-readable application-data file.
+  No real account, ingestion, user credential, or provider mail read has occurred.
 - Product promise: **Your inboxes, understood as one.**
 
 Do not imply that fixture-backed behavior is connected to real mail or AI.

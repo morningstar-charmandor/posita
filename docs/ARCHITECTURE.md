@@ -344,14 +344,14 @@ instead of racing cancellation against a possibly committed credential. Cleanup
 failure is distinct recovery-required state. Startup constructs the coordinator with
 the validated client ID, but it has no IPC, preload, renderer, or invoking command.
 
-The future desktop client identifier has one inert infrastructure source:
+The desktop client credential pair has one inert infrastructure source:
 `loadGoogleOAuthClientConfiguration`. It reads only `google-oauth-client.json` from
 the absolute Posita application-data directory, refuses symbolic links and files
 readable by other users on POSIX platforms, caps input at 4 KiB, and accepts only
-the exact versioned `provider` and `clientId` fields. It explicitly rejects a client
-secret and does not search the repository, environment variables, or alternate
-locations. The result remains trusted-main-only and is consumed by the single startup
-composition factory, never preload, IPC, or renderer code.
+the exact version-2 `provider`, `clientId`, and `clientSecret` fields. It rejects
+legacy or unknown shapes and does not search the repository, environment variables,
+or alternate locations. The result remains trusted-main-only and is consumed by the
+single startup composition factory, never preload, IPC, renderer code, or logs.
 
 `AccountConnectionService` is the next trusted application layer above that
 adapter. It validates begin output against the requested account, binds completion

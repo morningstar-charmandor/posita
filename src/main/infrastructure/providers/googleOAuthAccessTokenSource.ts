@@ -5,13 +5,16 @@ import {
   googleRefreshTokenName,
   type SecretVault
 } from '../../application/secretVault'
+import {
+  GOOGLE_OAUTH_CLIENT_ID_PATTERN,
+  GOOGLE_OAUTH_CLIENT_SECRET_PATTERN
+} from './googleOAuthProtocol'
 
 const GOOGLE_TOKEN_ENDPOINT = 'https://oauth2.googleapis.com/token'
 const MAX_RESPONSE_BYTES = 16 * 1024
 const DEFAULT_TIMEOUT_MS = 15_000
 const EXPIRY_SKEW_MS = 60_000
 const MAX_TOKEN_LIFETIME_SECONDS = 24 * 60 * 60
-const CLIENT_ID_PATTERN = /^[A-Za-z0-9._-]{1,480}\.apps\.googleusercontent\.com$/
 
 type JsonRecord = Record<string, unknown>
 
@@ -21,6 +24,7 @@ export interface GoogleAccessTokenSource {
 
 export interface GoogleOAuthClientConfiguration {
   clientId: string
+  clientSecret: string
 }
 
 export interface GoogleAccessTokenClock {
@@ -218,7 +222,8 @@ export class GoogleOAuthAccessTokenSource implements GoogleAccessTokenSource {
     private readonly clock: GoogleAccessTokenClock = { now: () => new Date() },
     private readonly timeoutMs = DEFAULT_TIMEOUT_MS
   ) {
-    if (!CLIENT_ID_PATTERN.test(configuration.clientId) ||
+    if (!GOOGLE_OAUTH_CLIENT_ID_PATTERN.test(configuration.clientId) ||
+        !GOOGLE_OAUTH_CLIENT_SECRET_PATTERN.test(configuration.clientSecret) ||
         !Number.isSafeInteger(timeoutMs) || timeoutMs < 1_000 || timeoutMs > 60_000 ||
         !Number.isFinite(clock.now().getTime())) {
       throw invalidRequest()
@@ -323,6 +328,7 @@ export class GoogleOAuthAccessTokenSource implements GoogleAccessTokenSource {
         },
         body: new URLSearchParams({
           client_id: this.configuration.clientId,
+          client_secret: this.configuration.clientSecret,
           refresh_token: refreshToken,
           grant_type: 'refresh_token'
         }).toString(),

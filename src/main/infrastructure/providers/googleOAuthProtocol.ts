@@ -6,6 +6,7 @@ export const GOOGLE_OAUTH_CALLBACK_PATH = '/oauth/google/callback'
 export const GOOGLE_OAUTH_MAX_URL_LENGTH = 4_096
 export const GOOGLE_OAUTH_CLIENT_ID_PATTERN =
   /^[A-Za-z0-9._-]{1,480}\.apps\.googleusercontent\.com$/
+export const GOOGLE_OAUTH_CLIENT_SECRET_PATTERN = /^[\u0021-\u007E]{16,256}$/
 export const GOOGLE_OAUTH_STATE_PATTERN = /^[A-Za-z0-9_-]{43}$/
 export const GOOGLE_OAUTH_CHALLENGE_PATTERN = /^[A-Za-z0-9_-]{43}$/
 

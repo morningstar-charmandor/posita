@@ -117,6 +117,9 @@ for (const path of await walk(rendererRoot)) {
   if (!path.includes('.test.') && /(?:@shared\/fixtures|shared\/fixtures)/.test(source)) {
     fail(`production renderer must not import fixture data directly: ${relative(root, path)}`)
   }
+  if (!path.includes('.test.') && /clientSecret|google-oauth-client\.json/.test(source)) {
+    fail(`renderer must never receive Google client credentials: ${relative(root, path)}`)
+  }
 }
 
 const preload = await readText('src/preload/index.ts')
@@ -271,13 +274,15 @@ if (!googleOAuthClientConfiguration.includes(
 ) || !googleOAuthClientConfiguration.includes('constants.O_NOFOLLOW') ||
     !googleOAuthClientConfiguration.includes('(metadata.mode & 0o077) !== 0') ||
     !googleOAuthClientConfiguration.includes(
-      "const ALLOWED_KEYS = ['version', 'provider', 'clientId'] as const"
-    )) {
+      "const ALLOWED_KEYS = ['version', 'provider', 'clientId', 'clientSecret'] as const"
+    ) || !googleOAuthClientConfiguration.includes('record.version !== 2') ||
+    !googleOAuthClientConfiguration.includes('GOOGLE_OAUTH_CLIENT_SECRET_PATTERN')) {
   fail('Google client configuration must stay fixed, private, symlink-refusing, and exact')
 }
 if (googleOAuthClientConfiguration.includes('process.env') ||
-    googleOAuthClientConfiguration.includes('clientSecret')) {
-  fail('Google client configuration must not use environment search or accept a client secret')
+    preload.includes('clientSecret') || preload.includes('google-oauth-client.json') ||
+    !googleProviderLifecycleComposition.includes('dependencies.configuration.clientSecret')) {
+  fail('Google client credentials must stay explicit, local-file-only, and trusted-main-only')
 }
 if (!localDataBootstrap.includes('new ElectronSafeStorageProtector()')) {
   fail('production composition must use the Electron OS-backed credential protector')

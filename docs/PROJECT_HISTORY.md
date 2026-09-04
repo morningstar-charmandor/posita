@@ -2495,6 +2495,36 @@ but no grant, credential, connected account, provider mail read, live mail, AI p
 or mailbox mutation is claimed. Adding or using the required client secret is explicitly
 deferred for owner approval; it must never be committed.
 
+## 2026-09-04 — Private Google desktop client configuration v2
+
+Goal: satisfy the provider-observed desktop client-secret requirement without widening
+Posita's configuration, process, repository, or UI trust boundaries.
+
+Delivered:
+
+- upgraded the single fixed `google-oauth-client.json` loader from the exact secret-free
+  version-1 shape to an exact version-2 client ID/secret pair,
+- retained the 4 KiB cap, regular-file and symlink refusal, owner-only POSIX permissions,
+  no fallback search, bounded safe failures, and trusted-main-only ownership,
+- intentionally rejected legacy version 1 rather than adding a compatibility path,
+- added the client secret only to the fixed authorization-code and refresh-token form bodies,
+- added tests for missing/invalid secrets, legacy input, exact request placement, and invalid
+  constructor configuration,
+- strengthened structural checks so production renderer and preload code cannot reference
+  the credential field or private configuration filename,
+- recorded ADR-055, superseding ADR-051's secret-free assumption for the configured client,
+- rotated the Google Cloud client secret with explicit owner approval and atomically stored
+  it only in Posita's owner-readable application-data file,
+- cleared the system clipboard immediately after transfer; no credential bundle is retained.
+
+Verification: `npm run verify` passes 83 test files and 504 tests, strict TypeScript,
+renderer structure/security checks, localhost callback integration, and production build.
+
+Limitations: deterministic tests use only conspicuous fake client values. The private real
+client pair is outside Git and never crosses preload, IPC, renderer, or logs. No user grant,
+refresh token, connected account, provider read, live mail, AI provider, or mailbox mutation
+is claimed. A fresh live authorization remains an explicit action-time decision.
+
 ## How future entries should be written
 
 For each material milestone, record:
