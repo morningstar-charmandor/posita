@@ -155,6 +155,79 @@ describe('GoogleDesktopAccountAuthorizationAdapter', () => {
     expect(redirects.release).toHaveBeenCalledWith(launch.sessionId)
   })
 
+  it('accepts bounded Google callback metadata without trusting it as the grant', async () => {
+    const { adapter, calls } = createHarness([
+      tokenGrant(
+        'email https://www.googleapis.com/auth/userinfo.email openid ' +
+        'https://www.googleapis.com/auth/gmail.readonly'
+      ),
+      identity(),
+      profile()
+    ])
+    const launch = await adapter.begin(request)
+    const callback = new URL(callbackFor(launch.authorizationUrl))
+    callback.searchParams.set('iss', 'https://accounts.google.com')
+    callback.searchParams.set(
+      'scope',
+      'email https://www.googleapis.com/auth/userinfo.email openid ' +
+      'https://www.googleapis.com/auth/gmail.readonly'
+    )
+    callback.searchParams.set('authuser', '0')
+    callback.searchParams.set('hd', 'example.test')
+    callback.searchParams.set('prompt', 'consent')
+
+    await expect(adapter.complete({
+      version: 1,
+      sessionId: launch.sessionId,
+      callbackUrl: callback.toString()
+    })).resolves.toMatchObject({
+      providerAccountId: 'google-subject-123',
+      mailboxAddress: 'owner.work@example.test'
+    })
+    expect(calls).toHaveLength(3)
+  })
+
+  it('accepts a standards-compliant token response with omitted scope and bounded refresh expiry', async () => {
+    const { adapter } = createHarness([
+      response(200, {
+        access_token: 'deterministic-access-token',
+        expires_in: 3_600,
+        refresh_token: 'deterministic-refresh-token',
+        refresh_token_expires_in: 604_800,
+        token_type: 'Bearer',
+        id_token: 'header.payload.signature'
+      }),
+      identity(),
+      profile()
+    ])
+    const launch = await adapter.begin(request)
+
+    await expect(adapter.complete({
+      version: 1,
+      sessionId: launch.sessionId,
+      callbackUrl: callbackFor(launch.authorizationUrl)
+    })).resolves.toMatchObject({ providerAccountId: 'google-subject-123' })
+  })
+
+  it('rejects unknown, duplicated, or widened Google callback metadata', async () => {
+    const { adapter, calls } = createHarness()
+    const launch = await adapter.begin(request)
+    const base = callbackFor(launch.authorizationUrl)
+
+    for (const query of [
+      '&unexpected=value',
+      '&iss=https%3A%2F%2Faccounts.google.com&iss=https%3A%2F%2Faccounts.google.com',
+      '&scope=openid%20email%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.modify'
+    ]) {
+      await expect(adapter.complete({
+        version: 1,
+        sessionId: launch.sessionId,
+        callbackUrl: `${base}${query}`
+      })).rejects.toMatchObject({ code: 'AUTHORIZATION_CALLBACK_REJECTED' })
+    }
+    expect(calls).toHaveLength(0)
+  })
+
   it('rejects a wrong state or callback origin without consuming the valid session', async () => {
     const { adapter, calls } = createHarness()
     const launch = await adapter.begin(request)
@@ -231,7 +304,7 @@ describe('GoogleDesktopAccountAuthorizationAdapter', () => {
     })).rejects.toMatchObject({ code: 'AUTHORIZATION_RESTART_REQUIRED', retryable: false })
   })
 
-  it('turns an ambiguous provider failure into a terminal fresh-start requirement', async () => {
+  it('classifies a temporary token-service failure without provider detail', async () => {
     const { adapter } = createHarness([response(503, 'private-provider-detail')])
     const launch = await adapter.begin(request)
     const completion = {
@@ -243,10 +316,79 @@ describe('GoogleDesktopAccountAuthorizationAdapter', () => {
     await expect(adapter.complete(completion)).rejects.toMatchObject({
       code: 'AUTHORIZATION_RESTART_REQUIRED',
       retryable: true,
-      message: 'Google authorization could not be completed. Start again.'
+      message: 'Google\'s token service is temporarily unavailable. Start again.'
     })
     await expect(adapter.complete(completion)).rejects.toMatchObject({
       code: 'AUTHORIZATION_SESSION_NOT_FOUND'
+    })
+  })
+
+  it('surfaces only an allow-listed token-exchange failure kind', async () => {
+    const { adapter } = createHarness([response(400, {
+      error: 'invalid_grant',
+      error_description: 'private-provider-detail-must-not-surface'
+    })])
+    const launch = await adapter.begin(request)
+
+    await expect(adapter.complete({
+      version: 1,
+      sessionId: launch.sessionId,
+      callbackUrl: callbackFor(launch.authorizationUrl)
+    })).rejects.toMatchObject({
+      code: 'AUTHORIZATION_RESTART_REQUIRED',
+      retryable: false,
+      message: 'Google rejected the one-time authorization grant. Start again.'
+    })
+  })
+
+  it('maps a recognized invalid-request parameter to fixed non-reflective copy', async () => {
+    const { adapter } = createHarness([response(400, {
+      error: 'invalid_request',
+      error_description: 'Missing required parameter: client_secret; private suffix'
+    })])
+    const launch = await adapter.begin(request)
+
+    await expect(adapter.complete({
+      version: 1,
+      sessionId: launch.sessionId,
+      callbackUrl: callbackFor(launch.authorizationUrl)
+    })).rejects.toMatchObject({
+      code: 'AUTHORIZATION_RESTART_REQUIRED',
+      retryable: false,
+      message: 'Google reports that Posita\'s client-secret configuration is incomplete.'
+    })
+  })
+
+  it('classifies identity and Gmail profile verification failures without provider detail', async () => {
+    const invalidIdentity = createHarness([
+      tokenGrant(),
+      response(200, { private_provider_detail: 'must-not-surface' })
+    ])
+    const identityLaunch = await invalidIdentity.adapter.begin(request)
+    await expect(invalidIdentity.adapter.complete({
+      version: 1,
+      sessionId: identityLaunch.sessionId,
+      callbackUrl: callbackFor(identityLaunch.authorizationUrl)
+    })).rejects.toMatchObject({
+      code: 'AUTHORIZATION_RESTART_REQUIRED',
+      retryable: false,
+      message: 'The Google identity response could not be verified. Start again.'
+    })
+
+    const invalidProfile = createHarness([
+      tokenGrant(),
+      identity(),
+      response(200, { private_provider_detail: 'must-not-surface' })
+    ])
+    const profileLaunch = await invalidProfile.adapter.begin(request)
+    await expect(invalidProfile.adapter.complete({
+      version: 1,
+      sessionId: profileLaunch.sessionId,
+      callbackUrl: callbackFor(profileLaunch.authorizationUrl)
+    })).rejects.toMatchObject({
+      code: 'AUTHORIZATION_RESTART_REQUIRED',
+      retryable: false,
+      message: 'The Gmail profile response could not be verified. Start again.'
     })
   })
 

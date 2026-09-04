@@ -13,8 +13,10 @@ exists deeper in the tree.
   validated the private local client ID. The trusted Google connection/sync/disconnect
   graph is production-composed and starts with zero accounts. Explicit public
   connection, cancellation, and confirmed disconnect UI/IPC commands are verified.
-  No real authorization, credential,
-  provider request, account, or live mail has been used.
+  Owner-approved live consent has verified the browser, exact loopback callback,
+  and token-endpoint handoff. Google reports that this desktop client requires a
+  client secret; no grant, credential, account, provider mail read, or live mail
+  has been stored. Private client-secret configuration awaits explicit approval.
 - Current data: deterministic fixtures stored as authenticated encrypted records.
 - Encrypted provider-account and sync-state storage is implemented but empty.
 - A non-sensitive lifecycle journal and confirmed full local-deletion execution are implemented.
@@ -49,8 +51,8 @@ exists deeper in the tree.
   OpenID identity, verified email, and Gmail read-only access. A separate explicit
   Continue-to-Google action can invoke the trusted command and can be cancelled
   while pending. Google Cloud has matching testing consent and a desktop client,
-  whose client ID is privately configured locally; no client secret, credential bundle,
-  user grant, or token was downloaded or used.
+  whose client ID is privately configured locally. No client secret, user grant,
+  or token is configured or stored.
 - Provider-independent authorization-session contracts and a deterministic fake
   are implemented but are not composed into startup, preload, IPC, or UI.
 - A real provider-inert Google desktop authorization adapter implements bounded PKCE,
@@ -124,13 +126,14 @@ exists deeper in the tree.
   testing consent, desktop-client creation, private client-ID placement, and a
   provider-inert production ownership graph are complete. The narrow connection,
   cancellation, and confirmed disconnect UI/IPC exposure is approved and implemented;
-  credential use and provider activation have not occurred.
+  live browser/callback/token-endpoint diagnostics occurred under explicit consent,
+  but credential use and provider activation did not complete.
 - The owner approved exact OpenID/email/Gmail-read-only consent and the credential-
   free desktop OAuth protocol core, provider-inert loopback/browser boundaries, and
   trusted connection-activation sequencing, plus the isolated Google-side testing
   configuration, private local client-ID placement, and narrow paired UI commands.
-  A client secret or credential bundle, real account, ingestion, and live provider-
-  network use have not occurred.
+  The live token endpoint identified a required client secret. No client secret,
+  real account, ingestion, or provider mail read has occurred.
 - Product promise: **Your inboxes, understood as one.**
 
 Do not imply that fixture-backed behavior is connected to real mail or AI.

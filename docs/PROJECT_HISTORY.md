@@ -2454,6 +2454,47 @@ next action after the Git checkpoint is for the user to select a dedicated test
 account in Google's browser and approve the exact read-only consent for the separate
 live authorization exercise.
 
+## Gate 2D milestone — Live Google callback compatibility
+
+Date: 2026-09-04
+Checkpoint: pending Git checkpoint
+
+Goal: exercise the approved read-only desktop consent with the owner account and
+close any gap between deterministic OAuth fixtures and Google's real callback.
+
+Google Cloud testing access was restricted to the approved owner. The owner completed
+Google's warning and consent screens, and Google reached Posita's exact ephemeral
+loopback callback. Posita correctly refused to exchange the code because the real
+redirect also contained issuer, granted-scope, account-index, hosted-domain, and
+prompt metadata that the deterministic callback fixture did not model. The stalled
+local session was cancelled before any token, account, or mail was stored.
+
+The adapter now accepts only a bounded allow-list of that metadata, validates the
+Google issuer, normalizes Google's two equivalent email-scope spellings, requires
+the reviewed scope set, and rejects unknown, duplicated, malformed, or widened
+fields. Callback metadata is never treated as the account grant; token exchange,
+verified OpenID identity, and Gmail-profile agreement remain authoritative.
+
+Fresh owner-approved retries then reached Google's token endpoint. The first safe
+stage diagnostic localized the failure to token exchange; the second mapped Google's
+allow-listed `invalid_request` kind; and the final non-reflective parameter classifier
+identified incomplete client-secret configuration. The parser was split into the
+dedicated `googleOAuthTokenExchangeFailure` module after the adapter crossed the
+project's complexity-review threshold. It maps only fixed OAuth kinds and recognized
+parameter names, never provider descriptions.
+
+Evidence: focused adapter and parser tests cover the observed callback shape, hostile
+metadata, optional standards-compliant token fields, stage isolation, fixed OAuth
+failure mapping, and non-reflection. The full `npm run verify` gate passes 83 test files
+and 501 tests, strict typecheck, renderer structure/security checks, localhost callback
+integration, and the production build.
+
+Limitations: the callback contained personal account metadata during the local live
+exercise; none of it is copied into this repository. The token endpoint was contacted,
+but no grant, credential, connected account, provider mail read, live mail, AI provider,
+or mailbox mutation is claimed. Adding or using the required client secret is explicitly
+deferred for owner approval; it must never be committed.
+
 ## How future entries should be written
 
 For each material milestone, record:

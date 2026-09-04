@@ -22,6 +22,10 @@ import {
   parseBoundedGoogleOAuthUrl,
   safelyEqualGoogleOAuthValue
 } from './googleOAuthProtocol'
+import {
+  GoogleTokenExchangeFailure,
+  parseGoogleTokenExchangeFailure
+} from './googleOAuthTokenExchangeFailure'
 
 const GOOGLE_TOKEN_ENDPOINT = 'https://oauth2.googleapis.com/token'
 const GOOGLE_USERINFO_ENDPOINT = 'https://openidconnect.googleapis.com/v1/userinfo'
@@ -29,9 +33,15 @@ const GOOGLE_GMAIL_PROFILE_ENDPOINT = 'https://gmail.googleapis.com/gmail/v1/use
 const SESSION_LIFETIME_MS = 5 * 60 * 1_000
 const DEFAULT_TIMEOUT_MS = 20_000
 const MAX_RESPONSE_BYTES = 32 * 1_024
+const MAX_REFRESH_TOKEN_LIFETIME_SECONDS = 10 * 365 * 24 * 60 * 60
 const OPAQUE_VALUE_PATTERN = /^[\u0021-\u007E]+$/
 const PROVIDER_SUBJECT_PATTERN = /^[A-Za-z0-9._:@+-]{1,255}$/
 const MAILBOX_ADDRESS_PATTERN = /^[^\s@]+@[^\s@]+$/
+const GOOGLE_EMAIL_SCOPE = 'https://www.googleapis.com/auth/userinfo.email'
+const GOOGLE_CALLBACK_ISSUER = 'https://accounts.google.com'
+const GOOGLE_CALLBACK_AUTHUSER_PATTERN = /^\d{1,3}$/
+const GOOGLE_CALLBACK_HOSTED_DOMAIN_PATTERN =
+  /^(?=.{1,253}$)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/
 
 type JsonRecord = Record<string, unknown>
 
@@ -74,6 +84,8 @@ interface GoogleTokenGrant {
   refreshToken: string
 }
 
+type GoogleAuthorizationVerificationStage = 'token exchange' | 'Google identity' | 'Gmail profile'
+
 const isRecord = (value: unknown): value is JsonRecord =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
 
@@ -112,6 +124,26 @@ const callbackRejected = (): AccountAuthorizationError => new AccountAuthorizati
   false
 )
 
+const restartRequiredAt = (
+  stage: GoogleAuthorizationVerificationStage,
+  cause: unknown
+): AccountAuthorizationError => {
+  if (stage === 'token exchange' && cause instanceof GoogleTokenExchangeFailure) {
+    return new AccountAuthorizationError(
+      'AUTHORIZATION_RESTART_REQUIRED',
+      cause.message,
+      cause.retryable,
+      { cause }
+    )
+  }
+  return new AccountAuthorizationError(
+    'AUTHORIZATION_RESTART_REQUIRED',
+    `The ${stage} response could not be verified. Start again.`,
+    cause instanceof AccountAuthorizationError ? cause.retryable : true,
+    { cause }
+  )
+}
+
 const randomValue = (source: GoogleOAuthRandomSource, length: number): string => {
   const value = source.bytes(length)
   if (!(value instanceof Uint8Array) || value.byteLength !== length) throw invalidRequest()
@@ -121,9 +153,30 @@ const randomValue = (source: GoogleOAuthRandomSource, length: number): string =>
 const hasExactReviewedScopes = (value: unknown): boolean => {
   if (typeof value !== 'string' || value.length > 1_024) return false
   const scopes = value.split(' ').filter((scope) => scope.length > 0)
-  return scopes.length === GOOGLE_CONNECT_SCOPES.length &&
-    new Set(scopes).size === scopes.length &&
-    GOOGLE_CONNECT_SCOPES.every((scope) => scopes.includes(scope))
+  if (scopes.length === 0 || new Set(scopes).size !== scopes.length) return false
+  const normalized = new Set(scopes.map((scope) =>
+    scope === GOOGLE_EMAIL_SCOPE ? 'email' : scope))
+  return normalized.size === GOOGLE_CONNECT_SCOPES.length &&
+    GOOGLE_CONNECT_SCOPES.every((scope) => normalized.has(scope))
+}
+
+const hasValidCallbackMetadata = (callback: URL): boolean => {
+  const optionalKeys = ['iss', 'scope', 'authuser', 'hd', 'prompt'] as const
+  const allowedKeys = new Set(['state', 'code', 'error', ...optionalKeys])
+  const keys = [...callback.searchParams.keys()]
+  if (keys.some((key) => !allowedKeys.has(key)) ||
+      optionalKeys.some((key) => callback.searchParams.getAll(key).length > 1)) return false
+
+  const issuer = callback.searchParams.get('iss')
+  const scopes = callback.searchParams.get('scope')
+  const authuser = callback.searchParams.get('authuser')
+  const hostedDomain = callback.searchParams.get('hd')
+  const prompt = callback.searchParams.get('prompt')
+  return (issuer === null || issuer === GOOGLE_CALLBACK_ISSUER) &&
+    (scopes === null || hasExactReviewedScopes(scopes)) &&
+    (authuser === null || GOOGLE_CALLBACK_AUTHUSER_PATTERN.test(authuser)) &&
+    (hostedDomain === null || GOOGLE_CALLBACK_HOSTED_DOMAIN_PATTERN.test(hostedDomain)) &&
+    (prompt === null || prompt === 'consent')
 }
 
 const readBoundedBody = async (body: ReadableStream<Uint8Array> | null): Promise<string> => {
@@ -168,7 +221,8 @@ const parseJson = (text: string): unknown => {
 
 const parseTokenGrant = (value: unknown): GoogleTokenGrant => {
   if (!isRecord(value) || !hasOnlyKeys(value, [
-    'access_token', 'expires_in', 'refresh_token', 'scope', 'token_type', 'id_token'
+    'access_token', 'expires_in', 'refresh_token', 'refresh_token_expires_in',
+    'scope', 'token_type', 'id_token'
   ]) || typeof value.access_token !== 'string' || value.access_token.length === 0 ||
       value.access_token.length > MAX_SECRET_LENGTH ||
       !OPAQUE_VALUE_PATTERN.test(value.access_token) ||
@@ -177,7 +231,12 @@ const parseTokenGrant = (value: unknown): GoogleTokenGrant => {
       !OPAQUE_VALUE_PATTERN.test(value.refresh_token) ||
       !Number.isSafeInteger(value.expires_in) || (value.expires_in as number) < 1 ||
       (value.expires_in as number) > 24 * 60 * 60 ||
-      value.token_type !== 'Bearer' || !hasExactReviewedScopes(value.scope) ||
+      value.token_type !== 'Bearer' ||
+      (value.scope !== undefined && !hasExactReviewedScopes(value.scope)) ||
+      (value.refresh_token_expires_in !== undefined &&
+        (!Number.isSafeInteger(value.refresh_token_expires_in) ||
+          (value.refresh_token_expires_in as number) < 1 ||
+          (value.refresh_token_expires_in as number) > MAX_REFRESH_TOKEN_LIFETIME_SECONDS)) ||
       (value.id_token !== undefined &&
         (typeof value.id_token !== 'string' || value.id_token.length === 0 ||
           value.id_token.length > MAX_SECRET_LENGTH ||
@@ -345,11 +404,17 @@ export class GoogleDesktopAccountAuthorizationAdapter implements AccountAuthoriz
 
     session.completing = true
     try {
-      const token = await this.exchangeCode(callback.code, session)
-      const identity = await this.loadIdentity(token.accessToken, session.controller.signal)
-      const mailboxAddress = await this.loadMailboxAddress(
-        token.accessToken,
-        session.controller.signal
+      const token = await this.verifyStage(
+        'token exchange',
+        () => this.exchangeCode(callback.code, session)
+      )
+      const identity = await this.verifyStage(
+        'Google identity',
+        () => this.loadIdentity(token.accessToken, session.controller.signal)
+      )
+      const mailboxAddress = await this.verifyStage(
+        'Gmail profile',
+        () => this.loadMailboxAddress(token.accessToken, session.controller.signal)
       )
       if (identity.email.toLowerCase() !== mailboxAddress.toLowerCase()) {
         throw restartRequired(false)
@@ -415,13 +480,12 @@ export class GoogleDesktopAccountAuthorizationAdapter implements AccountAuthoriz
     }
     const codeValues = callback.searchParams.getAll('code')
     const errorValues = callback.searchParams.getAll('error')
-    const keys = [...new Set(callback.searchParams.keys())]
     if (errorValues.length === 1 && errorValues[0] === 'access_denied' &&
-        codeValues.length === 0 && keys.every((key) => key === 'state' || key === 'error')) {
+        codeValues.length === 0 && hasValidCallbackMetadata(callback)) {
       return { type: 'declined' }
     }
     if (codeValues.length !== 1 || errorValues.length !== 0 ||
-        keys.some((key) => key !== 'state' && key !== 'code') ||
+        !hasValidCallbackMetadata(callback) ||
         codeValues[0]!.length === 0 || codeValues[0]!.length > 2_048 ||
         !OPAQUE_VALUE_PATTERN.test(codeValues[0]!)) return { type: 'rejected' }
     return { type: 'code', code: codeValues[0]! }
@@ -448,6 +512,17 @@ export class GoogleDesktopAccountAuthorizationAdapter implements AccountAuthoriz
       ])
     })
     return parseTokenGrant(value)
+  }
+
+  private async verifyStage<T>(
+    stage: GoogleAuthorizationVerificationStage,
+    action: () => Promise<T>
+  ): Promise<T> {
+    try {
+      return await action()
+    } catch (error) {
+      throw restartRequiredAt(stage, error)
+    }
   }
 
   private async loadIdentity(accessToken: string, signal: AbortSignal): Promise<{
@@ -490,6 +565,9 @@ export class GoogleDesktopAccountAuthorizationAdapter implements AccountAuthoriz
     }
     const text = await readBoundedBody(response.body)
     if (response.status !== 200) {
+      if (url === GOOGLE_TOKEN_ENDPOINT) {
+        throw parseGoogleTokenExchangeFailure(text, response.status)
+      }
       throw restartRequired(response.status === 429 || response.status >= 500)
     }
     return parseJson(text)

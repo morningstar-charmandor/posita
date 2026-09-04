@@ -456,6 +456,20 @@ data only. Real mail remains blocked until production lifecycle composition and 
 the undocumented Gmail web route is revalidated, and the remaining provider
 activation gates pass.
 
+The first owner-only Google consent exercise also produced a useful security finding:
+the real callback carried valid issuer, granted-scope, account-index, hosted-domain,
+and consent metadata beyond the minimal deterministic fixture. Posita failed closed
+before token exchange instead of silently accepting an unmodelled response. The fix
+uses a bounded allow-list, normalizes Google's equivalent email-scope spellings, and
+keeps the token and verified identity endpoints—not callback metadata—as the source
+of authority. Subsequent owner-approved retries reached Google's token endpoint and
+used progressively narrower, non-reflective diagnostics to identify an incomplete
+client-secret configuration. The diagnostic parser returns only fixed messages for
+allow-listed OAuth categories and parameter names; provider descriptions are discarded.
+This is verified fail-closed integration evidence, not evidence of a connected mailbox.
+No grant, account, or mail was stored, and adding the private secret remains a separate
+owner-approved step.
+
 The connection experience now demonstrates the same gated approach in the product:
 Settings verifies local readiness before revealing a separate Continue-to-Google
 action, keeps authorization cancellable, and exposes a typed-confirmation disconnect

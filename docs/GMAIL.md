@@ -54,14 +54,22 @@ and is not composed at startup. A real `GoogleDesktopAccountAuthorizationAdapter
 now implements S256 PKCE, cryptographic state, an exact `127.0.0.1` callback check,
 bounded code exchange, verified OpenID `sub`/email, and agreement with Gmail profile
 identity. Its loopback URI and HTTP transport are injected and deterministic in
-tests. It never opens a browser itself. The matching provider-inert loopback listener
+tests. A live owner-only exercise confirmed Google may add `iss`, `scope`, `authuser`,
+`hd`, and `prompt` to a successful redirect. These fields are individually bounded
+and allow-listed; issuer and normalized reviewed scopes are checked, duplicates,
+unknowns, malformed values, and widened scopes are rejected, and none of this metadata
+is trusted as the account grant. It never opens a browser itself. The matching loopback listener
 now binds one ephemeral IPv4 localhost port with strict host/path/state, header,
 request, queue, and five-minute lifetime bounds. Its browser response never reflects
 callback data. The separate system-browser launcher validates the entire exact
 Google URL and uses an injected Electron delegate; deterministic tests never invoke
-the OS. Production client configuration and construction are complete; credential
-persistence, account creation, browser launch, and live provider request have not
-occurred. The public preparation path stays read-only; only its separate explicit
+the OS. Production client configuration and construction are complete. The approved
+owner browser consent and local callback have been exercised. After the callback fix,
+Google's token endpoint was reached and returned a bounded `invalid_request` response
+whose non-reflective parameter classifier identified an incomplete client-secret
+configuration. Posita surfaces only fixed allow-listed diagnostics and discards the
+provider description. No grant, credential, account, provider read, or live mail was
+stored. The public preparation path stays read-only; only its separate explicit
 connection command can invoke this infrastructure.
 
 The credential-free `AccountConnectionActivationService` now proves how these
@@ -72,8 +80,9 @@ and completes through the existing vault-before-encrypted-state transaction. It
 cancels on browser/listener failure and reports uncertain cleanup distinctly. The
 authorization URL and callback never enter renderer data. This coordinator is
 constructed inside the startup graph and is reachable only through the exact
-trusted-window connection command. No credential, browser invocation, account, or
-provider request has yet occurred.
+trusted-window connection command. Browser invocation, loopback callback, and one
+failed token-endpoint request have now occurred under explicit consent; credential
+exchange, account activation, and provider mail reads remain unverified.
 
 Gate 2D also defines a credential-free `AccountConnectionService` above the
 authorization adapter. It verifies that the opaque Posita account has neither an
