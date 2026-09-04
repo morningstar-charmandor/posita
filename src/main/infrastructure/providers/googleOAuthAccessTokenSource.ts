@@ -15,6 +15,7 @@ const MAX_RESPONSE_BYTES = 16 * 1024
 const DEFAULT_TIMEOUT_MS = 15_000
 const EXPIRY_SKEW_MS = 60_000
 const MAX_TOKEN_LIFETIME_SECONDS = 24 * 60 * 60
+const OPAQUE_TOKEN_PATTERN = /^[\u0021-\u007E]+$/
 
 type JsonRecord = Record<string, unknown>
 
@@ -189,15 +190,19 @@ const parseTokenResponse = (
   issuedAtMs: number
 ): CachedAccessToken => {
   if (!isRecord(value) || !hasOnlyKeys(value, [
-    'access_token', 'expires_in', 'scope', 'token_type'
+    'access_token', 'expires_in', 'scope', 'token_type', 'id_token'
   ]) || typeof value.access_token !== 'string' ||
-      !/^[\u0021-\u007E]+$/.test(value.access_token) ||
+      !OPAQUE_TOKEN_PATTERN.test(value.access_token) ||
       value.access_token.length > MAX_SECRET_LENGTH ||
       !Number.isSafeInteger(value.expires_in) ||
       (value.expires_in as number) < 1 ||
       (value.expires_in as number) > MAX_TOKEN_LIFETIME_SECONDS ||
       (value.token_type !== undefined && value.token_type !== 'Bearer') ||
-      (value.scope !== undefined && !hasExactReviewedScopes(value.scope))) {
+      (value.scope !== undefined && !hasExactReviewedScopes(value.scope)) ||
+      (value.id_token !== undefined &&
+        (typeof value.id_token !== 'string' || value.id_token.length === 0 ||
+          value.id_token.length > MAX_SECRET_LENGTH ||
+          !OPAQUE_TOKEN_PATTERN.test(value.id_token)))) {
     throw invalidResponse()
   }
   return {

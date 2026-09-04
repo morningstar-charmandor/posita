@@ -63,6 +63,25 @@ describe('GoogleOAuthAccessTokenSource', () => {
     expect(secrets.get).toHaveBeenCalledOnce()
   })
 
+  it('accepts and discards the bounded OpenID ID token Google may return on refresh', async () => {
+    const fetchRequest = vi.fn<GoogleAccessTokenFetch>(async () => response(200, {
+      access_token: 'short-lived-access-token',
+      expires_in: 3_600,
+      id_token: 'header.payload.signature',
+      scope: 'openid email https://www.googleapis.com/auth/gmail.readonly',
+      token_type: 'Bearer'
+    }))
+    const source = new GoogleOAuthAccessTokenSource(
+      vault('test-refresh-token'), configuration, fetchRequest
+    )
+
+    await expect(source.getAccessToken('account-work-1', signal()))
+      .resolves.toBe('short-lived-access-token')
+    await expect(source.getAccessToken('account-work-1', signal()))
+      .resolves.toBe('short-lived-access-token')
+    expect(fetchRequest).toHaveBeenCalledOnce()
+  })
+
   it('refreshes inside the fixed expiry safety window', async () => {
     let now = new Date('2026-09-02T09:00:00.000Z')
     const fetchRequest = vi.fn<GoogleAccessTokenFetch>()
@@ -183,6 +202,34 @@ describe('GoogleOAuthAccessTokenSource', () => {
       code: 'ACCESS_TOKEN_RESPONSE_INVALID',
       retryable: false
     })
+
+    const malformedIdToken = new GoogleOAuthAccessTokenSource(
+      vault('test-refresh-token'), configuration, async () => response(200, {
+        access_token: 'token',
+        expires_in: 3_600,
+        id_token: 'contains whitespace',
+        token_type: 'Bearer'
+      })
+    )
+    await expect(malformedIdToken.getAccessToken('account-work-1', signal()))
+      .rejects.toMatchObject({
+        code: 'ACCESS_TOKEN_RESPONSE_INVALID',
+        retryable: false
+      })
+
+    const unknownField = new GoogleOAuthAccessTokenSource(
+      vault('test-refresh-token'), configuration, async () => response(200, {
+        access_token: 'token',
+        expires_in: 3_600,
+        unexpected: 'provider-detail',
+        token_type: 'Bearer'
+      })
+    )
+    await expect(unknownField.getAccessToken('account-work-1', signal()))
+      .rejects.toMatchObject({
+        code: 'ACCESS_TOKEN_RESPONSE_INVALID',
+        retryable: false
+      })
   })
 
   it('invalidates account cache and destroys all future use', async () => {

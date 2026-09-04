@@ -1139,3 +1139,22 @@
   Existing version-1 local configuration intentionally fails closed until explicitly
   migrated; there is no compatibility fallback. This decision does not itself authorize
   a user grant, account activation, Gmail read, or mailbox mutation.
+
+## ADR-056: Accept but never trust the optional OpenID refresh ID token
+
+- Status: accepted for Gate 2D live-sync compatibility
+- Context: the first successful owner-approved account connection durably stored its
+  protected refresh credential and encrypted account/sync state, then initial sync
+  recorded `PROVIDER_UNAVAILABLE` before storing mail. Google documents that a refresh
+  response can include `id_token` when `openid` was granted, while Posita's strict
+  access-token parser rejected that otherwise legitimate allow-listed field. This is
+  the narrowest standards-backed suspected cause; raw provider tokens were not logged.
+- Decision: allow an optional `id_token` only in the refresh response's exact key set,
+  require a non-empty bounded printable opaque value, and discard it immediately.
+  Continue to cache only the access token in memory and treat the verified identity
+  established during the authorization-code exchange as authoritative. Reject malformed,
+  oversized, unknown, and scope-widened responses exactly as before.
+- Consequence: Posita becomes compatible with the documented OpenID refresh shape
+  without adding a token store, identity path, dependency, IPC field, or renderer
+  capability. Live verification still requires a separately approved retry route;
+  until then, the causal diagnosis remains evidence-backed but not provider-confirmed.

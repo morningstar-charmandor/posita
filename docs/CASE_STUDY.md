@@ -26,10 +26,11 @@ connection transaction, sync coordinator, and lifecycle owner now form one trust
 production ownership graph. Startup supplies that graph with zero accounts, so it
 starts retention and owns safe teardown without opening a browser or contacting
 Google. The real desktop client ID and rotated secret are read only from an owner-readable
-application-data file and are absent from Git, preload, IPC, renderer, and logs; no user
-grant, token, or real account exists. The client-configuration change passes the complete
-83-file, 504-test verification suite; a fresh dedicated-account retry remains. Gmail and AI remain unconnected, and every
-visible mail item remains deterministic sample data.
+application-data file and are absent from Git, preload, IPC, renderer, and logs. One
+owner-approved account is connected with its refresh credential OS-protected and identity/
+sync state encrypted. The installation is live-empty: initial sync stored no provider mail
+and recorded a safe attention state. AI remains unconnected, and no fixture is presented as
+live Gmail.
 
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
 
@@ -476,7 +477,8 @@ action, keeps authorization cancellable, and exposes a typed-confirmation discon
 for every connected account. Trusted main—not the UI—creates account identity, owns
 credential persistence and initial sync, and attempts journaled rollback if activation
 fails. This is portfolio evidence of a security constraint made legible in the
-interface, not evidence of live Gmail access; no real account has yet been connected.
+interface. One real test account is now connected, but this is not evidence of successful
+mail ingestion: initial sync stored no provider mail.
 
 ### Private desktop-client completion without widening trust
 
@@ -502,6 +504,31 @@ In a clean updated runtime, Settings also completed the non-activating preparati
 displayed `Ready to continue to Google` while explicitly reporting zero browser session,
 account, credential, and mailbox data.
 
-Limitations: this milestone configures an application credential, not a user grant. No real
-account, refresh token, provider read, live mail, AI provider, or mailbox mutation is claimed.
-The next live authorization still requires an action-time owner decision.
+Limitations at that checkpoint: the application credential alone was not a user grant. The
+subsequent owner-approved connection is recorded separately below.
+
+### First protected account connection and fail-closed live sync
+
+The next approved attempt completed the full browser, loopback, code exchange, verified
+identity, vault-before-encrypted-state transaction, and one-way live-mode transition. Aggregate
+local inspection confirmed one OS-protected refresh credential, one encrypted provider account,
+one encrypted sync record, zero provider-mail records, zero sample rows, and no pending cleanup.
+No credential, token, identity value, or mailbox content was copied into project evidence.
+
+Initial read-only sync recorded `PROVIDER_UNAVAILABLE` with no cursor or successful checkpoint.
+The UI truthfully moved to live-empty attention state instead of restoring samples or claiming
+mail access. Inspection found a narrow standards mismatch: Google documents that refresh can
+return an `id_token` when `openid` was granted, while Posita's refresh parser rejected that
+allow-listed optional field. ADR-056 accepts only a bounded opaque value and discards it; the
+authorization-code identity remains authoritative and access tokens remain memory-only.
+
+Evidence: deterministic tests now cover accepting/discarding the optional field, rejecting
+malformed values and unknown fields, and retaining scope-widening rejection. The causal link is
+still an inference because raw provider tokens were intentionally not logged. Live verification
+requires either a confirmed disconnect/reconnect exercise or a separately reviewed sync-retry
+command. No ad-hoc provider call is used because one trusted sync coordinator owns all Gmail I/O.
+The complete gate passes 83 test files and 505 tests, strict typecheck, renderer security/
+structure checks, localhost callback integration, and the production build.
+
+Limitations: no provider mail, cursor, successful sync, AI provider, or mailbox mutation is
+claimed. The protected account remains connected and requires the owner's next-step decision.

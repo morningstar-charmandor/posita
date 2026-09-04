@@ -36,17 +36,23 @@ locally; no credential, connected account, provider read, or live mail was store
 compatibility fix now validates those bounded fields, rejects unknown, duplicated, or
 widened metadata, and continues to derive authority only from the token and identity
 endpoints. Fresh owner-approved retries reached Google's token endpoint, which returned
-`invalid_request`; a bounded non-reflective classifier then identified the specific
-cause as incomplete client-secret configuration. Posita discarded the provider's free-
-text description and stored no grant, credential, account, provider mail, or live mail.
-The new client-configuration implementation passes 83 test files and 504 tests,
-strict typecheck, renderer structure/security checks, localhost callback integration,
-and the production build. A clean updated runtime also completed the local preparation
-check and displayed `Ready to continue to Google` while truthfully retaining zero browser
-session, account, user credential, and mailbox data. The next step is an action-time owner
-decision before starting another Google authorization attempt.
+`invalid_request`; a bounded non-reflective classifier identified incomplete client-secret
+configuration. After the secret was privately configured, the next owner-approved
+authorization completed and durably stored one OS-protected refresh credential plus one
+encrypted provider-account/sync pair. The installation atomically entered live mode and
+removed its sample rows. Initial read-only sync then recorded the safe code
+`PROVIDER_UNAVAILABLE` before any provider mail or cursor was stored. Aggregate inspection
+confirmed one connected pair, zero provider-mail records, no lifecycle cleanup operation,
+and live-empty UI with attention required; no credential or message content was exposed.
+The narrowest standards-backed suspected cause is that Google's refresh response may include
+an optional `id_token` for the granted `openid` scope, while Posita rejected that allow-listed
+field. A bounded accept-and-discard compatibility fix is implemented with deterministic tests;
+raw tokens were not logged, so live confirmation remains pending. The next step requires an
+owner decision between a confirmed disconnect/reconnect exercise and a separately reviewed
+explicit sync-retry capability. Do not bypass the single sync owner with ad-hoc provider calls.
 The product is a runnable Electron desktop prototype using React, strict TypeScript,
-and SQLite. All visible mail is deterministic sample data.
+and SQLite. The current installation is live-empty and shows no provider mail; deterministic
+sample data remains only in repository fixtures and sample-mode tests.
 
 The canonical public source repository is
 `https://github.com/morningstar-charmandor/posita`. The local `main` branch is
@@ -298,56 +304,54 @@ Implemented:
 
 Simulated or deliberately inactive:
 
-- all accounts, people, topics, messages, summaries, and drafts are fixtures,
-- generated-looking summaries and drafts are not produced by an AI provider,
-- the desktop client ID and rotated secret are privately configured locally; no user
-  authorization grant or refresh credential is configured or stored,
+- no provider mail, people, topics, summaries, or drafts are currently stored in the
+  live installation; repository fixtures remain deterministic sample/test assets,
+- no summaries or drafts are produced by an AI provider,
+- the desktop client ID and rotated secret are privately configured locally; one user
+  authorization grant is stored only as an OS-protected refresh credential,
 - the isolated `posita-mail-hub-2026` Google Cloud project has Gmail API, external
   testing consent, and the `Posita macOS Desktop` client configured,
-- encrypted provider-account and sync-state tables contain no real account,
-- Google authorization revocation has a real fixed-endpoint adapter, exercised only
-  through injected deterministic HTTP and unreachable without a public command,
+- encrypted provider-account and sync-state tables contain one real connected account,
+- Google authorization revocation has a real fixed-endpoint adapter and remains behind
+  the confirmed public disconnect command; live revocation has not been exercised,
 - Google access-token refresh has a real fixed-endpoint adapter, exercised only
-  through an injected fake token and deterministic HTTP; production constructs it
-  with the private client credential pair but supplies no account,
-- Google desktop authorization has a real PKCE/state/code/identity protocol adapter,
-  exercised only through injected loopback and deterministic HTTP boundaries and
-  constructed in production without a caller,
-- loopback reception and the system-browser handoff have real bounded adapters,
-  exercised only through local deterministic HTTP and a fake desktop delegate,
-- local deletion operates only on deterministic fixture-backed Posita data because
-  no real account or credential exists,
+  through deterministic HTTP and now once through the protected live credential; the
+  first live refresh path recorded only the safe sync failure code,
+- Google desktop authorization has a real PKCE/state/code/identity protocol adapter
+  exercised through deterministic seams and the owner-approved live connection,
+- loopback reception and the system-browser handoff have real bounded adapters and
+  completed one owner-approved live flow,
+- local deletion now includes the real protected connection and live-empty state but
+  has not been invoked on them,
 - account disconnect has exact preload/IPC/UI triggers guarded by a short-lived,
   same-window typed confirmation and an opaque durable confirmation-intent record,
 - Gmail connection consent separates non-activating preparation from an explicit
-  cancellable Continue-to-Google action; owner-approved live attempts reached the
-  loopback callback and token endpoint but did not produce a grant or account,
+  cancellable Continue-to-Google action; the latest owner-approved attempt produced
+  one protected grant and encrypted account pair,
 - authorization-session behavior has both a deterministic fake and a production-
   constructed Google protocol adapter; it is reachable only through the explicit
   trusted-window command and never exposes protocol values to the renderer,
 - account-connection persistence is deterministic-tested and reachable only through
   the explicit trusted-window command,
-- canonical provider-mail and sync behavior is exercised only through
-  deterministic fakes, an encrypted SQLite proof, and file-backed workers;
+- canonical provider-mail and sync behavior is exercised through deterministic fakes,
+  an encrypted SQLite proof, file-backed workers, and one live attempt that stored no mail;
   retention and the bounded read-only live-state query are composed at startup,
   while source-detail is composed for bounded encrypted-local inspection and the
   provider write path is reachable only inside the inactive zero-account graph,
-- the schema-v10 sample-to-live service is trusted-main-only and unexposed; it
-  has been verified with deterministic connected state but has no production
-  connection, sync-start, preload, IPC, or UI caller,
+- the schema-v10 sample-to-live service was invoked by the production connection and
+  durably removed sample rows before the failed initial sync,
 - the provider-mail lifecycle owner is production-composed and starts with zero
   accounts; trusted inventory remains read-only and is not handed to automatic sync,
 - account consistency is not independently exposed; the recovery command uses it
   inside main without mutation or provider action,
-- local account recovery is active only for inconsistent local records and has no
-  real account to recover; normal sample accounts report that recovery is not needed,
+- local account recovery remains only for inconsistent local records; the current real
+  account pair is complete and does not need orphan recovery,
 - sending and every other remote mailbox mutation are disabled.
 
 Not implemented:
 
-- completed real-account authorization and evidence from a private-client-secret retry,
 - live provider-ingestion evidence,
-- automatic provider sync retry or pending-disconnect startup scheduling,
+- a public provider sync retry or pending-disconnect startup scheduling,
 - any remote mailbox mutation control,
 - automatic pending-disconnect resume with a live idempotent revocation adapter,
 - a model provider, embeddings, classification, retrieval, or generation,
@@ -368,16 +372,16 @@ Not implemented:
 
 ## Next recommended milestone
 
-The owner-approved live exercise verified the browser, exact loopback callback, and
-token-endpoint handoff without storing a user credential or account. Callback compatibility
-is closed with bounded allow-listed metadata. After the token endpoint identified the
-configured client's secret requirement, the owner approved a one-time secret rotation and
-private placement. Posita now loads an exact version-2 client ID/secret pair only from its
-owner-readable application-data file and submits the secret only in trusted-main token
-requests. Legacy version 1 fails closed. All 83 test files and 504 tests pass with the full
-verification gate. The updated app has confirmed local readiness; stop for a separate
-action-time owner decision immediately before a fresh Google authorization attempt because
-success may store a protected refresh credential, activate live mode, and begin read-only sync.
+The owner-approved connection completed and left one internally consistent protected account
+in durable live mode. Initial read-only sync stored no provider mail and recorded only
+`PROVIDER_UNAVAILABLE`. A read-only trusted diagnostic confirmed no cursor, no successful sync,
+and no pending lifecycle cleanup. Google and OpenID documentation establish that `id_token`
+may appear on refresh for an `openid` grant; Posita's previous refresh parser rejected that
+optional field. The bounded accept-and-discard fix is deterministic-tested, but the actual
+failure cause remains an inference until live retry succeeds. Stop for the owner's decision:
+either use the existing confirmed disconnect and reconnect flow to verify the fix, or separately
+approve designing a narrow explicit sync-retry command. Do not call Gmail outside the single
+trusted sync coordinator.
 
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,
@@ -578,7 +582,7 @@ credential, personal data, provider request, or mailbox mutation was added.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 83 test files, 504 tests, strict typecheck, structure
+- Current verified baseline: 83 test files, 505 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,

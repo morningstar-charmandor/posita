@@ -7,8 +7,8 @@
     "repository": "https://github.com/morningstar-charmandor/posita",
     "repositoryVisibility": "public",
     "canonicalBranch": "main",
-    "currentMilestone": "gate-2d-google-client-secret-ready-awaiting-live-authorization",
-    "dataMode": "deterministic-sample-with-inert-activation-ready-encrypted-provider-foundation",
+    "currentMilestone": "gate-2d-google-live-account-connected-awaiting-sync-retry-decision",
+    "dataMode": "live-empty-with-connected-google-account-and-sync-attention",
     "mailSendingEnabled": false
   },
   "toolchain": {
@@ -59,9 +59,17 @@
       "liveCallbackReceived": true,
       "liveCallbackCompatibilityFixImplemented": true,
       "liveTokenExchangeAttempted": true,
-      "liveTokenExchangeFailure": "client-secret-configuration-incomplete",
+      "previousLiveTokenExchangeFailure": "client-secret-configuration-incomplete",
       "providerNetworkUseEnabled": true,
-      "liveAccountConnected": false
+      "liveAccountConnected": true,
+      "protectedRefreshCredentialStored": true,
+      "liveModeActivated": true,
+      "liveProviderMailReadAttempted": true,
+      "liveProviderMailStored": false,
+      "liveSyncFailureSafeCode": "PROVIDER_UNAVAILABLE",
+      "liveSyncFailureSuspectedCause": "optional-openid-id-token-rejected-during-refresh",
+      "refreshIdTokenCompatibilityFixImplemented": true,
+      "refreshIdTokenCompatibilityLiveVerified": false
     }
   },
   "entrypoints": {
@@ -272,6 +280,7 @@
     "google-revocation-is-fixed-endpoint-bounded-token-private-and-invalid-token-idempotent",
     "google-access-tokens-are-vault-sourced-memory-only-bounded-single-flight-and-provider-inert",
     "google-token-responses-cannot-widen-the-reviewed-identity-and-gmail-readonly-scope-set",
+    "google-refresh-may-accept-and-discard-one-bounded-openid-id-token-without-using-it-as-authority",
     "google-consent-exactly-discloses-openid-email-and-gmail-readonly-scopes",
     "google-client-configuration-v2-is-fixed-user-data-only-owner-readable-symlink-refusing-exact-and-trusted-main-only",
     "google-production-composition-starts-with-zero-accounts-and-performs-no-automatic-provider-work",

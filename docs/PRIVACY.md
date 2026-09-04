@@ -2,15 +2,11 @@
 
 ## Gate 2D boundary
 
-Posita currently contains deterministic sample mail only. Gate 2C stores that
-dataset as independently authenticated encrypted records and migrates existing
-fixture databases away from plaintext. Account-scoped retention, disconnect, and
-full local deletion are now tested at their credential-free boundaries. The
-one-way sample-to-live policy is implemented as an unexposed schema-v10 boundary.
-The trusted production ownership graph is also assembled, but it starts with zero
-accounts and exposes no activation command. Real mailbox ingestion remains disabled
-until separately approved provider activation is complete.
-No real account exists.
+Posita's current installation is live-empty after one owner-approved test-account
+connection. The one-way schema-v10 transition atomically removed deterministic sample
+records. One refresh credential is OS-protected and one provider-account/sync pair is
+encrypted. Initial read-only sync stored no provider mail and recorded a safe attention
+state. Repository fixtures remain sample/test assets and are never presented as live.
 
 The canonical provider-mail contract validates sensitive normalized source data
 before application use, and the credential-free sync coordinator accepts only
@@ -18,15 +14,15 @@ that exact bounded shape. Schema v9 can persist it as independently authenticate
 encrypted message/thread records and advance the encrypted account cursor in the
 same transaction. Provider IDs, canonical IDs, addresses, subjects, bodies,
 labels, and attachment metadata are ciphertext; only opaque local record IDs,
-opaque account scope, and record kind remain queryable. The projection is empty.
-One shared worker is present in the provider-inert production graph, but startup
-supplies no account and performs no provider commit; only its retention and bounded
-local-read paths run automatically. Existing sample messages remain fixture
+opaque account scope, and record kind remain queryable. The projection remains empty.
+One shared worker handled the approved initial sync attempt through the trusted
+coordinator; no provider commit occurred. Startup still does not automatically resume
+sync; only retention and bounded local-read paths run automatically. Existing sample messages remain fixture
 compatibility records and are not assigned fabricated provider provenance. No
 personal mailbox data has passed through this path.
 
-On first approved live-account activation, Posita will atomically remove all
-sample compatibility records and durably select live mode. It will never mix
+The first approved live-account activation atomically removed all sample compatibility
+records and durably selected live mode. Posita will never mix
 samples with provider records or reseed samples after the last live account is
 disconnected. Full local deletion remains separate and removes this non-sensitive
 mode marker along with Posita mail state.
@@ -85,17 +81,17 @@ authorization grant. Posita's inert configuration source reads only an exact ver
 credential file from the app's local data directory. It refuses symbolic links,
 oversized or loosely permissioned files, unknown fields, legacy version-1 input, and
 invalid client identifiers or secrets. The source feeds only the provider-inert trusted
-graph. The real values remain outside the repository, preload, renderer, IPC, and logs;
-no user credential has been received.
+graph. The real values remain outside the repository, preload, renderer, IPC, and logs.
 
 The provider-inert access-token source reads only one selected protected refresh
 credential and exchanges it through a fixed bounded trusted-main endpoint adapter.
 Short-lived access tokens remain memory-only, are cached with an expiry margin,
 can be invalidated per account, and are cleared on teardown. Exact response
-validation refuses a scope outside the reviewed Gmail read-only permission. Tests
-use only conspicuous deterministic client/token values. Production receives the
-private client credential pair but no refresh credential or account, and performs no token or
-provider request.
+validation refuses a scope outside the reviewed Gmail read-only permission. One real
+refresh credential was used only through this trusted source during the approved initial
+sync. Google may return a bounded optional OpenID `id_token` during refresh; Posita now
+accepts and immediately discards it without treating it as identity authority. Access
+tokens remain memory-only. Tests use only conspicuous deterministic values.
 
 The deterministic fake protector is test-only. It demonstrates adapter behavior
 and makes plaintext-persistence assertions possible; it provides no security and
@@ -260,10 +256,9 @@ Gate 2D now exposes the reviewed `google-gmail-readonly-identity-v2` consent con
 in the existing read-only application state. Settings shows exact `openid`, `email`,
 and Gmail read-only scopes, explains the identity-only purpose of the first two,
 and shows the rolling 90-day window, local encryption boundary, inactive AI provider,
-and disconnect outcome. It also states that Gmail is not connected. The contract
-is runtime validated as an exact shape, and the authorization control is disabled;
-no consent acceptance, configured OAuth client, credential, browser flow, or account record
-is created by viewing it.
+and disconnect outcome. Before connection it truthfully states that Gmail is not connected.
+The contract is runtime validated as an exact shape; viewing it creates no consent
+acceptance, credential, browser flow, or account record.
 
 The authorization-session contract and provider-inert Google protocol adapter
 remain main-process-only and explicitly mark
@@ -273,8 +268,8 @@ have no renderer or persistence surface in this milestone. PKCE verifier, state,
 authorization code, and access token remain bounded in trusted memory. The adapter
 requires a verified stable Google subject/email and agreement with Gmail profile,
 and consumes ambiguous exchanges so a code cannot be retried blindly. Deterministic
-tests perform no external action; real credential handling still requires separate
-approval and end-to-end composition review.
+tests perform no external action. Real credential handling occurred only after explicit
+owner approval and remains inside the reviewed composition.
 
 The provider-inert loopback listener keeps at most one bounded callback URL in trusted
 memory, listens only on an operating-system-selected `127.0.0.1` port, and verifies
@@ -335,6 +330,6 @@ mode. The renderer supplies a known opaque Posita account ID but never selects t
 orphan type; main derives that through presence-only checks. Separate validated
 prepare and execute methods bind the challenge to the same trusted window. After
 one execute attempt, including a failed deletion, a fresh review and confirmation
-are required. The UI labels current accounts as samples and explicitly states that
-Gmail is not connected or contacted. No browser, OAuth flow, provider request,
-revocation, mailbox mutation, new dependency, or personal account data is involved.
+are required. The recovery UI distinguishes sample and live state and does not contact
+Gmail during local diagnosis. No browser, OAuth flow, provider request, revocation,
+mailbox mutation, new dependency, or personal content is involved in preparation.

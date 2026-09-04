@@ -10,10 +10,12 @@ Public repository: [github.com/morningstar-charmandor/posita](https://github.com
 ## Current status
 
 Gate 2D's credential-free lifecycle foundation and approved Google adapter set are
-complete but have not been used to connect a real account. A strict trusted-main source validates a
+complete and have now connected one owner-approved test account. A strict trusted-main source validates a
 desktop client credential pair from one private application-data file. The real client ID
 and rotated secret are locally present, validated, absent from Git, and consumed only by a
-provider-inert trusted-main composition. No user credential, grant, token, or account is present. Posita includes
+trusted-main composition. The refresh credential is OS-protected and the account/sync
+state is encrypted. Initial read-only sync failed safely before storing provider mail,
+leaving this installation live-empty and requiring review. Posita includes
 a Daily Brief,
 topic timeline with source citations, original-message inspection, a unified
 classic mail view, and an editable draft flow. Realistic fixture data is seeded
@@ -21,7 +23,7 @@ idempotently as independently authenticated AES-256-GCM records in a versioned
 local SQLite database and loaded through validated, read-only Electron IPC. A
 per-installation data key is protected by the operating-system vault. Schema v4
 adds versioned encrypted provider-account and sync-state records with strict
-account isolation; those tables contain no real account. Schema v5 adds an opaque,
+account isolation; those tables now contain one protected test-account pair. Schema v5 adds an opaque,
 non-sensitive lifecycle journal that can survive deletion of that encryption key.
 Schema v6 and a deterministic application service add fail-closed 90-day
 retention with atomic derived-data eviction. Main now owns an immediate startup
@@ -46,9 +48,9 @@ through separate prepare and execute IPC methods. Execution requires a five-minu
 typed confirmation bound to one operation, and pending journal state has a bounded
 safe-status projection. One validated read-only application-state query now
 renders pending, retry-required, recovery-required, and completed local-deletion
-outcomes. No other lifecycle command is exposed. Gmail and AI providers are not
-connected, no user OAuth grant or refresh credential exists, and sending is
-deliberately disabled.
+outcomes. No other lifecycle command is exposed. Gmail is connected for one
+owner-approved test account, but initial read-only sync stored no provider mail and
+needs review. No AI provider is connected, and sending is deliberately disabled.
 
 Settings now includes a validated `google-gmail-readonly-identity-v2` connection-
 consent preview. It exactly discloses OpenID identity, verified email, and planned
@@ -57,12 +59,13 @@ boundary, and disconnect behavior. Google Cloud project `posita-mail-hub-2026` n
 has Gmail API, external testing consent with the exact reviewed scopes, and one
 `Posita macOS Desktop` client. Its client ID and rotated secret are privately configured
 and validated locally in an owner-readable file; neither is committed or exposed to
-the renderer. No credential bundle is retained, and no user grant or token exists.
+the renderer. No credential bundle is retained. One refresh token is OS-protected;
+access tokens remain memory-only and no provider mail has been stored.
 Settings first runs a non-activating local readiness check, then offers a
 separate explicit Continue-to-Google command. The trusted command owns the opaque
 account ID, cancellation, authorization, encrypted persistence, initial sync, and
-rollback. A connected account has a typed-confirmation disconnect control. No user
-grant, real account, provider request, or live mail has yet been used.
+rollback. A connected account has a typed-confirmation disconnect control. The approved
+connection completed, but initial sync recorded a safe error and stored no live mail.
 
 The trusted backend now defines a bounded provider-independent authorization
 session contract, deterministic fake, and real Google desktop protocol
@@ -76,8 +79,8 @@ An exact-URL system-browser launcher has an injected Electron delegate and is te
 without opening a browser. Production constructs these boundaries inside one
 lifecycle graph and starts it with zero accounts. Exact validated connection and
 cancellation IPC can invoke the activation coordinator only after the user chooses
-Continue to Google. The private client secret is configured but no user grant,
-account, browser action from the updated runtime, or live provider request is present.
+Continue to Google. The approved connection has now stored one protected refresh grant
+and encrypted account state; no provider mail was stored.
 
 A trusted-main activation coordinator joins those boundaries to the
 existing account-connection service. It starts callback waiting before browser
@@ -85,8 +88,8 @@ handoff, keeps authorization URLs and callbacks out of renderer state, bounds
 non-consuming callback rejection, observes cancellation before code exchange, and
 fails closed if cleanup cannot be confirmed. A fixed UI/IPC command invokes it only
 after explicit preparation, and a paired confirmed disconnect remains available.
-There is no user credential, account,
-browser action, or provider request.
+The user credential and account now exist only behind trusted-main protection; the
+initial provider request stored no mail.
 
 A trusted account-connection coordinator now composes that interface with the
 existing vault and encrypted account-state contracts in credential-free tests.
@@ -146,26 +149,28 @@ through deterministic fakes. Schema v9 adds a credential-free authenticated
 SQLite projection that atomically stores canonical messages, threads, and the
 encrypted account cursor; source IDs and content remain ciphertext, while opaque
 local storage IDs enforce account isolation. The existing `Message` remains a
-sample-only view and receives no invented provider identity. The empty projection
-is shared by the provider-inert production graph and local read surfaces, while
+sample-only view and receives no invented provider identity. The projection
+is shared by the trusted production graph and local read surfaces, while
 remaining absent from IPC, UI, and provider payloads. A packaged single-flight
 worker adapter now keeps file-backed projection reads, decrypt/scan, encryption,
 and commits off Electron's main event loop, validates a bounded protocol, and
-erases its retained key context. All visible mail remains deterministic sample data.
+erases its retained key context. The current installation is live-empty; fixtures remain
+available only to sample-mode and deterministic tests.
 
 The normalized provider/commit batch is now a strict deletion-aware v2 contract.
 Incremental tombstones remove remotely deleted cached messages and repair affected
 threads in the same transaction as cursor advancement. Invalid-cursor recovery
 collects the complete bounded 90-day window before one authoritative replacement,
 so incomplete recovery cannot partially erase the encrypted projection. This path
-is now owned by the provider-inert production graph; startup supplies zero accounts,
-so it remains deterministic and performs no provider request.
+is now owned by the trusted production graph; startup supplies zero accounts, while the
+explicit owner-approved connection invoked one initial provider request and stored no mail.
 
 The journaled disconnect service requires that worker-backed
 projection remover in its local mail-data phase. If canonical deletion fails after
 sample data was already removed, retry resumes the same phase safely and repeats
 both idempotent actions. The production graph contains the real Google revoker and
-an explicit confirmed disconnect UI. No credential or provider account exists.
+an explicit confirmed disconnect UI. One credential/account pair now exists; live
+disconnect has not been exercised.
 
 The existing automatic retention worker now applies the same exact 90-day cutoff
 to canonical provider messages by absolute `receivedAt`. It retains the boundary,

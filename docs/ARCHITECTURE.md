@@ -409,16 +409,17 @@ to the existing typed application errors. Deterministic injected-HTTP tests cove
 this behavior without credentials or network use; startup constructs it but supplies
 zero accounts.
 
-Its token boundary is implemented by the provider-inert
+Its token boundary is implemented by the trusted-main
 `GoogleOAuthAccessTokenSource`. The source reads only the account-scoped refresh
 credential from `SecretVault`, exchanges it at the fixed Google token endpoint,
 and caches the short-lived access token only in trusted memory with a one-minute
 expiry margin. Refresh is single-flight per account, independently cancellable by
 waiters, bounded by time and response size, and explicitly invalidated on future
 disconnect or destroyed on shutdown. Exact response validation refuses any scope
-other than the reviewed full `gmail.readonly` URI. Production injects the validated
-private client ID but no account or refresh credential, and no token or error detail
-crosses IPC.
+other than the reviewed identity-plus-`gmail.readonly` set. A documented optional
+refresh-time OpenID `id_token` is bounded and discarded; it is never used as identity
+authority or persisted. Production has one protected account credential, and no token
+or error detail crosses IPC.
 
 Sync operations remain idempotent, transactional at a batch boundary, resumable,
 quota-aware, and isolated per account.

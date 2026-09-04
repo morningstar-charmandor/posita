@@ -2,19 +2,27 @@
 
 ## Current status
 
-Gmail is not connected and Posita's repository does not contain a Google OAuth
-client ID, secret, user credential, or token.
+One owner-approved test Gmail account is connected locally. Posita's public repository
+does not contain a Google OAuth client ID, secret, user credential, token, or mailbox data.
 An isolated Google Cloud project named `Posita` with project ID
 `posita-mail-hub-2026` now has Gmail API enabled, external testing consent configured
 for OpenID, verified email, and Gmail read-only, and one desktop client named
 `Posita macOS Desktop`. Its client ID and rotated secret are stored only in Posita's
 owner-readable private application-data file and pass the strict version-2 loader.
-No credential bundle is retained, and no user grant, refresh token, or access token exists.
+No credential bundle is retained. One refresh token is OS-protected and never crosses
+trusted main; access tokens remain memory-only.
 Real desktop authorization protocol, read-only, idempotent revocation, and refresh-
 to-access-token adapters are assembled inside one production graph that starts with
-zero accounts. Explicit connection, cancellation, and confirmed disconnect commands
-are implemented, but none has been used with a real account. This document does not
+zero startup accounts. Explicit connection, cancellation, and confirmed disconnect commands
+are implemented and the connection command was used for the approved test account.
+Initial read-only sync recorded `PROVIDER_UNAVAILABLE` and stored no provider mail. This document does not
 by itself authorize live mailbox access.
+
+Google's current OpenID reference permits an `id_token` in a refresh response when
+the original grant included `openid`. The refresh source accepts only one bounded
+opaque value for that allow-listed field and discards it immediately; it never uses
+refresh-time identity as account authority. Unknown fields, malformed values, scope
+widening, and oversized responses still fail closed.
 
 Posita can now project its durable `live` installation mode through a bounded
 worker-backed application snapshot. That local read model is not Gmail access: it
@@ -68,8 +76,9 @@ owner browser consent and local callback have been exercised. After the callback
 Google's token endpoint was reached and returned a bounded `invalid_request` response
 whose non-reflective parameter classifier identified an incomplete client-secret
 configuration. Posita surfaces only fixed allow-listed diagnostics and discards the
-provider description. No grant, credential, account, provider read, or live mail was
-stored. The public preparation path stays read-only; only its separate explicit
+provider description. A later owner-approved attempt completed authorization and
+stored the refresh credential plus encrypted account/sync state. Initial sync safely
+failed before storing provider mail. The public preparation path stays read-only; only its separate explicit
 connection command can invoke this infrastructure.
 
 The credential-free `AccountConnectionActivationService` now proves how these
@@ -80,9 +89,9 @@ and completes through the existing vault-before-encrypted-state transaction. It
 cancels on browser/listener failure and reports uncertain cleanup distinctly. The
 authorization URL and callback never enter renderer data. This coordinator is
 constructed inside the startup graph and is reachable only through the exact
-trusted-window connection command. Browser invocation, loopback callback, and one
-failed token-endpoint request have now occurred under explicit consent; credential
-exchange, account activation, and provider mail reads remain unverified.
+trusted-window connection command. Browser invocation, loopback callback, credential
+exchange, account activation, and one provider read attempt have occurred under explicit
+consent; no provider mail was stored and a live sync retry remains unverified.
 
 Gate 2D also defines a credential-free `AccountConnectionService` above the
 authorization adapter. It verifies that the opaque Posita account has neither an
@@ -91,9 +100,8 @@ before persistence. A valid grant is stored in `SecretVault` before its encrypte
 provider-account projection. Failed or ambiguous account-state writes trigger
 reverse cleanup of account state and credential; incomplete cleanup is reported
 as recovery-required. The returned result contains provider identity and consent
-metadata but never the refresh credential. This service uses deterministic fakes
-only and is not a Google client, production credential path, startup component,
-IPC capability, or enabled connection action.
+metadata but never the refresh credential. Its behavior is deterministic-tested and
+is now invoked only through the explicit trusted-window connection command.
 
 The coordinator can now diagnose the local connection pair without contacting
 Google. Its versioned main-only result distinguishes no records, both records,
@@ -101,7 +109,7 @@ credential-only, and provider-state-only. It returns no provider subject or toke
 and its vault presence check does not decrypt the credential. This status blocks
 new authorization when either side is inconsistent and performs no automatic
 repair. The separately confirmed Settings recovery command can discard one
-diagnosed orphaned local side; reconnecting Gmail remains impossible in this build.
+diagnosed orphaned local side; a fresh connection remains explicit.
 
 The local recovery service now encodes the approved policy: after
 an exact account- and orphan-status-bound confirmation, discard only the orphaned

@@ -1,6 +1,6 @@
 # Gate 2D Lifecycle Readiness Audit
 
-Last reviewed: 2026-09-03
+Last reviewed: 2026-09-04
 Audit baseline: `2033e86` (`feat: persist safe sync status`)
 
 ## Verdict
@@ -11,7 +11,7 @@ retention, full local deletion, account removal, connection consistency, confirm
 orphan recovery, startup inventory, durable sync status, provider-independent sync,
 encrypted projection, read surfaces, and disconnect orchestration contracts.
 
-**Live Gmail authorization and ingestion have not yet been exercised.** The narrow
+**Live Gmail authorization has been exercised; ingestion has not succeeded.** The narrow
 connection, cancellation, and confirmed disconnect command boundary is implemented;
 the canonical provider-independent
 mail contract, credential-free sync coordinator, empty schema-v9 encrypted
@@ -20,7 +20,7 @@ coordinator-to-worker boundary is now integration-tested with the deterministic
 provider and assembled in a production graph that starts with zero accounts. Canonical provider-mail
 retention and journaled deletion are complete at their credential-free boundaries.
 The real Google revoker, read-only Gmail adapter, and protected refresh-to-access-
-token source are production-constructed but provider-inert; no startup sync occurs.
+token source are production-constructed; no automatic startup sync occurs.
 The sample-to-live policy
 is now a durable, credential-free, unexposed schema-v10 boundary.
 Disconnect is production-constructed but has no active user command. The final
@@ -29,37 +29,38 @@ provider-inert desktop authorization protocol, bounded loopback/browser boundari
 and trusted connection-activation coordinator leave no smaller credential-free
 connection milestone. Activation now has an isolated Google Cloud project
 (`posita-mail-hub-2026`), Gmail API, external testing consent with the exact approved
-scopes, and a desktop client whose credentials remain unused. One trusted-main
+scopes, and a desktop client whose credentials were used only in the approved flow. One trusted-main
 composition now owns the full graph but receives an explicit empty startup account
-list. The real client ID and rotated secret are private, local, and loader-validated;
-no user grant or token exists. Preparation remains non-activating, while a separate
-explicit execution command and paired disconnect are now present. Final full-suite
-verification and dedicated-account testing remain before claiming live readiness.
+list. The real client ID and rotated secret are private, local, and loader-validated.
+One user grant is OS-protected and access tokens remain memory-only. Preparation remains
+non-activating, while a separate explicit execution command and paired disconnect are
+present. The account is live-empty after a safe initial sync failure; no provider mail
+or cursor was stored.
 
-No credential, provider connection, browser authorization, network request, Gmail
-SDK, mailbox data, or model provider was used for this audit.
+The original audit used no credential or provider request. The 2026-09-04 activation
+evidence is recorded separately and contains no committed credential or mailbox data.
 
 ## Readiness matrix
 
 | Area | Status | Verified evidence | Activation consequence |
 | --- | --- | --- | --- |
 | Renderer trust boundary | Ready | sandbox, context isolation, allow-listed validated preload/IPC, structural check | Keep provider payloads and credentials in main |
-| Credential vault | Ready, empty | OS-backed fail-closed protector and `SecretVault`; deterministic fake tests | A future refresh token has a protected account-scoped destination |
+| Credential vault | Ready, one protected grant | OS-backed fail-closed protector and aggregate presence inspection | The refresh token never crosses trusted main |
 | Encrypted private cache | Ready for current records | per-record AES-256-GCM, protected installation key, authenticated metadata, migrations, sanitization | Real records still require the provider-normalized schema below |
-| Provider account/sync state | Ready, empty | versioned encrypted account/cursor records plus production-composed lifecycle status writer and fixed retry dispositions | Can store future connection identity and truthful bounded sync state without starting provider work |
+| Provider account/sync state | Ready, one connected pair | encrypted account plus safe `PROVIDER_UNAVAILABLE` sync state, with no cursor | Truthfully reports live-empty attention without exposing private values |
 | Consent and local preflight | Approved | exact `google-gmail-readonly-identity-v2` projection plus a validated non-activating Settings/IPC readiness result | Viewing or preparing creates no authorization session, browser action, credential, or account state |
-| Authorization session | Production-constructed, provider-inert | bounded begin/complete/cancel contract, deterministic fake, S256 PKCE/state, exact callback verification, bounded exchange, verified identity, ephemeral IPv4 loopback, and exact-URL browser-delegate tests | No command, browser action, or live request exists |
-| Connection persistence | Explicit command implemented, not live-tested | vault-before-state ordering, main-generated account ID, callback-before-browser sequencing, cancellation, lifecycle activation, and journaled rollback tests | Only a trusted-window Continue-to-Google action can invoke it; no credential crosses IPC |
+| Authorization session | Live-verified once | bounded begin/complete/cancel contract, S256 PKCE/state, exact callback, verified identity, and loopback/browser evidence | Protocol values remained trusted-main-only |
+| Connection persistence | Live-verified once | vault-before-state ordering plus aggregate protected/encrypted presence evidence | Only the trusted-window command invoked it; no credential crossed IPC |
 | Connection consistency/recovery | Ready locally | presence-only diagnosis plus same-window one-use confirmed orphan discard | Never reconstructs a connection or contacts Google |
 | Retention | Ready | exact 90-day eviction, daily worker schedule, safe retry/status | Cleanup affects encrypted Posita data only |
 | Full local deletion | Ready | confirmed Settings command, durable recovery, keyless restart, cryptographic erasure | Removes local projection ciphertext; never deletes remote provider mail |
 | Account disconnect | Confirmed command implemented, not live-tested | five-minute same-window typed challenge, opaque durable intent audit, journaled idempotent service, and real fixed-endpoint revoker tests | Revokes Posita and removes its local data; never mutates Gmail mail |
-| Canonical provider mail model | Activation-ready, empty | exact validators, schema-v9 authenticated envelopes, opaque row IDs, packaged serial worker, fixed-window retention, journaled account deletion, lifecycle ordering, inventory, and durable status | Must remain empty until the paired Google activation plan is approved |
-| Sample/live boundary | Ready, unexposed | schema-v10 one-way mode, connected-pair gate, atomic sample removal, restart/no-reseed and retry tests | Must be invoked only by reviewed connection/sync composition |
-| Live application read model | Ready at credential-free presentation boundary | durable mode-aware query, encrypted human-readable account identity, bounded canonical recent-mail list and source detail, fixed validated IPC/preload, worker ownership, loading/missing/error/retry UI, and confirmed main-derived original-source handoff | Contains no live record until separately approved provider activation |
+| Canonical provider mail model | Activated but empty | exact validators, schema-v9 authenticated envelopes, worker ownership, and zero live records after the attempt | A verified retry may populate only through the sync coordinator |
+| Sample/live boundary | Live-verified | durable live marker, zero sample rows, connected-pair gate tests | Samples were atomically removed and will not reseed |
+| Live application read model | Live-empty attention verified | durable mode-aware query shows the protected account and zero summaries without exposing private storage detail | Reload remains local-only; no sync retry is exposed |
 | Sync coordinator | Lifecycle-owned, zero-account startup | 90-day path, real worker integration, bounded concurrency, cancellation, retention exclusion, disconnect/deletion quiescence, key teardown, durable status, and explicit retry policy are tested | No retry or automatic inventory handoff is exposed |
-| Gmail read adapter | Production-constructed, provider-inert | fixed read-only routes, versioned full/history cursors, bounded normalization, deletion events, safe failures, deterministic HTTP and coordinator integration tests | No account or user credential is supplied |
-| Google access-token source | Production-constructed, provider-inert | protected account-scoped refresh read, fixed bounded token exchange, memory-only expiry cache, cancellation, invalidation, safe failures, deterministic tests | Private client ID and secret are injected in trusted main; no account credential or caller exists |
+| Gmail read adapter | Live attempt, no stored mail | fixed read-only routes, safe `PROVIDER_UNAVAILABLE` state, deterministic HTTP tests | No cursor or provider-mail record exists |
+| Google access-token source | Live attempt plus compatibility fix | protected refresh read, memory-only access token, bounded optional refresh `id_token` accept-and-discard | Live retry is needed to confirm the suspected mismatch |
 | AI provider | Deferred | no model adapter, prompt, embedding, or model output path | Fixture summaries/drafts remain explicitly simulated |
 
 ## Blocking gaps before real mail
@@ -232,9 +233,9 @@ consent, and desktop-client creation are complete. The owner approved one client
 rotation and private placement. The strict local configuration source contains only the
 exact version-2 client ID and secret in an owner-readable application-data file, passes
 validation, and feeds only the inert graph. No downloaded credential bundle is retained.
-This approval does not authorize connecting an
-account, real browser action, network
-testing with Google, or ingesting mail; those remain later explicit gates.
+The owner later explicitly approved connecting the test account. Authorization completed,
+but initial read-only sync stored no mail. A further live retry or disconnect remains a
+separate decision; this approval never covers mailbox mutation.
 
 ## Original audit evidence
 

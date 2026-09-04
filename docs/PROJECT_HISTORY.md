@@ -2528,6 +2528,37 @@ client pair is outside Git and never crosses preload, IPC, renderer, or logs. No
 refresh token, connected account, provider read, live mail, AI provider, or mailbox mutation
 is claimed. A fresh live authorization remains an explicit action-time decision.
 
+## 2026-09-04 — First protected account connection and refresh-response compatibility
+
+Goal: complete the explicitly approved read-only connection, verify durable local state without
+exposing private values, and diagnose the first live sync failure without bypassing Posita's
+single provider-I/O owner.
+
+Delivered and observed:
+
+- completed Google browser consent, loopback callback, code exchange, verified identity,
+  vault-before-state persistence, and durable sample-to-live transition,
+- confirmed through aggregate local inspection: one protected refresh credential, one encrypted
+  provider-account record, one encrypted sync record, zero provider-mail records, zero sample
+  rows, and no pending lifecycle cleanup,
+- recorded the safe sync state `PROVIDER_UNAVAILABLE` with no cursor or successful checkpoint,
+- kept all credential, identity, token, and mailbox values out of logs, Git, and documentation,
+- identified an evidence-backed standards mismatch: OpenID/Google permit an optional `id_token`
+  on refresh, while Posita's strict refresh parser rejected that field,
+- added a bounded accept-and-discard path for that one allow-listed field; verified identity from
+  the authorization-code exchange remains authoritative,
+- retained fail-closed behavior for malformed, oversized, unknown, and scope-widened responses,
+- recorded ADR-056 and left live causal verification pending rather than calling Gmail outside
+  the trusted sync coordinator.
+
+Verification: `npm run verify` passes 83 test files and 505 tests, strict TypeScript,
+renderer structure/security checks, localhost callback integration, and production build.
+
+Limitations: the optional refresh `id_token` is the narrowest standards-backed suspected cause,
+not a raw-response-confirmed cause. No provider mail or successful cursor exists. A live retry
+requires an owner decision between confirmed disconnect/reconnect and a new reviewed sync-retry
+capability. No AI provider or mailbox mutation is involved.
+
 ## How future entries should be written
 
 For each material milestone, record:

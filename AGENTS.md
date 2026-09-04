@@ -15,10 +15,16 @@ exists deeper in the tree.
   connection, cancellation, and confirmed disconnect UI/IPC commands are verified.
   Owner-approved live consent has verified the browser, exact loopback callback,
   and token-endpoint handoff. Google reports that this desktop client requires a
-  client secret. The owner approved a one-time rotation and private local placement;
-  no grant, user credential, account, provider mail read, or live mail has been stored.
-- Current data: deterministic fixtures stored as authenticated encrypted records.
-- Encrypted provider-account and sync-state storage is implemented but empty.
+  client secret. The owner approved a one-time rotation and private local placement.
+  A subsequent owner-approved authorization completed: one refresh credential is
+  OS-protected, one account and sync state are encrypted, and the installation is in
+  durable live mode. Initial sync safely recorded `PROVIDER_UNAVAILABLE`; no provider
+  mail was stored. The likely protocol mismatch is an optional OpenID `id_token` in the
+  refresh response; a bounded accept-and-discard compatibility fix is implemented and
+  awaits a separately approved live retry path.
+- Current data: the local installation is live-empty; deterministic fixtures remain
+  repository/test assets but were atomically removed from the live installation.
+- Encrypted provider-account and sync-state storage contains one real connected account.
 - A non-sensitive lifecycle journal and confirmed full local-deletion execution are implemented.
 - Deterministic 90-day retention and exact legacy-fixture compatibility are implemented;
   encrypted file-backed maintenance runs at startup and on a bounded 24-hour cadence.
@@ -40,19 +46,21 @@ exists deeper in the tree.
   operation remains pending.
 - Startup keylessly resumes a pending full deletion and honors its completed
   marker without recreating a data key or reseeding fixtures.
-- An OS-protected credential vault is implemented but contains no real token.
+- An OS-protected credential vault contains one real account-scoped refresh token and
+  the installation data key; neither is exposed outside trusted main.
 - A bounded refresh-to-access-token source now connects that vault contract to the
   Gmail reader contract in trusted main. A separate strict configuration source can
   read the desktop client credential pair from Posita's private application-data file,
-  and both are constructed only inside the provider-inert production graph. No real
-  user credential has been received.
+  and both are constructed only inside the trusted production graph. One real refresh
+  credential is now present only in the OS-protected vault.
 - A versioned Gmail consent preview and local readiness action are
   visible in Settings and exactly disclose
   OpenID identity, verified email, and Gmail read-only access. A separate explicit
   Continue-to-Google action can invoke the trusted command and can be cancelled
   while pending. Google Cloud has matching testing consent and a desktop client,
   whose client ID and secret are privately configured locally and remain trusted-main-only.
-  No user grant or token is configured or stored.
+  One owner-approved user grant is stored as an OS-protected refresh token; access
+  tokens remain memory-only and never cross IPC.
 - Provider-independent authorization-session contracts and a deterministic fake
   are implemented but are not composed into startup, preload, IPC, or UI.
 - A real provider-inert Google desktop authorization adapter implements bounded PKCE,
@@ -118,23 +126,25 @@ exists deeper in the tree.
   reports one-sided state as recovery-required; it does not start sync.
 - The real read-only Gmail adapter, idempotent revoker, memory-only access-token
   source, canonical projection worker, sync coordinator, and lifecycle owner are
-  assembled in one production graph. Startup supplies zero accounts; Gmail and
-  model providers remain inactive until an explicit user command.
+  assembled in one production graph. Startup still supplies zero accounts; one explicit
+  owner-approved connection invoked the graph and recorded a failed initial sync.
+  The model provider remains inactive.
 - Sending mail is intentionally disabled.
 - The final production-composition audit and approved Google adapter/infrastructure/
   activation-coordinator set are complete. Isolated Google Cloud, Gmail API, external
   testing consent, desktop-client creation, private client-ID placement, and a
   provider-inert production ownership graph are complete. The narrow connection,
   cancellation, and confirmed disconnect UI/IPC exposure is approved and implemented;
-  live browser/callback/token-endpoint diagnostics occurred under explicit consent,
-  but credential use and provider activation did not complete.
+  live browser/callback/token-endpoint work and account activation completed under
+  explicit consent, while the initial read-only sync stored no provider mail.
 - The owner approved exact OpenID/email/Gmail-read-only consent and the credential-
   free desktop OAuth protocol core, provider-inert loopback/browser boundaries, and
   trusted connection-activation sequencing, plus the isolated Google-side testing
   configuration, private local client-credential placement, and narrow paired UI
   commands. The live token endpoint identified a required client secret; the owner
   approved rotating and storing it only in the owner-readable application-data file.
-  No real account, ingestion, user credential, or provider mail read has occurred.
+  One real test account and protected refresh credential now exist locally. A provider
+  read was attempted but stored no provider mail; AI and mailbox mutation remain inactive.
 - Product promise: **Your inboxes, understood as one.**
 
 Do not imply that fixture-backed behavior is connected to real mail or AI.
