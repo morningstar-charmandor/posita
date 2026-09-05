@@ -600,3 +600,16 @@ cannot enter the output. No Gmail request was needed for this milestone; the rem
 now narrowed to the real provider lifecycle rather than another assumed timer defect.
 The canonical gate passes 87 test files and 529 tests, strict typechecking, renderer security checks,
 localhost callback integration, and production builds.
+
+The separately approved fourth observation then replaced the broad provider-path hypothesis with a much
+smaller boundary. Posita safely completed protected credential retrieval, the token HTTP request, and the
+bounded token-response-body read, but emitted no first Gmail stage. The whole-attempt deadline still did not
+return to the UI, while a read-only process sample showed the Electron main process idle rather than frozen.
+No provider mail was stored. After the runtime was stopped, aggregate-only storage inspection found no
+unfinished lifecycle cleanup, and a provider-inert restart restored the truthful attention-required UI.
+
+This is useful negative evidence: Google credential retrieval and response-body transport are no longer the
+leading suspects, but token acceptance and the promise handoff into the Gmail reader are not yet proven.
+The project records that limit explicitly and forbids treating the run as a successful Gmail sync. The next
+step is a credential-free Electron reproduction of that precise boundary before asking for any fifth live
+request.

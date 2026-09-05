@@ -252,8 +252,11 @@ the account again. The next gate is local Electron-runtime deadline diagnosis; n
 request is authorized.
 Provider-inert Electron checks now prove the exact deadline command and validated IPC response settle
 correctly. Bounded stage tracing is production-composed across the remaining credential, provider-read,
-and encrypted-commit path, with only fixed phases and opaque account IDs. The next approved observation
-can isolate the stalled stage without exposing mail or tokens; no fourth request is implied.
+and encrypted-commit path, with only fixed phases and opaque account IDs. The separately approved fourth
+observation completed credential read, token request, and bounded token-response-body read, but no Gmail
+stage began and the complete command again failed to settle after its deadline. Zero provider mail was
+stored, and provider-inert restart recovery passed. The next gate is credential-free Electron correction of
+token validation/access-source settlement before Gmail entry; no fifth request is authorized.
 
 ## Original audit evidence
 

@@ -39,8 +39,14 @@ exists deeper in the tree.
   again recovered the account to attention-required. Exact provider-inert Electron checks now prove
   the command deadline and IPC return path settle correctly. Production has bounded, privacy-safe
   stage tracing across credential read, token exchange, Gmail profile/list/message read, and encrypted
-  projection commit so the next approved observation can isolate the real provider-stage stall. No
-  fourth live request was made.
+  projection commit. A fourth explicitly approved read-only retry ran exactly once. Protected credential
+  read, token request, and bounded token-response-body read all completed; no Gmail stage started. The
+  attempt again exceeded the whole-attempt deadline while a read-only process sample showed Electron main
+  idle, and it stored zero provider mail. The attempt was stopped; an aggregate-only inspection found no
+  unfinished lifecycle cleanup, and a provider-inert restart recovered the account to attention-required.
+  No fifth live request is authorized. The next milestone is a provider-inert correction inside the narrow
+  post-token-response/pre-Gmail boundary, with exact settlement and cancellation evidence before any new
+  provider observation.
 - Current data: the local installation is live-empty; deterministic fixtures remain
   repository/test assets but were atomically removed from the live installation.
 - Encrypted provider-account and sync-state storage contains one real connected account.

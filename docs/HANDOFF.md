@@ -412,15 +412,25 @@ privacy-safe reporter over the remaining credential read, token request/response
 message-batch read, and encrypted projection commit stages. It logs only fixed stages/phases plus an
 opaque account ID; no token, address, mail, payload, cursor, URL, or raw error can enter it.
 
+The owner approved one fourth read-only diagnostic, and it ran exactly once. The stage stream proves that
+protected credential read, the token HTTP request, and bounded token-response-body reading completed. No
+Gmail profile/list/message stage started. The operation still did not return after the ten-minute command
+deadline; a one-second read-only process sample showed Electron main idle rather than CPU-blocked. The app
+was stopped without another control. Aggregate-only SQLite inspection found zero provider-mail records,
+one encrypted account record, one encrypted sync-state record, and no unfinished lifecycle cleanup. A
+provider-inert restart visibly recovered the account to attention-required with an explicit retry. No fifth
+provider request is authorized, and no token validation, Gmail read, cursor, or successful sync is claimed.
+
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,
 safe status, full-deletion startup recovery, read-only lifecycle UI, and explicitly
 confirmed local deletion are complete at their current layers. Continue in this order:
 
-1. ADR-059's provider-inert stage diagnostics are canonically verified. A fourth live read-only retry
-   remains a separate owner decision. If approved, observe the fixed stage stream,
-   stop at the bounded deadline, and use the last started/completed stage to isolate one cause before
-   changing provider behavior.
+1. Reproduce and correct the narrow post-token-response/pre-Gmail settlement boundary without credentials
+   or network use. Cover successful token parsing, access-source promise settlement, cancellation, and the
+   outer command deadline in the real Electron main process. Add a fixed stage only if it materially
+   distinguishes those existing steps without exposing token data. Do not issue a fifth provider request;
+   any future live observation requires a new owner decision after canonical verification.
 2. Treat the local account-connection recovery UI as complete at its current boundary. Do not add
    automatic account-pair repair; failed execution must continue to require fresh review.
 3. Treat automatic retention scheduling and its Settings status as complete at

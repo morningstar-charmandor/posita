@@ -83,6 +83,10 @@ provider request remains explicit. Provider-inert Electron checks now prove the 
 and IPC return path settle correctly, ruling out the button/bridge path. Production emits only fixed
 sync-stage names, phases, and opaque account IDs for credential read, token exchange, Gmail read, and
 encrypted commit; it never logs tokens, addresses, mail content, provider payloads, or raw errors.
+The separately approved fourth read-only observation completed credential read, the token request, and
+bounded response-body reading, then stalled before any Gmail stage and stored no mail. A provider-inert
+restart recovered the truthful retryable UI. No fifth request is authorized; the next correction is confined
+to credential-free token-validation/access-source settlement testing in Electron.
 
 The trusted backend now defines a bounded provider-independent authorization
 session contract, deterministic fake, and real Google desktop protocol

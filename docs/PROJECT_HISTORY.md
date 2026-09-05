@@ -2686,6 +2686,27 @@ A fourth provider request remains a separate owner decision. Verification passes
 529 tests, strict TypeScript, renderer structure/security checks, localhost callback integration,
 and production Electron builds.
 
+### 2026-09-05 — Fourth bounded live-sync diagnosis
+
+- executed the separately owner-approved read-only retry exactly once and disabled duplicate input,
+- observed completed protected-credential read, token request, and bounded token-response-body stages,
+- observed no Gmail profile, list, message-batch, or projection-commit stage begin,
+- allowed the fixed ten-minute whole-attempt deadline to elapse; the command still did not settle,
+- sampled the Electron main process read-only for one second and found it idle rather than CPU-blocked,
+- stopped the development runtime without disconnect, reconnect, another retry, AI, or mailbox mutation,
+- confirmed through aggregate-only SQLite counts that zero provider-mail records were stored and no
+  lifecycle cleanup remained pending,
+- restarted provider-inert and visually verified the connected account recovered to attention-required
+  with an explicit retry, then stopped without invoking any control.
+
+This evidence narrows the defect to token validation or access-source settlement after the bounded response
+body is read and before the Gmail adapter emits its first stage. It does not prove that a usable access token
+was accepted, and it does not authorize a fifth provider request. The next work is a credential-free exact-
+Electron reproducer and correction for that boundary, including cancellation and outer-deadline settlement.
+No dependency, schema, secret, personal-mail record, public IPC, or mailbox capability changed. Canonical
+verification passes 87 test files and 529 tests, strict TypeScript, renderer structure/security checks,
+localhost callback integration, and production Electron builds.
+
 ## How future entries should be written
 
 For each material milestone, record:

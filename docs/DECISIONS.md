@@ -1228,3 +1228,10 @@ non-cooperative but does not block the desktop runtime. ADR-059 adds the missing
   the renderer, credential, or encrypted-cache boundaries. The reporter adds no dependency, schema,
   public IPC, UI capability, provider request, automatic retry, compatibility path, or mailbox
   mutation. A fourth live request remains a separate owner decision.
+
+Implementation evidence: the separately approved fourth read-only retry completed credential read, token
+request, and bounded token-response-body read, then emitted no Gmail stage and did not settle after the
+whole-attempt deadline. A read-only process sample showed Electron main idle. Zero provider-mail records
+were stored, and provider-inert restart recovery returned the account to attention-required. This narrows
+the unresolved boundary to token validation or access-source settlement before Gmail entry; it does not
+prove access-token acceptance and does not authorize a fifth provider request.

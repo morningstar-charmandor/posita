@@ -7,7 +7,7 @@
     "repository": "https://github.com/morningstar-charmandor/posita",
     "repositoryVisibility": "public",
     "canonicalBranch": "main",
-    "currentMilestone": "gate-2d-privacy-safe-sync-stage-diagnostics-verified-awaiting-live-decision",
+    "currentMilestone": "gate-2d-fourth-live-sync-diagnostic-recovered-awaiting-provider-inert-post-token-fix",
     "dataMode": "live-empty-with-connected-google-account-and-sync-attention",
     "mailSendingEnabled": false
   },
@@ -58,8 +58,8 @@
       "publicSyncRetryCommandEnabled": true,
       "publicSyncRetryCommandVerified": true,
       "publicSyncRetryCommandLiveExecuted": true,
-      "publicSyncRetryLiveOutcome": "third-attempt-exceeded-corrected-deadline-and-stored-zero-provider-mail",
-      "publicSyncRetryLiveAttemptCount": 3,
+      "publicSyncRetryLiveOutcome": "fourth-attempt-completed-token-request-and-bounded-response-read-then-stalled-before-first-gmail-stage-and-stored-zero-provider-mail",
+      "publicSyncRetryLiveAttemptCount": 4,
       "publicSyncRetryBoundedAttemptImplemented": true,
       "interruptedSyncStartupRecoveryImplemented": true,
       "interruptedSyncStartupRecoveryUiVerified": true,
@@ -70,6 +70,9 @@
       "providerInertElectronDeadlineCommandVerified": true,
       "providerInertElectronDeadlineIpcVerified": true,
       "privacySafeSyncStageDiagnosticsImplemented": true,
+      "privacySafeSyncStageDiagnosticsLiveObserved": true,
+      "privacySafeSyncStageLastCompleted": "token-response",
+      "privacySafeSyncStageNextStarted": false,
       "liveAuthorizationAttempted": true,
       "liveCallbackReceived": true,
       "liveCallbackCompatibilityFixImplemented": true,
@@ -82,7 +85,7 @@
       "liveProviderMailReadAttempted": true,
       "liveProviderMailStored": false,
       "liveSyncFailureSafeCode": "PROVIDER_UNAVAILABLE",
-      "liveSyncFailureSuspectedCause": "optional-openid-id-token-rejected-during-refresh",
+      "liveSyncFailureSuspectedCause": "post-token-response-pre-gmail-stage-token-validation-or-access-source-settlement",
       "refreshIdTokenCompatibilityFixImplemented": true,
       "refreshIdTokenCompatibilityLiveVerified": false
     }
