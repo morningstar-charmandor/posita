@@ -25,9 +25,9 @@ exists deeper in the tree.
   execution did not settle during observation and stored no provider mail. ADR-058 now
   gives the complete manual attempt a fixed deadline, routes cancellation through the
   existing lifecycle owner, and locally recovers only persisted interrupted `syncing`
-  state on restart. Canonical verification and a provider-inert runtime restart pass;
-  visual UI confirmation is pending because the Mac was locked. Another live request
-  has not been made.
+  state on restart. Canonical verification, a provider-inert runtime restart, and visual
+  UI confirmation now pass: the connected account is truthfully attention-required with
+  a fresh explicit retry, not trapped in `syncing`. Another live request has not been made.
 - Current data: the local installation is live-empty; deterministic fixtures remain
   repository/test assets but were atomically removed from the live installation.
 - Encrypted provider-account and sync-state storage contains one real connected account.

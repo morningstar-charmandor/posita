@@ -188,6 +188,8 @@ not automatically retry or contact Google, and status-storage failure prevents t
 provider call from starting. The complete manual attempt has one fixed ten-minute
 deadline, and provider-inert startup converts only a persisted interrupted `syncing`
 marker into an explicit retryable state before any provider work can begin.
+Provider-inert restart and visual inspection verify that interrupted state returns to the
+attention-required presentation with an explicit retry; inspection itself performs no Gmail call.
 
 The final activation audit requires provider reads and revocation to arrive as one
 reviewed lifecycle composition. A single existing projection worker must own reads,

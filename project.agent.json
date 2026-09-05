@@ -7,7 +7,7 @@
     "repository": "https://github.com/morningstar-charmandor/posita",
     "repositoryVisibility": "public",
     "canonicalBranch": "main",
-    "currentMilestone": "gate-2d-google-sync-bounded-recovery-ready-for-unlocked-ui-inspection",
+    "currentMilestone": "gate-2d-google-sync-bounded-recovery-ui-verified-awaiting-next-live-decision",
     "dataMode": "live-empty-with-connected-google-account-and-sync-attention",
     "mailSendingEnabled": false
   },
@@ -61,6 +61,8 @@
       "publicSyncRetryLiveOutcome": "attempt-did-not-settle-and-stored-zero-provider-mail",
       "publicSyncRetryBoundedAttemptImplemented": true,
       "interruptedSyncStartupRecoveryImplemented": true,
+      "interruptedSyncStartupRecoveryUiVerified": true,
+      "currentLiveSyncPresentation": "attention-required-with-explicit-retry-available",
       "liveAuthorizationAttempted": true,
       "liveCallbackReceived": true,
       "liveCallbackCompatibilityFixImplemented": true,

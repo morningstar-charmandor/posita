@@ -239,7 +239,9 @@ but initial read-only sync stored no mail. The owner then approved both a narrow
 retry and the existing confirmed disconnect/reconnect fallback. The first live retry did
 not settle during observation and stored no provider mail. ADR-058 therefore bounds the
 complete attempt and recovers only interrupted durable sync status locally; another provider
-request remains explicit, and none of these approvals covers mailbox mutation.
+request remains explicit, and none of these approvals covers mailbox mutation. Provider-inert
+restart and visual inspection confirm the account is no longer trapped in progress and is shown
+as attention-required with a fresh retry control.
 
 ## Original audit evidence
 

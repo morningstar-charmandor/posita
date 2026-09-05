@@ -39,6 +39,9 @@ result. Posita stored no mail during the observation. The recovery keeps the val
 bounds the complete attempt to ten minutes, cancels through the same sync owner, and converts
 only an interrupted durable `syncing` marker into a retryable local state on restart. This is
 failure-path evidence, not evidence of successful Gmail ingestion.
+An unlocked provider-inert inspection subsequently confirmed that the connected account returned
+to the attention-required state with a fresh explicit retry rather than remaining stuck in progress.
+No control was invoked during that inspection.
 
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
 
@@ -559,7 +562,7 @@ Evidence: `npm run verify` passes 86 test files and 522 tests, strict typechecki
 security/structure checks, localhost callback integration, and production builds. The tests cover
 normal completion, whole-attempt timeout, coordinator cancellation, overlap during cleanup,
 durable timeout status, and startup recovery. A provider-inert runtime restart also completed;
-visual confirmation remains pending only because the Mac was locked.
+an unlocked visual check confirmed the account was no longer presented as actively syncing.
 
 Limitations: the exact internal cause of the stalled attempt is not yet proven. No provider mail,
 cursor, successful sync, AI provider, or mailbox mutation is claimed, and no second Gmail request

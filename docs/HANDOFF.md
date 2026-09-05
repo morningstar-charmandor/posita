@@ -389,19 +389,21 @@ verified. The first controlled live click did not settle and stored no provider 
 whole-attempt and interrupted-status recovery fix is now implemented under ADR-058. The canonical
 verification gate passes, and Posita completed a provider-inert restart so any persisted `syncing`
 state could be recovered locally. Visual inspection was blocked only because the Mac was locked.
-The next step is to unlock the Mac and inspect the truthful UI state without contacting Gmail.
-Only after that check should the owner choose another explicit retry; use the approved
-disconnect/reconnect fallback only when a typed result shows it is necessary.
+The later unlocked visual inspection passed: the connected account is shown as needing attention,
+offers a fresh explicit retry, and is no longer trapped in `Syncing`. No control was invoked and
+no Gmail request occurred during inspection. The next step is an owner decision between one more
+controlled live retry using ADR-058's bounded path or the already approved disconnect/reconnect
+fallback; prefer retry unless a typed result shows reconnection is necessary.
 
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,
 safe status, full-deletion startup recovery, read-only lifecycle UI, and explicitly
 confirmed local deletion are complete at their current layers. Continue in this order:
 
-1. Unlock the Mac and visually confirm the provider-inert restarted account is no longer trapped
-   in a recorded in-progress state. A later live retry remains explicit.
-2. Treat the local recovery UI as complete at its current boundary. Do not add
-   automatic startup repair; failed execution must continue to require fresh review.
+1. Request the owner's explicit choice before another live provider action. The least-destructive
+   option is one controlled bounded retry, followed only by aggregate encrypted-local inspection.
+2. Treat the local account-connection recovery UI as complete at its current boundary. Do not add
+   automatic account-pair repair; failed execution must continue to require fresh review.
 3. Treat automatic retention scheduling and its Settings status as complete at
    the current fixed 90-day boundary. Do not add configurable retention yet.
 4. Treat canonical fixed-window retention, journaled account removal, worker

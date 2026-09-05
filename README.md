@@ -70,7 +70,9 @@ its durable policy allows, an explicit Gmail sync-retry control. The approved co
 completed, but initial sync recorded a safe error and stored no live mail; the new retry
 command's first live execution did not settle during observation and still stored no mail.
 ADR-058 bounds the complete attempt, cancels through the same owner, and recovers only an
-interrupted durable in-progress marker locally on restart.
+interrupted durable in-progress marker locally on restart. Provider-inert restart and UI
+inspection confirm the account returns to a truthful attention-required state with an explicit
+retry instead of remaining stuck in progress.
 
 The trusted backend now defines a bounded provider-independent authorization
 session contract, deterministic fake, and real Google desktop protocol
