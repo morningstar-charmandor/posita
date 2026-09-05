@@ -1,7 +1,7 @@
 # Posita Portfolio Case Study
 
 Status: evolving working draft  
-Last reviewed: 2026-09-04
+Last reviewed: 2026-09-05
 
 This document turns verified project history into a portfolio-ready narrative.
 It should remain honest about what is implemented, simulated, measured, and
@@ -32,6 +32,13 @@ sync state encrypted. The installation is live-empty: initial sync stored no pro
 and recorded a safe attention state. A policy-gated manual retry now preserves the valid
 connection and reuses the single lifecycle owner without exposing provider details. AI remains
 unconnected, and no fixture is presented as live Gmail.
+
+The first explicit retry exposed a whole-operation resilience gap: although each provider HTTP
+request was timed, the user-visible lifecycle attempt itself could remain busy without a final
+result. Posita stored no mail during the observation. The recovery keeps the valid account,
+bounds the complete attempt to ten minutes, cancels through the same sync owner, and converts
+only an interrupted durable `syncing` marker into a retryable local state on restart. This is
+failure-path evidence, not evidence of successful Gmail ingestion.
 
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
 
@@ -532,5 +539,28 @@ complete gate passes 86 test files and 518 tests, strict typecheck, renderer sec
 checks, localhost callback integration, and the production build.
 
 Limitations: no provider mail, cursor, successful sync, AI provider, or mailbox mutation is
-claimed. The protected account remains connected; the new retry command is verified but not yet
-executed against Gmail.
+claimed. The protected account remains connected; the first live retry was executed but did not
+settle during observation, so another provider request remains a separate explicit action.
+
+### Turning a stalled live read into a bounded recovery path
+
+The first approved manual retry was invoked through Posita's public control and remained busy
+through the observation window. Aggregate inspection showed zero canonical mail records, and
+later inspection found no active provider connection. The development process was stopped without
+disconnecting the account or issuing another provider request.
+
+This revealed that bounded HTTP calls were not sufficient: the complete user-triggered lifecycle
+also needed a deadline. ADR-058 adds a fixed ten-minute attempt window, propagates cancellation
+through the existing lifecycle owner, and keeps duplicate retries excluded until cancellation
+settles. A restart can now distinguish a persisted in-progress marker from real active work and
+convert only that marker into an explicit retryable interruption while preserving any cursor.
+
+Evidence: `npm run verify` passes 86 test files and 522 tests, strict typechecking, renderer
+security/structure checks, localhost callback integration, and production builds. The tests cover
+normal completion, whole-attempt timeout, coordinator cancellation, overlap during cleanup,
+durable timeout status, and startup recovery. A provider-inert runtime restart also completed;
+visual confirmation remains pending only because the Mac was locked.
+
+Limitations: the exact internal cause of the stalled attempt is not yet proven. No provider mail,
+cursor, successful sync, AI provider, or mailbox mutation is claimed, and no second Gmail request
+was made during this recovery milestone.

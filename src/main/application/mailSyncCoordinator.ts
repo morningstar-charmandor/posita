@@ -93,8 +93,9 @@ interface ActiveSync {
 }
 
 /**
- * The single application-owned provider I/O coordinator. It is deliberately not
- * composed into Electron startup, IPC, or UI in this credential-free milestone.
+ * The single application-owned provider I/O coordinator. Trusted main composes it
+ * behind explicit connection and policy-gated retry commands; renderer code never
+ * invokes provider I/O directly.
  */
 export class MailSyncCoordinator {
   private readonly active = new Map<string, ActiveSync>()

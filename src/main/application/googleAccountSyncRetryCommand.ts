@@ -23,6 +23,9 @@ import type {
   ProviderMailLifecycleOwner
 } from './providerMailLifecycleOwner'
 
+export const GOOGLE_ACCOUNT_SYNC_RETRY_TIMEOUT_MS = 10 * 60 * 1000
+const TIMED_OUT = Symbol('google-account-sync-retry-timed-out')
+
 const error = (
   code: GoogleAccountSyncRetryErrorCodeV1,
   message: string,
@@ -46,7 +49,8 @@ export interface GoogleAccountSyncRetryState {
 
 export interface GoogleAccountSyncRetryLifecycle {
   syncAccounts(
-    accounts: unknown
+    accounts: unknown,
+    signal?: AbortSignal
   ): Promise<ProviderMailLifecycleAccountOutcomeV1[]>
 }
 
@@ -61,7 +65,8 @@ export class GoogleAccountSyncRetryCommandService {
   constructor(
     private readonly connection?: AccountConnectionConsistencyInspector,
     private readonly accountState?: GoogleAccountSyncRetryState,
-    private readonly lifecycle?: GoogleAccountSyncRetryLifecycle
+    private readonly lifecycle?: GoogleAccountSyncRetryLifecycle,
+    private readonly timeoutMs = GOOGLE_ACCOUNT_SYNC_RETRY_TIMEOUT_MS
   ) {}
 
   async execute(requestValue: unknown): Promise<RetryGoogleAccountSyncResponseV1> {
@@ -76,6 +81,7 @@ export class GoogleAccountSyncRetryCommandService {
       return error('SYNC_IN_PROGRESS', 'A Gmail synchronization is already running for this account.', false)
     }
     this.activeAccounts.add(request.accountId)
+    let releaseOnReturn = true
     try {
       const consistency = await this.connection.inspect(request.accountId)
       if (!isAccountConnectionConsistencyV1(consistency) ||
@@ -117,12 +123,39 @@ export class GoogleAccountSyncRetryCommandService {
         return error('SYNC_RETRY_NOT_ALLOWED', notAllowedMessage[policy.disposition], false)
       }
 
-      const outcomes = await this.lifecycle.syncAccounts([{
+      const controller = new AbortController()
+      let timeoutHandle: ReturnType<typeof setTimeout> | undefined
+      const timedOut = new Promise<typeof TIMED_OUT>((resolve) => {
+        timeoutHandle = setTimeout(() => {
+          controller.abort()
+          resolve(TIMED_OUT)
+        }, this.timeoutMs)
+        timeoutHandle.unref?.()
+      })
+      const lifecycleResult = this.lifecycle.syncAccounts([{
         version: POSITA_PROTOCOL_VERSION,
         accountId: request.accountId,
         provider: 'google'
-      }])
-      return this.mapOutcome(request.accountId, outcomes)
+      }], controller.signal)
+      let result: ProviderMailLifecycleAccountOutcomeV1[] | typeof TIMED_OUT
+      try {
+        result = await Promise.race([lifecycleResult, timedOut])
+      } finally {
+        if (timeoutHandle !== undefined) clearTimeout(timeoutHandle)
+      }
+      if (result === TIMED_OUT) {
+        releaseOnReturn = false
+        void lifecycleResult.then(
+          () => this.activeAccounts.delete(request.accountId),
+          () => this.activeAccounts.delete(request.accountId)
+        )
+        return error(
+          'SYNC_FAILED',
+          'Gmail synchronization took too long and Posita cancelled the bounded attempt safely.',
+          true
+        )
+      }
+      return this.mapOutcome(request.accountId, result)
     } catch {
       return error(
         'SYNC_FAILED',
@@ -130,7 +163,7 @@ export class GoogleAccountSyncRetryCommandService {
         true
       )
     } finally {
-      this.activeAccounts.delete(request.accountId)
+      if (releaseOnReturn) this.activeAccounts.delete(request.accountId)
     }
   }
 

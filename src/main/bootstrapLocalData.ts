@@ -203,6 +203,11 @@ export const bootstrapLocalDataWithDependencies = async (
       accountStateRepository,
       systemClock
     )
+    if (providerMailStartupInventory.status === 'ready') {
+      for (const account of providerMailStartupInventory.accounts) {
+        providerMailSyncStatusService.recoverInterrupted(account)
+      }
+    }
     const sampleMailService = new MailApplicationService(
       repository,
       systemClock

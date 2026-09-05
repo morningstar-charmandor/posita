@@ -127,6 +127,51 @@ describe('bootstrapLocalData lifecycle recovery', () => {
     closeRuntime(restarted)
   })
 
+  it('recovers only an interrupted connected-account sync during provider-inert startup', async () => {
+    const databasePath = await createDatabasePath()
+    const initial = await bootstrapLocalDataWithDependencies(databasePath, dependencies())
+    if (initial.mode !== 'ready') throw new Error('Expected ready runtime.')
+    initial.accountStateRepository.saveProviderAccount({
+      version: 2,
+      accountId: 'work',
+      provider: 'google',
+      providerAccountId: 'provider-subject-test-1',
+      displayIdentity: { mailboxAddress: 'work@example.test' },
+      consentVersion: GOOGLE_CONNECT_CONSENT.consentVersion,
+      connectedAt: '2026-09-04T12:00:00.000Z'
+    })
+    initial.accountStateRepository.saveSyncState({
+      version: 1,
+      accountId: 'work',
+      provider: 'google',
+      status: 'syncing',
+      cursor: 'retained-test-cursor'
+    })
+    await initial.secretVault.set(
+      googleRefreshTokenName('work'),
+      'deterministic-test-refresh-credential'
+    )
+    await initial.mailDataModeService.activateLive({ version: 1, accountId: 'work' })
+    closeRuntime(initial)
+
+    const restarted = await bootstrapLocalDataWithDependencies(databasePath, dependencies())
+    if (restarted.mode !== 'ready') throw new Error('Expected ready runtime.')
+    expect(restarted.providerMailStartupInventory).toEqual({
+      version: 1,
+      status: 'ready',
+      accounts: [{ version: 1, accountId: 'work', provider: 'google' }]
+    })
+    expect(restarted.accountStateRepository.loadSyncState('work')).toEqual({
+      version: 1,
+      accountId: 'work',
+      provider: 'google',
+      status: 'error',
+      cursor: 'retained-test-cursor',
+      lastErrorCode: 'SYNC_INTERRUPTED'
+    })
+    closeRuntime(restarted)
+  })
+
   it('composes confirmed local-only recovery for an orphaned credential', async () => {
     const databasePath = await createDatabasePath()
     const ids = ['confirmation-recovery-1', 'operation-recovery-1']

@@ -2589,6 +2589,42 @@ Limitations: the command is production-composed but has not yet been executed li
 sync, cursor, provider mail, AI provider, or mailbox mutation is claimed. The approved destructive
 disconnect/reconnect fallback remains unnecessary unless the controlled retry still fails.
 
+## 2026-09-05 — Bounded retry and interrupted-state recovery
+
+Goal: recover safely from the first live manual retry, which entered the read-only lifecycle
+but did not settle, without disconnecting the valid account or creating another provider path.
+
+Observed before implementation:
+
+- one explicit live retry was invoked through the semantic account control,
+- the UI remained in its busy state during the observation window,
+- aggregate local inspection continued to show zero canonical provider-mail records,
+- later process inspection found no active provider connection,
+- the local development process was stopped; no second retry, disconnect, reconnect, AI call,
+  or mailbox mutation was performed.
+
+Delivered:
+
+- recorded ADR-058 and added a fixed ten-minute deadline around the complete manual attempt,
+- propagated cancellation through `ProviderMailLifecycleOwner` to the existing single sync
+  coordinator instead of adding an ad-hoc provider call,
+- retained per-account overlap exclusion until the underlying lifecycle attempt settles,
+- added explicit retryable `SYNC_ATTEMPT_TIMED_OUT` and `SYNC_INTERRUPTED` states,
+- recovered only a complete account's persisted `syncing` marker during provider-inert startup,
+  preserving its cursor and leaving all other states unchanged,
+- added failure-path tests for attempt timeout, cancellation, overlap, and restart recovery,
+- added no dependency, database migration, automatic sync, new lifecycle owner, provider scope,
+  credential surface, or mailbox mutation.
+
+Verification: `npm run verify` passes 86 test files and 522 tests, strict TypeScript,
+renderer structure/security checks, localhost callback integration, and production builds.
+A provider-inert runtime restart completed without starting Gmail; visual UI inspection remains
+pending because the Mac was locked.
+
+Limitations: the observation proves an unbounded whole-attempt failure mode, not its precise
+internal cause. No successful sync, cursor, or provider mail is claimed. A later live retry
+requires another explicit owner action after the local recovery checkpoint is verified.
+
 ## How future entries should be written
 
 For each material milestone, record:

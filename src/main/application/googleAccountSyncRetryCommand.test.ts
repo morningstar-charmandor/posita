@@ -65,11 +65,14 @@ describe('GoogleAccountSyncRetryCommandService', () => {
         replayedMessages: 0
       }
     })
-    expect(syncAccounts).toHaveBeenCalledExactlyOnceWith([{
-      version: 1,
-      accountId: request.accountId,
-      provider: 'google'
-    }])
+    expect(syncAccounts).toHaveBeenCalledExactlyOnceWith(
+      [{
+        version: 1,
+        accountId: request.accountId,
+        provider: 'google'
+      }],
+      expect.any(AbortSignal)
+    )
   })
 
   it('rejects malformed, unavailable, absent, and one-sided connection states', async () => {
@@ -141,6 +144,36 @@ describe('GoogleAccountSyncRetryCommandService', () => {
     })
     finish?.([synced()])
     await expect(first).resolves.toMatchObject({ ok: true })
+  })
+
+  it('bounds the complete attempt and keeps overlap blocked until cancellation settles', async () => {
+    let finish: ((value: ProviderMailLifecycleAccountOutcomeV1[]) => void) | undefined
+    const pending = new Promise<ProviderMailLifecycleAccountOutcomeV1[]>((resolve) => {
+      finish = resolve
+    })
+    const service = new GoogleAccountSyncRetryCommandService(
+      connection(),
+      { loadSyncState: () => syncState() },
+      { syncAccounts: () => pending },
+      5
+    )
+
+    await expect(service.execute(request)).resolves.toMatchObject({
+      ok: false,
+      error: {
+        code: 'SYNC_FAILED',
+        retryable: true,
+        message: expect.stringContaining('cancelled the bounded attempt')
+      }
+    })
+    await expect(service.execute(request)).resolves.toMatchObject({
+      ok: false,
+      error: { code: 'SYNC_IN_PROGRESS', retryable: false }
+    })
+
+    finish?.([synced()])
+    await Promise.resolve()
+    await expect(service.execute(request)).resolves.toMatchObject({ ok: true })
   })
 
   it('returns only bounded safe failures from lifecycle and unexpected errors', async () => {

@@ -92,7 +92,9 @@ constructed inside the startup graph and is reachable only through the exact
 trusted-window connection command. Browser invocation, loopback callback, credential
 exchange, account activation, and one provider read attempt have occurred under explicit
 consent; no provider mail was stored. A narrow explicit sync-retry command is now
-deterministic-tested and production-composed, while its live result remains unverified.
+deterministic-tested and production-composed. Its first approved live attempt did not
+settle and stored no provider mail; ADR-058 now bounds the whole attempt and safely
+recovers interrupted durable status, while a successful live result remains unverified.
 
 Gate 2D also defines a credential-free `AccountConnectionService` above the
 authorization adapter. It verifies that the opaque Posita account has neither an
@@ -174,15 +176,18 @@ composition must operate: live-mode activation precedes initial sync, retention
 does not overlap sync batches, disconnect/deletion first suspend and settle sync,
 and shutdown destroys the projection worker key only after work finishes. A
 live-empty startup starts no provider work; offline startup returns a safe retry-
-required outcome. The owner receives no token and remains outside Electron
-startup, preload, IPC, UI, Google, and network composition.
+required outcome. Trusted Electron main composes the owner behind only the explicit
+connection, retry, and confirmed disconnect commands; preload and renderer code never
+receive its token, provider, cursor, or direct lifecycle capabilities.
 
 The owner now writes account-scoped encrypted sync status through one trusted-main
 service: syncing before provider work, idle with a validated cursor and success time
 afterward, idle on cancellation, and a typed error on failure. A fixed descriptive
 policy separates retry, delayed retry, reconnect, review, and cancellation. It does
 not automatically retry or contact Google, and status-storage failure prevents the
-provider call from starting.
+provider call from starting. The complete manual attempt has one fixed ten-minute
+deadline, and provider-inert startup converts only a persisted interrupted `syncing`
+marker into an explicit retryable state before any provider work can begin.
 
 The final activation audit requires provider reads and revocation to arrive as one
 reviewed lifecycle composition. A single existing projection worker must own reads,

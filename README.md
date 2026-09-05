@@ -68,7 +68,9 @@ account ID, cancellation, authorization, encrypted persistence, initial sync, an
 rollback. A connected account has a typed-confirmation disconnect control and, only when
 its durable policy allows, an explicit Gmail sync-retry control. The approved connection
 completed, but initial sync recorded a safe error and stored no live mail; the new retry
-command has not yet been exercised live.
+command's first live execution did not settle during observation and still stored no mail.
+ADR-058 bounds the complete attempt, cancels through the same owner, and recovers only an
+interrupted durable in-progress marker locally on restart.
 
 The trusted backend now defines a bounded provider-independent authorization
 session contract, deterministic fake, and real Google desktop protocol
@@ -218,7 +220,10 @@ A fixed policy distinguishes immediate manual retry, delayed retry, reconnect,
 review, and cancellation; it does not schedule work. If status persistence is
 unavailable, provider work does not start. The explicit account-scoped retry command
 accepts only the policy's immediate-manual-retry states, refuses overlap, and delegates
-to this owner without exposing cursors or provider payloads. It performs no automatic work.
+to this owner without exposing cursors or provider payloads. Its complete user-triggered
+attempt now has a fixed ten-minute deadline and cancels through that same owner. Startup
+locally converts only an interrupted persisted `syncing` marker into a typed retryable
+failure before any provider work can begin. Neither path schedules or performs automatic sync.
 
 The final production-composition audit confirms there is no smaller standalone
 credential-free milestone left. The approved read-only Gmail adapter and idempotent

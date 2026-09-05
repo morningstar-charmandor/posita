@@ -86,6 +86,7 @@ export const composeGoogleProviderLifecycle = (
   )
   const sync: ProviderMailSyncLifecycle = {
     syncAccount: (request) => coordinator.syncAccount(request),
+    cancelAccount: (accountId) => coordinator.cancelAccount(accountId),
     suspend: () => coordinator.suspend(),
     resume: () => coordinator.resume(),
     shutdown: async () => {

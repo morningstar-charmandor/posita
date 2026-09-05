@@ -70,6 +70,24 @@ describe('ProviderMailSyncStatusService', () => {
     })
   })
 
+  it('recovers only a persisted interrupted sync into an explicit retryable failure', () => {
+    const { service, state } = harness({
+      version: 1, accountId: 'work', provider: 'google', status: 'syncing',
+      cursor: 'retained-cursor'
+    })
+
+    expect(service.recoverInterrupted(request)).toEqual({
+      version: 1,
+      accountId: 'work',
+      provider: 'google',
+      status: 'error',
+      cursor: 'retained-cursor',
+      lastErrorCode: 'SYNC_INTERRUPTED'
+    })
+    expect(state()).toEqual(service.recoverInterrupted(request))
+    expect(providerMailSyncRetryPolicy('SYNC_INTERRUPTED').disposition).toBe('retry-allowed')
+  })
+
   it('rejects mismatched results and maps repository failures safely', () => {
     const { service } = harness()
     expect(() => service.recordSucceeded(request, {

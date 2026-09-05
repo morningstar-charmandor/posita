@@ -1176,3 +1176,24 @@
   introducing a second provider owner, dependency, schema, polling loop, or compatibility
   path. Reconnect-required, delayed, review-required, absent, inconsistent, malformed, and
   already-running states fail closed. Live execution remains a distinct approved action.
+
+## ADR-058: Bound the whole manual sync attempt and recover interrupted status
+
+- Status: accepted for Gate 2D live-sync safety
+- Context: the first approved live retry entered the trusted read-only lifecycle but did
+  not settle during the observed window. The UI remained busy, no canonical provider-mail
+  record was committed, and later inspection found no active provider connection. Existing
+  HTTP calls were individually timed, but the complete lifecycle operation had no user-level
+  deadline; terminating the development process could also leave durable `syncing` state.
+- Decision: give the explicit manual retry one fixed ten-minute whole-attempt deadline.
+  Propagate its abort signal through the existing lifecycle owner to the one sync coordinator,
+  retain per-account overlap exclusion until cancellation settles, and record a typed retryable
+  timeout if provider work had started. During startup, after presence-only inventory proves a
+  complete account pair and before any provider graph can start work, convert only a persisted
+  `syncing` state to a typed retryable interruption. Do not start sync, contact Google, alter
+  connection state, or discard a cursor during that recovery.
+- Consequence: a user-requested read can no longer hold the UI indefinitely, and a process
+  interruption cannot permanently make the connected account unretryable. Existing successful,
+  error, idle, disabled, absent, and one-sided states are unchanged. No dependency, migration,
+  automatic provider request, new lifecycle owner, credential exposure, or mailbox mutation is
+  introduced. Another live retry remains a separate explicit action after verification.

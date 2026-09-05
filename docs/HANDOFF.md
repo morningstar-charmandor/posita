@@ -1,6 +1,6 @@
 # Posita Continuity Handoff
 
-Last reviewed: 2026-09-04
+Last reviewed: 2026-09-05
 
 This is the first document to read when Posita work continues in a new AI model,
 thread, chat, or development session. It records current state and the safest
@@ -50,7 +50,12 @@ field. A bounded accept-and-discard compatibility fix is implemented with determ
 raw tokens were not logged, so live confirmation remains pending. The owner approved both a
 narrow manual retry capability and, only if needed afterward, the existing confirmed disconnect/
 reconnect fallback. The manual retry is now fully implemented and delegates only to the single
-sync lifecycle owner; it has not yet been exercised live.
+sync lifecycle owner. Its first approved live execution entered the read-only flow but did not
+settle during the observed window; the UI remained busy and aggregate inspection still showed
+zero provider-mail records. The local development process was stopped without disconnecting the
+account or making another provider request. ADR-058 now adds a fixed whole-attempt deadline,
+cancellation through the same lifecycle owner, and startup recovery for only persisted
+interrupted `syncing` state.
 The product is a runnable Electron desktop prototype using React, strict TypeScript,
 and SQLite. The current installation is live-empty and shows no provider mail; deterministic
 sample data remains only in repository fixtures and sample-mode tests.
@@ -380,18 +385,21 @@ in durable live mode. Initial read-only sync stored no provider mail and recorde
 `PROVIDER_UNAVAILABLE`. Google and OpenID documentation establish that `id_token` may appear
 on refresh for an `openid` grant; Posita's previous parser rejected that optional field. The
 bounded accept-and-discard fix and ADR-057's policy-gated manual retry command are now fully
-verified. The next step is one controlled live click on **Retry Gmail sync**. Inspect only
-aggregate encrypted-local state afterward. If it succeeds, record counts/status without copying
-mail content. If it still fails, preserve the safe state and diagnose through typed boundaries;
-use the approved disconnect/reconnect fallback only when the result shows it is necessary.
+verified. The first controlled live click did not settle and stored no provider mail. A bounded
+whole-attempt and interrupted-status recovery fix is now implemented under ADR-058. The canonical
+verification gate passes, and Posita completed a provider-inert restart so any persisted `syncing`
+state could be recovered locally. Visual inspection was blocked only because the Mac was locked.
+The next step is to unlock the Mac and inspect the truthful UI state without contacting Gmail.
+Only after that check should the owner choose another explicit retry; use the approved
+disconnect/reconnect fallback only when a typed result shows it is necessary.
 
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,
 safe status, full-deletion startup recovery, read-only lifecycle UI, and explicitly
 confirmed local deletion are complete at their current layers. Continue in this order:
 
-1. Run the approved manual sync retry once through the visible account control; do not
-   use a diagnostic provider request or an automatic startup handoff.
+1. Unlock the Mac and visually confirm the provider-inert restarted account is no longer trapped
+   in a recorded in-progress state. A later live retry remains explicit.
 2. Treat the local recovery UI as complete at its current boundary. Do not add
    automatic startup repair; failed execution must continue to require fresh review.
 3. Treat automatic retention scheduling and its Settings status as complete at

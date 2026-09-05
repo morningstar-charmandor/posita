@@ -1,4 +1,5 @@
 import {
+  isProviderSyncStateV1,
   type AccountStateRepository,
   type ProviderSyncStateV1,
   type SyncFailureCode
@@ -34,7 +35,9 @@ const retryPolicy: Record<SyncFailureCode, ProviderMailSyncRetryDispositionV1> =
   SYNC_CHECKPOINT_CONFLICT: 'review-required',
   SYNC_STORAGE_FAILED: 'retry-allowed',
   SYNC_BATCH_LIMIT_REACHED: 'retry-allowed',
-  SYNC_CANCELLED: 'cancelled'
+  SYNC_CANCELLED: 'cancelled',
+  SYNC_ATTEMPT_TIMED_OUT: 'retry-allowed',
+  SYNC_INTERRUPTED: 'retry-allowed'
 }
 
 export const providerMailSyncRetryPolicy = (
@@ -89,6 +92,27 @@ export class ProviderMailSyncStatusService {
       ? this.save(request, { status: 'idle' })
       : this.save(request, { status: 'error', lastErrorCode: code })
     return { state, policy }
+  }
+
+  recoverInterrupted(request: unknown): ProviderSyncStateV1 | undefined {
+    if (!isSyncAccountRequestV1(request)) throw this.invalid()
+    try {
+      const current = this.accountState.loadSyncState(request.accountId)
+      if (current === undefined) return undefined
+      if (!isProviderSyncStateV1(current) ||
+          current.accountId !== request.accountId || current.provider !== request.provider) {
+        throw this.invalid()
+      }
+      if (current.status !== 'syncing') return current
+      return this.save(request, { status: 'error', lastErrorCode: 'SYNC_INTERRUPTED' })
+    } catch (error) {
+      if (error instanceof ProviderMailSyncStatusError) throw error
+      throw new ProviderMailSyncStatusError(
+        'Interrupted provider-mail synchronization state could not be recovered.',
+        true,
+        { cause: error }
+      )
+    }
   }
 
   private save(

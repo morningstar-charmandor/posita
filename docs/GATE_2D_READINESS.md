@@ -236,8 +236,10 @@ exact version-2 client ID and secret in an owner-readable application-data file,
 validation, and feeds only the inert graph. No downloaded credential bundle is retained.
 The owner later explicitly approved connecting the test account. Authorization completed,
 but initial read-only sync stored no mail. The owner then approved both a narrow manual
-retry and the existing confirmed disconnect/reconnect fallback. The retry implementation
-is verified but not yet live-executed; none of these approvals covers mailbox mutation.
+retry and the existing confirmed disconnect/reconnect fallback. The first live retry did
+not settle during observation and stored no provider mail. ADR-058 therefore bounds the
+complete attempt and recovers only interrupted durable sync status locally; another provider
+request remains explicit, and none of these approvals covers mailbox mutation.
 
 ## Original audit evidence
 

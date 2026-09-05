@@ -63,6 +63,13 @@ class FakeSync implements ProviderMailSyncLifecycle {
     return Promise.resolve(result(syncRequest.accountId))
   }
 
+  cancelAccount(accountId: string): boolean {
+    const active = this.blocked.get(accountId)
+    if (active === undefined) return false
+    active.reject(new MailSyncError('SYNC_CANCELLED', 'Test-only cancellation.', true))
+    return true
+  }
+
   async suspend(): Promise<void> {
     this.events.push('sync:suspend')
     const active = [...this.blocked.values()]
@@ -287,6 +294,34 @@ describe('ProviderMailLifecycleOwner', () => {
     expect(events.indexOf('retention:suspend')).toBeLessThan(events.indexOf('disconnect:work'))
     expect(events.slice(-2)).toEqual(['sync:resume', 'retention:resume'])
     expect(syncStatus.states.get('work')).toBe('idle')
+  })
+
+  it('cancels a bounded manual attempt and records a retryable timeout', async () => {
+    const { owner, sync, events, syncStatus } = harness('live')
+    await owner.start([])
+    events.length = 0
+    sync.behavior.set('work', 'blocked')
+    const controller = new AbortController()
+
+    const syncing = owner.syncAccounts([request('work')], controller.signal)
+    await flush()
+    controller.abort()
+
+    await expect(syncing).resolves.toEqual([{
+      version: 1,
+      accountId: 'work',
+      provider: 'google',
+      status: 'retry-required',
+      errorCode: 'SYNC_ATTEMPT_TIMED_OUT',
+      retryable: true
+    }])
+    expect(events).toEqual([
+      'retention:suspend',
+      'sync:start:work',
+      'sync:settled:work',
+      'retention:resume'
+    ])
+    expect(syncStatus.states.get('work')).toBe('error:SYNC_ATTEMPT_TIMED_OUT')
   })
 
   it('acts as the quiescence gate for separately confirmed full deletion', async () => {

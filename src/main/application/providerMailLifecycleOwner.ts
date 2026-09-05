@@ -20,6 +20,7 @@ const MAX_STARTUP_ACCOUNTS = 8
 
 export interface ProviderMailSyncLifecycle {
   syncAccount(request: SyncAccountRequestV1): Promise<SyncAccountResultV1>
+  cancelAccount(accountId: string): boolean
   suspend(): Promise<void>
   resume(): void
   shutdown(): Promise<void>
@@ -184,7 +185,10 @@ export class ProviderMailLifecycleOwner {
     })
   }
 
-  syncAccounts(accountsValue: unknown): Promise<ProviderMailLifecycleAccountOutcomeV1[]> {
+  syncAccounts(
+    accountsValue: unknown,
+    signal?: AbortSignal
+  ): Promise<ProviderMailLifecycleAccountOutcomeV1[]> {
     let accounts: SyncAccountRequestV1[]
     try {
       accounts = validateAccounts(accountsValue, false)
@@ -193,9 +197,11 @@ export class ProviderMailLifecycleOwner {
     }
     return this.enqueue(async () => {
       this.assertRunning()
+      if (signal?.aborted) return accounts.map((request) => this.timedOut(request))
       await this.retention.suspend()
       try {
-        return await this.runSyncBatch(accounts)
+        if (signal?.aborted) return accounts.map((request) => this.timedOut(request))
+        return await this.runSyncBatch(accounts, signal)
       } finally {
         if (this.state === 'running') this.retention.resume()
       }
@@ -312,17 +318,24 @@ export class ProviderMailLifecycleOwner {
   }
 
   private runSyncBatch(
-    accounts: readonly SyncAccountRequestV1[]
+    accounts: readonly SyncAccountRequestV1[],
+    signal?: AbortSignal
   ): Promise<ProviderMailLifecycleAccountOutcomeV1[]> {
-    return Promise.all(accounts.map((request) => this.runSync(request)))
+    return Promise.all(accounts.map((request) => this.runSync(request, signal)))
   }
 
   private async runSync(
-    request: SyncAccountRequestV1
+    request: SyncAccountRequestV1,
+    signal?: AbortSignal
   ): Promise<ProviderMailLifecycleAccountOutcomeV1> {
+    if (signal?.aborted) return this.timedOut(request)
+    const cancel = (): void => { this.sync.cancelAccount(request.accountId) }
+    signal?.addEventListener('abort', cancel, { once: true })
     try {
       this.syncStatus.recordStarted(request)
-      const result = await this.sync.syncAccount(request)
+      const syncPromise = this.sync.syncAccount(request)
+      if (signal?.aborted) cancel()
+      const result = await syncPromise
       this.syncStatus.recordSucceeded(request, result)
       return {
         version: 1,
@@ -332,7 +345,14 @@ export class ProviderMailLifecycleOwner {
         result
       }
     } catch (error) {
-      let failure = error instanceof MailSyncError
+      let failure = signal?.aborted
+        ? new MailSyncError(
+            'SYNC_ATTEMPT_TIMED_OUT',
+            'Provider-mail synchronization exceeded its bounded attempt window.',
+            true,
+            { cause: error }
+          )
+        : error instanceof MailSyncError
         ? error
         : new MailSyncError(
           'SYNC_STORAGE_FAILED',
@@ -358,6 +378,21 @@ export class ProviderMailLifecycleOwner {
         errorCode: failure.code,
         retryable: failure.retryable
       }
+    } finally {
+      signal?.removeEventListener('abort', cancel)
+    }
+  }
+
+  private timedOut(
+    request: SyncAccountRequestV1
+  ): ProviderMailLifecycleAccountOutcomeV1 {
+    return {
+      version: 1,
+      accountId: request.accountId,
+      provider: request.provider,
+      status: 'retry-required',
+      errorCode: 'SYNC_ATTEMPT_TIMED_OUT',
+      retryable: true
     }
   }
 
