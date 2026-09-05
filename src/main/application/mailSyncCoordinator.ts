@@ -19,6 +19,11 @@ import {
   type SyncAccountRequestV1,
   type SyncAccountResultV1
 } from './mailSync'
+import {
+  observeProviderMailSyncStage,
+  silentProviderMailSyncStageReporter,
+  type ProviderMailSyncStageReporter
+} from './providerMailSyncDiagnostics'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -107,7 +112,8 @@ export class MailSyncCoordinator {
     private readonly provider: ProviderMailAdapter,
     private readonly projection: MailSyncProjection,
     private readonly clock: { now(): Date },
-    maximumConcurrentAccounts = 2
+    maximumConcurrentAccounts = 2,
+    private readonly syncStages: ProviderMailSyncStageReporter = silentProviderMailSyncStageReporter
   ) {
     if (!Number.isSafeInteger(maximumConcurrentAccounts) ||
         maximumConcurrentAccounts < 1 || maximumConcurrentAccounts > 8) throw invalidRequest()
@@ -290,19 +296,24 @@ export class MailSyncCoordinator {
 
       let committed: CommitProviderMailBatchResultV1
       try {
-        committed = await this.projection.commitBatch({
-          version: 2,
-          accountId: request.accountId,
-          provider: request.provider,
-          ...(expectedCursor === undefined ? {} : { expectedCursor }),
-          nextCursor: unknownBatch.nextCursor,
-          reconciliation: mode === 'bounded-resync' ? 'bounded-resync' : 'incremental',
-          messages,
-          threads,
-          deletedProviderMessageIds: mode === 'bounded-resync'
-            ? []
-            : unknownBatch.deletedProviderMessageIds
-        })
+        committed = await observeProviderMailSyncStage(
+          this.syncStages,
+          request.accountId,
+          'projection-commit',
+          () => this.projection.commitBatch({
+            version: 2,
+            accountId: request.accountId,
+            provider: request.provider,
+            ...(expectedCursor === undefined ? {} : { expectedCursor }),
+            nextCursor: unknownBatch.nextCursor,
+            reconciliation: mode === 'bounded-resync' ? 'bounded-resync' : 'incremental',
+            messages,
+            threads,
+            deletedProviderMessageIds: mode === 'bounded-resync'
+              ? []
+              : unknownBatch.deletedProviderMessageIds
+          })
+        )
       } catch (error) {
         if (error instanceof MailSyncError) throw error
         throw this.storageFailure(error)

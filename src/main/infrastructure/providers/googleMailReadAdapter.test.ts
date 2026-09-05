@@ -12,6 +12,7 @@ import type { GoogleAccessTokenSource } from './googleOAuthAccessTokenSource'
 import { GoogleAccessTokenError } from './googleOAuthAccessTokenSource'
 import { MailSyncCoordinator } from '../../application/mailSyncCoordinator'
 import { DeterministicFakeMailSyncProjection } from './deterministicFakeMailSync'
+import type { ProviderMailSyncStageEventV1 } from '../../application/providerMailSyncDiagnostics'
 
 const body = (value: unknown): Response => new Response(JSON.stringify(value), { status: 200 })
 const tokenSource = (token: string | null = 'access-token'): GoogleAccessTokenSource => ({
@@ -122,6 +123,33 @@ describe('GoogleMailReadAdapter', () => {
         redirect: 'error'
       })
     }
+  })
+
+  it('reports only bounded Gmail read stages around one canonical batch', async () => {
+    const events: ProviderMailSyncStageEventV1[] = []
+    const adapter = new GoogleMailReadAdapter(
+      tokenSource(),
+      queuedFetch(
+        body({ historyId: '100' }),
+        body({ messages: [{ id: 'message-1' }] }),
+        body(message())
+      ),
+      20_000,
+      { report: (event) => events.push(event) }
+    )
+
+    await adapter.fetchBatch(request(), new AbortController().signal)
+
+    expect(events.map(({ stage, phase }) => `${stage}:${phase}`)).toEqual([
+      'gmail-profile:started',
+      'gmail-profile:completed',
+      'gmail-list:started',
+      'gmail-list:completed',
+      'gmail-message-batch:started',
+      'gmail-message-batch:completed'
+    ])
+    expect(JSON.stringify(events)).not.toContain('Deterministic subject')
+    expect(JSON.stringify(events)).not.toContain('Message body')
   })
 
   it('resumes full pagination without repeating the profile request', async () => {

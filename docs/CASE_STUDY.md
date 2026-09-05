@@ -584,3 +584,19 @@ an unlocked visual check confirmed the account was no longer presented as active
 Limitations: the exact internal cause of the stalled attempt is not yet proven. No provider mail,
 cursor, successful sync, AI provider, or mailbox mutation is claimed, and no second Gmail request
 was made during this recovery milestone.
+
+### Replacing guesses with bounded stage evidence
+
+After the third live attempt also exceeded ten minutes, the next step did not change provider behavior.
+Two provider-free checks ran the exact command inside Electron and through its validated IPC return
+path; both settled in under half a second with a deliberately non-settling fake. That ruled out the
+button, command timer, response validation, and desktop bridge in isolation.
+
+ADR-059 then added best-effort stage evidence to the existing trusted path. Output is structurally
+limited to a fixed stage, fixed phase, and opaque Posita account ID across protected credential read,
+token exchange, Gmail profile/list/message-batch read, and encrypted projection commit. Tests prove
+writer failure cannot affect sync and that tokens, message content, provider payloads, and raw errors
+cannot enter the output. No Gmail request was needed for this milestone; the remaining live fault is
+now narrowed to the real provider lifecycle rather than another assumed timer defect.
+The canonical gate passes 87 test files and 529 tests, strict typechecking, renderer security checks,
+localhost callback integration, and production builds.

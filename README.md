@@ -79,7 +79,10 @@ provider-inert inspection confirms the account recovered to attention-required w
 retry and is no longer displayed as actively syncing; that inspection contacted no provider. A
 third explicitly approved read-only attempt still remained busy beyond ten minutes and stored no
 provider mail. Stopping it and restarting provider-inert recovered the account again. Another
-provider request is blocked until the desktop-runtime deadline path is diagnosed locally.
+provider request remains explicit. Provider-inert Electron checks now prove the exact command deadline
+and IPC return path settle correctly, ruling out the button/bridge path. Production emits only fixed
+sync-stage names, phases, and opaque account IDs for credential read, token exchange, Gmail read, and
+encrypted commit; it never logs tokens, addresses, mail content, provider payloads, or raw errors.
 
 The trusted backend now defines a bounded provider-independent authorization
 session contract, deterministic fake, and real Google desktop protocol

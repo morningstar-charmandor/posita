@@ -2664,6 +2664,28 @@ the Electron path. The next milestone must distinguish a deadline callback that 
 a response path that does not settle after firing, using provider-inert runtime evidence before any
 additional Gmail request.
 
+### 2026-09-05 — Privacy-safe live-sync stage diagnostics
+
+- ran the exact retry command with a non-settling provider fake inside Electron; it returned the safe
+  timeout response in 255 ms,
+- exercised that same command through the validated Electron IPC path; the response returned in
+  454 ms,
+- ruled out the retry button contract, command timer, response validator, and desktop bridge in
+  isolation without credentials or network access,
+- added one best-effort reporter shared by the existing token source, Gmail reader, and coordinator,
+- limited output to fixed stages/phases and an opaque Posita account ID,
+- covered credential read, token request/response, Gmail profile/list/message-batch read, and encrypted
+  projection commit,
+- verified diagnostic-writer failure cannot alter provider behavior and raw thrown values are never
+  logged,
+- added no dependency, schema, public IPC, UI capability, provider request, retry, or mailbox mutation.
+
+The provider-free evidence narrows the unresolved fault to the real provider lifecycle path. It does
+not claim that token refresh, Gmail reading, encrypted commit, or the complete live sync succeeds.
+A fourth provider request remains a separate owner decision. Verification passes 87 test files and
+529 tests, strict TypeScript, renderer structure/security checks, localhost callback integration,
+and production Electron builds.
+
 ## How future entries should be written
 
 For each material milestone, record:

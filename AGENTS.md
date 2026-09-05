@@ -31,12 +31,16 @@ exists deeper in the tree.
   then exceeded the intended deadline and stored no provider mail. Runtime evidence showed
   that detaching the timer from Node liveness prevented the Electron main process from waking
   for the deadline. The timer is now referenced and has a regression test; canonical verification
-  passes with 523 tests. Another provider-inert recovery restart and unlocked visual inspection
+  passes with 529 tests. Another provider-inert recovery restart and unlocked visual inspection
   now confirm the account is attention-required with a fresh explicit retry, not trapped in
   `syncing`. A third explicitly approved read-only retry then remained busy beyond the corrected
   ten-minute deadline and stored zero provider mail, proving the referenced-timer correction is
   insufficient in the real Electron path. The attempt was stopped and a provider-inert restart
-  again recovered the account to attention-required. No fourth live request was made.
+  again recovered the account to attention-required. Exact provider-inert Electron checks now prove
+  the command deadline and IPC return path settle correctly. Production has bounded, privacy-safe
+  stage tracing across credential read, token exchange, Gmail profile/list/message read, and encrypted
+  projection commit so the next approved observation can isolate the real provider-stage stall. No
+  fourth live request was made.
 - Current data: the local installation is live-empty; deterministic fixtures remain
   repository/test assets but were atomically removed from the live installation.
 - Encrypted provider-account and sync-state storage contains one real connected account.

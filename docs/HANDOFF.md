@@ -405,16 +405,22 @@ control. Aggregate-only inspection found zero provider-mail records, one encrypt
 one encrypted sync-state record, and no unfinished lifecycle cleanup. A provider-inert restart then
 returned the UI to attention-required with an explicit retry. The referenced-timer correction is
 therefore insufficient in the real Electron path; no fourth provider request has been made.
+Provider-inert Electron checks then exercised the exact retry command with a non-settling fake and its
+validated IPC return path: they settled safely in 255 ms and 454 ms respectively. This rules out the
+deadline command and desktop bridge in isolation. ADR-059 now production-composes one best-effort,
+privacy-safe reporter over the remaining credential read, token request/response, Gmail profile/list/
+message-batch read, and encrypted projection commit stages. It logs only fixed stages/phases plus an
+opaque account ID; no token, address, mail, payload, cursor, URL, or raw error can enter it.
 
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,
 safe status, full-deletion startup recovery, read-only lifecycle UI, and explicitly
 confirmed local deletion are complete at their current layers. Continue in this order:
 
-1. Diagnose the desktop-runtime deadline path without Gmail. Establish whether the timeout callback
-   fails to fire or whether the command response fails to return after it fires, using bounded,
-   non-sensitive evidence in a real Electron main process. Do not issue a fourth live retry before
-   that cause is isolated, fixed, and canonically verified.
+1. ADR-059's provider-inert stage diagnostics are canonically verified. A fourth live read-only retry
+   remains a separate owner decision. If approved, observe the fixed stage stream,
+   stop at the bounded deadline, and use the last started/completed stage to isolate one cause before
+   changing provider behavior.
 2. Treat the local account-connection recovery UI as complete at its current boundary. Do not add
    automatic account-pair repair; failed execution must continue to require fresh review.
 3. Treat automatic retention scheduling and its Settings status as complete at
@@ -607,7 +613,7 @@ credential, personal data, provider request, or mailbox mutation was added.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 86 test files, 523 tests, strict typecheck, structure
+- Current verified baseline: 87 test files, 529 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,

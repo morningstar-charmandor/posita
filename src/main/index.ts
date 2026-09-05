@@ -23,6 +23,7 @@ import { GoogleAccountConnectionCommandService } from './application/googleAccou
 import { GoogleAccountDisconnectCommandService } from './application/googleAccountDisconnectCommand'
 import { GoogleAccountSyncRetryCommandService } from './application/googleAccountSyncRetryCommand'
 import { inspectAccountConnectionConsistency } from './application/accountConnection'
+import { SafeConsoleProviderMailSyncStageReporter } from './application/providerMailSyncDiagnostics'
 
 const isTrustedExternalUrl = (candidate: string): boolean => {
   try {
@@ -149,7 +150,8 @@ app.whenReady().then(async () => {
           storageSanitizer: runtime.storageSanitizer,
           retention: retentionMaintenance,
           syncStatus: runtime.providerMailSyncStatusService,
-          openExternal: (url, options) => shell.openExternal(url, options)
+          openExternal: (url, options) => shell.openExternal(url, options),
+          syncStages: new SafeConsoleProviderMailSyncStageReporter()
         })
         // Production ownership is now assembled, but provider I/O remains inert.
         // A later reviewed command may pass an explicit account; startup may not.

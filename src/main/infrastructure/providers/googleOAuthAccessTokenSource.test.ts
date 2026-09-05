@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { SecretVault } from '../../application/secretVault'
+import type { ProviderMailSyncStageEventV1 } from '../../application/providerMailSyncDiagnostics'
 import {
   GoogleOAuthAccessTokenSource,
   type GoogleAccessTokenFetch
@@ -61,6 +62,31 @@ describe('GoogleOAuthAccessTokenSource', () => {
     })
     expect(init.signal).toBeInstanceOf(AbortSignal)
     expect(secrets.get).toHaveBeenCalledOnce()
+  })
+
+  it('reports bounded refresh stages without provider payloads', async () => {
+    const events: ProviderMailSyncStageEventV1[] = []
+    const source = new GoogleOAuthAccessTokenSource(
+      vault('test-refresh-token'),
+      configuration,
+      async () => tokenResponse(),
+      { now: () => new Date('2026-09-05T12:00:00.000Z') },
+      15_000,
+      { report: (event) => events.push(event) }
+    )
+
+    await expect(source.getAccessToken('account-work-1', signal()))
+      .resolves.toBe('short-lived-access-token')
+    expect(events.map(({ stage, phase }) => `${stage}:${phase}`)).toEqual([
+      'credential-read:started',
+      'credential-read:completed',
+      'token-request:started',
+      'token-request:completed',
+      'token-response:started',
+      'token-response:completed'
+    ])
+    expect(JSON.stringify(events)).not.toContain('test-refresh-token')
+    expect(JSON.stringify(events)).not.toContain('short-lived-access-token')
   })
 
   it('accepts and discards the bounded OpenID ID token Google may return on refresh', async () => {

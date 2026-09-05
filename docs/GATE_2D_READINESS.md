@@ -250,6 +250,10 @@ control was invoked. A third explicitly approved read-only retry subsequently re
 the corrected ten-minute boundary and stored zero provider mail. Provider-inert restart recovered
 the account again. The next gate is local Electron-runtime deadline diagnosis; no fourth provider
 request is authorized.
+Provider-inert Electron checks now prove the exact deadline command and validated IPC response settle
+correctly. Bounded stage tracing is production-composed across the remaining credential, provider-read,
+and encrypted-commit path, with only fixed phases and opaque account IDs. The next approved observation
+can isolate the stalled stage without exposing mail or tokens; no fourth request is implied.
 
 ## Original audit evidence
 

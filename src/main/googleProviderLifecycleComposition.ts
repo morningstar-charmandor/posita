@@ -13,6 +13,10 @@ import {
   type ProviderMailSyncLifecycle
 } from './application/providerMailLifecycleOwner'
 import type { ProviderMailSyncStatusService } from './application/providerMailSyncStatus'
+import {
+  silentProviderMailSyncStageReporter,
+  type ProviderMailSyncStageReporter
+} from './application/providerMailSyncDiagnostics'
 import type { RetentionMaintenanceOwner } from './application/retentionMaintenanceOwner'
 import type { SecretVault } from './application/secretVault'
 import type { StorageSanitizer } from './application/storageSanitizer'
@@ -40,6 +44,7 @@ export interface GoogleProviderLifecycleCompositionDependencies {
   retention: RetentionMaintenanceOwner
   syncStatus: ProviderMailSyncStatusService
   openExternal: GoogleOAuthOpenExternal
+  syncStages?: ProviderMailSyncStageReporter
 }
 
 export interface GoogleProviderLifecycleComposition {
@@ -55,6 +60,7 @@ export interface GoogleProviderLifecycleComposition {
 export const composeGoogleProviderLifecycle = (
   dependencies: GoogleProviderLifecycleCompositionDependencies
 ): GoogleProviderLifecycleComposition => {
+  const syncStages = dependencies.syncStages ?? silentProviderMailSyncStageReporter
   const loopback = new GoogleOAuthLoopbackRedirectServer()
   const authorization = new GoogleDesktopAccountAuthorizationAdapter(
     dependencies.configuration.clientId,
@@ -77,12 +83,18 @@ export const composeGoogleProviderLifecycle = (
 
   const tokens = new GoogleOAuthAccessTokenSource(
     dependencies.secretVault,
-    dependencies.configuration
+    dependencies.configuration,
+    undefined,
+    undefined,
+    undefined,
+    syncStages
   )
   const coordinator = new MailSyncCoordinator(
-    new GoogleMailReadAdapter(tokens),
+    new GoogleMailReadAdapter(tokens, undefined, undefined, syncStages),
     dependencies.projection,
-    systemClock
+    systemClock,
+    undefined,
+    syncStages
   )
   const sync: ProviderMailSyncLifecycle = {
     syncAccount: (request) => coordinator.syncAccount(request),

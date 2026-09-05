@@ -200,6 +200,11 @@ A third owner-approved read-only attempt then remained busy beyond that correcte
 no provider mail. After the process was stopped, provider-inert restart recovered the interrupted
 state locally. A fourth provider request is blocked until an Electron-main, provider-inert diagnostic
 distinguishes timer firing from command-response settlement.
+That provider-inert diagnostic now proves the exact deadline command settles inside Electron and its
+validated IPC response returns to a renderer process. The remaining fault is therefore within the real
+provider lifecycle path. ADR-059 instruments only fixed privacy-safe stages around credential read,
+token request/response, Gmail profile/list/message-batch read, and encrypted projection commit. No
+provider data or raw error enters those logs; another live request remains explicit.
 
 The final activation audit requires provider reads and revocation to arrive as one
 reviewed lifecycle composition. A single existing projection worker must own reads,

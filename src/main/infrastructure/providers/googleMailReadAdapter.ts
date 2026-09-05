@@ -8,6 +8,11 @@ import {
   type ProviderMailBatchV2
 } from '../../application/mailSync'
 import { MAX_SECRET_LENGTH } from '../../application/secretVault'
+import {
+  observeProviderMailSyncStage,
+  silentProviderMailSyncStageReporter,
+  type ProviderMailSyncStageReporter
+} from '../../application/providerMailSyncDiagnostics'
 import type { ProviderMailThreadV1 } from '../../../shared/providerMail'
 import {
   googleExternalTextBodyIds,
@@ -167,7 +172,8 @@ export class GoogleMailReadAdapter implements ProviderMailAdapter {
   constructor(
     private readonly tokens: GoogleAccessTokenSource,
     private readonly fetchRequest: GoogleMailFetch = (url, init) => fetch(url, init),
-    private readonly timeoutMs = DEFAULT_TIMEOUT_MS
+    private readonly timeoutMs = DEFAULT_TIMEOUT_MS,
+    private readonly syncStages: ProviderMailSyncStageReporter = silentProviderMailSyncStageReporter
   ) {
     if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1_000 || timeoutMs > 60_000) {
       throw failure('MALFORMED_PAYLOAD', false)
@@ -212,8 +218,12 @@ export class GoogleMailReadAdapter implements ProviderMailAdapter {
     if (receivedAfter === undefined) throw failure('INVALID_CURSOR', true)
     let historyId = cursor?.historyId
     if (historyId === undefined) {
-      const profile = await this.getJson('/gmail/v1/users/me/profile', token, signal,
-        MAX_LIST_RESPONSE_BYTES)
+      const profile = await observeProviderMailSyncStage(
+        this.syncStages,
+        request.accountId,
+        'gmail-profile',
+        () => this.getJson('/gmail/v1/users/me/profile', token, signal, MAX_LIST_RESPONSE_BYTES)
+      )
       historyId = isRecord(profile) && safeString(profile.historyId) && /^\d+$/.test(profile.historyId)
         ? profile.historyId
         : undefined
@@ -225,8 +235,17 @@ export class GoogleMailReadAdapter implements ProviderMailAdapter {
       includeSpamTrash: 'false',
       ...(cursor === undefined ? {} : { pageToken: cursor.pageToken })
     })
-    const listed = await this.getJson(`/gmail/v1/users/me/messages?${query}`, token, signal,
-      MAX_LIST_RESPONSE_BYTES)
+    const listed = await observeProviderMailSyncStage(
+      this.syncStages,
+      request.accountId,
+      'gmail-list',
+      () => this.getJson(
+        `/gmail/v1/users/me/messages?${query}`,
+        token,
+        signal,
+        MAX_LIST_RESPONSE_BYTES
+      )
+    )
     if (!isRecord(listed) || (listed.messages !== undefined && !Array.isArray(listed.messages)) ||
         (listed.nextPageToken !== undefined && !safeString(listed.nextPageToken))) {
       throw failure('MALFORMED_PAYLOAD', false)
@@ -237,11 +256,11 @@ export class GoogleMailReadAdapter implements ProviderMailAdapter {
         new Set(ids).size !== ids.length) {
       throw failure('MALFORMED_PAYLOAD', false)
     }
-    const { loaded: normalized, missing } = await this.loadMessagesAllowMissing(
-      ids as string[],
+    const { loaded: normalized, missing } = await observeProviderMailSyncStage(
+      this.syncStages,
       request.accountId,
-      token,
-      signal
+      'gmail-message-batch',
+      () => this.loadMessagesAllowMissing(ids as string[], request.accountId, token, signal)
     )
     const nextCursor = listed.nextPageToken === undefined
       ? encodeCursor({ version: 1, mode: 'history', historyId })
@@ -266,8 +285,18 @@ export class GoogleMailReadAdapter implements ProviderMailAdapter {
       maxResults: String(SYNC_BATCH_SIZE),
       ...(cursor.pageToken === undefined ? {} : { pageToken: cursor.pageToken })
     })
-    const history = await this.getJson(`/gmail/v1/users/me/history?${query}`, token, signal,
-      MAX_LIST_RESPONSE_BYTES, 'invalid-cursor')
+    const history = await observeProviderMailSyncStage(
+      this.syncStages,
+      request.accountId,
+      'gmail-list',
+      () => this.getJson(
+        `/gmail/v1/users/me/history?${query}`,
+        token,
+        signal,
+        MAX_LIST_RESPONSE_BYTES,
+        'invalid-cursor'
+      )
+    )
     if (!isRecord(history) || !safeString(history.historyId) || !/^\d+$/.test(history.historyId) ||
         (history.history !== undefined && !Array.isArray(history.history)) ||
         (history.nextPageToken !== undefined && !safeString(history.nextPageToken))) {
@@ -298,11 +327,11 @@ export class GoogleMailReadAdapter implements ProviderMailAdapter {
     const selected = changes.slice(offset, offset + SYNC_BATCH_SIZE)
     const loadIds = selected.flatMap(([id, state]) => state === 'load' ? [id] : [])
     const deleted = selected.flatMap(([id, state]) => state === 'delete' ? [id] : [])
-    const { loaded, missing } = await this.loadMessagesAllowMissing(
-      loadIds,
+    const { loaded, missing } = await observeProviderMailSyncStage(
+      this.syncStages,
       request.accountId,
-      token,
-      signal
+      'gmail-message-batch',
+      () => this.loadMessagesAllowMissing(loadIds, request.accountId, token, signal)
     )
     const nextOffset = offset + selected.length
     const hasMoreInPage = nextOffset < changes.length

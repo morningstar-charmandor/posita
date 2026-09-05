@@ -125,6 +125,27 @@ describe('MailSyncCoordinator', () => {
     })
   })
 
+  it('reports only the bounded projection commit stage', async () => {
+    const events: string[] = []
+    const coordinator = new MailSyncCoordinator(
+      new DeterministicFakeMailProviderAdapter([{
+        accountId: 'account-work-1',
+        batch: batch()
+      }]),
+      new DeterministicFakeMailSyncProjection(),
+      clock,
+      2,
+      { report: ({ stage, phase }) => events.push(`${stage}:${phase}`) }
+    )
+
+    await coordinator.syncAccount(request())
+
+    expect(events).toEqual([
+      'projection-commit:started',
+      'projection-commit:completed'
+    ])
+  })
+
   it('shares one in-flight account sync and keeps different account scopes separate', async () => {
     const provider = new DeterministicFakeMailProviderAdapter([
       { accountId: 'account-work-1', batch: batch('account-work-1', 'work') },

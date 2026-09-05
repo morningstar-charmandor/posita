@@ -1193,7 +1193,7 @@
   `syncing` state to a typed retryable interruption. Do not start sync, contact Google, alter
   connection state, or discard a cursor during that recovery.
 - Consequence: a user-requested read can no longer hold the UI indefinitely, and a process
-  interruption cannot permanently make the connected account unretryable. Existing successful,
+  interruption is locally recoverable on restart. Existing successful,
   error, idle, disabled, absent, and one-sided states are unchanged. No dependency, migration,
   automatic provider request, new lifecycle owner, credential exposure, or mailbox mutation is
   introduced. Another live retry remains a separate explicit action after verification.
@@ -1204,3 +1204,27 @@ the desktop process remained open. The attempt exceeded ten minutes, stayed visi
 stored zero provider-mail records. The timer must therefore remain referenced until it fires or
 the lifecycle settles; normal completion still clears it immediately. A regression test inspects
 the real Node timer handle's liveness instead of relying only on ordinary fake-timer behavior.
+
+The third approved live retry showed that the referenced timer alone is not sufficient in the real
+provider path: the UI remained busy beyond ten minutes and stored no mail. Provider-inert Electron
+checks prove that both the exact command deadline and its IPC response settle when provider work is
+non-cooperative but does not block the desktop runtime. ADR-059 adds the missing stage evidence.
+
+## ADR-059: Trace only bounded privacy-safe sync stages before another live diagnosis
+
+- Status: accepted for Gate 2D live-sync diagnosis
+- Context: three approved read-only sync observations stored no provider mail. The third exceeded
+  the corrected whole-attempt deadline, while provider-inert Electron checks proved the same command
+  and IPC return path settle correctly. Existing safe status intentionally collapses provider detail,
+  so it cannot distinguish protected credential access, token exchange, Gmail reads, or projection
+  commit without another assumption.
+- Decision: use one injected, best-effort diagnostic reporter across the existing access-token source,
+  Gmail adapter, and sync coordinator. It may emit only version, opaque Posita account ID, a fixed
+  stage name, and `started`, `completed`, or `failed`. The fixed stages are credential read, token
+  request/response, Gmail profile/list/message-batch read, and encrypted projection commit. Never log
+  tokens, addresses, message data, provider payloads, URLs, cursors, raw errors, or timing-derived
+  private information. Reporter failure must never change provider behavior. Startup remains inert.
+- Consequence: the last completed or started stage can isolate a future live stall without weakening
+  the renderer, credential, or encrypted-cache boundaries. The reporter adds no dependency, schema,
+  public IPC, UI capability, provider request, automatic retry, compatibility path, or mailbox
+  mutation. A fourth live request remains a separate owner decision.

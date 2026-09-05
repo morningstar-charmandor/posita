@@ -6,6 +6,11 @@ import {
   type SecretVault
 } from '../../application/secretVault'
 import {
+  observeProviderMailSyncStage,
+  silentProviderMailSyncStageReporter,
+  type ProviderMailSyncStageReporter
+} from '../../application/providerMailSyncDiagnostics'
+import {
   GOOGLE_OAUTH_CLIENT_ID_PATTERN,
   GOOGLE_OAUTH_CLIENT_SECRET_PATTERN
 } from './googleOAuthProtocol'
@@ -225,7 +230,8 @@ export class GoogleOAuthAccessTokenSource implements GoogleAccessTokenSource {
     private readonly configuration: GoogleOAuthClientConfiguration,
     private readonly fetchRequest: GoogleAccessTokenFetch = (url, init) => fetch(url, init),
     private readonly clock: GoogleAccessTokenClock = { now: () => new Date() },
-    private readonly timeoutMs = DEFAULT_TIMEOUT_MS
+    private readonly timeoutMs = DEFAULT_TIMEOUT_MS,
+    private readonly syncStages: ProviderMailSyncStageReporter = silentProviderMailSyncStageReporter
   ) {
     if (!GOOGLE_OAUTH_CLIENT_ID_PATTERN.test(configuration.clientId) ||
         !GOOGLE_OAUTH_CLIENT_SECRET_PATTERN.test(configuration.clientSecret) ||
@@ -312,7 +318,12 @@ export class GoogleOAuthAccessTokenSource implements GoogleAccessTokenSource {
   private async refresh(accountId: string, signal: AbortSignal): Promise<string | undefined> {
     let refreshToken: string | undefined
     try {
-      refreshToken = await this.vault.get(googleRefreshTokenName(accountId))
+      refreshToken = await observeProviderMailSyncStage(
+        this.syncStages,
+        accountId,
+        'credential-read',
+        () => this.vault.get(googleRefreshTokenName(accountId))
+      )
     } catch (error) {
       throw storageFailure(error)
     }
@@ -325,21 +336,26 @@ export class GoogleOAuthAccessTokenSource implements GoogleAccessTokenSource {
     if (!Number.isFinite(issuedAtMs)) throw invalidRequest()
     let response: GoogleAccessTokenHttpResponse
     try {
-      response = await this.fetchRequest(GOOGLE_TOKEN_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/x-www-form-urlencoded',
-          accept: 'application/json'
-        },
-        body: new URLSearchParams({
-          client_id: this.configuration.clientId,
-          client_secret: this.configuration.clientSecret,
-          refresh_token: refreshToken,
-          grant_type: 'refresh_token'
-        }).toString(),
-        redirect: 'error',
-        signal: AbortSignal.any([signal, AbortSignal.timeout(this.timeoutMs)])
-      })
+      response = await observeProviderMailSyncStage(
+        this.syncStages,
+        accountId,
+        'token-request',
+        () => this.fetchRequest(GOOGLE_TOKEN_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/x-www-form-urlencoded',
+            accept: 'application/json'
+          },
+          body: new URLSearchParams({
+            client_id: this.configuration.clientId,
+            client_secret: this.configuration.clientSecret,
+            refresh_token: refreshToken,
+            grant_type: 'refresh_token'
+          }).toString(),
+          redirect: 'error',
+          signal: AbortSignal.any([signal, AbortSignal.timeout(this.timeoutMs)])
+        })
+      )
     } catch (error) {
       if (signal.aborted) throw abortError()
       if (error instanceof GoogleAccessTokenError) throw error
@@ -349,7 +365,12 @@ export class GoogleOAuthAccessTokenSource implements GoogleAccessTokenSource {
       try { await response.body?.cancel() } catch { /* Preserve safe classification. */ }
       throw invalidResponse()
     }
-    const text = await readBoundedBody(response.body)
+    const text = await observeProviderMailSyncStage(
+      this.syncStages,
+      accountId,
+      'token-response',
+      () => readBoundedBody(response.body)
+    )
     if (response.status !== 200) {
       if (response.status === 400) {
         const payload = text.length === 0 ? undefined : parseJson(text)

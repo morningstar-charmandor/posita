@@ -424,6 +424,12 @@ or error detail crosses IPC.
 Sync operations remain idempotent, transactional at a batch boundary, resumable,
 quota-aware, and isolated per account.
 
+ADR-059 adds one best-effort trusted-main diagnostic reporter to this existing path. Production may
+emit only an opaque Posita account ID, one fixed stage, and a fixed started/completed/failed phase for
+credential read, token exchange, Gmail profile/list/message-batch read, and projection commit. It has
+no renderer or IPC surface and receives no token, address, message, cursor, provider payload, URL, or
+raw error. Reporter failure is swallowed so observability cannot change sync behavior.
+
 One application-owned sync coordinator is the only component permitted to call
 provider adapters. Provider mail is the remote source of truth; the encrypted
 cache is a projection, while user corrections, derived artifacts, drafts, and
