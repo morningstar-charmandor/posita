@@ -244,7 +244,9 @@ restart and visual inspection confirm the account is no longer trapped in progre
 as attention-required with a fresh retry control.
 The second approved retry exceeded that intended deadline with zero stored mail because the Node
 timer was unreferenced inside Electron. The corrected timer remains referenced and is covered by
-a timer-liveness regression test; another live request remains a separate decision.
+a timer-liveness regression test. A subsequent unlocked provider-inert inspection confirms the
+account recovered to attention-required with an explicit retry and is not stuck in progress; no
+control was invoked. Another live request remains a separate decision.
 
 ## Original audit evidence
 

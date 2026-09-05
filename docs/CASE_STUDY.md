@@ -49,6 +49,10 @@ deadline after the Node timer was detached with `unref()`. The UI remained busy 
 and the encrypted projection still contained zero mail. The correction keeps the deadline timer
 referenced and clears it on normal completion; a regression test checks the actual Node timer
 handle's liveness. No third provider request, reconnect, AI call, or mailbox mutation followed.
+After a provider-inert restart, an unlocked accessibility-tree inspection confirmed that the
+recovered account again presents as attention-required with an explicit retry, rather than as an
+active sync. The inspection invoked no control. This verifies truthful recovery presentation while
+keeping the corrected deadline's live firing as a separate, explicitly approved evidence step.
 
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
 

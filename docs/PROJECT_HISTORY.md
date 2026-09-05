@@ -2642,7 +2642,11 @@ Second live execution evidence:
 This corrects the implementation of ADR-058 without changing its scope, timeout duration,
 provider ownership, persistence model, dependency set, or public IPC contract. Canonical
 verification passes with 86 test files and 523 tests. A provider-inert restart completed to
-recover the interrupted state; visual inspection was blocked because the Mac locked again.
+recover the interrupted state; visual inspection was initially blocked because the Mac locked again.
+After unlock, an accessibility-tree inspection confirmed the account is attention-required with an
+explicit retry available and is no longer displayed as actively syncing. The inspection invoked no
+control and made no third Gmail request. This closes the recovery-presentation evidence gap; it does
+not prove that the corrected deadline fires during a live Electron provider attempt.
 
 ## How future entries should be written
 

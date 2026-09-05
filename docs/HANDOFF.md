@@ -396,16 +396,18 @@ It exceeded the intended ten-minute deadline, remained visibly busy, and stored 
 records. Process evidence isolated an Electron/Node timer-liveness defect: the deadline timer had
 been detached with `unref()`. The implementation now keeps that timer referenced and clears it on
 normal settlement, with a regression test over the real timer handle. The attempt was stopped;
-no disconnect, reconnect, third retry, AI call, or mailbox mutation occurred.
+no disconnect, reconnect, third retry, AI call, or mailbox mutation occurred. A subsequent unlocked,
+provider-inert inspection confirms the recovered account is attention-required with an explicit
+retry available and is not displayed as `Syncing`. No control was invoked during that inspection.
 
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,
 safe status, full-deletion startup recovery, read-only lifecycle UI, and explicitly
 confirmed local deletion are complete at their current layers. Continue in this order:
 
-1. Canonical verification and the provider-inert restart now pass. Unlock the Mac and visually
-   confirm attention-required state; the first inspection attempt was blocked by the lock. Do not
-   issue a third live retry without a new explicit owner decision.
+1. Canonical verification, provider-inert restart, and unlocked visual confirmation now pass. The
+   account is attention-required with an explicit retry and is not trapped in progress. Do not issue
+   a third live retry without a new explicit owner decision.
 2. Treat the local account-connection recovery UI as complete at its current boundary. Do not add
    automatic account-pair repair; failed execution must continue to require fresh review.
 3. Treat automatic retention scheduling and its Settings status as complete at

@@ -193,6 +193,9 @@ attention-required presentation with an explicit retry; inspection itself perfor
 Live evidence from the next approved attempt established that this main-process deadline timer
 must remain referenced under Electron. Normal lifecycle settlement clears it; detaching it with
 `unref()` can leave the renderer busy beyond the intended boundary.
+An unlocked provider-inert restart inspection after that correction confirms the durable interrupted
+state again resolves to the attention-required presentation with an explicit retry. The inspection
+does not contact Gmail and does not establish that the corrected deadline has fired in a live attempt.
 
 The final activation audit requires provider reads and revocation to arrive as one
 reviewed lifecycle composition. A single existing projection worker must own reads,
