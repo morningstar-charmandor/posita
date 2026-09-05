@@ -246,7 +246,10 @@ The second approved retry exceeded that intended deadline with zero stored mail 
 timer was unreferenced inside Electron. The corrected timer remains referenced and is covered by
 a timer-liveness regression test. A subsequent unlocked provider-inert inspection confirms the
 account recovered to attention-required with an explicit retry and is not stuck in progress; no
-control was invoked. Another live request remains a separate decision.
+control was invoked. A third explicitly approved read-only retry subsequently remained busy beyond
+the corrected ten-minute boundary and stored zero provider mail. Provider-inert restart recovered
+the account again. The next gate is local Electron-runtime deadline diagnosis; no fourth provider
+request is authorized.
 
 ## Original audit evidence
 

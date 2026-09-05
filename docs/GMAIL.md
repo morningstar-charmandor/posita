@@ -196,6 +196,10 @@ must remain referenced under Electron. Normal lifecycle settlement clears it; de
 An unlocked provider-inert restart inspection after that correction confirms the durable interrupted
 state again resolves to the attention-required presentation with an explicit retry. The inspection
 does not contact Gmail and does not establish that the corrected deadline has fired in a live attempt.
+A third owner-approved read-only attempt then remained busy beyond that corrected deadline and stored
+no provider mail. After the process was stopped, provider-inert restart recovered the interrupted
+state locally. A fourth provider request is blocked until an Electron-main, provider-inert diagnostic
+distinguishes timer firing from command-response settlement.
 
 The final activation audit requires provider reads and revocation to arrive as one
 reviewed lifecycle composition. A single existing projection worker must own reads,

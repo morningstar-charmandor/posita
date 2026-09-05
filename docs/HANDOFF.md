@@ -399,15 +399,22 @@ normal settlement, with a regression test over the real timer handle. The attemp
 no disconnect, reconnect, third retry, AI call, or mailbox mutation occurred. A subsequent unlocked,
 provider-inert inspection confirms the recovered account is attention-required with an explicit
 retry available and is not displayed as `Syncing`. No control was invoked during that inspection.
+A third explicitly approved read-only retry started exactly once, disabled duplicate input, and
+remained visibly busy beyond the corrected ten-minute deadline. It was stopped without any other
+control. Aggregate-only inspection found zero provider-mail records, one encrypted account record,
+one encrypted sync-state record, and no unfinished lifecycle cleanup. A provider-inert restart then
+returned the UI to attention-required with an explicit retry. The referenced-timer correction is
+therefore insufficient in the real Electron path; no fourth provider request has been made.
 
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,
 safe status, full-deletion startup recovery, read-only lifecycle UI, and explicitly
 confirmed local deletion are complete at their current layers. Continue in this order:
 
-1. Canonical verification, provider-inert restart, and unlocked visual confirmation now pass. The
-   account is attention-required with an explicit retry and is not trapped in progress. Do not issue
-   a third live retry without a new explicit owner decision.
+1. Diagnose the desktop-runtime deadline path without Gmail. Establish whether the timeout callback
+   fails to fire or whether the command response fails to return after it fires, using bounded,
+   non-sensitive evidence in a real Electron main process. Do not issue a fourth live retry before
+   that cause is isolated, fixed, and canonically verified.
 2. Treat the local account-connection recovery UI as complete at its current boundary. Do not add
    automatic account-pair repair; failed execution must continue to require fresh review.
 3. Treat automatic retention scheduling and its Settings status as complete at
@@ -425,7 +432,8 @@ confirmed local deletion are complete at their current layers. Continue in this 
 5. Treat the approved Google authorization, loopback/browser infrastructure,
    reader, revoker, access-token source, strict local client-credential source, and
    zero-account startup lifecycle graph as complete. Connection, retry, and confirmed
-   disconnect UI/IPC boundaries are verified; only retry still needs live evidence.
+   disconnect UI/IPC boundaries are verified; retry now has three failed live observations,
+   and the Electron deadline/response path requires provider-inert diagnosis.
 6. Keep all provider work explicit. If retry fails, inspect safe status before deciding
    whether the approved typed-confirmation disconnect/reconnect fallback is warranted.
 
@@ -599,7 +607,7 @@ credential, personal data, provider request, or mailbox mutation was added.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 86 test files, 518 tests, strict typecheck, structure
+- Current verified baseline: 86 test files, 523 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,

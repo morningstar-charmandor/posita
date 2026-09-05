@@ -2648,6 +2648,22 @@ explicit retry available and is no longer displayed as actively syncing. The ins
 control and made no third Gmail request. This closes the recovery-presentation evidence gap; it does
 not prove that the corrected deadline fires during a live Electron provider attempt.
 
+Third live execution evidence:
+
+- the owner explicitly approved one read-only retry and it was invoked exactly once,
+- duplicate input remained disabled and no other UI control was invoked,
+- the attempt remained visibly busy beyond the corrected ten-minute deadline,
+- aggregate-only storage inspection found zero provider-mail records and no unfinished cleanup,
+- the protected connection pair remained present,
+- stopping the development process and restarting provider-inert recovered the account to the
+  attention-required presentation with an explicit retry,
+- no fourth provider request, reconnect, disconnect, AI call, or mailbox mutation occurred.
+
+The live result disproves the assumption that keeping the Node timer referenced was sufficient in
+the Electron path. The next milestone must distinguish a deadline callback that does not fire from
+a response path that does not settle after firing, using provider-inert runtime evidence before any
+additional Gmail request.
+
 ## How future entries should be written
 
 For each material milestone, record:

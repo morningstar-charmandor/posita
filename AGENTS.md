@@ -33,7 +33,10 @@ exists deeper in the tree.
   for the deadline. The timer is now referenced and has a regression test; canonical verification
   passes with 523 tests. Another provider-inert recovery restart and unlocked visual inspection
   now confirm the account is attention-required with a fresh explicit retry, not trapped in
-  `syncing`. No control was invoked during inspection and no third live request was made.
+  `syncing`. A third explicitly approved read-only retry then remained busy beyond the corrected
+  ten-minute deadline and stored zero provider mail, proving the referenced-timer correction is
+  insufficient in the real Electron path. The attempt was stopped and a provider-inert restart
+  again recovered the account to attention-required. No fourth live request was made.
 - Current data: the local installation is live-empty; deterministic fixtures remain
   repository/test assets but were atomically removed from the live installation.
 - Encrypted provider-account and sync-state storage contains one real connected account.

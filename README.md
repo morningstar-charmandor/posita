@@ -76,7 +76,10 @@ retry instead of remaining stuck in progress. A second controlled attempt expose
 unreferenced Node timer does not reliably wake Electron main for the whole-attempt deadline;
 the timer now remains referenced until it fires or normal settlement clears it. A later unlocked,
 provider-inert inspection confirms the account recovered to attention-required with an explicit
-retry and is no longer displayed as actively syncing; that inspection contacted no provider.
+retry and is no longer displayed as actively syncing; that inspection contacted no provider. A
+third explicitly approved read-only attempt still remained busy beyond ten minutes and stored no
+provider mail. Stopping it and restarting provider-inert recovered the account again. Another
+provider request is blocked until the desktop-runtime deadline path is diagnosed locally.
 
 The trusted backend now defines a bounded provider-independent authorization
 session contract, deterministic fake, and real Google desktop protocol

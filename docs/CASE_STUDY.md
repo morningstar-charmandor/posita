@@ -54,6 +54,12 @@ recovered account again presents as attention-required with an explicit retry, r
 active sync. The inspection invoked no control. This verifies truthful recovery presentation while
 keeping the corrected deadline's live firing as a separate, explicitly approved evidence step.
 
+That evidence step did not validate the correction: a third explicitly approved read-only attempt
+remained busy beyond ten minutes and stored zero provider mail. Posita was stopped without another
+control and recovered locally on a provider-inert restart. The result narrows the next engineering
+question to whether the desktop deadline callback fails to fire or its completed response fails to
+return. It is documented as a failed live check, not Gmail ingestion progress.
+
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
 
 **Collaboration:** the product direction and decisions are developed with the
