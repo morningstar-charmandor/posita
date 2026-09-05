@@ -27,7 +27,12 @@ exists deeper in the tree.
   existing lifecycle owner, and locally recovers only persisted interrupted `syncing`
   state on restart. Canonical verification, a provider-inert runtime restart, and visual
   UI confirmation now pass: the connected account is truthfully attention-required with
-  a fresh explicit retry, not trapped in `syncing`. Another live request has not been made.
+  a fresh explicit retry, not trapped in `syncing`. A second explicitly approved live retry
+  then exceeded the intended deadline and stored no provider mail. Runtime evidence showed
+  that detaching the timer from Node liveness prevented the Electron main process from waking
+  for the deadline. The timer is now referenced and has a regression test; canonical verification
+  passes with 523 tests and another provider-inert recovery restart completed. Visual confirmation
+  is pending because the Mac locked again. No third live request was made.
 - Current data: the local installation is live-empty; deterministic fixtures remain
   repository/test assets but were atomically removed from the live installation.
 - Encrypted provider-account and sync-state storage contains one real connected account.

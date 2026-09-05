@@ -43,6 +43,13 @@ An unlocked provider-inert inspection subsequently confirmed that the connected 
 to the attention-required state with a fresh explicit retry rather than remaining stuck in progress.
 No control was invoked during that inspection.
 
+A second explicitly approved retry then supplied a sharper desktop-runtime lesson: Posita's
+ordinary tests proved that the timeout callback was scheduled, but Electron did not wake for the
+deadline after the Node timer was detached with `unref()`. The UI remained busy beyond ten minutes
+and the encrypted projection still contained zero mail. The correction keeps the deadline timer
+referenced and clears it on normal completion; a regression test checks the actual Node timer
+handle's liveness. No third provider request, reconnect, AI call, or mailbox mutation followed.
+
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
 
 **Collaboration:** the product direction and decisions are developed with the
@@ -558,7 +565,7 @@ through the existing lifecycle owner, and keeps duplicate retries excluded until
 settles. A restart can now distinguish a persisted in-progress marker from real active work and
 convert only that marker into an explicit retryable interruption while preserving any cursor.
 
-Evidence: `npm run verify` passes 86 test files and 522 tests, strict typechecking, renderer
+Evidence: `npm run verify` passes 86 test files and 523 tests, strict typechecking, renderer
 security/structure checks, localhost callback integration, and production builds. The tests cover
 normal completion, whole-attempt timeout, coordinator cancellation, overlap during cleanup,
 durable timeout status, and startup recovery. A provider-inert runtime restart also completed;

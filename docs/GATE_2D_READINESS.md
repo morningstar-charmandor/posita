@@ -242,6 +242,9 @@ complete attempt and recovers only interrupted durable sync status locally; anot
 request remains explicit, and none of these approvals covers mailbox mutation. Provider-inert
 restart and visual inspection confirm the account is no longer trapped in progress and is shown
 as attention-required with a fresh retry control.
+The second approved retry exceeded that intended deadline with zero stored mail because the Node
+timer was unreferenced inside Electron. The corrected timer remains referenced and is covered by
+a timer-liveness regression test; another live request remains a separate decision.
 
 ## Original audit evidence
 

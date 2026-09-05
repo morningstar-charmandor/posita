@@ -176,6 +176,34 @@ describe('GoogleAccountSyncRetryCommandService', () => {
     await expect(service.execute(request)).resolves.toMatchObject({ ok: true })
   })
 
+  it('keeps the whole-attempt deadline referenced by the Electron main event loop', async () => {
+    const timerSpy = vi.spyOn(globalThis, 'setTimeout')
+    let timerWasReferenced = false
+    const service = new GoogleAccountSyncRetryCommandService(
+      connection(),
+      { loadSyncState: () => syncState() },
+      {
+        syncAccounts: async () => {
+          const handle: unknown = timerSpy.mock.results.at(-1)?.value
+          if (typeof handle === 'object' && handle !== null && 'hasRef' in handle) {
+            const hasRef = (handle as { hasRef?: unknown }).hasRef
+            if (typeof hasRef === 'function') {
+              timerWasReferenced = hasRef.call(handle) === true
+            }
+          }
+          return [synced()]
+        }
+      }
+    )
+
+    try {
+      await expect(service.execute(request)).resolves.toMatchObject({ ok: true })
+      expect(timerWasReferenced).toBe(true)
+    } finally {
+      timerSpy.mockRestore()
+    }
+  })
+
   it('returns only bounded safe failures from lifecycle and unexpected errors', async () => {
     const retryableFailure = new GoogleAccountSyncRetryCommandService(
       connection(),

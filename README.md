@@ -72,7 +72,9 @@ command's first live execution did not settle during observation and still store
 ADR-058 bounds the complete attempt, cancels through the same owner, and recovers only an
 interrupted durable in-progress marker locally on restart. Provider-inert restart and UI
 inspection confirm the account returns to a truthful attention-required state with an explicit
-retry instead of remaining stuck in progress.
+retry instead of remaining stuck in progress. A second controlled attempt exposed that an
+unreferenced Node timer does not reliably wake Electron main for the whole-attempt deadline;
+the timer now remains referenced until it fires or normal settlement clears it.
 
 The trusted backend now defines a bounded provider-independent authorization
 session contract, deterministic fake, and real Google desktop protocol

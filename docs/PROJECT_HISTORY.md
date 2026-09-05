@@ -2616,7 +2616,7 @@ Delivered:
 - added no dependency, database migration, automatic sync, new lifecycle owner, provider scope,
   credential surface, or mailbox mutation.
 
-Verification: `npm run verify` passes 86 test files and 522 tests, strict TypeScript,
+Verification: `npm run verify` passes 86 test files and 523 tests, strict TypeScript,
 renderer structure/security checks, localhost callback integration, and production builds.
 A provider-inert runtime restart completed without starting Gmail; its initial visual inspection
 was blocked because the Mac was locked. A later unlocked inspection verified the connected account
@@ -2627,6 +2627,22 @@ Limitations: the observation proves an unbounded whole-attempt failure mode, not
 internal cause. No successful sync, cursor, or provider mail is claimed. A later live retry
 requires another explicit owner action after the local recovery checkpoint is verified.
 The recovery checkpoint itself is now locally and visually verified.
+
+Second live execution evidence:
+
+- the owner explicitly approved one more controlled read-only retry,
+- the UI correctly excluded duplicate input but remained busy beyond the intended ten-minute limit,
+- aggregate inspection still showed zero canonical provider-mail records,
+- process timing proved the Electron app had exceeded the deadline,
+- code inspection isolated the defect to `unref()` on the whole-attempt Node timer,
+- the local attempt was stopped without disconnect, reconnect, third retry, AI call, or mailbox mutation,
+- the deadline now stays referenced until firing or normal lifecycle settlement clears it,
+- a regression test verifies the actual Node timer handle remains referenced in the command path.
+
+This corrects the implementation of ADR-058 without changing its scope, timeout duration,
+provider ownership, persistence model, dependency set, or public IPC contract. Canonical
+verification passes with 86 test files and 523 tests. A provider-inert restart completed to
+recover the interrupted state; visual inspection was blocked because the Mac locked again.
 
 ## How future entries should be written
 

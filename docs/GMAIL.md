@@ -190,6 +190,9 @@ deadline, and provider-inert startup converts only a persisted interrupted `sync
 marker into an explicit retryable state before any provider work can begin.
 Provider-inert restart and visual inspection verify that interrupted state returns to the
 attention-required presentation with an explicit retry; inspection itself performs no Gmail call.
+Live evidence from the next approved attempt established that this main-process deadline timer
+must remain referenced under Electron. Normal lifecycle settlement clears it; detaching it with
+`unref()` can leave the renderer busy beyond the intended boundary.
 
 The final activation audit requires provider reads and revocation to arrive as one
 reviewed lifecycle composition. A single existing projection worker must own reads,

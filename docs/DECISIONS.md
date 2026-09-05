@@ -1197,3 +1197,10 @@
   error, idle, disabled, absent, and one-sided states are unchanged. No dependency, migration,
   automatic provider request, new lifecycle owner, credential exposure, or mailbox mutation is
   introduced. Another live retry remains a separate explicit action after verification.
+
+Implementation evidence: the second approved live retry showed that calling `unref()` on the
+whole-attempt timer prevented the Electron main process from waking for the deadline even though
+the desktop process remained open. The attempt exceeded ten minutes, stayed visibly busy, and
+stored zero provider-mail records. The timer must therefore remain referenced until it fires or
+the lifecycle settles; normal completion still clears it immediately. A regression test inspects
+the real Node timer handle's liveness instead of relying only on ordinary fake-timer behavior.

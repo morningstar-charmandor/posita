@@ -391,17 +391,21 @@ verification gate passes, and Posita completed a provider-inert restart so any p
 state could be recovered locally. Visual inspection was blocked only because the Mac was locked.
 The later unlocked visual inspection passed: the connected account is shown as needing attention,
 offers a fresh explicit retry, and is no longer trapped in `Syncing`. No control was invoked and
-no Gmail request occurred during inspection. The next step is an owner decision between one more
-controlled live retry using ADR-058's bounded path or the already approved disconnect/reconnect
-fallback; prefer retry unless a typed result shows reconnection is necessary.
+no Gmail request occurred during inspection. The owner then approved one more controlled retry.
+It exceeded the intended ten-minute deadline, remained visibly busy, and stored zero provider-mail
+records. Process evidence isolated an Electron/Node timer-liveness defect: the deadline timer had
+been detached with `unref()`. The implementation now keeps that timer referenced and clears it on
+normal settlement, with a regression test over the real timer handle. The attempt was stopped;
+no disconnect, reconnect, third retry, AI call, or mailbox mutation occurred.
 
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,
 safe status, full-deletion startup recovery, read-only lifecycle UI, and explicitly
 confirmed local deletion are complete at their current layers. Continue in this order:
 
-1. Request the owner's explicit choice before another live provider action. The least-destructive
-   option is one controlled bounded retry, followed only by aggregate encrypted-local inspection.
+1. Canonical verification and the provider-inert restart now pass. Unlock the Mac and visually
+   confirm attention-required state; the first inspection attempt was blocked by the lock. Do not
+   issue a third live retry without a new explicit owner decision.
 2. Treat the local account-connection recovery UI as complete at its current boundary. Do not add
    automatic account-pair repair; failed execution must continue to require fresh review.
 3. Treat automatic retention scheduling and its Settings status as complete at

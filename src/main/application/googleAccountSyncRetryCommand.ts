@@ -130,7 +130,6 @@ export class GoogleAccountSyncRetryCommandService {
           controller.abort()
           resolve(TIMED_OUT)
         }, this.timeoutMs)
-        timeoutHandle.unref?.()
       })
       const lifecycleResult = this.lifecycle.syncAccounts([{
         version: POSITA_PROTOCOL_VERSION,
