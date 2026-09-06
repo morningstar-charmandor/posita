@@ -270,6 +270,9 @@ from canonical normalization without logging message-derived values; no seventh 
 That provider-inert separation is now implemented with fixed, at-most-once batch-scoped retrieval and normalization
 stages plus success and failure-path tests. One seventh read-only observation is owner-approved after the canonical
 checkpoint; no eighth request is authorized.
+The seventh command ran once but remained before the first credential/provider stage for five minutes while Electron
+main was idle. It stored zero mail and recovered provider-inertly. The message split therefore remains unobserved in
+the live path; next separate the local connection/lifecycle/retention/checkpoint preflight without provider access.
 
 ## Original audit evidence
 

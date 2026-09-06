@@ -7,7 +7,7 @@
     "repository": "https://github.com/morningstar-charmandor/posita",
     "repositoryVisibility": "public",
     "canonicalBranch": "main",
-    "currentMilestone": "gate-2d-provider-inert-message-batch-stage-separation-verified-seventh-live-authorized",
+    "currentMilestone": "gate-2d-seventh-command-stalled-before-provider-awaiting-provider-inert-preflight-diagnosis",
     "dataMode": "live-empty-with-connected-google-account-and-sync-attention",
     "mailSendingEnabled": false
   },
@@ -58,8 +58,8 @@
       "publicSyncRetryCommandEnabled": true,
       "publicSyncRetryCommandVerified": true,
       "publicSyncRetryCommandLiveExecuted": true,
-      "publicSyncRetryLiveOutcome": "sixth-attempt-completed-token-validation-gmail-profile-and-list-then-failed-message-batch-before-commit-stored-zero-provider-mail-and-recovered-provider-inert",
-      "publicSyncRetryLiveAttemptCount": 6,
+      "publicSyncRetryLiveOutcome": "seventh-command-remained-before-first-provider-stage-for-five-minutes-stored-zero-provider-mail-and-recovered-provider-inert",
+      "publicSyncRetryLiveAttemptCount": 7,
       "publicSyncRetryBoundedAttemptImplemented": true,
       "interruptedSyncStartupRecoveryImplemented": true,
       "interruptedSyncStartupRecoveryUiVerified": true,
@@ -97,6 +97,8 @@
       "liveSyncFailureSafeCode": "PROVIDER_UNAVAILABLE",
       "liveSyncFailureSuspectedCause": "bounded-individual-message-retrieval-or-normalization-before-first-projection-commit",
       "seventhReadOnlySyncRetryAuthorized": true,
+      "seventhReadOnlySyncRetryExecuted": true,
+      "seventhReadOnlySyncRetryReachedProvider": false,
       "refreshIdTokenCompatibilityFixImplemented": true,
       "refreshIdTokenCompatibilityLiveVerified": false
     }

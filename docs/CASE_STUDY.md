@@ -645,3 +645,8 @@ covers bounded message and external text-body transport/JSON handling; a second 
 conversion to the provider-independent mail contract. A private batch tracker emits each phase only once and never
 receives a message identifier, count, content, payload, raw error, URL, or timestamp. Deterministic tests prove both
 failure paths separately, turning the next approved read into a bounded experiment rather than another guess.
+
+The seventh command exposed a different boundary before that experiment could begin: for five minutes it emitted no
+credential or provider stage while Electron main remained idle. Posita stopped the observation, confirmed zero stored
+mail, and recovered locally. The result is recorded as a pre-provider lifecycle wait—not mislabeled as another Gmail
+failure—and the message retrieval/normalization question remains open.

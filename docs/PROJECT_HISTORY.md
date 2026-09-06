@@ -2782,6 +2782,20 @@ has approved exactly one seventh read-only retry after the checkpoint; no eighth
 verification passes 87 test files and 534 tests plus strict TypeScript, renderer structure/security checks,
 localhost callback integration, and production Electron builds.
 
+### 2026-09-06 — Seventh command isolated a pre-provider lifecycle wait
+
+- invoked the approved command exactly once after the message-batch diagnostic checkpoint,
+- observed no credential, token, Gmail, message, or projection stage for five minutes,
+- sampled Electron main read-only and found it idle rather than CPU-bound,
+- stopped without a second click or any eighth request,
+- confirmed aggregate-only that zero provider mail was stored and no lifecycle operation remained unfinished,
+- restarted provider-inert and visually confirmed the attention-required UI recovered.
+
+The seventh command did not reach Google and did not exercise the new message stages. Its remaining boundary is local:
+connection inspection, lifecycle queue/retention suspension, or encrypted sync checkpoint preparation. No cause is
+assumed. The next milestone is provider-inert stage separation and settlement evidence before any eighth provider
+observation. Canonical verification remains 87 test files and 534 tests plus all standard checks.
+
 ## How future entries should be written
 
 For each material milestone, record:

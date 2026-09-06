@@ -64,8 +64,12 @@ exists deeper in the tree.
   content, IDs, or timing. That separation is now implemented with fixed batch-scoped retrieval and normalization
   stages that emit each phase at most once and never receive provider data. Deterministic success, retrieval-failure,
   normalization-failure, and non-reflection tests pass. The owner has now approved exactly one seventh read-only
-  retry after this provider-inert checkpoint; no eighth request is authorized. Canonical verification passes with
-  534 tests.
+  retry after this provider-inert checkpoint. That command ran once but remained before the first credential/provider
+  stage for five minutes; Electron main sampled idle, zero provider mail was stored, aggregate inspection found no
+  unfinished lifecycle cleanup, and provider-inert restart restored the attention-required UI. It did not exercise
+  the new message stages and must not be represented as a Gmail result. No eighth request is authorized. The next
+  milestone is provider-inert separation of connection preflight, lifecycle queue/retention suspension, and sync
+  checkpoint preparation before any further provider observation. Canonical verification passes with 534 tests.
 - Current data: the local installation is live-empty; deterministic fixtures remain
   repository/test assets but were atomically removed from the live installation.
 - Encrypted provider-account and sync-state storage contains one real connected account.

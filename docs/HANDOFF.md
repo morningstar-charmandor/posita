@@ -459,14 +459,23 @@ count, content, payload, raw error, URL, or timestamp. Tests prove successful co
 normalization-only failure, and non-reflection. The owner has approved exactly one seventh read-only observation
 after this checkpoint; no eighth request is authorized.
 
+The seventh command was invoked exactly once but emitted no credential, token, Gmail, or projection stage during a
+five-minute observation. A one-second read-only sample showed Electron main idle. The process was stopped without a
+second click; aggregate-only inspection found zero provider-mail records and no unfinished lifecycle operation. A
+provider-inert restart restored the attention-required UI. This did not exercise the message-batch split and is not
+a Gmail failure. The remaining pre-provider boundary includes connection inspection, the lifecycle queue and
+retention suspension, and encrypted checkpoint preparation; it must be separated provider-inertly before any eighth
+request.
+
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,
 safe status, full-deletion startup recovery, read-only lifecycle UI, and explicitly
 confirmed local deletion are complete at their current layers. Continue in this order:
 
-1. The provider-inert message-batch split is implemented and canonically verified. The owner has approved exactly
-   one seventh read-only observation. Invoke Retry once, observe which fixed substage fails or completes, stop after
-   the bounded outcome, and inspect only aggregate storage. Do not issue an eighth request.
+1. The seventh command ended before provider work and the message-batch split remains live-unobserved. Add fixed,
+   privacy-safe provider-inert stages for connection inspection, lifecycle queue/retention suspension, and encrypted
+   checkpoint preparation. Prove exact settlement and cancellation locally. Do not issue an eighth request without
+   a new owner decision.
 2. Treat the local account-connection recovery UI as complete at its current boundary. Do not add
    automatic account-pair repair; failed execution must continue to require fresh review.
 3. Treat automatic retention scheduling and its Settings status as complete at

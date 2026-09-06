@@ -99,6 +99,9 @@ normalization; no seventh live request is authorized.
 That provider-inert split is now implemented with fixed batch-scoped retrieval and normalization stages. They emit
 no message ID, count, content, provider payload, raw error, or timestamp, and deterministic tests distinguish both
 failure paths. The owner has approved one seventh read-only observation after this verified checkpoint.
+That command ran once but remained before protected credential access or any provider stage for five minutes. The
+idle main process, zero stored mail, clean aggregate lifecycle state, and recovered UI identify a local pre-provider
+wait, not a Gmail result. The message-batch split remains live-unobserved; no eighth request is authorized.
 
 The trusted backend now defines a bounded provider-independent authorization
 session contract, deterministic fake, and real Google desktop protocol

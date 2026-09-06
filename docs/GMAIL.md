@@ -44,6 +44,9 @@ Retrieval covers bounded message and external text-body HTTP/JSON handling; norm
 the canonical provider-independent model. A stage/phase is emitted at most once per batch, with only the opaque
 Posita account scope already allowed by diagnostics. No message count, ID, content, provider payload, raw error,
 URL, or timestamp enters the event. The owner has approved one seventh read-only observation after verification.
+That command emitted no credential or provider stage during five minutes and therefore did not exercise these Gmail
+sub-stages. It was stopped, stored zero mail, and recovered provider-inertly. Treat it as a local pre-provider wait;
+no eighth request is authorized before that boundary is diagnosed provider-inertly.
 
 Posita can now project its durable `live` installation mode through a bounded
 worker-backed application snapshot. That local read model is not Gmail access: it

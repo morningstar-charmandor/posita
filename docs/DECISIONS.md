@@ -1301,3 +1301,8 @@ authorized.
   adapter, public contract, persistence, dependency, or mailbox capability. Tests cover success plus isolated
   retrieval and normalization failures and prove non-reflection. The owner approved exactly one seventh read-only
   observation after canonical verification; no eighth request is authorized.
+
+Implementation evidence: the seventh command was invoked once but emitted no credential or provider stage during a
+five-minute observation, so it did not exercise this decision's message stages. Electron main sampled idle, zero
+mail was stored, and provider-inert restart recovered the UI. This is a separate pre-provider lifecycle wait, not a
+retrieval or normalization result.
