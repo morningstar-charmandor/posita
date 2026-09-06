@@ -623,3 +623,12 @@ and a network-free Electron main-process harness then completed the token-to-Gma
 This strengthens the suspected cause without claiming live success; a fifth read-only observation still
 requires the owner's separate decision. Canonical verification passes 87 test files and 531 tests plus strict
 type, renderer-boundary, localhost integration, and production-build checks.
+
+The approved fifth observation provided a sharper result: the protected credential and token transport completed,
+then the new `token-validation` stage failed before Gmail began. Zero mail was stored, and a provider-inert restart
+returned the account to its truthful attention-required state. Because diagnostics intentionally exclude provider
+payloads, the exact field was not exposed. Reviewing the narrow parser against Google's primary desktop OAuth
+guidance revealed that Posita rejected any extra success-response field even though Google directs clients to ignore
+unrecognized fields. The corrected boundary keeps the entire response capped, ignores unused extensions, and still
+strictly validates every value Posita consumes plus the exact reviewed permissions. Deterministic handoff tests pass;
+live Gmail success remains unclaimed and any sixth observation requires a new decision.

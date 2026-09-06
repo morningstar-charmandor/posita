@@ -2729,6 +2729,26 @@ fifth live read-only observation behind a new owner decision. Canonical verifica
 531 tests, strict TypeScript, renderer structure/security checks, localhost callback integration, and
 production Electron builds.
 
+### 2026-09-06 — Fifth live validation evidence and bounded extension-field compatibility
+
+- executed the separately approved fifth read-only retry exactly once,
+- observed credential read, token request, and bounded response read complete, followed by a failed
+  `token-validation` stage before any Gmail stage,
+- stopped after a short post-failure observation without a second click, reconnect, disconnect, AI, or mailbox mutation,
+- confirmed with aggregate-only SQLite queries that zero provider-mail records were stored and no lifecycle cleanup
+  remained unfinished,
+- restarted provider-inert and visually confirmed the account recovered to attention-required with an explicit retry,
+- audited Google's primary desktop OAuth guidance, which instructs clients to ignore unrecognized response fields,
+- removed the incompatible success-response key whitelist while retaining the 16 KiB body cap and strict validation
+  of every consumed token, expiry, type, optional ID token, and exact reviewed scope,
+- added deterministic token-source and token-to-Gmail handoff regressions with documented and future extension fields,
+- added no dependency, schema, credential storage, public command, automatic provider work, AI, or mailbox mutation.
+
+The live evidence proves response validation failed but deliberately does not reveal the provider payload or exact
+field. The correction is standards-backed and provider-inert; it does not claim live Gmail success or authorize a
+sixth request. Canonical verification passes 87 test files and 532 tests, strict TypeScript, renderer
+structure/security checks, localhost callback integration, and production Electron builds.
+
 ## How future entries should be written
 
 For each material milestone, record:

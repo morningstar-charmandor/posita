@@ -430,18 +430,29 @@ requires the exact reviewed `openid`, email, and `gmail.readonly` set and reject
 fixed `token-validation` diagnostic stage distinguishes bounded body transport from token acceptance.
 Deterministic tests and a temporary, network-free exact Electron main-process harness prove the real token
 source settles and enters the Gmail profile/list path with the full email URI. The harness and its output were
-removed after the check. This is provider-inert evidence, not proof of live Gmail ingestion; no fifth request
-was made or authorized.
+removed after the check. The separately approved fifth request then ran exactly once. Credential read, token
+request, and bounded response reading completed; `token-validation` started and failed, and no Gmail stage
+began. The command remained visibly busy during a short post-failure observation, so the runtime was stopped
+without a second click. Aggregate-only inspection again found zero provider-mail records, one encrypted account,
+one encrypted sync state, and no unfinished lifecycle cleanup. A provider-inert restart restored the truthful
+attention-required UI.
+
+That observation proves the remaining failure is response validation, but privacy-safe diagnostics deliberately
+do not reveal which field caused it. A primary-documentation audit found one remaining incompatible rule:
+Posita rejected every extra success-response key, while Google's desktop OAuth guidance says unrecognized fields
+must be ignored. The bounded 16 KiB parser now ignores unused fields but still validates every consumed token,
+expiry, type, ID-token, and exact-scope value. Deterministic token-source and token-to-Gmail tests pass with
+documented and future extension fields. This is provider-inert compatibility evidence, not live Gmail success.
 
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,
 safe status, full-deletion startup recovery, read-only lifecycle UI, and explicitly
 confirmed local deletion are complete at their current layers. Continue in this order:
 
-1. The narrow provider-inert post-token correction is implemented and canonically verified. Stop before any
-   provider action. If the owner separately approves a fifth read-only observation, invoke Retry exactly once,
-   observe the fixed stage stream through `token-validation` and the first Gmail stage, stop at the bounded
-   deadline, and store no diagnostic payload. Without that approval, continue no Gmail work.
+1. The fifth live observation is complete and the bounded extra-field correction is provider-inert verified.
+   Stop before any provider action. A sixth read-only observation requires a new explicit owner decision; without
+   it, continue no Gmail work. If later approved, invoke Retry exactly once and observe whether token validation
+   completes and the first Gmail stage begins, storing no diagnostic payload.
 2. Treat the local account-connection recovery UI as complete at its current boundary. Do not add
    automatic account-pair repair; failed execution must continue to require fresh review.
 3. Treat automatic retention scheduling and its Settings status as complete at
@@ -634,7 +645,7 @@ credential, personal data, provider request, or mailbox mutation was added.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 87 test files, 531 tests, strict typecheck, structure
+- Current verified baseline: 87 test files, 532 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,

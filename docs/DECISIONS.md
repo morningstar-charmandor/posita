@@ -1258,3 +1258,23 @@ References: Google's [OAuth overview](https://developers.google.com/identity/pro
 returned and requested scope strings may differ, and its
 [scope catalog](https://developers.google.com/identity/protocols/oauth2/scopes) documents the equivalent email
 identifiers.
+
+## ADR-061: Ignore bounded unused Google token-response fields
+
+- Status: accepted for Gate 2D provider-inert compatibility
+- Context: the separately approved fifth read-only retry completed credential retrieval, token transport, and
+  bounded response reading, then failed at the fixed `token-validation` stage before Gmail began. Posita's parser
+  required the success object to contain only five known keys. Google's desktop OAuth guidance explicitly directs
+  clients to ignore unrecognized response fields and documents extension fields such as
+  `refresh_token_expires_in`. Privacy-safe diagnostics correctly did not expose the actual response field.
+- Decision: retain the 16 KiB response-body cap and strict runtime validation of `access_token`, `expires_in`,
+  `token_type`, optional `id_token`, and the exact reviewed scopes. Ignore every unused field after the body is
+  proven to be a bounded JSON object; do not persist it, log it, return it, or allow it into domain state.
+- Consequence: documented and future Google metadata cannot invalidate an otherwise safe access token, while
+  malformed consumed fields, missing required values, widened or duplicate scopes, oversized bodies, and non-object
+  responses still fail closed. Deterministic token-source and token-to-Gmail handoff tests verify the boundary. No
+  dependency, schema, public IPC, provider request, credential storage, AI, or mailbox mutation is added. The fifth
+  attempt stored zero mail; a sixth live observation remains a separate owner decision.
+
+Reference: Google's [OAuth 2.0 for iOS & Desktop Apps](https://developers.google.com/identity/protocols/oauth2/native-app)
+states that clients should ignore unrecognized fields in token responses.

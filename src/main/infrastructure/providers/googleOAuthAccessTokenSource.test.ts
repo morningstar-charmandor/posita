@@ -110,6 +110,22 @@ describe('GoogleOAuthAccessTokenSource', () => {
     expect(fetchRequest).toHaveBeenCalledOnce()
   })
 
+  it('ignores bounded extra Google response fields while validating the consumed fields', async () => {
+    const source = new GoogleOAuthAccessTokenSource(
+      vault('test-refresh-token'), configuration, async () => response(200, {
+        access_token: 'short-lived-access-token',
+        expires_in: 3_600,
+        refresh_token_expires_in: 604_800,
+        provider_extension: { version: 1 },
+        scope: 'openid email https://www.googleapis.com/auth/gmail.readonly',
+        token_type: 'Bearer'
+      })
+    )
+
+    await expect(source.getAccessToken('account-work-1', signal()))
+      .resolves.toBe('short-lived-access-token')
+  })
+
   it("accepts Google's documented full URI alias for the reviewed email scope only", async () => {
     const accepted = new GoogleOAuthAccessTokenSource(
       vault('test-refresh-token'), configuration, async () => response(200, {
@@ -235,7 +251,7 @@ describe('GoogleOAuthAccessTokenSource', () => {
     })
   })
 
-  it('rejects scope widening and oversized responses', async () => {
+  it('rejects scope widening, oversized responses, and malformed consumed fields', async () => {
     const widened = new GoogleOAuthAccessTokenSource(
       vault('test-refresh-token'), configuration, async () => response(200, {
         access_token: 'token',
@@ -272,19 +288,6 @@ describe('GoogleOAuthAccessTokenSource', () => {
         retryable: false
       })
 
-    const unknownField = new GoogleOAuthAccessTokenSource(
-      vault('test-refresh-token'), configuration, async () => response(200, {
-        access_token: 'token',
-        expires_in: 3_600,
-        unexpected: 'provider-detail',
-        token_type: 'Bearer'
-      })
-    )
-    await expect(unknownField.getAccessToken('account-work-1', signal()))
-      .rejects.toMatchObject({
-        code: 'ACCESS_TOKEN_RESPONSE_INVALID',
-        retryable: false
-      })
   })
 
   it('invalidates account cache and destroys all future use', async () => {

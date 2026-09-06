@@ -167,6 +167,8 @@ describe('GoogleMailReadAdapter', () => {
       async () => body({
         access_token: 'short-lived-access-token',
         expires_in: 3_600,
+        refresh_token_expires_in: 604_800,
+        provider_extension: { version: 1 },
         scope: 'openid https://www.googleapis.com/auth/userinfo.email ' +
           'https://www.googleapis.com/auth/gmail.readonly',
         token_type: 'Bearer'

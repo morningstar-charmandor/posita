@@ -196,9 +196,7 @@ const parseTokenResponse = (
   value: unknown,
   issuedAtMs: number
 ): CachedAccessToken => {
-  if (!isRecord(value) || !hasOnlyKeys(value, [
-    'access_token', 'expires_in', 'scope', 'token_type', 'id_token'
-  ]) || typeof value.access_token !== 'string' ||
+  if (!isRecord(value) || typeof value.access_token !== 'string' ||
       !OPAQUE_TOKEN_PATTERN.test(value.access_token) ||
       value.access_token.length > MAX_SECRET_LENGTH ||
       !Number.isSafeInteger(value.expires_in) ||

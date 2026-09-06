@@ -84,13 +84,14 @@ and IPC return path settle correctly, ruling out the button/bridge path. Product
 sync-stage names, phases, and opaque account IDs for credential read, token exchange, Gmail read, and
 encrypted commit; it never logs tokens, addresses, mail content, provider payloads, or raw errors.
 The separately approved fourth read-only observation completed credential read, the token request, and
-bounded response-body reading, then stalled before any Gmail stage and stored no mail. A provider-inert
-restart recovered the truthful retryable UI. No fifth request is authorized; the next correction is confined
-to credential-free token-validation/access-source settlement testing in Electron. That correction now accepts
+bounded response-body reading, then stalled before any Gmail stage and stored no mail. The provider-inert
+correction accepts
 only Google's documented full `userinfo.email` URI as equivalent to the already-approved `email` scope, while
 still rejecting duplicates and every widened permission. A fixed `token-validation` stage and a network-free
-Electron main-process check prove the token-to-first-Gmail-stage handoff settles. Live confirmation remains a
-separate owner decision.
+Electron main-process check prove that path reaches Gmail. The separately approved fifth retry then failed at
+`token-validation` before any Gmail request and stored no mail. Google explicitly tells desktop OAuth clients
+to ignore unrecognized response fields, so Posita now ignores only bounded unused fields while still strictly
+validating every field it consumes and the exact approved scope set. No sixth live retry is authorized.
 
 The trusted backend now defines a bounded provider-independent authorization
 session contract, deterministic fake, and real Google desktop protocol

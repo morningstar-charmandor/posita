@@ -44,15 +44,18 @@ exists deeper in the tree.
   attempt again exceeded the whole-attempt deadline while a read-only process sample showed Electron main
   idle, and it stored zero provider mail. The attempt was stopped; an aggregate-only inspection found no
   unfinished lifecycle cleanup, and a provider-inert restart recovered the account to attention-required.
-  No fifth live request is authorized. The next milestone is a provider-inert correction inside the narrow
-  post-token-response/pre-Gmail boundary, with exact settlement and cancellation evidence before any new
-  provider observation. That correction is now implemented: refresh-scope validation normalizes only
+  A provider-inert correction then normalized only
   Google's documented full `userinfo.email` URI to the already-approved `email` scope, still requires the
   exact three-scope set, and rejects duplicates or widening. A new fixed `token-validation` diagnostic stage
   separates response-body transport from token acceptance. Deterministic tests and a network-free exact
-  Electron main-process harness prove token validation settles and enters the first Gmail stage. No credential,
-  account data, provider request, dependency, schema, public IPC, or fifth live observation was added. A fifth
-  read-only request remains a separate owner decision. Canonical verification passes with 531 tests.
+  Electron main-process harness prove that provider-inert path enters the first Gmail stage. The separately
+  approved fifth retry ran once and failed specifically at `token-validation`; no Gmail stage began and zero
+  provider mail was stored. The attempt was stopped after a short post-failure observation, aggregate-only
+  inspection found no unfinished lifecycle cleanup, and a provider-inert restart restored the attention-required
+  UI. A code and primary-documentation audit found Posita still rejected every extra success-response field even
+  though Google instructs desktop clients to ignore unrecognized fields. The parser now ignores bounded unused
+  fields while strictly validating the access token, expiry, token type, optional ID token, and exact approved
+  scopes. No sixth live request is authorized. Canonical verification passes with 532 tests.
 - Current data: the local installation is live-empty; deterministic fixtures remain
   repository/test assets but were atomically removed from the live installation.
 - Encrypted provider-account and sync-state storage contains one real connected account.

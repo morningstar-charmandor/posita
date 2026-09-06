@@ -21,8 +21,10 @@ by itself authorize live mailbox access.
 Google's current OpenID reference permits an `id_token` in a refresh response when
 the original grant included `openid`. The refresh source accepts only one bounded
 opaque value for that allow-listed field and discards it immediately; it never uses
-refresh-time identity as account authority. Unknown fields, malformed values, scope
-widening, and oversized responses still fail closed.
+refresh-time identity as account authority. The complete body remains capped at 16 KiB;
+following Google's desktop OAuth guidance, unrecognized fields are ignored rather than
+entering Posita's domain. Every consumed field, malformed value, scope widening, and
+oversized response still fails closed.
 
 Google also documents that a returned scope string may not textually match the requested string even when
 the granted permissions are unchanged, and lists both `email` and
