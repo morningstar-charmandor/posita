@@ -444,15 +444,23 @@ must be ignored. The bounded 16 KiB parser now ignores unused fields but still v
 expiry, type, ID-token, and exact-scope value. Deterministic token-source and token-to-Gmail tests pass with
 documented and future extension fields. This is provider-inert compatibility evidence, not live Gmail success.
 
+The owner then approved one sixth read-only observation. It completed token validation, Gmail profile, and Gmail
+list, proving the refresh and least-privilege access path live. The bounded `gmail-message-batch` stage started and
+failed before any projection commit. The UI did not return during a 30-second post-failure observation, so the
+runtime was stopped without another click. Aggregate-only inspection found zero provider-mail records, one encrypted
+account, one encrypted sync state, and no unfinished lifecycle cleanup. A provider-inert restart again restored the
+attention-required UI with an explicit retry. The current safe evidence cannot distinguish individual-message HTTP/
+body handling from canonical normalization, and neither is asserted as the cause.
+
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,
 safe status, full-deletion startup recovery, read-only lifecycle UI, and explicitly
 confirmed local deletion are complete at their current layers. Continue in this order:
 
-1. The fifth live observation is complete and the bounded extra-field correction is provider-inert verified.
-   Stop before any provider action. A sixth read-only observation requires a new explicit owner decision; without
-   it, continue no Gmail work. If later approved, invoke Retry exactly once and observe whether token validation
-   completes and the first Gmail stage begins, storing no diagnostic payload.
+1. The sixth live observation is complete and verified token validation, Gmail profile, and Gmail list. Stop before
+   any provider action. Provider-inertly separate individual-message transport/body parsing from canonical
+   normalization using fixed, non-message-derived evidence that does not reveal message count, IDs, content, or
+   timing. A seventh read-only observation requires a new explicit owner decision.
 2. Treat the local account-connection recovery UI as complete at its current boundary. Do not add
    automatic account-pair repair; failed execution must continue to require fresh review.
 3. Treat automatic retention scheduling and its Settings status as complete at

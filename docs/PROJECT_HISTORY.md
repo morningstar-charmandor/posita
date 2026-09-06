@@ -2749,6 +2749,24 @@ field. The correction is standards-backed and provider-inert; it does not claim 
 sixth request. Canonical verification passes 87 test files and 532 tests, strict TypeScript, renderer
 structure/security checks, localhost callback integration, and production Electron builds.
 
+### 2026-09-06 — Sixth live read reached the Gmail message-batch boundary
+
+- executed the separately approved sixth read-only retry exactly once,
+- observed token validation, Gmail profile, and Gmail list complete,
+- observed the bounded Gmail message-batch stage fail before encrypted projection commit,
+- stopped after a 30-second post-failure observation without another click, reconnect, disconnect, AI, or mailbox mutation,
+- confirmed through aggregate-only SQLite queries that zero provider-mail records were stored and no lifecycle cleanup
+  remained unfinished,
+- restarted provider-inert and visually confirmed the account recovered to attention-required with an explicit retry,
+- changed no provider adapter behavior and issued no seventh request.
+
+This proves the Google authorization, token compatibility, profile, and list boundaries live. Existing privacy-safe
+evidence does not distinguish individual-message transport/body parsing from canonical normalization, so the next
+milestone is a provider-inert separation of those stages without emitting message-derived data. No dependency,
+schema, public command, credential handling, AI, or mailbox mutation changed. Canonical verification remains 87 test
+files and 532 tests plus strict TypeScript, renderer structure/security checks, localhost callback integration, and
+production Electron builds.
+
 ## How future entries should be written
 
 For each material milestone, record:

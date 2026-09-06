@@ -55,7 +55,13 @@ exists deeper in the tree.
   UI. A code and primary-documentation audit found Posita still rejected every extra success-response field even
   though Google instructs desktop clients to ignore unrecognized fields. The parser now ignores bounded unused
   fields while strictly validating the access token, expiry, token type, optional ID token, and exact approved
-  scopes. No sixth live request is authorized. Canonical verification passes with 532 tests.
+  scopes. The separately approved sixth retry then completed token validation, Gmail profile, and Gmail list,
+  proving the authorization and compatibility correction live. The bounded message-batch stage failed before
+  projection commit; zero provider mail was stored. It was stopped after a short post-failure observation,
+  aggregate-only inspection found no unfinished lifecycle cleanup, and a provider-inert restart restored the
+  attention-required UI. No seventh live request is authorized. The next milestone is provider-inert separation
+  of individual message transport/body parsing from canonical normalization, without exposing message count,
+  content, IDs, or timing. Canonical verification passes with 532 tests.
 - Current data: the local installation is live-empty; deterministic fixtures remain
   repository/test assets but were atomically removed from the live installation.
 - Encrypted provider-account and sync-state storage contains one real connected account.

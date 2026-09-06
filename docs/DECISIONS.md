@@ -1278,3 +1278,9 @@ identifiers.
 
 Reference: Google's [OAuth 2.0 for iOS & Desktop Apps](https://developers.google.com/identity/protocols/oauth2/native-app)
 states that clients should ignore unrecognized fields in token responses.
+
+Implementation evidence: the separately approved sixth read-only retry completed token validation, Gmail profile,
+and Gmail list, verifying this decision in the live path. The subsequent bounded message-batch stage failed before
+projection commit and stored zero mail. That later failure is outside this token-response decision and remains
+unclassified between individual-message transport/body parsing and canonical normalization. No seventh request is
+authorized.

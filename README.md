@@ -91,7 +91,11 @@ still rejecting duplicates and every widened permission. A fixed `token-validati
 Electron main-process check prove that path reaches Gmail. The separately approved fifth retry then failed at
 `token-validation` before any Gmail request and stored no mail. Google explicitly tells desktop OAuth clients
 to ignore unrecognized response fields, so Posita now ignores only bounded unused fields while still strictly
-validating every field it consumes and the exact approved scope set. No sixth live retry is authorized.
+validating every field it consumes and the exact approved scope set.
+The separately approved sixth retry verified that correction live: token validation, Gmail profile, and Gmail
+listing completed. The bounded message batch then failed before encrypted commit, so zero provider mail was
+stored. The next work is provider-inert diagnosis separating message retrieval/body parsing from canonical
+normalization; no seventh live request is authorized.
 
 The trusted backend now defines a bounded provider-independent authorization
 session contract, deterministic fake, and real Google desktop protocol

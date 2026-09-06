@@ -33,6 +33,12 @@ that full URI to the already-reviewed `email` scope, then still requires exactly
 `gmail.readonly`; duplicates, omissions, and every wider scope fail closed. A fixed `token-validation` stage
 records only started/completed/failed around parsing and never receives token content.
 
+The sixth approved live observation verified this token boundary and the Gmail profile/list calls. The first
+bounded message batch failed before encrypted projection commit and stored no mail. Current diagnostics do not
+distinguish message HTTP/body handling from canonical normalization, so neither is claimed as the cause. That
+separation must be proven provider-inert without emitting message count, IDs, content, or timing before any
+seventh live observation is considered.
+
 Posita can now project its durable `live` installation mode through a bounded
 worker-backed application snapshot. That local read model is not Gmail access: it
 starts no sync, uses no credential, and exposes no remote provider IDs or cursor.

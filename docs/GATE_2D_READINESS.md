@@ -61,7 +61,7 @@ evidence is recorded separately and contains no committed credential or mailbox 
 | Live application read model | Live-empty attention verified | durable mode-aware query shows the protected account and zero summaries without exposing private storage detail | Reload remains local-only; explicit retry is a separate command |
 | Sync coordinator | Lifecycle-owned, zero-account startup | 90-day path, real worker integration, bounded concurrency, cancellation, retention exclusion, disconnect/deletion quiescence, key teardown, durable status, and explicit retry policy are tested | Manual retry delegates to this owner; no automatic inventory handoff exists |
 | Gmail read adapter | Live attempt, no stored mail | fixed read-only routes, safe `PROVIDER_UNAVAILABLE` state, deterministic HTTP tests | No cursor or provider-mail record exists |
-| Google access-token source | Fifth live validation failure isolated; provider-inert compatibility corrected | protected refresh read, memory-only access token, bounded optional refresh `id_token` discard, exact reviewed scope validation with only the documented email URI alias, bounded unused response fields ignored per Google guidance, and token-to-Gmail handoff tests | A sixth live retry remains a separate owner decision |
+| Google access-token source | Live-verified through Gmail list | protected refresh read, memory-only access token, bounded optional refresh `id_token` discard, exact reviewed scope validation with only the documented email URI alias, bounded unused response fields ignored per Google guidance, and token-to-Gmail handoff tests | Sixth retry completed token validation, profile, and list; no seventh request is authorized |
 | AI provider | Deferred | no model adapter, prompt, embedding, or model output path | Fixture summaries/drafts remain explicitly simulated |
 
 ## Blocking gaps before real mail
@@ -261,7 +261,12 @@ now normalizes only Google's documented full `userinfo.email` URI to the approve
 fixed token-validation stage, and passes a network-free exact Electron main-process handoff through the first
 Gmail stage. The separately approved fifth retry then failed at token validation before Gmail and stored zero
 mail. Posita now ignores bounded unused response fields per Google's desktop OAuth guidance while still validating
-every consumed field and the exact approved scopes. A sixth live observation requires a separate owner decision.
+every consumed field and the exact approved scopes. At that checkpoint, a sixth live observation required a
+separate owner decision.
+The separately approved sixth observation completed token validation, Gmail profile, and Gmail list, then failed
+inside the bounded message-batch stage before projection commit. Zero provider mail was stored and provider-inert
+restart recovery passed. The next gate is provider-inert separation of individual-message transport/body parsing
+from canonical normalization without logging message-derived values; no seventh request is authorized.
 
 ## Original audit evidence
 

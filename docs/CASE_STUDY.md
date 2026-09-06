@@ -632,3 +632,10 @@ guidance revealed that Posita rejected any extra success-response field even tho
 unrecognized fields. The corrected boundary keeps the entire response capped, ignores unused extensions, and still
 strictly validates every value Posita consumes plus the exact reviewed permissions. Deterministic handoff tests pass;
 live Gmail success remains unclaimed and any sixth observation requires a new decision.
+
+The approved sixth observation validated that correction in the real path. Token validation, Gmail profile, and
+message listing completed before the bounded message batch failed. Because projection commit never began, Posita
+stored zero mail. A provider-inert restart restored the honest attention-required state. This moves the investigation
+from a broad “Gmail does not work” problem to one precise boundary: either individual message transport/body parsing
+or canonical normalization. Posita still does not claim successful Gmail ingestion, and the next diagnostic must
+separate those paths without recording message-derived data or spending another provider request.
