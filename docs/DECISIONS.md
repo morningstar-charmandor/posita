@@ -1235,3 +1235,26 @@ whole-attempt deadline. A read-only process sample showed Electron main idle. Ze
 were stored, and provider-inert restart recovery returned the account to attention-required. This narrows
 the unresolved boundary to token validation or access-source settlement before Gmail entry; it does not
 prove access-token acceptance and does not authorize a fifth provider request.
+
+## ADR-060: Normalize only Google's documented email-scope alias at token validation
+
+- Status: accepted for Gate 2D provider-inert compatibility
+- Context: the fourth approved read-only observation completed bounded token-response-body reading but did
+  not reach the first Gmail diagnostic stage. Posita required the returned scope text to contain the short
+  `email` identifier exactly. Google's OAuth guidance states that a returned scope may not textually match
+  the requested scope even when the grant is unchanged, and Google's scope catalog documents both `email`
+  and `https://www.googleapis.com/auth/userinfo.email` for the same email permission.
+- Decision: normalize only the full documented `userinfo.email` URI to the already-approved `email` scope,
+  then apply the existing exact-set, uniqueness, size, and Gmail-read-only checks. Continue rejecting missing,
+  duplicated, unknown, or wider scopes. Add a fixed `token-validation` diagnostic stage around parsing so
+  response-body completion cannot be mistaken for access-token acceptance.
+- Consequence: Google may express the approved email permission in either documented spelling without
+  widening Posita's grant. No provider payload, token, address, timing, or raw error enters diagnostics. No
+  dependency, schema, public IPC, UI capability, provider request, credential use, or mailbox mutation is
+  added. Deterministic tests and a temporary network-free Electron main-process harness verify settlement
+  through the first Gmail stages; a fifth live request remains a separate owner decision.
+
+References: Google's [OAuth overview](https://developers.google.com/identity/protocols/oauth2) states that
+returned and requested scope strings may differ, and its
+[scope catalog](https://developers.google.com/identity/protocols/oauth2/scopes) documents the equivalent email
+identifiers.

@@ -21,6 +21,7 @@ const DEFAULT_TIMEOUT_MS = 15_000
 const EXPIRY_SKEW_MS = 60_000
 const MAX_TOKEN_LIFETIME_SECONDS = 24 * 60 * 60
 const OPAQUE_TOKEN_PATTERN = /^[\u0021-\u007E]+$/
+const GOOGLE_EMAIL_SCOPE_URI = 'https://www.googleapis.com/auth/userinfo.email'
 
 type JsonRecord = Record<string, unknown>
 
@@ -184,7 +185,8 @@ const isExpiredGrant = (value: unknown): boolean =>
 
 const hasExactReviewedScopes = (value: unknown): boolean => {
   if (typeof value !== 'string' || value.length > 1_024) return false
-  const scopes = value.split(' ').filter((scope) => scope.length > 0)
+  const scopes = value.split(' ').filter((scope) => scope.length > 0).map((scope) =>
+    scope === GOOGLE_EMAIL_SCOPE_URI ? 'email' : scope)
   return scopes.length === GOOGLE_CONNECT_SCOPES.length &&
     new Set(scopes).size === scopes.length &&
     GOOGLE_CONNECT_SCOPES.every((scope) => scopes.includes(scope))
@@ -378,7 +380,12 @@ export class GoogleOAuthAccessTokenSource implements GoogleAccessTokenSource {
       }
       throw providerUnavailable(response.status === 429 || response.status >= 500)
     }
-    const token = parseTokenResponse(parseJson(text), issuedAtMs)
+    const token = await observeProviderMailSyncStage(
+      this.syncStages,
+      accountId,
+      'token-validation',
+      async () => parseTokenResponse(parseJson(text), issuedAtMs)
+    )
     if (!this.destroyed && !signal.aborted) this.cache.set(accountId, token)
     return token.token
   }

@@ -83,7 +83,9 @@ describe('GoogleOAuthAccessTokenSource', () => {
       'token-request:started',
       'token-request:completed',
       'token-response:started',
-      'token-response:completed'
+      'token-response:completed',
+      'token-validation:started',
+      'token-validation:completed'
     ])
     expect(JSON.stringify(events)).not.toContain('test-refresh-token')
     expect(JSON.stringify(events)).not.toContain('short-lived-access-token')
@@ -106,6 +108,33 @@ describe('GoogleOAuthAccessTokenSource', () => {
     await expect(source.getAccessToken('account-work-1', signal()))
       .resolves.toBe('short-lived-access-token')
     expect(fetchRequest).toHaveBeenCalledOnce()
+  })
+
+  it("accepts Google's documented full URI alias for the reviewed email scope only", async () => {
+    const accepted = new GoogleOAuthAccessTokenSource(
+      vault('test-refresh-token'), configuration, async () => response(200, {
+        access_token: 'short-lived-access-token',
+        expires_in: 3_600,
+        scope: 'openid https://www.googleapis.com/auth/userinfo.email ' +
+          'https://www.googleapis.com/auth/gmail.readonly',
+        token_type: 'Bearer'
+      })
+    )
+
+    await expect(accepted.getAccessToken('account-work-1', signal()))
+      .resolves.toBe('short-lived-access-token')
+
+    const duplicatedAlias = new GoogleOAuthAccessTokenSource(
+      vault('test-refresh-token'), configuration, async () => response(200, {
+        access_token: 'short-lived-access-token',
+        expires_in: 3_600,
+        scope: 'openid email https://www.googleapis.com/auth/userinfo.email ' +
+          'https://www.googleapis.com/auth/gmail.readonly',
+        token_type: 'Bearer'
+      })
+    )
+    await expect(duplicatedAlias.getAccessToken('account-work-1', signal()))
+      .rejects.toMatchObject({ code: 'ACCESS_TOKEN_RESPONSE_INVALID', retryable: false })
   })
 
   it('refreshes inside the fixed expiry safety window', async () => {

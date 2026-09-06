@@ -9,7 +9,10 @@ import {
   type GoogleMailFetch
 } from './googleMailReadAdapter'
 import type { GoogleAccessTokenSource } from './googleOAuthAccessTokenSource'
-import { GoogleAccessTokenError } from './googleOAuthAccessTokenSource'
+import {
+  GoogleAccessTokenError,
+  GoogleOAuthAccessTokenSource
+} from './googleOAuthAccessTokenSource'
 import { MailSyncCoordinator } from '../../application/mailSyncCoordinator'
 import { DeterministicFakeMailSyncProjection } from './deterministicFakeMailSync'
 import type { ProviderMailSyncStageEventV1 } from '../../application/providerMailSyncDiagnostics'
@@ -150,6 +153,53 @@ describe('GoogleMailReadAdapter', () => {
     ])
     expect(JSON.stringify(events)).not.toContain('Deterministic subject')
     expect(JSON.stringify(events)).not.toContain('Message body')
+  })
+
+  it('settles the real token-source handoff before entering the first Gmail stage', async () => {
+    const events: ProviderMailSyncStageEventV1[] = []
+    const reporter = { report: (event: ProviderMailSyncStageEventV1) => events.push(event) }
+    const tokens = new GoogleOAuthAccessTokenSource(
+      { get: async () => 'deterministic-refresh-token' },
+      {
+        clientId: '123456789-posita.apps.googleusercontent.com',
+        clientSecret: 'GOCSPX-deterministic-test-secret'
+      },
+      async () => body({
+        access_token: 'short-lived-access-token',
+        expires_in: 3_600,
+        scope: 'openid https://www.googleapis.com/auth/userinfo.email ' +
+          'https://www.googleapis.com/auth/gmail.readonly',
+        token_type: 'Bearer'
+      }),
+      { now: () => new Date('2026-09-06T08:00:00.000Z') },
+      15_000,
+      reporter
+    )
+    const adapter = new GoogleMailReadAdapter(
+      tokens,
+      queuedFetch(body({ historyId: '100' }), body({})),
+      20_000,
+      reporter
+    )
+
+    await expect(adapter.fetchBatch(request(), new AbortController().signal))
+      .resolves.toMatchObject({ version: 2, messages: [], complete: true })
+    expect(events.map(({ stage, phase }) => `${stage}:${phase}`)).toEqual([
+      'credential-read:started',
+      'credential-read:completed',
+      'token-request:started',
+      'token-request:completed',
+      'token-response:started',
+      'token-response:completed',
+      'token-validation:started',
+      'token-validation:completed',
+      'gmail-profile:started',
+      'gmail-profile:completed',
+      'gmail-list:started',
+      'gmail-list:completed',
+      'gmail-message-batch:started',
+      'gmail-message-batch:completed'
+    ])
   })
 
   it('resumes full pagination without repeating the profile request', async () => {

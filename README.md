@@ -86,7 +86,11 @@ encrypted commit; it never logs tokens, addresses, mail content, provider payloa
 The separately approved fourth read-only observation completed credential read, the token request, and
 bounded response-body reading, then stalled before any Gmail stage and stored no mail. A provider-inert
 restart recovered the truthful retryable UI. No fifth request is authorized; the next correction is confined
-to credential-free token-validation/access-source settlement testing in Electron.
+to credential-free token-validation/access-source settlement testing in Electron. That correction now accepts
+only Google's documented full `userinfo.email` URI as equivalent to the already-approved `email` scope, while
+still rejecting duplicates and every widened permission. A fixed `token-validation` stage and a network-free
+Electron main-process check prove the token-to-first-Gmail-stage handoff settles. Live confirmation remains a
+separate owner decision.
 
 The trusted backend now defines a bounded provider-independent authorization
 session contract, deterministic fake, and real Google desktop protocol

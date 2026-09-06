@@ -408,7 +408,7 @@ therefore insufficient in the real Electron path; no fourth provider request has
 Provider-inert Electron checks then exercised the exact retry command with a non-settling fake and its
 validated IPC return path: they settled safely in 255 ms and 454 ms respectively. This rules out the
 deadline command and desktop bridge in isolation. ADR-059 now production-composes one best-effort,
-privacy-safe reporter over the remaining credential read, token request/response, Gmail profile/list/
+privacy-safe reporter over the remaining credential read, token request/response/validation, Gmail profile/list/
 message-batch read, and encrypted projection commit stages. It logs only fixed stages/phases plus an
 opaque account ID; no token, address, mail, payload, cursor, URL, or raw error can enter it.
 
@@ -421,16 +421,27 @@ one encrypted account record, one encrypted sync-state record, and no unfinished
 provider-inert restart visibly recovered the account to attention-required with an explicit retry. No fifth
 provider request is authorized, and no token validation, Gmail read, cursor, or successful sync is claimed.
 
+The provider-inert follow-up found one standards-backed compatibility defect inside that exact boundary.
+Google documents that the scope string returned with an access token may not textually match the requested
+scope even when the grant is unchanged, and documents both `email` and the full
+`https://www.googleapis.com/auth/userinfo.email` identifier for the same email permission. Posita previously
+accepted only the short form. The token source now normalizes only that one documented alias, then still
+requires the exact reviewed `openid`, email, and `gmail.readonly` set and rejects duplicates or widening. A
+fixed `token-validation` diagnostic stage distinguishes bounded body transport from token acceptance.
+Deterministic tests and a temporary, network-free exact Electron main-process harness prove the real token
+source settles and enters the Gmail profile/list path with the full email URI. The harness and its output were
+removed after the check. This is provider-inert evidence, not proof of live Gmail ingestion; no fifth request
+was made or authorized.
+
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,
 safe status, full-deletion startup recovery, read-only lifecycle UI, and explicitly
 confirmed local deletion are complete at their current layers. Continue in this order:
 
-1. Reproduce and correct the narrow post-token-response/pre-Gmail settlement boundary without credentials
-   or network use. Cover successful token parsing, access-source promise settlement, cancellation, and the
-   outer command deadline in the real Electron main process. Add a fixed stage only if it materially
-   distinguishes those existing steps without exposing token data. Do not issue a fifth provider request;
-   any future live observation requires a new owner decision after canonical verification.
+1. The narrow provider-inert post-token correction is implemented and canonically verified. Stop before any
+   provider action. If the owner separately approves a fifth read-only observation, invoke Retry exactly once,
+   observe the fixed stage stream through `token-validation` and the first Gmail stage, stop at the bounded
+   deadline, and store no diagnostic payload. Without that approval, continue no Gmail work.
 2. Treat the local account-connection recovery UI as complete at its current boundary. Do not add
    automatic account-pair repair; failed execution must continue to require fresh review.
 3. Treat automatic retention scheduling and its Settings status as complete at
@@ -448,8 +459,8 @@ confirmed local deletion are complete at their current layers. Continue in this 
 5. Treat the approved Google authorization, loopback/browser infrastructure,
    reader, revoker, access-token source, strict local client-credential source, and
    zero-account startup lifecycle graph as complete. Connection, retry, and confirmed
-   disconnect UI/IPC boundaries are verified; retry now has three failed live observations,
-   and the Electron deadline/response path requires provider-inert diagnosis.
+   disconnect UI/IPC boundaries are verified; retry now has four failed live observations,
+   and the provider-inert post-token compatibility correction awaits a separate live decision.
 6. Keep all provider work explicit. If retry fails, inspect safe status before deciding
    whether the approved typed-confirmation disconnect/reconnect fallback is warranted.
 
@@ -623,7 +634,7 @@ credential, personal data, provider request, or mailbox mutation was added.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 87 test files, 529 tests, strict typecheck, structure
+- Current verified baseline: 87 test files, 531 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,

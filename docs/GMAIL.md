@@ -24,6 +24,13 @@ opaque value for that allow-listed field and discards it immediately; it never u
 refresh-time identity as account authority. Unknown fields, malformed values, scope
 widening, and oversized responses still fail closed.
 
+Google also documents that a returned scope string may not textually match the requested string even when
+the granted permissions are unchanged, and lists both `email` and
+`https://www.googleapis.com/auth/userinfo.email` for the email permission. The refresh source normalizes only
+that full URI to the already-reviewed `email` scope, then still requires exactly `openid`, email, and
+`gmail.readonly`; duplicates, omissions, and every wider scope fail closed. A fixed `token-validation` stage
+records only started/completed/failed around parsing and never receives token content.
+
 Posita can now project its durable `live` installation mode through a bounded
 worker-backed application snapshot. That local read model is not Gmail access: it
 starts no sync, uses no credential, and exposes no remote provider IDs or cursor.
@@ -203,7 +210,7 @@ distinguishes timer firing from command-response settlement.
 That provider-inert diagnostic now proves the exact deadline command settles inside Electron and its
 validated IPC response returns to a renderer process. The remaining fault is therefore within the real
 provider lifecycle path. ADR-059 instruments only fixed privacy-safe stages around credential read,
-token request/response, Gmail profile/list/message-batch read, and encrypted projection commit. No
+token request/response/validation, Gmail profile/list/message-batch read, and encrypted projection commit. No
 provider data or raw error enters those logs; another live request remains explicit.
 
 The final activation audit requires provider reads and revocation to arrive as one
@@ -251,9 +258,11 @@ It keeps the access token only in trusted memory, refreshes within a one-minute
 expiry margin, shares one cancellable refresh per account, bounds time and response
 bytes, refuses a returned scope set other than exact `openid`, `email`, and the
 full `gmail.readonly` URI,
+while accepting only Google's documented full `userinfo.email` URI as an equivalent spelling of `email`,
 and exposes account invalidation plus teardown. Missing or `invalid_grant`
 authorization is distinct from retryable storage/provider failure. Deterministic
-tests use conspicuous tokens and no network.
+tests use conspicuous tokens and no network. A temporary network-free Electron main-process harness verified
+that the real source settles through token validation and enters the Gmail profile/list path.
 
 The separate inert `loadGoogleOAuthClientConfiguration` boundary accepts only an
 exact version-2 desktop client ID and secret from the fixed `google-oauth-client.json`

@@ -46,7 +46,13 @@ exists deeper in the tree.
   unfinished lifecycle cleanup, and a provider-inert restart recovered the account to attention-required.
   No fifth live request is authorized. The next milestone is a provider-inert correction inside the narrow
   post-token-response/pre-Gmail boundary, with exact settlement and cancellation evidence before any new
-  provider observation.
+  provider observation. That correction is now implemented: refresh-scope validation normalizes only
+  Google's documented full `userinfo.email` URI to the already-approved `email` scope, still requires the
+  exact three-scope set, and rejects duplicates or widening. A new fixed `token-validation` diagnostic stage
+  separates response-body transport from token acceptance. Deterministic tests and a network-free exact
+  Electron main-process harness prove token validation settles and enters the first Gmail stage. No credential,
+  account data, provider request, dependency, schema, public IPC, or fifth live observation was added. A fifth
+  read-only request remains a separate owner decision. Canonical verification passes with 531 tests.
 - Current data: the local installation is live-empty; deterministic fixtures remain
   repository/test assets but were atomically removed from the live installation.
 - Encrypted provider-account and sync-state storage contains one real connected account.

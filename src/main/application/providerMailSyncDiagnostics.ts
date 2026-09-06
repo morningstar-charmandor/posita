@@ -4,6 +4,7 @@ export const PROVIDER_MAIL_SYNC_STAGES = [
   'credential-read',
   'token-request',
   'token-response',
+  'token-validation',
   'gmail-profile',
   'gmail-list',
   'gmail-message-batch',

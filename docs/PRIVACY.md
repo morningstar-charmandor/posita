@@ -93,7 +93,9 @@ validation refuses a scope outside the reviewed Gmail read-only permission. One 
 refresh credential was used only through this trusted source during the approved initial
 sync. Google may return a bounded optional OpenID `id_token` during refresh; Posita now
 accepts and immediately discards it without treating it as identity authority. Access
-tokens remain memory-only. Tests use only conspicuous deterministic values.
+tokens remain memory-only. Google's documented full `userinfo.email` scope URI is normalized
+only to the already-approved `email` permission before exact-set validation; no wider permission
+is accepted. Tests and the Electron provider-inert check use only conspicuous deterministic values.
 
 The deterministic fake protector is test-only. It demonstrates adapter behavior
 and makes plaintext-persistence assertions possible; it provides no security and

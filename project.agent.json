@@ -7,7 +7,7 @@
     "repository": "https://github.com/morningstar-charmandor/posita",
     "repositoryVisibility": "public",
     "canonicalBranch": "main",
-    "currentMilestone": "gate-2d-fourth-live-sync-diagnostic-recovered-awaiting-provider-inert-post-token-fix",
+    "currentMilestone": "gate-2d-provider-inert-token-scope-compatibility-verified-awaiting-fifth-live-decision",
     "dataMode": "live-empty-with-connected-google-account-and-sync-attention",
     "mailSendingEnabled": false
   },
@@ -73,6 +73,10 @@
       "privacySafeSyncStageDiagnosticsLiveObserved": true,
       "privacySafeSyncStageLastCompleted": "token-response",
       "privacySafeSyncStageNextStarted": false,
+      "privacySafeTokenValidationStageImplemented": true,
+      "googleEmailScopeAliasCompatibilityImplemented": true,
+      "providerInertPostTokenHandoffVerified": true,
+      "providerInertPostTokenHandoffElectronVerified": true,
       "liveAuthorizationAttempted": true,
       "liveCallbackReceived": true,
       "liveCallbackCompatibilityFixImplemented": true,
@@ -85,7 +89,7 @@
       "liveProviderMailReadAttempted": true,
       "liveProviderMailStored": false,
       "liveSyncFailureSafeCode": "PROVIDER_UNAVAILABLE",
-      "liveSyncFailureSuspectedCause": "post-token-response-pre-gmail-stage-token-validation-or-access-source-settlement",
+      "liveSyncFailureSuspectedCause": "documented-google-userinfo-email-scope-alias-rejected-before-gmail-entry",
       "refreshIdTokenCompatibilityFixImplemented": true,
       "refreshIdTokenCompatibilityLiveVerified": false
     }

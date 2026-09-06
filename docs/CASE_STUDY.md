@@ -613,3 +613,13 @@ leading suspects, but token acceptance and the promise handoff into the Gmail re
 The project records that limit explicitly and forbids treating the run as a successful Gmail sync. The next
 step is a credential-free Electron reproduction of that precise boundary before asking for any fifth live
 request.
+
+The provider-inert reproduction identified a concrete protocol compatibility gap without touching the real
+account. Google documents that returned scope spelling may differ from the request while representing the
+same grant, and recognizes both `email` and its full `userinfo.email` URI. Posita now normalizes only that one
+alias before enforcing the same exact three permissions; duplicates and wider scopes remain rejected. A new
+privacy-safe token-validation marker separates response transport from token acceptance. Deterministic tests
+and a network-free Electron main-process harness then completed the token-to-Gmail-profile/list handoff.
+This strengthens the suspected cause without claiming live success; a fifth read-only observation still
+requires the owner's separate decision. Canonical verification passes 87 test files and 531 tests plus strict
+type, renderer-boundary, localhost integration, and production-build checks.

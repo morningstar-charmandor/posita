@@ -2707,6 +2707,28 @@ No dependency, schema, secret, personal-mail record, public IPC, or mailbox capa
 verification passes 87 test files and 529 tests, strict TypeScript, renderer structure/security checks,
 localhost callback integration, and production Electron builds.
 
+### 2026-09-06 — Provider-inert token-scope compatibility and Electron handoff proof
+
+- traced the fourth observation's post-response boundary against Google's current primary documentation,
+- identified that Posita accepted only the short `email` scope although Google may return the documented full
+  `https://www.googleapis.com/auth/userinfo.email` identifier for the same permission,
+- normalized only that one alias before the existing exact reviewed-scope-set check,
+- retained rejection of duplicate, omitted, unknown, malformed, and wider permissions,
+- added a fixed privacy-safe `token-validation` diagnostic stage that receives no token or provider payload,
+- added deterministic acceptance, duplicate-alias rejection, and real token-source-to-Gmail-reader settlement
+  tests,
+- built and ran a temporary network-free Electron main-process harness; it completed token validation and
+  entered/completed Gmail profile, list, and empty message-batch stages,
+- removed the temporary harness and output after verification,
+- made no credential read, Google request, Gmail read, fifth retry, schema, dependency, public IPC, UI, AI,
+  or mailbox mutation change.
+
+The exact Electron evidence is provider-inert and does not claim that the live token was accepted or Gmail
+ingestion succeeded. It establishes one concrete, least-privilege compatibility correction and leaves any
+fifth live read-only observation behind a new owner decision. Canonical verification passes 87 test files and
+531 tests, strict TypeScript, renderer structure/security checks, localhost callback integration, and
+production Electron builds.
+
 ## How future entries should be written
 
 For each material milestone, record:
