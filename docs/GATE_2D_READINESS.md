@@ -267,6 +267,9 @@ The separately approved sixth observation completed token validation, Gmail prof
 inside the bounded message-batch stage before projection commit. Zero provider mail was stored and provider-inert
 restart recovery passed. The next gate is provider-inert separation of individual-message transport/body parsing
 from canonical normalization without logging message-derived values; no seventh request is authorized.
+That provider-inert separation is now implemented with fixed, at-most-once batch-scoped retrieval and normalization
+stages plus success and failure-path tests. One seventh read-only observation is owner-approved after the canonical
+checkpoint; no eighth request is authorized.
 
 ## Original audit evidence
 

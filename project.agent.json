@@ -7,7 +7,7 @@
     "repository": "https://github.com/morningstar-charmandor/posita",
     "repositoryVisibility": "public",
     "canonicalBranch": "main",
-    "currentMilestone": "gate-2d-sixth-live-reached-gmail-message-batch-awaiting-provider-inert-batch-diagnosis",
+    "currentMilestone": "gate-2d-provider-inert-message-batch-stage-separation-verified-seventh-live-authorized",
     "dataMode": "live-empty-with-connected-google-account-and-sync-attention",
     "mailSendingEnabled": false
   },
@@ -74,6 +74,9 @@
       "privacySafeSyncStageLastCompleted": "gmail-list",
       "privacySafeSyncStageNextStarted": true,
       "privacySafeSyncStageLastOutcome": "gmail-message-batch-failed",
+      "privacySafeMessageRetrievalStageImplemented": true,
+      "privacySafeMessageNormalizationStageImplemented": true,
+      "privacySafeMessageBatchStageDeduplicationVerified": true,
       "privacySafeTokenValidationStageImplemented": true,
       "googleEmailScopeAliasCompatibilityImplemented": true,
       "googleTokenUnknownFieldCompatibilityImplemented": true,
@@ -93,6 +96,7 @@
       "liveProviderMailStored": false,
       "liveSyncFailureSafeCode": "PROVIDER_UNAVAILABLE",
       "liveSyncFailureSuspectedCause": "bounded-individual-message-retrieval-or-normalization-before-first-projection-commit",
+      "seventhReadOnlySyncRetryAuthorized": true,
       "refreshIdTokenCompatibilityFixImplemented": true,
       "refreshIdTokenCompatibilityLiveVerified": false
     }

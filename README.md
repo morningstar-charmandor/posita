@@ -96,6 +96,9 @@ The separately approved sixth retry verified that correction live: token validat
 listing completed. The bounded message batch then failed before encrypted commit, so zero provider mail was
 stored. The next work is provider-inert diagnosis separating message retrieval/body parsing from canonical
 normalization; no seventh live request is authorized.
+That provider-inert split is now implemented with fixed batch-scoped retrieval and normalization stages. They emit
+no message ID, count, content, provider payload, raw error, or timestamp, and deterministic tests distinguish both
+failure paths. The owner has approved one seventh read-only observation after this verified checkpoint.
 
 The trusted backend now defines a bounded provider-independent authorization
 session contract, deterministic fake, and real Google desktop protocol

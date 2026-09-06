@@ -23,6 +23,12 @@ cursor, credential, provider identifier, or mail payload through IPC. Existing s
 compatibility records and are not assigned fabricated provider provenance. No
 personal mailbox data has passed through this path.
 
+Live-sync diagnostics emit only a fixed stage, fixed phase, and opaque Posita account
+scope. The message-batch boundary now has batch-scoped retrieval and normalization
+sub-stages; each stage/phase is emitted at most once and receives no message ID, count,
+content, provider payload, raw error, URL, or timestamp. Diagnostics are best-effort,
+non-persistent, and cannot weaken provider behavior or encrypted storage boundaries.
+
 The first approved live-account activation atomically removed all sample compatibility
 records and durably selected live mode. Posita will never mix
 samples with provider records or reseed samples after the last live account is

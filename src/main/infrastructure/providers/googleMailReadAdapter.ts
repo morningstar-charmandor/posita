@@ -386,48 +386,79 @@ export class GoogleMailReadAdapter implements ProviderMailAdapter {
   ): Promise<{ loaded: NormalizedGoogleMessage[]; missing: string[] }> {
     const loaded: NormalizedGoogleMessage[] = []
     const missing: string[] = []
+    const stages = new GoogleMessageBatchStageTracker(this.syncStages, accountId)
     for (let offset = 0; offset < ids.length; offset += MAX_PARALLEL_MESSAGE_READS) {
       const group = ids.slice(offset, offset + MAX_PARALLEL_MESSAGE_READS)
-      const values = await Promise.all(group.map(async (id) => {
-        try {
-          const value = await this.getJson(
-            `/gmail/v1/users/me/messages/${encodeURIComponent(id)}?format=FULL`,
-            token,
-            signal,
-            MAX_MESSAGE_RESPONSE_BYTES,
-            'missing-message'
+      stages.startRetrieval()
+      let values: Array<GoogleMessageRead | undefined>
+      try {
+        values = await Promise.all(group.map((id) =>
+          this.readMessageAllowMissing(id, token, signal)))
+      } catch (error) {
+        stages.failRetrieval()
+        throw error
+      }
+      const present = values.filter((value): value is GoogleMessageRead => value !== undefined)
+      if (present.length > 0) stages.startNormalization()
+      try {
+        for (const value of present) {
+          const normalized = normalizeGoogleMessage(
+            value.payload,
+            accountId,
+            value.externalBodies
           )
-          const textBodyIds = googleExternalTextBodyIds(value)
-          if (textBodyIds.length > 16) throw failure('MALFORMED_PAYLOAD', false)
-          const externalBodies = new Map<string, string>()
-          for (const attachmentId of textBodyIds) {
-            const attachment = await this.getJson(
-              `/gmail/v1/users/me/messages/${encodeURIComponent(id)}/attachments/${
-                encodeURIComponent(attachmentId)}`,
-              token,
-              signal,
-              MAX_MESSAGE_RESPONSE_BYTES
-            )
-            if (!isRecord(attachment) || !safeString(attachment.data, 2_700_000)) {
-              throw failure('MALFORMED_PAYLOAD', false)
-            }
-            externalBodies.set(attachmentId, attachment.data)
-          }
-          const normalized = normalizeGoogleMessage(value, accountId, externalBodies)
-          if (normalized === undefined || normalized.message.source.providerMessageId !== id) {
+          if (normalized === undefined ||
+              normalized.message.source.providerMessageId !== value.providerMessageId) {
             throw failure('MALFORMED_PAYLOAD', false)
           }
-          return normalized
-        } catch (error) {
-          if (error instanceof GoogleMissingMessageError) return undefined
-          throw error
+          loaded.push(normalized)
         }
-      }))
-      values.forEach((value, index) => value === undefined
-        ? missing.push(group[index]!)
-        : loaded.push(value))
+      } catch (error) {
+        stages.failNormalization()
+        throw error
+      }
+      values.forEach((value, index) => {
+        if (value === undefined) missing.push(group[index]!)
+      })
     }
+    stages.complete()
     return { loaded, missing }
+  }
+
+  private async readMessageAllowMissing(
+    id: string,
+    token: string,
+    signal: AbortSignal
+  ): Promise<GoogleMessageRead | undefined> {
+    try {
+      const payload = await this.getJson(
+        `/gmail/v1/users/me/messages/${encodeURIComponent(id)}?format=FULL`,
+        token,
+        signal,
+        MAX_MESSAGE_RESPONSE_BYTES,
+        'missing-message'
+      )
+      const textBodyIds = googleExternalTextBodyIds(payload)
+      if (textBodyIds.length > 16) throw failure('MALFORMED_PAYLOAD', false)
+      const externalBodies = new Map<string, string>()
+      for (const attachmentId of textBodyIds) {
+        const attachment = await this.getJson(
+          `/gmail/v1/users/me/messages/${encodeURIComponent(id)}/attachments/${
+            encodeURIComponent(attachmentId)}`,
+          token,
+          signal,
+          MAX_MESSAGE_RESPONSE_BYTES
+        )
+        if (!isRecord(attachment) || !safeString(attachment.data, 2_700_000)) {
+          throw failure('MALFORMED_PAYLOAD', false)
+        }
+        externalBodies.set(attachmentId, attachment.data)
+      }
+      return { providerMessageId: id, payload, externalBodies }
+    } catch (error) {
+      if (error instanceof GoogleMissingMessageError) return undefined
+      throw error
+    }
   }
 
   private async getJson(
@@ -479,3 +510,59 @@ export class GoogleMailReadAdapter implements ProviderMailAdapter {
 }
 
 class GoogleMissingMessageError extends Error {}
+
+interface GoogleMessageRead {
+  providerMessageId: string
+  payload: unknown
+  externalBodies: ReadonlyMap<string, string>
+}
+
+class GoogleMessageBatchStageTracker {
+  private retrieval: 'idle' | 'started' | 'failed' = 'idle'
+  private normalization: 'idle' | 'started' | 'failed' = 'idle'
+
+  constructor(
+    private readonly reporter: ProviderMailSyncStageReporter,
+    private readonly accountId: string
+  ) {}
+
+  startRetrieval(): void {
+    if (this.retrieval !== 'idle') return
+    this.retrieval = 'started'
+    this.report('gmail-message-retrieval', 'started')
+  }
+
+  startNormalization(): void {
+    if (this.normalization !== 'idle') return
+    this.normalization = 'started'
+    this.report('gmail-message-normalization', 'started')
+  }
+
+  failRetrieval(): void {
+    if (this.retrieval !== 'started') return
+    this.retrieval = 'failed'
+    this.report('gmail-message-retrieval', 'failed')
+  }
+
+  failNormalization(): void {
+    if (this.normalization !== 'started') return
+    this.normalization = 'failed'
+    this.report('gmail-message-normalization', 'failed')
+  }
+
+  complete(): void {
+    if (this.retrieval === 'started') this.report('gmail-message-retrieval', 'completed')
+    if (this.normalization === 'started') this.report('gmail-message-normalization', 'completed')
+  }
+
+  private report(
+    stage: 'gmail-message-retrieval' | 'gmail-message-normalization',
+    phase: 'started' | 'completed' | 'failed'
+  ): void {
+    try {
+      this.reporter.report({ version: 1, accountId: this.accountId, stage, phase })
+    } catch {
+      // Diagnostics must never alter provider behavior.
+    }
+  }
+}

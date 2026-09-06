@@ -149,10 +149,63 @@ describe('GoogleMailReadAdapter', () => {
       'gmail-list:started',
       'gmail-list:completed',
       'gmail-message-batch:started',
+      'gmail-message-retrieval:started',
+      'gmail-message-normalization:started',
+      'gmail-message-retrieval:completed',
+      'gmail-message-normalization:completed',
       'gmail-message-batch:completed'
     ])
     expect(JSON.stringify(events)).not.toContain('Deterministic subject')
     expect(JSON.stringify(events)).not.toContain('Message body')
+  })
+
+  it('separates bounded message retrieval failures from normalization without payload detail', async () => {
+    const events: ProviderMailSyncStageEventV1[] = []
+    const adapter = new GoogleMailReadAdapter(
+      tokenSource(),
+      queuedFetch(
+        body({ historyId: '100' }),
+        body({ messages: [{ id: 'private-message-id' }] }),
+        new Response(null, { status: 503 })
+      ),
+      20_000,
+      { report: (event) => events.push(event) }
+    )
+
+    await expect(adapter.fetchBatch(request(), new AbortController().signal))
+      .rejects.toMatchObject({ code: 'PROVIDER_UNAVAILABLE', retryable: true })
+    expect(events.map(({ stage, phase }) => `${stage}:${phase}`).slice(-4)).toEqual([
+      'gmail-message-batch:started',
+      'gmail-message-retrieval:started',
+      'gmail-message-retrieval:failed',
+      'gmail-message-batch:failed'
+    ])
+    expect(JSON.stringify(events)).not.toContain('private-message-id')
+  })
+
+  it('separates bounded message normalization failures without payload detail', async () => {
+    const events: ProviderMailSyncStageEventV1[] = []
+    const adapter = new GoogleMailReadAdapter(
+      tokenSource(),
+      queuedFetch(
+        body({ historyId: '100' }),
+        body({ messages: [{ id: 'private-message-id' }] }),
+        body({ id: 'private-message-id', threadId: 'thread-1' })
+      ),
+      20_000,
+      { report: (event) => events.push(event) }
+    )
+
+    await expect(adapter.fetchBatch(request(), new AbortController().signal))
+      .rejects.toMatchObject({ code: 'MALFORMED_PAYLOAD', retryable: false })
+    expect(events.map(({ stage, phase }) => `${stage}:${phase}`).slice(-5)).toEqual([
+      'gmail-message-batch:started',
+      'gmail-message-retrieval:started',
+      'gmail-message-normalization:started',
+      'gmail-message-normalization:failed',
+      'gmail-message-batch:failed'
+    ])
+    expect(JSON.stringify(events)).not.toContain('private-message-id')
   })
 
   it('settles the real token-source handoff before entering the first Gmail stage', async () => {

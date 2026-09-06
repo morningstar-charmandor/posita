@@ -8,6 +8,8 @@ export const PROVIDER_MAIL_SYNC_STAGES = [
   'gmail-profile',
   'gmail-list',
   'gmail-message-batch',
+  'gmail-message-retrieval',
+  'gmail-message-normalization',
   'projection-commit'
 ] as const
 

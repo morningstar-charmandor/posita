@@ -639,3 +639,9 @@ stored zero mail. A provider-inert restart restored the honest attention-require
 from a broad “Gmail does not work” problem to one precise boundary: either individual message transport/body parsing
 or canonical normalization. Posita still does not claim successful Gmail ingestion, and the next diagnostic must
 separate those paths without recording message-derived data or spending another provider request.
+
+Before another live observation, Posita split that broad batch marker provider-inertly. One fixed retrieval stage
+covers bounded message and external text-body transport/JSON handling; a second fixed normalization stage covers
+conversion to the provider-independent mail contract. A private batch tracker emits each phase only once and never
+receives a message identifier, count, content, payload, raw error, URL, or timestamp. Deterministic tests prove both
+failure paths separately, turning the next approved read into a bounded experiment rather than another guess.

@@ -61,7 +61,11 @@ exists deeper in the tree.
   aggregate-only inspection found no unfinished lifecycle cleanup, and a provider-inert restart restored the
   attention-required UI. No seventh live request is authorized. The next milestone is provider-inert separation
   of individual message transport/body parsing from canonical normalization, without exposing message count,
-  content, IDs, or timing. Canonical verification passes with 532 tests.
+  content, IDs, or timing. That separation is now implemented with fixed batch-scoped retrieval and normalization
+  stages that emit each phase at most once and never receive provider data. Deterministic success, retrieval-failure,
+  normalization-failure, and non-reflection tests pass. The owner has now approved exactly one seventh read-only
+  retry after this provider-inert checkpoint; no eighth request is authorized. Canonical verification passes with
+  534 tests.
 - Current data: the local installation is live-empty; deterministic fixtures remain
   repository/test assets but were atomically removed from the live installation.
 - Encrypted provider-account and sync-state storage contains one real connected account.

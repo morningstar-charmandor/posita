@@ -1284,3 +1284,20 @@ and Gmail list, verifying this decision in the live path. The subsequent bounded
 projection commit and stored zero mail. That later failure is outside this token-response decision and remains
 unclassified between individual-message transport/body parsing and canonical normalization. No seventh request is
 authorized.
+
+## ADR-062: Separate message retrieval from normalization with batch-scoped diagnostics
+
+- Status: accepted for Gate 2D provider-inert diagnosis
+- Context: the sixth approved retry completed token validation, Gmail profile, and Gmail list, then failed inside
+  the existing `gmail-message-batch` stage before projection commit. That stage combined bounded message/attachment
+  HTTP and JSON handling with canonical normalization, leaving two materially different causes indistinguishable.
+- Decision: retain the outer batch stage and add fixed `gmail-message-retrieval` and
+  `gmail-message-normalization` stages inside the existing Google adapter. Use one private tracker per batch so each
+  stage/phase is emitted at most once. Retrieval owns message and external text-body request/body parsing;
+  normalization owns conversion to the existing canonical model. Events may contain only the existing version,
+  opaque account scope, fixed stage, and fixed phase—never message IDs, counts, content, payloads, raw errors, URLs,
+  or timestamps. Reporter failure remains behavior-inert.
+- Consequence: a single future observation can classify the boundary without adding provider behavior, another
+  adapter, public contract, persistence, dependency, or mailbox capability. Tests cover success plus isolated
+  retrieval and normalization failures and prove non-reflection. The owner approved exactly one seventh read-only
+  observation after canonical verification; no eighth request is authorized.

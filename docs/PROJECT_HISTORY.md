@@ -2767,6 +2767,21 @@ schema, public command, credential handling, AI, or mailbox mutation changed. Ca
 files and 532 tests plus strict TypeScript, renderer structure/security checks, localhost callback integration, and
 production Electron builds.
 
+### 2026-09-06 — Provider-inert message-batch stage separation
+
+- split the existing diagnostic boundary into fixed batch-scoped retrieval and normalization stages,
+- kept message/attachment HTTP and bounded JSON handling in retrieval and canonical conversion in normalization,
+- emitted each stage/phase at most once per batch without message IDs, counts, content, provider payloads, raw
+  errors, URLs, or timestamps,
+- preserved the existing single Gmail adapter, sync coordinator, retry command, error policy, and public contracts,
+- added deterministic success, retrieval-failure, normalization-failure, and non-reflection coverage,
+- made no credential read, provider request, mailbox read, schema, dependency, AI, or mailbox mutation.
+
+This provider-inert checkpoint makes the next approved observation diagnostic rather than speculative. The owner
+has approved exactly one seventh read-only retry after the checkpoint; no eighth request is authorized. Canonical
+verification passes 87 test files and 534 tests plus strict TypeScript, renderer structure/security checks,
+localhost callback integration, and production Electron builds.
+
 ## How future entries should be written
 
 For each material milestone, record:

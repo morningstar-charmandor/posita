@@ -39,6 +39,12 @@ distinguish message HTTP/body handling from canonical normalization, so neither 
 separation must be proven provider-inert without emitting message count, IDs, content, or timing before any
 seventh live observation is considered.
 
+That separation now uses fixed batch-scoped `gmail-message-retrieval` and `gmail-message-normalization` stages.
+Retrieval covers bounded message and external text-body HTTP/JSON handling; normalization covers conversion into
+the canonical provider-independent model. A stage/phase is emitted at most once per batch, with only the opaque
+Posita account scope already allowed by diagnostics. No message count, ID, content, provider payload, raw error,
+URL, or timestamp enters the event. The owner has approved one seventh read-only observation after verification.
+
 Posita can now project its durable `live` installation mode through a bounded
 worker-backed application snapshot. That local read model is not Gmail access: it
 starts no sync, uses no credential, and exposes no remote provider IDs or cursor.
