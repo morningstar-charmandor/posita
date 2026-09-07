@@ -2859,6 +2859,23 @@ milestone is provider-inert fixed-boundary separation; no tenth request is autho
 Canonical verification passes 88 test files and 544 tests plus all standard checks. This checkpoint can classify the
 remaining local path without guessing; a tenth live observation remains a separate owner decision.
 
+### 2026-09-07 — Tenth command proved safe backend settlement before the UI handoff
+
+- executed the separately approved tenth read-only command exactly once,
+- observed connection preflight and encrypted state reading complete, retry eligibility fail, and the safe backend
+  command complete,
+- observed no lifecycle dispatch/queue, credential, token, Gmail, message, or projection stage,
+- confirmed the renderer remained in its running state after backend command settlement,
+- stopped the runtime without a second click or any eleventh request,
+- confirmed aggregate-only that zero provider mail was stored, one protected account pair remained, and no lifecycle
+  operation was unfinished,
+- restarted provider-inert and visually confirmed the truthful attention-required UI recovered,
+- made no code, schema, dependency, credential, provider behavior, AI, or mailbox mutation change.
+
+The evidence proves a local retry-visibility/policy mismatch and narrows the unresolved busy state to IPC validation,
+Electron response delivery, preload validation, or renderer promise settlement. It is not a Gmail result. The next
+milestone is provider-inert response-handoff separation; no eleventh request is authorized.
+
 ## How future entries should be written
 
 For each material milestone, record:

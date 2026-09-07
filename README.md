@@ -121,6 +121,11 @@ That final local gap is now separated provider-inertly with fixed eligibility, l
 settlement stages. Deterministic tests prove allowed and rejected policy paths, synchronous dispatch failure, normal
 lifecycle settlement, and diagnostic isolation without credentials or provider access. A tenth live observation
 remains a separate owner decision.
+The separately approved tenth observation did not reach lifecycle or Gmail work. Its durable state failed the fixed
+retry-eligibility policy, and trusted main completed a bounded safe response, while the renderer remained busy. Zero
+mail was stored and provider-inert restart recovery passed. This proves a local mismatch between retry-control
+visibility and backend policy, plus an unresolved Electron IPC/preload response handoff after command settlement.
+No eleventh request is authorized.
 
 The trusted backend now defines a bounded provider-independent authorization
 session contract, deterministic fake, and real Google desktop protocol

@@ -683,3 +683,10 @@ prepared a bounded safe response before IPC validation. Tests cover rejection, d
 encrypted-state-to-trusted-handler success path. This preserves the investigation's core discipline: increase
 evidence before spending another live request. The canonical gate passes 88 test files and 544 tests; a tenth live
 observation remains a separate owner decision.
+
+The separately approved tenth observation finally proved that the backend was not hanging. It rejected the durable
+state under the fixed retry policy and completed a bounded safe response before lifecycle or provider work, while the
+renderer continued to show “Syncing Gmail.” Zero mail was stored and recovery passed. The result exposed two local
+product defects rather than another Gmail problem: the read model can show a retry control for a state the command
+rejects, and a completed backend response is not settling the visible UI through the real Electron path. The next
+work separates IPC, preload, and renderer delivery provider-inertly; no eleventh live request is authorized.

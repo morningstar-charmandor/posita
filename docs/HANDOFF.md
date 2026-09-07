@@ -506,15 +506,25 @@ trusted-handler path. Diagnostics remain best-effort and receive no state value,
 provider payload, raw error, or credential. No provider request occurred. Canonical verification passes 88 test
 files and 544 tests. A tenth live observation remains a separate owner decision.
 
+The owner then approved exactly one tenth read-only observation. `connection-preflight` and `sync-state-read`
+completed, `sync-retry-eligibility` failed, and `sync-retry-command` completed. No `lifecycle-dispatch`, lifecycle-
+queue, credential, token, Gmail, message, or projection stage began. The renderer remained visibly busy after trusted
+main had prepared its safe result, so the runtime was stopped once without another control. Aggregate-only storage
+inspection found zero provider-mail records, one encrypted account, one encrypted sync state, and no unfinished
+lifecycle operation. A provider-inert restart restored the attention-required UI. This proves a local retry-control
+visibility/policy mismatch and narrows the unresolved busy state to IPC validation, Electron serialization, preload
+validation, or renderer promise delivery. No eleventh request is authorized.
+
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,
 safe status, full-deletion startup recovery, read-only lifecycle UI, and explicitly
 confirmed local deletion are complete at their current layers. Continue in this order:
 
-1. Treat the ninth observation and provider-inert local-settlement separation as complete. The next controlled live
-   observation, if separately approved, can distinguish eligibility, lifecycle dispatch/queue, and safe command
-   settlement using fixed non-reflective stages. The message-batch split remains live-unobserved. Do not issue a
-   tenth request without a new owner decision.
+1. Treat the tenth observation as a completed local response-handoff result, not a Gmail failure. Separate trusted
+   IPC validation/return, Electron delivery, preload validation, and renderer promise settlement provider-inertly.
+   Reconcile retry-control visibility with the fixed backend retry policy from one shared safe projection; do not
+   broaden the policy or expose private error state by assumption. The message-batch split remains live-unobserved.
+   Do not issue an eleventh request without a new owner decision.
 2. Treat the local account-connection recovery UI as complete at its current boundary. Do not add
    automatic account-pair repair; failed execution must continue to require fresh review.
 3. Treat automatic retention scheduling and its Settings status as complete at

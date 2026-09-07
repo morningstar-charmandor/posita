@@ -69,6 +69,13 @@ command response preparation. They expose only the existing opaque account scope
 tests cover allowed, rejected, dispatch-failure, and settlement paths. No Google request occurred. A tenth live
 observation remains a separate owner decision.
 
+The owner then approved exactly one tenth read-only observation. Connection preflight and encrypted state reading
+completed, retry eligibility failed, and the bounded backend command completed. No lifecycle-dispatch, credential,
+token, Gmail, message, or projection stage began. The renderer still remained busy, so this is a local response-
+handoff result rather than a Gmail failure. Zero mail was stored and provider-inert recovery passed. The read-model
+also currently offers retry for an attention state rejected by the command's fixed policy. No eleventh request is
+authorized; separate IPC, preload, and renderer settlement provider-inertly before changing behavior.
+
 Posita can now project its durable `live` installation mode through a bounded
 worker-backed application snapshot. That local read model is not Gmail access: it
 starts no sync, uses no credential, and exposes no remote provider IDs or cursor.

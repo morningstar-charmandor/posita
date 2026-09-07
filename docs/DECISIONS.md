@@ -1274,6 +1274,15 @@ failure, and the real encrypted-state-to-trusted-handler integration. No provide
 contract, persistence, timing value, dependency, or private field was added. A tenth observation remains a separate
 owner decision.
 
+Tenth-observation evidence: after separate approval, connection preflight and encrypted state reading completed,
+`sync-retry-eligibility` failed, and `sync-retry-command` completed. Lifecycle dispatch, credential access, and every
+Google stage did not begin. The renderer still displayed its running state until the process was stopped. Zero mail
+was stored, aggregate lifecycle state was clean, and provider-inert recovery passed. This proves two local facts: the
+read-model currently offers retry for an attention state that the command policy rejects, and the safe backend
+response did not settle the visible control. It does not prove whether IPC validation, Electron serialization,
+preload validation, or renderer promise delivery is responsible. Separate that response path provider-inertly before
+changing policy or UI behavior. No eleventh request is authorized.
+
 ## ADR-060: Normalize only Google's documented email-scope alias at token validation
 
 - Status: accepted for Gate 2D provider-inert compatibility

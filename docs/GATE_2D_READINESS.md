@@ -286,6 +286,10 @@ request is authorized.
 That provider-inert checkpoint is now complete: fixed eligibility, lifecycle-dispatch, and command-settlement stages
 separate the remaining local boundary without credentials, provider data, timing, or raw errors. Deterministic tests
 cover normal, rejected, and synchronous-dispatch-failure paths. A tenth observation remains a separate owner decision.
+That tenth observation was separately approved and ran once. Eligibility failed and the safe backend command
+completed before lifecycle or provider work, while the renderer remained busy. Zero mail was stored and recovery
+passed. The next provider-inert checkpoint is the IPC/preload/renderer response handoff and retry-visibility policy
+alignment. No eleventh request is authorized.
 
 ## Original audit evidence
 
