@@ -716,5 +716,6 @@ projects only a safe `available`/`unavailable` retry value derived from the same
 The renderer never receives the stored error code and no longer interprets a broad "Needs attention" label as permission
 to contact Gmail. This is a useful product-engineering lesson from Posita: careful diagnosis reduced eleven ambiguous
 observations to a local lifecycle error, then converted the fix into a versioned, testable contract. Verification passes
-88 test files and 547 tests. A real-window visual check is honestly recorded as pending because macOS was locked; no
-twelfth Gmail request was made or authorized.
+88 test files and 547 tests. A later unlocked real-window check confirmed the current account remains honestly marked
+"Needs attention" while the policy-disallowed Retry control is absent. Disconnect and local-status reload remain
+available. No control was invoked, and no twelfth Gmail request was made or authorized.

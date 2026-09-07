@@ -139,7 +139,8 @@ cleanup during development, and the retry control never restored its mounted gua
 safe response. The retry, disconnect, and open-original controls now use replay-safe guards. The live-mail read model
 is version 3 and carries only a safe retry-availability value derived from the same fixed backend policy; attention
 states no longer automatically expose Retry. Automated verification passes with 547 tests. A visual inspection of
-the real local state remains pending because macOS was locked, and no twelfth request is authorized.
+the real local state later passed: the account remains truthfully attention-required and the policy-disallowed Retry
+control is absent. No control was invoked, no provider request occurred, and no twelfth request is authorized.
 
 The trusted backend now defines a bounded provider-independent authorization
 session contract, deterministic fake, and real Google desktop protocol

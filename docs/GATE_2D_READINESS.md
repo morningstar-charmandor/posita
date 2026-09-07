@@ -302,9 +302,9 @@ That provider-inert boundary is now resolved. React Strict Mode replayed cleanup
 controls did not restore their mounted guards during the second setup, causing them to ignore valid settled responses.
 Replay-safe guards and Strict Mode tests now cover retry, disconnect, and open-original. Live-mail read contract v3
 also projects safe retry availability from the existing trusted policy, preventing policy-rejected attention states
-from offering another provider request. Canonical verification passes 88 test files and 547 tests. Startup-only visual
-inspection was attempted without invoking a control, but macOS was locked; it remains pending. No twelfth request is
-authorized.
+from offering another provider request. Canonical verification passes 88 test files and 547 tests. A later unlocked,
+startup-only inspection confirmed the current account remains attention-required with local reload and confirmed
+disconnect available, while Retry is absent. No control was invoked and no twelfth request is authorized.
 
 ## Original audit evidence
 

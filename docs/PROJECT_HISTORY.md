@@ -2923,6 +2923,18 @@ preload validation, or renderer promise settlement. It is not a Gmail result. No
 The next exact step is an unlocked startup-only inspection confirming the current review-required account does not
 offer Retry. No twelfth live request is authorized.
 
+### 2026-09-07 — Unlocked provider-inert retry-visibility inspection
+
+- launched the verified local build without invoking any account or provider control,
+- visually confirmed the real connected account remains truthfully labeled `Needs attention`,
+- confirmed the policy-disallowed Retry control is absent,
+- confirmed local-status reload and the existing typed-confirmation Disconnect entry remain available,
+- closed the development runtime without a Gmail request, credential read, twelfth retry, disconnect, or mailbox action,
+- changed only continuity evidence and the machine-readable milestone state.
+
+The UI correction is now visually verified. The next provider-affecting recovery choice belongs to the owner; no
+twelfth live request is authorized.
+
 ## How future entries should be written
 
 For each material milestone, record:

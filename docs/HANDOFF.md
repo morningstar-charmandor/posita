@@ -67,8 +67,9 @@ controls now restore their guards on every setup and have Strict Mode settlement
 contract is now v3 and projects only `available` or `unavailable` retry status from the extracted pure policy also used
 by the trusted command. The renderer no longer infers provider permission from a broad attention state. No credential,
 provider request, schema migration, dependency, AI, or mailbox mutation was involved. Canonical verification passes
-88 test files and 547 tests. A startup-only provider-inert visual check was attempted, but macOS was locked; do not
-claim visual confirmation. No twelfth live request is authorized.
+88 test files and 547 tests. A later unlocked startup-only inspection confirmed the current real account remains
+truthfully attention-required, keeps local-status reload and confirmed disconnect, and no longer exposes the
+policy-disallowed Retry control. No control was invoked and no twelfth live request is authorized.
 
 Milestone change report: `providerMailSyncRetryPolicy` is the one extracted pure policy module; the existing status
 service and retry command now consume it, and the encrypted projection uses it only to emit the bounded v3
@@ -554,10 +555,11 @@ retention, account removal, disconnect, full local deletion, explicit confirmati
 safe status, full-deletion startup recovery, read-only lifecycle UI, and explicitly
 confirmed local deletion are complete at their current layers. Continue in this order:
 
-1. Treat the post-main response defect and durable retry-visibility mismatch as corrected provider-inertly. When the
-   Mac is unlocked, perform a startup-only visual inspection: confirm the current review-required account exposes no
-   Retry control, and do not click any provider control. Keep the message-batch split live-unobserved. Do not issue a
-   twelfth request without a new owner decision.
+1. Treat the post-main response defect and durable retry-visibility mismatch as corrected and visually verified
+   provider-inertly. The current durable state is policy-rejected, so do not restore or invoke Retry by assumption.
+   The next provider-affecting recovery is an owner decision: retain the connected account for further provider-inert
+   diagnosis, or use the existing typed-confirmation disconnect and later reconnect path. Keep the message-batch split
+   live-unobserved. Do not issue a twelfth request without a new owner decision.
 2. Treat the local account-connection recovery UI as complete at its current boundary. Do not add
    automatic account-pair repair; failed execution must continue to require fresh review.
 3. Treat automatic retention scheduling and its Settings status as complete at

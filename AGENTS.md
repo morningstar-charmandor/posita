@@ -111,7 +111,9 @@ exists deeper in the tree.
   guards with Strict Mode regression coverage. Live-mail read contract v3 also projects only `available` or
   `unavailable` retry status from the same fixed trusted policy used by the command; the renderer no longer infers
   permission from a broad attention state. No provider request occurred. Canonical verification passes with 547
-  tests. A provider-inert visual inspection remains pending because macOS was locked; no twelfth request is authorized.
+  tests. A later unlocked provider-inert startup inspection confirmed the real account remains truthfully
+  attention-required, exposes local reload and confirmed disconnect, and no longer offers the policy-disallowed Retry
+  control. No control was invoked, no provider request occurred, and no twelfth request is authorized.
 - Current data: the local installation is live-empty; deterministic fixtures remain
   repository/test assets but were atomically removed from the live installation.
 - Encrypted provider-account and sync-state storage contains one real connected account.

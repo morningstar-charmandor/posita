@@ -1385,4 +1385,5 @@ retrieval or normalization result.
   and known policy-rejected states do not invite another provider request. No error code, provider payload, credential,
   cursor, raw failure, or timing enters the renderer. No dependency, database migration, Gmail request, AI capability,
   or mailbox mutation is added. The v2 live-read shape is rejected rather than retained as a parallel compatibility
-  path. Automated verification passes 88 test files and 547 tests; visual inspection is pending because macOS was locked.
+  path. Automated verification passes 88 test files and 547 tests. A later unlocked provider-inert startup inspection
+  confirmed the current policy-rejected account no longer renders Retry; no control or provider request was invoked.
