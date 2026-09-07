@@ -32,7 +32,10 @@ export function GoogleAccountDisconnectControl({
 }): React.JSX.Element {
   const [state, setState] = useState<State>({ kind: 'idle' })
   const mounted = useRef(true)
-  useEffect(() => () => { mounted.current = false }, [])
+  useEffect(() => {
+    mounted.current = true
+    return () => { mounted.current = false }
+  }, [])
 
   const prepare = async (): Promise<void> => {
     setState({ kind: 'preparing' })

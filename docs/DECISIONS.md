@@ -1367,3 +1367,22 @@ Implementation evidence: the seventh command was invoked once but emitted no cre
 five-minute observation, so it did not exercise this decision's message stages. Electron main sampled idle, zero
 mail was stored, and provider-inert restart recovered the UI. This is a separate pre-provider lifecycle wait, not a
 retrieval or normalization result.
+
+## ADR-063: Make async controls Strict-Mode-safe and project retry permission explicitly
+
+- Status: accepted for Gate 2D provider-inert UI correctness
+- Context: the eleventh observation proved trusted command and IPC-handler completion while the development renderer
+  stayed busy. React Strict Mode intentionally replays effect setup and cleanup once. Three async controls initialized
+  a mounted flag only during render, set it false during replay cleanup, and never restored it during the second setup;
+  they therefore discarded later valid responses. Separately, the live renderer inferred Retry from broad offline or
+  attention status even when the trusted command's fixed durable policy rejected that failure.
+- Decision: restore each affected mounted guard during every effect setup and retain cleanup suppression after a real
+  unmount. Exercise retry, disconnect, and open-original settlement under React Strict Mode. Version the bounded live
+  read contract from v2 to v3 and add exactly one `available`/`unavailable` retry projection per account, derived in
+  the encrypted read model from the extracted pure retry-policy source used by the trusted command. The renderer may
+  show Retry only for `available`; main remains authoritative and rechecks connection consistency, overlap, and policy.
+- Consequence: development and production lifecycle semantics agree, valid local responses are not silently discarded,
+  and known policy-rejected states do not invite another provider request. No error code, provider payload, credential,
+  cursor, raw failure, or timing enters the renderer. No dependency, database migration, Gmail request, AI capability,
+  or mailbox mutation is added. The v2 live-read shape is rejected rather than retained as a parallel compatibility
+  path. Automated verification passes 88 test files and 547 tests; visual inspection is pending because macOS was locked.

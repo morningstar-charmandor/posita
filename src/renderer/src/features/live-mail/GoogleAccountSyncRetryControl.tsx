@@ -21,7 +21,10 @@ export function GoogleAccountSyncRetryControl({
 }: GoogleAccountSyncRetryControlProps): React.JSX.Element {
   const [state, setState] = useState<State>({ kind: 'idle' })
   const mounted = useRef(true)
-  useEffect(() => () => { mounted.current = false }, [])
+  useEffect(() => {
+    mounted.current = true
+    return () => { mounted.current = false }
+  }, [])
 
   const retry = (): void => {
     if (state.kind === 'running') return

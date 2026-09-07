@@ -1,5 +1,5 @@
 import type { MailDataset } from './domain'
-import type { LiveMailSnapshotV2 } from './liveMail'
+import type { LiveMailSnapshotV3 } from './liveMail'
 import type {
   LiveMailMessageDetailRequestV1,
   LiveMailMessageDetailResultV1
@@ -112,7 +112,7 @@ export interface AppSnapshotV1 {
   dataset: MailDataset
 }
 
-export type ApplicationMailSnapshotV1 = AppSnapshotV1 | LiveMailSnapshotV2
+export type ApplicationMailSnapshotV1 = AppSnapshotV1 | LiveMailSnapshotV3
 
 export type AppErrorCodeV1 =
   | 'INVALID_REQUEST'

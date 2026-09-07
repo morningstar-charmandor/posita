@@ -9,44 +9,11 @@ import {
   isSyncAccountResultV1,
   type SyncAccountRequestV1
 } from './mailSync'
-
-export type ProviderMailSyncRetryDispositionV1 =
-  | 'retry-allowed'
-  | 'retry-later'
-  | 'reconnect-required'
-  | 'review-required'
-  | 'cancelled'
-
-export interface ProviderMailSyncRetryPolicyV1 {
-  version: 1
-  errorCode: SyncFailureCode
-  disposition: ProviderMailSyncRetryDispositionV1
-}
-
-const retryPolicy: Record<SyncFailureCode, ProviderMailSyncRetryDispositionV1> = {
-  OFFLINE: 'retry-allowed',
-  PROVIDER_UNAVAILABLE: 'retry-allowed',
-  QUOTA_EXHAUSTED: 'retry-later',
-  AUTHENTICATION_EXPIRED: 'reconnect-required',
-  PERMISSION_REVOKED: 'reconnect-required',
-  INVALID_CURSOR: 'review-required',
-  MALFORMED_PAYLOAD: 'review-required',
-  INVALID_SYNC_REQUEST: 'review-required',
-  SYNC_CHECKPOINT_CONFLICT: 'review-required',
-  SYNC_STORAGE_FAILED: 'retry-allowed',
-  SYNC_BATCH_LIMIT_REACHED: 'retry-allowed',
-  SYNC_CANCELLED: 'cancelled',
-  SYNC_ATTEMPT_TIMED_OUT: 'retry-allowed',
-  SYNC_INTERRUPTED: 'retry-allowed'
-}
-
-export const providerMailSyncRetryPolicy = (
-  errorCode: SyncFailureCode
-): ProviderMailSyncRetryPolicyV1 => ({
-  version: 1,
-  errorCode,
-  disposition: retryPolicy[errorCode]
-})
+import {
+  isProviderMailSyncFailureCode,
+  providerMailSyncRetryPolicy,
+  type ProviderMailSyncRetryPolicyV1
+} from './providerMailSyncRetryPolicy'
 
 export class ProviderMailSyncStatusError extends Error {
   constructor(message: string, readonly retryable: boolean, options?: ErrorOptions) {
@@ -84,9 +51,9 @@ export class ProviderMailSyncStatusService {
     state: ProviderSyncStateV1
     policy: ProviderMailSyncRetryPolicyV1
   } {
-    if (!isSyncAccountRequestV1(request) || typeof errorCode !== 'string' ||
-        !Object.hasOwn(retryPolicy, errorCode)) throw this.invalid()
-    const code = errorCode as SyncFailureCode
+    if (!isSyncAccountRequestV1(request) ||
+        !isProviderMailSyncFailureCode(errorCode)) throw this.invalid()
+    const code: SyncFailureCode = errorCode
     const policy = providerMailSyncRetryPolicy(code)
     const state = policy.disposition === 'cancelled'
       ? this.save(request, { status: 'idle' })

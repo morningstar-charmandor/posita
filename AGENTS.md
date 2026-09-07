@@ -105,7 +105,13 @@ exists deeper in the tree.
   lifecycle dispatch, credential, or Google stage began. Zero provider mail was stored, aggregate lifecycle state was
   clean, and provider-inert recovery passed. The unresolved response defect is now strictly after trusted main's IPC
   handler return—in Electron delivery, preload validation, or renderer promise settlement. No twelfth request is
-  authorized. Separate those post-main boundaries provider-inertly before changing behavior.
+  authorized. Provider-inert reproduction then identified the exact renderer cause: React Strict Mode's development
+  effect replay ran cleanup once, but the affected controls never restored their mounted guard, so they discarded
+  every later settled response. The retry, disconnect, and open-original controls now use replay-safe lifecycle
+  guards with Strict Mode regression coverage. Live-mail read contract v3 also projects only `available` or
+  `unavailable` retry status from the same fixed trusted policy used by the command; the renderer no longer infers
+  permission from a broad attention state. No provider request occurred. Canonical verification passes with 547
+  tests. A provider-inert visual inspection remains pending because macOS was locked; no twelfth request is authorized.
 - Current data: the local installation is live-empty; deterministic fixtures remain
   repository/test assets but were atomically removed from the live installation.
 - Encrypted provider-account and sync-state storage contains one real connected account.

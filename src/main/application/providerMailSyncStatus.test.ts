@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import type { ProviderSyncStateV1, SyncFailureCode } from './accountState'
 import {
-  ProviderMailSyncStatusService,
-  providerMailSyncRetryPolicy
+  ProviderMailSyncStatusService
 } from './providerMailSyncStatus'
+import { providerMailSyncRetryPolicy } from './providerMailSyncRetryPolicy'
 
 const request = { version: 1 as const, accountId: 'work', provider: 'google' as const }
 

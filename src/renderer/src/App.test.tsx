@@ -156,7 +156,7 @@ describe('Posita vertical slice', () => {
         value: {
           ...successResponse.value,
           snapshot: {
-            version: 2,
+            version: 3,
             dataMode: 'live-canonical',
             loadedAt: '2026-09-01T05:00:00.000Z',
             status: 'empty',
@@ -182,7 +182,7 @@ describe('Posita vertical slice', () => {
       value: {
         ...successResponse.value,
         snapshot: {
-          version: 2 as const,
+          version: 3 as const,
           dataMode: 'live-canonical' as const,
           loadedAt: '2026-09-01T05:00:00.000Z',
           status: 'offline' as const,
@@ -195,6 +195,7 @@ describe('Posita vertical slice', () => {
               displayLabel: 'Work'
             },
             status: 'offline' as const,
+            syncRetry: 'available' as const,
             lastSuccessAt: '2026-08-31T05:00:00.000Z'
           }],
           messages: [],
@@ -221,7 +222,7 @@ describe('Posita vertical slice', () => {
         value: {
           ...successResponse.value,
           snapshot: {
-            version: 2,
+            version: 3,
             dataMode: 'live-canonical',
             loadedAt: '2026-09-01T05:00:00.000Z',
             status: 'ready',
@@ -232,7 +233,8 @@ describe('Posita vertical slice', () => {
                 status: 'available',
                 mailboxAddress: 'owner.work@example.test'
               },
-              status: 'ready'
+              status: 'ready',
+              syncRetry: 'unavailable'
             }],
             messages: [{
               id: 'message-live-1',

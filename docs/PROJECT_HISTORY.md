@@ -2904,6 +2904,25 @@ authorized.
 This rules out trusted command and IPC-handler settlement. The remaining local response defect is Electron delivery,
 preload validation, or renderer promise settlement. It is not a Gmail result. No twelfth request is authorized.
 
+### 2026-09-07 — Provider-inert renderer settlement and retry-policy alignment
+
+- reproduced the post-main failure under the same React Strict Mode used by the development renderer,
+- identified the exact cause: replay cleanup set the mounted guard false and the second effect setup did not restore it,
+- made retry, disconnect, and open-original lifecycle guards replay-safe while preserving real-unmount suppression,
+- exercised all three affected async controls under Strict Mode,
+- extracted the existing pure retry policy so the trusted command and encrypted read projection share one authority,
+- versioned the bounded live-mail read contract from v2 to v3 with only `available`/`unavailable` retry projection,
+- rendered Retry only when that safe projection permits it; trusted main still rechecks consistency, overlap, and policy,
+- rejected the old v2 live-read shape instead of retaining a parallel compatibility path,
+- added contract, worker, encrypted-projection, policy-failure, renderer, and Strict Mode coverage,
+- passed structure/security, strict typecheck, 88 test files with 547 tests, and production Electron builds,
+- attempted a startup-only provider-inert visual check without clicking any control; macOS was locked, so visual
+  confirmation remains pending,
+- made no Gmail request, credential read, dependency, database migration, AI call, or mailbox mutation.
+
+The next exact step is an unlocked startup-only inspection confirming the current review-required account does not
+offer Retry. No twelfth live request is authorized.
+
 ## How future entries should be written
 
 For each material milestone, record:

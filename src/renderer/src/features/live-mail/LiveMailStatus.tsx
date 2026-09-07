@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { AlertTriangle, CloudOff, Database, RefreshCw } from 'lucide-react'
-import type { LiveMailSnapshotV2 } from '@shared/liveMail'
+import type { LiveMailSnapshotV3 } from '@shared/liveMail'
 import { POSITA_PROTOCOL_VERSION } from '@shared/contracts'
 import type { LiveMailMessageDetailV1 } from '@shared/liveMailDetail'
 import type { LiveMailMessageDetailDataSource } from '../../application/liveMailMessageDetailDataSource'
@@ -11,7 +11,7 @@ import type { GoogleAccountConnectionPreflightDataSource } from '../../applicati
 import { GoogleAccountDisconnectControl } from '../settings/GoogleAccountDisconnectControl'
 import { GoogleAccountSyncRetryControl } from './GoogleAccountSyncRetryControl'
 
-const statusCopy: Record<LiveMailSnapshotV2['status'], {
+const statusCopy: Record<LiveMailSnapshotV3['status'], {
   title: string
   detail: string
 }> = {
@@ -37,7 +37,7 @@ const statusCopy: Record<LiveMailSnapshotV2['status'], {
   }
 }
 
-const accountStatusLabel: Record<LiveMailSnapshotV2['accounts'][number]['status'], string> = {
+const accountStatusLabel: Record<LiveMailSnapshotV3['accounts'][number]['status'], string> = {
   'not-synced': 'Not synced',
   syncing: 'Sync state recorded',
   ready: 'Ready',
@@ -47,7 +47,7 @@ const accountStatusLabel: Record<LiveMailSnapshotV2['accounts'][number]['status'
 }
 
 export interface LiveMailStatusProps {
-  snapshot: LiveMailSnapshotV2
+  snapshot: LiveMailSnapshotV3
   onReload: () => void
   detailDataSource: LiveMailMessageDetailDataSource
   openOriginalDataSource: OpenLiveMailOriginalDataSource
@@ -147,7 +147,7 @@ export function LiveMailStatus({
               <div className="live-mail-account-actions">
                 <strong>{accountStatusLabel[account.status]}</strong>
                 {googleAccountDataSource &&
-                  (account.status === 'offline' || account.status === 'attention-required') && (
+                  account.syncRetry === 'available' && (
                     <GoogleAccountSyncRetryControl
                       accountId={account.accountId}
                       dataSource={googleAccountDataSource}

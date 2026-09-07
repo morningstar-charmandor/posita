@@ -11,11 +11,14 @@ describe('GoogleAccountSyncRetryControl', () => {
     const pending = new Promise((resolve) => { finish = resolve })
     const retrySync = vi.fn(() => pending as never)
     const onSynced = vi.fn()
-    render(<GoogleAccountSyncRetryControl
-      accountId="account-work-1"
-      dataSource={{ retrySync }}
-      onSynced={onSynced}
-    />)
+    render(
+      <GoogleAccountSyncRetryControl
+        accountId="account-work-1"
+        dataSource={{ retrySync }}
+        onSynced={onSynced}
+      />,
+      { reactStrictMode: true }
+    )
 
     fireEvent.click(screen.getByRole('button', { name: 'Retry Gmail sync' }))
     expect(screen.getByRole('button', { name: 'Syncing Gmail…' })).toBeDisabled()

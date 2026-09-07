@@ -25,7 +25,10 @@ export function OpenOriginalConfirmation({
 }: OpenOriginalConfirmationProps): React.JSX.Element {
   const [state, setState] = useState<OpenState>({ status: 'idle' })
   const active = useRef(true)
-  useEffect(() => () => { active.current = false }, [])
+  useEffect(() => {
+    active.current = true
+    return () => { active.current = false }
+  }, [])
 
   const open = (): void => {
     setState({ status: 'opening' })

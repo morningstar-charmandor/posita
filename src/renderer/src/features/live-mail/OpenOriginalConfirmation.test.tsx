@@ -11,12 +11,15 @@ describe('OpenOriginalConfirmation', () => {
       ok: true as const,
       value: { version: 1 as const, status: 'external-open-requested' as const }
     }))
-    render(<OpenOriginalConfirmation
-      accountId="account-work-1"
-      messageId="message-1"
-      accountLabel="Work"
-      dataSource={{ openOriginal }}
-    />)
+    render(
+      <OpenOriginalConfirmation
+        accountId="account-work-1"
+        messageId="message-1"
+        accountLabel="Work"
+        dataSource={{ openOriginal }}
+      />,
+      { reactStrictMode: true }
+    )
     fireEvent.click(screen.getByRole('button', { name: 'Open original in Gmail…' }))
     expect(openOriginal).not.toHaveBeenCalled()
     const dialog = screen.getByRole('dialog', { name: 'Open Gmail in your browser?' })

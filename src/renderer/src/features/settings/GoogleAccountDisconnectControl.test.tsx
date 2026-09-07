@@ -29,15 +29,18 @@ describe('GoogleAccountDisconnectControl', () => {
       value: { version: 1, operationId: 'operation-1', accountId: 'account-1', status: 'disconnected' }
     })
     const disconnected = vi.fn()
-    render(<GoogleAccountDisconnectControl
-      accountId="account-1"
-      accountLabel="owner@example.test"
-      dataSource={{
-        prepare: vi.fn(), connect: vi.fn(), cancel: vi.fn(), retrySync: vi.fn(),
-        prepareDisconnect, executeDisconnect
-      }}
-      onDisconnected={disconnected}
-    />)
+    render(
+      <GoogleAccountDisconnectControl
+        accountId="account-1"
+        accountLabel="owner@example.test"
+        dataSource={{
+          prepare: vi.fn(), connect: vi.fn(), cancel: vi.fn(), retrySync: vi.fn(),
+          prepareDisconnect, executeDisconnect
+        }}
+        onDisconnected={disconnected}
+      />,
+      { reactStrictMode: true }
+    )
 
     fireEvent.click(screen.getByRole('button', { name: 'Disconnect…' }))
     const confirm = await screen.findByRole('button', { name: 'Disconnect Gmail' })

@@ -134,6 +134,12 @@ The separately approved eleventh observation completed the trusted IPC response 
 busy. No lifecycle or Google work began, zero mail was stored, and provider-inert recovery passed. This rules out the
 main command and handler: the unresolved response defect is now after trusted main, within Electron delivery, preload
 validation, or renderer promise settlement. No twelfth request is authorized.
+Provider-inert reproduction found the local cause without another Gmail request: React Strict Mode replayed effect
+cleanup during development, and the retry control never restored its mounted guard, so it ignored the already-settled
+safe response. The retry, disconnect, and open-original controls now use replay-safe guards. The live-mail read model
+is version 3 and carries only a safe retry-availability value derived from the same fixed backend policy; attention
+states no longer automatically expose Retry. Automated verification passes with 547 tests. A visual inspection of
+the real local state remains pending because macOS was locked, and no twelfth request is authorized.
 
 The trusted backend now defines a bounded provider-independent authorization
 session contract, deterministic fake, and real Google desktop protocol

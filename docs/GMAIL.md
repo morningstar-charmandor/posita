@@ -84,6 +84,13 @@ The separately approved eleventh observation completed the fixed IPC response ma
 busy. No lifecycle or provider work began, zero mail was stored, and recovery passed. This is a post-main local
 response-delivery defect, not a Gmail failure. No twelfth request is authorized.
 
+Provider-inert reproduction found the response-delivery cause in renderer lifecycle handling, not Electron or Gmail:
+React Strict Mode's development replay set the control's mounted guard false and the next effect setup did not restore
+it. Retry, disconnect, and open-original now restore their guards on every setup and have Strict Mode settlement tests.
+Live-mail read contract v3 separately projects only safe retry availability from the same fixed policy used by the
+trusted command, so broad attention status no longer authorizes a button. No credential was read, no provider request
+occurred, and no twelfth request is authorized.
+
 Posita can now project its durable `live` installation mode through a bounded
 worker-backed application snapshot. That local read model is not Gmail access: it
 starts no sync, uses no credential, and exposes no remote provider IDs or cursor.

@@ -703,3 +703,18 @@ rules out both the backend command and trusted main handler in the real runtime.
 stored, and recovery passed. The remaining defect is now a small post-main boundary—Electron response delivery,
 preload validation, or renderer promise settlement—while the independent retry-visibility policy mismatch remains
 explicit. No twelfth live request is authorized.
+
+Provider-inert reproduction then found one precise UI lifecycle defect. Posita's development renderer uses React
+Strict Mode, which deliberately replays effect setup and cleanup. The affected controls treated that rehearsal cleanup
+as a permanent unmount, so the real settled response was intentionally ignored by their own safety guard. Restoring
+the guard during every setup fixes the response path while preserving stale-update protection after a real unmount.
+The same review caught the identical latent defect in confirmed disconnect and open-original, so all three controls
+now share verified Strict Mode behavior.
+
+The policy mismatch was resolved at the data boundary rather than with more UI guesswork. Live-mail read contract v3
+projects only a safe `available`/`unavailable` retry value derived from the same pure policy used by the trusted command.
+The renderer never receives the stored error code and no longer interprets a broad "Needs attention" label as permission
+to contact Gmail. This is a useful product-engineering lesson from Posita: careful diagnosis reduced eleven ambiguous
+observations to a local lifecycle error, then converted the fix into a versioned, testable contract. Verification passes
+88 test files and 547 tests. A real-window visual check is honestly recorded as pending because macOS was locked; no
+twelfth Gmail request was made or authorized.

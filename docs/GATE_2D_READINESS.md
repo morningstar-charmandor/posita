@@ -298,6 +298,14 @@ renderer remained busy. No lifecycle/provider work began, zero mail was stored, 
 provider-inert boundary is Electron delivery, preload validation, and renderer promise settlement. No twelfth request
 is authorized.
 
+That provider-inert boundary is now resolved. React Strict Mode replayed cleanup during development, and the affected
+controls did not restore their mounted guards during the second setup, causing them to ignore valid settled responses.
+Replay-safe guards and Strict Mode tests now cover retry, disconnect, and open-original. Live-mail read contract v3
+also projects safe retry availability from the existing trusted policy, preventing policy-rejected attention states
+from offering another provider request. Canonical verification passes 88 test files and 547 tests. Startup-only visual
+inspection was attempted without invoking a control, but macOS was locked; it remains pending. No twelfth request is
+authorized.
+
 ## Original audit evidence
 
 - `npm run verify` passes at the audit baseline: 39 test files, 258 tests, strict

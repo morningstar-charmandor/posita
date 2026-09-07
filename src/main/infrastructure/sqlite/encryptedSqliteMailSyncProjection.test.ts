@@ -304,7 +304,25 @@ describe('EncryptedSqliteMailSyncProjection', () => {
             status: 'available',
             mailboxAddress: 'owner.work@example.test'
           },
-          status: 'offline'
+          status: 'offline',
+          syncRetry: 'available'
+        }]
+      })
+
+    offline.accountState.saveSyncState({
+      version: 1,
+      accountId: 'account-work-1',
+      provider: 'google',
+      status: 'error',
+      lastErrorCode: 'MALFORMED_PAYLOAD'
+    })
+    await expect(offline.projection.loadReadModel('2026-09-01T05:00:00.000Z'))
+      .resolves.toMatchObject({
+        status: 'attention-required',
+        accounts: [{
+          accountId: 'account-work-1',
+          status: 'attention-required',
+          syncRetry: 'unavailable'
         }]
       })
   })

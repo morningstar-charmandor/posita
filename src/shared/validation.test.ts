@@ -157,7 +157,7 @@ describe('shared contract validation', () => {
         version: 1,
         mode: 'ready',
         snapshot: {
-          version: 2,
+          version: 3,
           dataMode: 'live-canonical',
           loadedAt: '2026-09-01T05:00:00.000Z',
           status: 'empty',

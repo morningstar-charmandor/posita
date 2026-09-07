@@ -1,15 +1,16 @@
 import '@testing-library/jest-dom/vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { LiveMailAccountV2, LiveMailMessageSummaryV2 } from '@shared/liveMail'
+import type { LiveMailAccountV3, LiveMailMessageSummaryV2 } from '@shared/liveMail'
 import { LiveMailSummaryList } from './LiveMailSummaryList'
 
 afterEach(cleanup)
 
-const accounts: LiveMailAccountV2[] = [{
+const accounts: LiveMailAccountV3[] = [{
   accountId: 'account-work-1',
   provider: 'google',
   status: 'ready',
+  syncRetry: 'unavailable',
   displayIdentity: {
     status: 'available',
     displayLabel: 'Work',
@@ -19,6 +20,7 @@ const accounts: LiveMailAccountV2[] = [{
   accountId: 'account-unknown-1',
   provider: 'google',
   status: 'attention-required',
+  syncRetry: 'unavailable',
   displayIdentity: { status: 'unavailable' }
 }]
 

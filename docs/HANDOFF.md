@@ -60,6 +60,22 @@ The product is a runnable Electron desktop prototype using React, strict TypeScr
 and SQLite. The current installation is live-empty and shows no provider mail; deterministic
 sample data remains only in repository fixtures and sample-mode tests.
 
+The eleventh observation's local response defect is now resolved provider-inertly. React Strict Mode replays effect
+setup/cleanup during development; the retry control set its mounted guard false during that replay and never restored
+it, so a valid settled response was discarded. The same pattern existed in disconnect and open-original. All three
+controls now restore their guards on every setup and have Strict Mode settlement coverage. The bounded live-mail read
+contract is now v3 and projects only `available` or `unavailable` retry status from the extracted pure policy also used
+by the trusted command. The renderer no longer infers provider permission from a broad attention state. No credential,
+provider request, schema migration, dependency, AI, or mailbox mutation was involved. Canonical verification passes
+88 test files and 547 tests. A startup-only provider-inert visual check was attempted, but macOS was locked; do not
+claim visual confirmation. No twelfth live request is authorized.
+
+Milestone change report: `providerMailSyncRetryPolicy` is the one extracted pure policy module; the existing status
+service and retry command now consume it, and the encrypted projection uses it only to emit the bounded v3
+availability value. This replaces the policy's former placement inside the status service and adds no parallel owner.
+Live-read v2 has been removed from source and is rejected at validation; there is no retained compatibility path or
+intentional duplication. Existing IPC, preload, worker, encrypted repository, and lifecycle owners are retained.
+
 The canonical public source repository is
 `https://github.com/morningstar-charmandor/posita`. The local `main` branch is
 expected to track `origin/main`. The persistent `staging` branch tracks
@@ -279,7 +295,8 @@ Implemented:
 - provider-account record v2 with a provider-verified encrypted mailbox address,
   optional bounded user display label, hidden provider subject, exact validation,
   and fail-closed rejection of legacy simulated v1 payloads,
-- live snapshot v2 provenance that exposes only an available address/label or an
+- live snapshot v3 provenance that exposes only an available address/label, an
+  explicit safe retry-availability value, or an
   unavailable safe state, while status UI no longer renders opaque account scope
   as human identity,
 - an exact canonical source-detail v1 contract and existing-worker operation keyed
@@ -537,11 +554,10 @@ retention, account removal, disconnect, full local deletion, explicit confirmati
 safe status, full-deletion startup recovery, read-only lifecycle UI, and explicitly
 confirmed local deletion are complete at their current layers. Continue in this order:
 
-1. Treat the eleventh observation as a completed post-main response-boundary result. Separate Electron response
-   delivery, preload validation, and renderer promise settlement provider-inertly before changing behavior.
-   Reconcile retry-control visibility with the fixed backend retry policy from one shared safe projection; do not
-   broaden the policy or expose private error state by assumption. The message-batch split remains live-unobserved.
-   Do not issue a twelfth request without a new owner decision.
+1. Treat the post-main response defect and durable retry-visibility mismatch as corrected provider-inertly. When the
+   Mac is unlocked, perform a startup-only visual inspection: confirm the current review-required account exposes no
+   Retry control, and do not click any provider control. Keep the message-batch split live-unobserved. Do not issue a
+   twelfth request without a new owner decision.
 2. Treat the local account-connection recovery UI as complete at its current boundary. Do not add
    automatic account-pair repair; failed execution must continue to require fresh review.
 3. Treat automatic retention scheduling and its Settings status as complete at
@@ -591,7 +607,7 @@ shows only the existing bounded summary projection with human account provenance
 and exact source selection. That renderer step added no dependency, schema,
 provider adapter, credential, network request, external action, secret, personal
 mailbox data, or mutation. Provider-
-account record v2 and live snapshot v2 now project the verified encrypted mailbox
+account record v2 and live snapshot v3 now project the verified encrypted mailbox
 address plus optional label while keeping the provider subject hidden; label
 editing remains unexposed. The canonical source-detail query now returns bounded
 plain text and safe metadata through the existing worker and a fixed validated
@@ -612,7 +628,7 @@ disconnect command are now implemented and fully verified with injected seams. T
 next milestone is a person-completed dedicated-account authorization exercise, not
 an automatic credential or account connection.
 The new presentation abstraction is `LiveMailSummaryList`; it consumes the existing
-`LiveMailSnapshotV2` without adding a parallel domain or data source. The other
+`LiveMailSnapshotV3` without adding a parallel domain or data source. The other
 recent abstractions are the shared `LiveMailMessageDetailV1` and open-original
 command contracts, the trusted `ProviderMailSourceDetailSource` and
 `ProviderMailOriginalSourceLocatorSource`, `OpenProviderMailOriginalService`, and

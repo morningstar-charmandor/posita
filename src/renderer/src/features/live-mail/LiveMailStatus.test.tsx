@@ -1,18 +1,19 @@
 import '@testing-library/jest-dom/vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { LiveMailSnapshotV2 } from '@shared/liveMail'
+import type { LiveMailSnapshotV3 } from '@shared/liveMail'
 import { LiveMailStatus } from './LiveMailStatus'
 
 afterEach(cleanup)
 
-const snapshot: LiveMailSnapshotV2 = {
-  version: 2,
+const snapshot: LiveMailSnapshotV3 = {
+  version: 3,
   dataMode: 'live-canonical',
   loadedAt: '2026-09-01T05:00:00.000Z',
   status: 'ready',
   accounts: [{
     accountId: 'account-1', provider: 'google', status: 'ready',
+    syncRetry: 'unavailable',
     displayIdentity: { status: 'available', mailboxAddress: 'owner@example.test' }
   }],
   messages: [{
@@ -56,7 +57,9 @@ describe('LiveMailStatus source inspection', () => {
       snapshot={{
         ...snapshot,
         status: 'attention-required',
-        accounts: [{ ...snapshot.accounts[0]!, status: 'attention-required' }],
+        accounts: [{
+          ...snapshot.accounts[0]!, status: 'attention-required', syncRetry: 'available'
+        }],
         messages: []
       }}
       onReload={reload}
@@ -75,6 +78,31 @@ describe('LiveMailStatus source inspection', () => {
       action: 'retry-google-account-sync',
       accountId: 'account-1'
     })
+  })
+
+  it('does not offer a provider request when the durable retry policy refuses it', () => {
+    const retrySync = vi.fn()
+    render(<LiveMailStatus
+      snapshot={{
+        ...snapshot,
+        status: 'attention-required',
+        accounts: [{
+          ...snapshot.accounts[0]!, status: 'attention-required', syncRetry: 'unavailable'
+        }],
+        messages: []
+      }}
+      onReload={vi.fn()}
+      detailDataSource={{ loadMessageDetail: vi.fn() }}
+      openOriginalDataSource={openOriginalDataSource}
+      googleAccountDataSource={{
+        prepare: vi.fn(), connect: vi.fn(), cancel: vi.fn(), retrySync,
+        prepareDisconnect: vi.fn(), executeDisconnect: vi.fn()
+      }}
+    />)
+
+    expect(screen.queryByRole('button', { name: 'Retry Gmail sync' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Reload local status' })).toBeInTheDocument()
+    expect(retrySync).not.toHaveBeenCalled()
   })
 
   it('shows a bounded summary and loads its plain-text source on request', async () => {

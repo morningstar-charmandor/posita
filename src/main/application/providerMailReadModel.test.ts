@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { LiveMailSnapshotV2 } from '../../shared/liveMail'
+import type { LiveMailSnapshotV3 } from '../../shared/liveMail'
 import { ProviderMailReadModelService } from './providerMailReadModel'
 
-const emptySnapshot = (loadedAt: string): LiveMailSnapshotV2 => ({
-  version: 2,
+const emptySnapshot = (loadedAt: string): LiveMailSnapshotV3 => ({
+  version: 3,
   dataMode: 'live-canonical',
   loadedAt,
   status: 'empty',

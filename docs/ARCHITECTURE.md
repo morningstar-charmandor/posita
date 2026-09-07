@@ -481,10 +481,12 @@ query now reads the durable mode on every load.
 Live mode uses a separate exact read-model contract rather than converting
 canonical records into the fixture dataset. One short-lived serial projection
 worker decrypts and validates canonical account/message/thread records and returns
-at most 50 newest summaries across at most 32 account scopes. The version-2 response
+at most 50 newest summaries across at most 32 account scopes. The version-3 response
 contains canonical source locators, encrypted-account-derived visible address/label
 provenance, sender, timestamp,
-subject, bounded plain-text preview, read state, and attachment count. It excludes
+subject, bounded plain-text preview, read state, attachment count, and one safe
+`available`/`unavailable` sync-retry projection derived from the same fixed policy
+used by the trusted retry command. It excludes
 full bodies, recipients, remote provider IDs, provider-account subjects, cursors,
 database paths, key material, and raw failures. Sample mode stays synchronous and
 unchanged. The application-state method is asynchronous so file-backed decryption
@@ -496,8 +498,9 @@ recent-mail list with visible human account identity, unread and attachment cues
 and direct selection of the exact encrypted local source. It never displays opaque
 account scope, remote provider identity, or full body content in the list. The
 open-original path remains a separate confirmed capability. Reload re-queries local
-state only. A distinct explicit retry control appears only for offline or attention
-states; trusted main rechecks the complete connection and durable retry policy before
+state only. A distinct explicit retry control appears only when the version-3 projection
+marks the durable failure retry-available; trusted main still rechecks complete connection,
+overlap, and policy before
 delegating one account-scoped read to the lifecycle owner.
 
 The canonical source-detail boundary now has one exact version-1 request keyed by

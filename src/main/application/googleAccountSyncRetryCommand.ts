@@ -17,7 +17,7 @@ import { isSyncAccountResultV1 } from './mailSync'
 import {
   providerMailSyncRetryPolicy,
   type ProviderMailSyncRetryDispositionV1
-} from './providerMailSyncStatus'
+} from './providerMailSyncRetryPolicy'
 import type {
   ProviderMailLifecycleAccountOutcomeV1,
   ProviderMailLifecycleOwner
