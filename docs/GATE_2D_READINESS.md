@@ -61,7 +61,7 @@ evidence is recorded separately and contains no committed credential or mailbox 
 | Live application read model | Live-empty attention verified | durable mode-aware query shows the protected account and zero summaries without exposing private storage detail | Reload remains local-only; explicit retry is a separate command |
 | Sync coordinator | Lifecycle-owned, zero-account startup | 90-day path, real worker integration, bounded concurrency, cancellation, retention exclusion, disconnect/deletion quiescence, key teardown, durable status, and explicit retry policy are tested | Manual retry delegates to this owner; no automatic inventory handoff exists |
 | Gmail read adapter | Live attempt, no stored mail | fixed read-only routes, safe `PROVIDER_UNAVAILABLE` state, deterministic HTTP tests | No cursor or provider-mail record exists |
-| Google access-token source | Live-verified through Gmail list | protected refresh read, memory-only access token, bounded optional refresh `id_token` discard, exact reviewed scope validation with only the documented email URI alias, bounded unused response fields ignored per Google guidance, and token-to-Gmail handoff tests | Sixth retry completed token validation, profile, and list; no seventh request is authorized |
+| Google access-token source | Live-verified through Gmail list | protected refresh read, memory-only access token, bounded optional refresh `id_token` discard, exact reviewed scope validation with only the documented email URI alias, bounded unused response fields ignored per Google guidance, and token-to-Gmail handoff tests | Sixth retry completed token validation, profile, and list; the seventh stopped before this source and no eighth request is authorized |
 | AI provider | Deferred | no model adapter, prompt, embedding, or model output path | Fixture summaries/drafts remain explicitly simulated |
 
 ## Blocking gaps before real mail
@@ -266,13 +266,17 @@ separate owner decision.
 The separately approved sixth observation completed token validation, Gmail profile, and Gmail list, then failed
 inside the bounded message-batch stage before projection commit. Zero provider mail was stored and provider-inert
 restart recovery passed. The next gate is provider-inert separation of individual-message transport/body parsing
-from canonical normalization without logging message-derived values; no seventh request is authorized.
+from canonical normalization without logging message-derived values; at that checkpoint no seventh request was authorized.
 That provider-inert separation is now implemented with fixed, at-most-once batch-scoped retrieval and normalization
 stages plus success and failure-path tests. One seventh read-only observation is owner-approved after the canonical
 checkpoint; no eighth request is authorized.
 The seventh command ran once but remained before the first credential/provider stage for five minutes while Electron
 main was idle. It stored zero mail and recovered provider-inertly. The message split therefore remains unobserved in
 the live path; next separate the local connection/lifecycle/retention/checkpoint preflight without provider access.
+That provider-inert separation is now complete with fixed connection-preflight, lifecycle-queue,
+retention-suspension, and encrypted-checkpoint stages plus deterministic settlement, failure, and queued-cancellation
+tests. The fixed command deadline now begins before connection preflight and blocks late aborted work from reaching
+the provider. No Google request occurred. An eighth read-only observation requires a separate owner decision.
 
 ## Original audit evidence
 

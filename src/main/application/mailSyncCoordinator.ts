@@ -21,6 +21,7 @@ import {
 } from './mailSync'
 import {
   observeProviderMailSyncStage,
+  reportProviderMailSyncStage,
   silentProviderMailSyncStageReporter,
   type ProviderMailSyncStageReporter
 } from './providerMailSyncDiagnostics'
@@ -200,14 +201,33 @@ export class MailSyncCoordinator {
     if (!Number.isFinite(now.getTime())) throw invalidRequest()
 
     let checkpoint: MailSyncCheckpointV1 | undefined
+    reportProviderMailSyncStage(this.syncStages, {
+      version: 1,
+      accountId: request.accountId,
+      stage: 'sync-checkpoint-preparation',
+      phase: 'started'
+    })
     try {
       checkpoint = await this.projection.loadCheckpoint(request.accountId)
+      if (checkpoint !== undefined && (!isMailSyncCheckpointV1(checkpoint) ||
+          checkpoint.accountId !== request.accountId || checkpoint.provider !== request.provider)) {
+        throw this.storageFailure()
+      }
+      reportProviderMailSyncStage(this.syncStages, {
+        version: 1,
+        accountId: request.accountId,
+        stage: 'sync-checkpoint-preparation',
+        phase: 'completed'
+      })
     } catch (error) {
+      reportProviderMailSyncStage(this.syncStages, {
+        version: 1,
+        accountId: request.accountId,
+        stage: 'sync-checkpoint-preparation',
+        phase: 'failed'
+      })
+      if (error instanceof MailSyncError) throw error
       throw this.storageFailure(error)
-    }
-    if (checkpoint !== undefined && (!isMailSyncCheckpointV1(checkpoint) ||
-        checkpoint.accountId !== request.accountId || checkpoint.provider !== request.provider)) {
-      throw this.storageFailure()
     }
 
     let expectedCursor = checkpoint?.cursor

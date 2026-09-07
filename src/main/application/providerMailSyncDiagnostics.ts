@@ -1,6 +1,10 @@
 import { isAccountId } from './accountState'
 
 export const PROVIDER_MAIL_SYNC_STAGES = [
+  'connection-preflight',
+  'lifecycle-queue',
+  'retention-suspension',
+  'sync-checkpoint-preparation',
   'credential-read',
   'token-request',
   'token-response',
@@ -62,19 +66,30 @@ export class SafeConsoleProviderMailSyncStageReporter implements ProviderMailSyn
   }
 }
 
+export const reportProviderMailSyncStage = (
+  reporter: ProviderMailSyncStageReporter,
+  event: ProviderMailSyncStageEventV1
+): void => {
+  try {
+    reporter.report(event)
+  } catch {
+    // Diagnostics must never alter sync behavior, including custom reporters.
+  }
+}
+
 export const observeProviderMailSyncStage = async <T>(
   reporter: ProviderMailSyncStageReporter,
   accountId: string,
   stage: ProviderMailSyncStage,
   work: () => Promise<T>
 ): Promise<T> => {
-  reporter.report({ version: 1, accountId, stage, phase: 'started' })
+  reportProviderMailSyncStage(reporter, { version: 1, accountId, stage, phase: 'started' })
   try {
     const result = await work()
-    reporter.report({ version: 1, accountId, stage, phase: 'completed' })
+    reportProviderMailSyncStage(reporter, { version: 1, accountId, stage, phase: 'completed' })
     return result
   } catch (error) {
-    reporter.report({ version: 1, accountId, stage, phase: 'failed' })
+    reportProviderMailSyncStage(reporter, { version: 1, accountId, stage, phase: 'failed' })
     throw error
   }
 }

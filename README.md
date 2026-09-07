@@ -102,6 +102,12 @@ failure paths. The owner has approved one seventh read-only observation after th
 That command ran once but remained before protected credential access or any provider stage for five minutes. The
 idle main process, zero stored mail, clean aggregate lifecycle state, and recovered UI identify a local pre-provider
 wait, not a Gmail result. The message-batch split remains live-unobserved; no eighth request is authorized.
+That local boundary is now separated provider-inertly into fixed connection-preflight, lifecycle-queue,
+retention-suspension, and encrypted-checkpoint stages. Tests prove normal settlement, safe failure reporting, and
+cancellation while queued before retention work. No Google request was made; an eighth observation still requires
+a separate owner decision. Code inspection also found that the command timer previously began after connection
+preflight. It now begins before preflight, returns the bounded safe result if that local check stalls, and retains
+overlap exclusion until the late check settles.
 
 The trusted backend now defines a bounded provider-independent authorization
 session contract, deterministic fake, and real Google desktop protocol

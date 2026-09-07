@@ -1,6 +1,6 @@
 # Posita Continuity Handoff
 
-Last reviewed: 2026-09-05
+Last reviewed: 2026-09-07
 
 This is the first document to read when Posita work continues in a new AI model,
 thread, chat, or development session. It records current state and the safest
@@ -467,15 +467,25 @@ a Gmail failure. The remaining pre-provider boundary includes connection inspect
 retention suspension, and encrypted checkpoint preparation; it must be separated provider-inertly before any eighth
 request.
 
+The pre-provider path is now separated provider-inertly. Fixed `connection-preflight`, `lifecycle-queue`,
+`retention-suspension`, and `sync-checkpoint-preparation` stages use the existing best-effort reporter and contain
+only the opaque account scope plus fixed stage/phase. The queue marker completes only when its lifecycle-owned work
+begins; an already-cancelled queued retry returns the existing timeout outcome without entering retention or provider
+work. Tests cover normal settlement, preflight/checkpoint failures, queued cancellation, and arbitrary reporter
+failure. Production passes one reporter through the retry command, lifecycle owner, coordinator, token source, and
+Gmail adapter. Provider-inert code inspection also found that the accepted whole-attempt deadline was constructed
+after connection preflight. It now starts before that check, returns the safe timeout even if preflight does not
+cooperate, retains overlap exclusion until late settlement, and prevents an aborted late result from entering
+retention or provider work. No credential was read and no Google request occurred. No eighth request is authorized.
+
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,
 safe status, full-deletion startup recovery, read-only lifecycle UI, and explicitly
 confirmed local deletion are complete at their current layers. Continue in this order:
 
-1. The seventh command ended before provider work and the message-batch split remains live-unobserved. Add fixed,
-   privacy-safe provider-inert stages for connection inspection, lifecycle queue/retention suspension, and encrypted
-   checkpoint preparation. Prove exact settlement and cancellation locally. Do not issue an eighth request without
-   a new owner decision.
+1. Treat provider-inert separation of connection inspection, lifecycle queue entry, retention suspension, and
+   encrypted checkpoint preparation as complete. The message-batch split remains live-unobserved. Do not issue an
+   eighth request without a new owner decision; if approved, run exactly once and classify only the last fixed stage.
 2. Treat the local account-connection recovery UI as complete at its current boundary. Do not add
    automatic account-pair repair; failed execution must continue to require fresh review.
 3. Treat automatic retention scheduling and its Settings status as complete at
@@ -668,7 +678,7 @@ credential, personal data, provider request, or mailbox mutation was added.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 87 test files, 534 tests, strict typecheck, structure
+- Current verified baseline: 87 test files, 540 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,

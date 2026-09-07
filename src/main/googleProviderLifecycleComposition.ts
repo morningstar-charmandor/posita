@@ -133,7 +133,8 @@ export const composeGoogleProviderLifecycle = (
       dependencies.retention,
       disconnect,
       dependencies.projection,
-      dependencies.syncStatus
+      dependencies.syncStatus,
+      syncStages
     )
   }
 }

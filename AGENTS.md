@@ -68,8 +68,13 @@ exists deeper in the tree.
   stage for five minutes; Electron main sampled idle, zero provider mail was stored, aggregate inspection found no
   unfinished lifecycle cleanup, and provider-inert restart restored the attention-required UI. It did not exercise
   the new message stages and must not be represented as a Gmail result. No eighth request is authorized. The next
-  milestone is provider-inert separation of connection preflight, lifecycle queue/retention suspension, and sync
-  checkpoint preparation before any further provider observation. Canonical verification passes with 534 tests.
+  provider-inert checkpoint now separates connection preflight, lifecycle queue entry, retention suspension, and
+  encrypted sync-checkpoint preparation with the same non-reflective stage contract. Deterministic tests prove
+  normal settlement, failure classification, queued cancellation before retention work, and reporter-failure
+  isolation. The fixed command deadline now starts before connection preflight, closing the exact unbounded local
+  gap exposed by code inspection while retaining overlap until late work settles. No provider request occurred.
+  Canonical verification passes with 540 tests. An eighth read-only
+  observation remains a separate owner decision.
 - Current data: the local installation is live-empty; deterministic fixtures remain
   repository/test assets but were atomically removed from the live installation.
 - Encrypted provider-account and sync-state storage contains one real connected account.

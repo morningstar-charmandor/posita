@@ -1210,6 +1210,12 @@ provider path: the UI remained busy beyond ten minutes and stored no mail. Provi
 checks prove that both the exact command deadline and its IPC response settle when provider work is
 non-cooperative but does not block the desktop runtime. ADR-059 adds the missing stage evidence.
 
+Later provider-inert inspection found that the implementation created the timer only after connection preflight,
+despite the accepted whole-attempt policy. The timer now starts immediately after validated request/overlap admission,
+before preflight. If preflight does not cooperate, the public command still returns the bounded safe timeout while
+keeping that account excluded until the late preflight settles; an aborted late completion cannot enter retention or
+provider work. Deterministic tests cover this exact path without credentials or network access.
+
 ## ADR-059: Trace only bounded privacy-safe sync stages before another live diagnosis
 
 - Status: accepted for Gate 2D live-sync diagnosis
@@ -1235,6 +1241,15 @@ whole-attempt deadline. A read-only process sample showed Electron main idle. Ze
 were stored, and provider-inert restart recovery returned the account to attention-required. This narrows
 the unresolved boundary to token validation or access-source settlement before Gmail entry; it does not
 prove access-token acceptance and does not authorize a fifth provider request.
+
+Later implementation evidence: the seventh approved command emitted no provider-stage event, so ADR-059's fixed
+stage vocabulary is extended across the existing local path with `connection-preflight`, `lifecycle-queue`,
+`retention-suspension`, and `sync-checkpoint-preparation`. The queue stage completes only when the lifecycle-owned
+operation begins; cancellation before entry skips retention and provider work. Tests prove normal settlement,
+preflight/checkpoint failure classification, queued cancellation, and that arbitrary reporter failure remains inert.
+The fixed whole-attempt deadline now starts before these stages, including connection preflight. No new public
+surface, persistence, dependency, provider request, timing value, or private data is added. An eighth
+live observation remains a separate owner decision.
 
 ## ADR-060: Normalize only Google's documented email-scope alias at token validation
 

@@ -48,6 +48,14 @@ That command emitted no credential or provider stage during five minutes and the
 sub-stages. It was stopped, stored zero mail, and recovered provider-inertly. Treat it as a local pre-provider wait;
 no eighth request is authorized before that boundary is diagnosed provider-inertly.
 
+That pre-provider boundary is now separated with fixed `connection-preflight`, `lifecycle-queue`,
+`retention-suspension`, and `sync-checkpoint-preparation` stages. The lifecycle queue marker completes only when
+the queued operation enters its owner; a cancellation observed before entry skips retention and provider work.
+Deterministic tests cover settlement and failure paths without credentials, network access, or provider data.
+The command's fixed deadline now begins before connection preflight, so a non-cooperative local check returns the
+safe bounded result and cannot continue into provider work after its late settlement. No eighth request has been
+made or authorized.
+
 Posita can now project its durable `live` installation mode through a bounded
 worker-backed application snapshot. That local read model is not Gmail access: it
 starts no sync, uses no credential, and exposes no remote provider IDs or cursor.

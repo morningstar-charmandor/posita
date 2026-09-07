@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { ProviderMailMessageV1, ProviderMailThreadV1 } from '../../shared/providerMail'
 import {
   MailSyncError,
@@ -125,7 +125,7 @@ describe('MailSyncCoordinator', () => {
     })
   })
 
-  it('reports only the bounded projection commit stage', async () => {
+  it('separates checkpoint preparation from the bounded projection commit', async () => {
     const events: string[] = []
     const coordinator = new MailSyncCoordinator(
       new DeterministicFakeMailProviderAdapter([{
@@ -141,9 +141,40 @@ describe('MailSyncCoordinator', () => {
     await coordinator.syncAccount(request())
 
     expect(events).toEqual([
+      'sync-checkpoint-preparation:started',
+      'sync-checkpoint-preparation:completed',
       'projection-commit:started',
       'projection-commit:completed'
     ])
+  })
+
+  it('marks checkpoint preparation failure before provider work begins', async () => {
+    const events: string[] = []
+    const provider = new DeterministicFakeMailProviderAdapter([{
+      accountId: 'account-work-1',
+      batch: batch()
+    }])
+    const projection = new DeterministicFakeMailSyncProjection()
+    vi.spyOn(projection, 'loadCheckpoint').mockRejectedValueOnce(
+      new Error('test-only private storage failure')
+    )
+    const coordinator = new MailSyncCoordinator(
+      provider,
+      projection,
+      clock,
+      2,
+      { report: ({ stage, phase }) => events.push(`${stage}:${phase}`) }
+    )
+
+    await expect(coordinator.syncAccount(request())).rejects.toMatchObject({
+      code: 'SYNC_STORAGE_FAILED',
+      retryable: true
+    })
+    expect(events).toEqual([
+      'sync-checkpoint-preparation:started',
+      'sync-checkpoint-preparation:failed'
+    ])
+    expect(provider.requests).toEqual([])
   })
 
   it('shares one in-flight account sync and keeps different account scopes separate', async () => {

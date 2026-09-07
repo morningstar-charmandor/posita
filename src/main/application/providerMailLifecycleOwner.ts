@@ -15,6 +15,12 @@ import {
   type SyncAccountRequestV1,
   type SyncAccountResultV1
 } from './mailSync'
+import {
+  observeProviderMailSyncStage,
+  reportProviderMailSyncStage,
+  silentProviderMailSyncStageReporter,
+  type ProviderMailSyncStageReporter
+} from './providerMailSyncDiagnostics'
 
 const MAX_STARTUP_ACCOUNTS = 8
 
@@ -134,7 +140,8 @@ export class ProviderMailLifecycleOwner {
     private readonly retention: ProviderMailRetentionLifecycle,
     private readonly disconnect: ProviderMailDisconnectLifecycle,
     private readonly projectionKey: ProviderMailProjectionKeyLifecycle,
-    private readonly syncStatus: ProviderMailSyncStatusLifecycle
+    private readonly syncStatus: ProviderMailSyncStatusLifecycle,
+    private readonly syncStages: ProviderMailSyncStageReporter = silentProviderMailSyncStageReporter
   ) {}
 
   start(accountsValue: unknown): Promise<ProviderMailLifecycleStartupResultV1> {
@@ -195,16 +202,47 @@ export class ProviderMailLifecycleOwner {
     } catch (error) {
       return Promise.reject(error)
     }
-    return this.enqueue(async () => {
+    const accountId = accounts[0]!.accountId
+    reportProviderMailSyncStage(this.syncStages, {
+      version: 1,
+      accountId,
+      stage: 'lifecycle-queue',
+      phase: 'started'
+    })
+    let enteredQueue = false
+    const operation = this.enqueue(async () => {
+      enteredQueue = true
+      reportProviderMailSyncStage(this.syncStages, {
+        version: 1,
+        accountId,
+        stage: 'lifecycle-queue',
+        phase: 'completed'
+      })
       this.assertRunning()
       if (signal?.aborted) return accounts.map((request) => this.timedOut(request))
-      await this.retention.suspend()
+      await observeProviderMailSyncStage(
+        this.syncStages,
+        accountId,
+        'retention-suspension',
+        () => this.retention.suspend()
+      )
       try {
         if (signal?.aborted) return accounts.map((request) => this.timedOut(request))
         return await this.runSyncBatch(accounts, signal)
       } finally {
         if (this.state === 'running') this.retention.resume()
       }
+    })
+    return operation.catch((error: unknown) => {
+      if (!enteredQueue) {
+        reportProviderMailSyncStage(this.syncStages, {
+          version: 1,
+          accountId,
+          stage: 'lifecycle-queue',
+          phase: 'failed'
+        })
+      }
+      throw error
     })
   }
 

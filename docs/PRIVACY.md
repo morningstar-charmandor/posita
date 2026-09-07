@@ -28,6 +28,9 @@ scope. The message-batch boundary now has batch-scoped retrieval and normalizati
 sub-stages; each stage/phase is emitted at most once and receives no message ID, count,
 content, provider payload, raw error, URL, or timestamp. Diagnostics are best-effort,
 non-persistent, and cannot weaken provider behavior or encrypted storage boundaries.
+The same contract now marks connection preflight, lifecycle queue entry, retention suspension,
+and encrypted checkpoint preparation. Those local stages receive no connection result, queue
+length, retention result, checkpoint, cursor, path, timing, or raw failure.
 
 The first approved live-account activation atomically removed all sample compatibility
 records and durably selected live mode. Posita will never mix

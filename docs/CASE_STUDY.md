@@ -650,3 +650,13 @@ The seventh command exposed a different boundary before that experiment could be
 credential or provider stage while Electron main remained idle. Posita stopped the observation, confirmed zero stored
 mail, and recovered locally. The result is recorded as a pre-provider lifecycle wait—not mislabeled as another Gmail
 failure—and the message retrieval/normalization question remains open.
+
+Posita then separated that local path without spending another provider request. The same non-reflective reporter now
+marks connection preflight, lifecycle queue entry, retention suspension, and encrypted checkpoint preparation. Tests
+prove completed and failed boundaries as well as cancellation while queued before retention or provider work. This
+turns a vague local wait into four observable checkpoints while still exposing no connection result, queue detail,
+checkpoint, cursor, timing, provider data, or raw error. Reviewing the exact command then uncovered a concrete policy
+gap: its “whole-attempt” timer started only after connection preflight. Moving timer ownership to the command entrance
+means even a non-cooperative local preflight returns a bounded safe result, while duplicate work stays excluded until
+the late check settles and cannot continue into provider work. Canonical verification passes 87 test files and 540 tests;
+an eighth live observation remains an explicit owner decision.

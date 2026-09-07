@@ -3,6 +3,7 @@ import type { AccountConnectionConsistencyInspector } from './accountConnection'
 import type { ProviderSyncStateV1, SyncFailureCode } from './accountState'
 import { GoogleAccountSyncRetryCommandService } from './googleAccountSyncRetryCommand'
 import type { ProviderMailLifecycleAccountOutcomeV1 } from './providerMailLifecycleOwner'
+import type { ProviderMailSyncStageEventV1 } from './providerMailSyncDiagnostics'
 
 const request = {
   version: 1 as const,
@@ -44,11 +45,14 @@ const connection = (
 
 describe('GoogleAccountSyncRetryCommandService', () => {
   it('runs one reviewed retry through the lifecycle owner and omits private cursor state', async () => {
+    const events: ProviderMailSyncStageEventV1[] = []
     const syncAccounts = vi.fn(async () => [synced()])
     const service = new GoogleAccountSyncRetryCommandService(
       connection(),
       { loadSyncState: () => syncState() },
-      { syncAccounts }
+      { syncAccounts },
+      undefined,
+      { report: (event) => events.push(event) }
     )
 
     await expect(service.execute(request)).resolves.toEqual({
@@ -73,6 +77,42 @@ describe('GoogleAccountSyncRetryCommandService', () => {
       }],
       expect.any(AbortSignal)
     )
+    expect(events).toEqual([
+      {
+        version: 1,
+        accountId: request.accountId,
+        stage: 'connection-preflight',
+        phase: 'started'
+      },
+      {
+        version: 1,
+        accountId: request.accountId,
+        stage: 'connection-preflight',
+        phase: 'completed'
+      }
+    ])
+  })
+
+  it('marks a failed connection preflight without entering lifecycle work', async () => {
+    const events: ProviderMailSyncStageEventV1[] = []
+    const syncAccounts = vi.fn(async () => [synced()])
+    const service = new GoogleAccountSyncRetryCommandService(
+      { inspect: async () => { throw new Error('test-only preflight failure') } },
+      { loadSyncState: () => syncState() },
+      { syncAccounts },
+      undefined,
+      { report: (event) => events.push(event) }
+    )
+
+    await expect(service.execute(request)).resolves.toMatchObject({
+      ok: false,
+      error: { code: 'SYNC_FAILED', retryable: true }
+    })
+    expect(events.map(({ stage, phase }) => `${stage}:${phase}`)).toEqual([
+      'connection-preflight:started',
+      'connection-preflight:failed'
+    ])
+    expect(syncAccounts).not.toHaveBeenCalled()
   })
 
   it('rejects malformed, unavailable, absent, and one-sided connection states', async () => {
@@ -172,8 +212,60 @@ describe('GoogleAccountSyncRetryCommandService', () => {
     })
 
     finish?.([synced()])
-    await Promise.resolve()
+    await new Promise<void>((resolve) => setImmediate(resolve))
     await expect(service.execute(request)).resolves.toMatchObject({ ok: true })
+  })
+
+  it('starts the complete-attempt deadline before connection preflight', async () => {
+    let finishInspection: ((value: {
+      version: 1
+      accountId: string
+      status: 'connected'
+    }) => void) | undefined
+    let inspectionCalls = 0
+    const firstInspection = new Promise<{
+      version: 1
+      accountId: string
+      status: 'connected'
+    }>((resolve) => { finishInspection = resolve })
+    const syncAccounts = vi.fn(async () => [synced()])
+    const events: ProviderMailSyncStageEventV1[] = []
+    const service = new GoogleAccountSyncRetryCommandService(
+      {
+        inspect: async (accountId) => {
+          inspectionCalls += 1
+          return inspectionCalls === 1
+            ? firstInspection
+            : { version: 1, accountId, status: 'connected' }
+        }
+      },
+      { loadSyncState: () => syncState() },
+      { syncAccounts },
+      5,
+      { report: (event) => events.push(event) }
+    )
+
+    await expect(service.execute(request)).resolves.toMatchObject({
+      ok: false,
+      error: {
+        code: 'SYNC_FAILED',
+        retryable: true,
+        message: expect.stringContaining('cancelled the bounded attempt')
+      }
+    })
+    expect(events.map(({ stage, phase }) => `${stage}:${phase}`)).toEqual([
+      'connection-preflight:started'
+    ])
+    expect(syncAccounts).not.toHaveBeenCalled()
+    await expect(service.execute(request)).resolves.toMatchObject({
+      ok: false,
+      error: { code: 'SYNC_IN_PROGRESS', retryable: false }
+    })
+
+    finishInspection?.({ version: 1, accountId: request.accountId, status: 'connected' })
+    await new Promise<void>((resolve) => setImmediate(resolve))
+    await expect(service.execute(request)).resolves.toMatchObject({ ok: true })
+    expect(syncAccounts).toHaveBeenCalledTimes(1)
   })
 
   it('keeps the whole-attempt deadline referenced by the Electron main event loop', async () => {

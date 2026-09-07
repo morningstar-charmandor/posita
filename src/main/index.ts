@@ -139,6 +139,7 @@ app.whenReady().then(async () => {
       )
       if (googleConfiguration.status === 'available' &&
           providerMailReadWorker !== undefined) {
+        const syncStages = new SafeConsoleProviderMailSyncStageReporter()
         const composition = composeGoogleProviderLifecycle({
           configuration: googleConfiguration.configuration,
           secretVault: runtime.secretVault,
@@ -151,7 +152,7 @@ app.whenReady().then(async () => {
           retention: retentionMaintenance,
           syncStatus: runtime.providerMailSyncStatusService,
           openExternal: (url, options) => shell.openExternal(url, options),
-          syncStages: new SafeConsoleProviderMailSyncStageReporter()
+          syncStages
         })
         // Production ownership is now assembled, but provider I/O remains inert.
         // A later reviewed command may pass an explicit account; startup may not.
@@ -173,7 +174,9 @@ app.whenReady().then(async () => {
         googleAccountSyncRetryCommand = new GoogleAccountSyncRetryCommandService(
           connectionConsistency,
           runtime.accountStateRepository,
-          composition.lifecycle
+          composition.lifecycle,
+          undefined,
+          syncStages
         )
         googleAccountDisconnectCommand = new GoogleAccountDisconnectCommandService(
           connectionConsistency,

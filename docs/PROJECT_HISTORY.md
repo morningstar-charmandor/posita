@@ -2796,6 +2796,22 @@ connection inspection, lifecycle queue/retention suspension, or encrypted sync c
 assumed. The next milestone is provider-inert stage separation and settlement evidence before any eighth provider
 observation. Canonical verification remains 87 test files and 534 tests plus all standard checks.
 
+### 2026-09-07 — Provider-inert pre-provider stage separation
+
+- extended the existing fixed diagnostic vocabulary across connection preflight, lifecycle queue entry, retention
+  suspension, and encrypted sync-checkpoint preparation,
+- passed one production reporter through the retry command, lifecycle owner, coordinator, token source, and Gmail adapter,
+- made every reporter implementation best-effort so a thrown diagnostic callback cannot affect sync behavior,
+- verified normal settlement, preflight and checkpoint failures, and cancellation while waiting in the lifecycle queue,
+- corrected the whole-attempt deadline to start before connection preflight and verified that a non-cooperative
+  preflight returns safely while overlap remains blocked until late settlement,
+- emitted no connection result, queue length, retention result, checkpoint, cursor, path, timing, raw error, or provider data,
+- made no credential read, Google request, mailbox read or mutation, schema change, dependency, IPC/UI, or AI change.
+
+This checkpoint can distinguish a connection check, lifecycle queue wait, retention suspension, or checkpoint-worker
+boundary before any provider access. The message retrieval/normalization split remains live-unobserved, and no eighth
+request is authorized. Canonical verification passes 87 test files and 540 tests plus all standard checks.
+
 ## How future entries should be written
 
 For each material milestone, record:

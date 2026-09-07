@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
   SafeConsoleProviderMailSyncStageReporter,
-  observeProviderMailSyncStage
+  observeProviderMailSyncStage,
+  reportProviderMailSyncStage
 } from './providerMailSyncDiagnostics'
 
 describe('provider-mail sync diagnostics', () => {
@@ -46,6 +47,23 @@ describe('provider-mail sync diagnostics', () => {
       'token-request',
       async () => 'access-result'
     )).resolves.toBe('access-result')
+  })
+
+  it('contains failures from any injected diagnostic reporter', async () => {
+    const reporter = { report: () => { throw new Error('test-only reporter failure') } }
+
+    expect(() => reportProviderMailSyncStage(reporter, {
+      version: 1,
+      accountId: 'account-work-1',
+      stage: 'lifecycle-queue',
+      phase: 'started'
+    })).not.toThrow()
+    await expect(observeProviderMailSyncStage(
+      reporter,
+      'account-work-1',
+      'sync-checkpoint-preparation',
+      async () => 'checkpoint-ready'
+    )).resolves.toBe('checkpoint-ready')
   })
 
   it('records a safe failed phase without logging the thrown value', async () => {

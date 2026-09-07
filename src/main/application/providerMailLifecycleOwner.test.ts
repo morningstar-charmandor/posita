@@ -14,6 +14,7 @@ import {
   type ProviderMailSyncLifecycle,
   type ProviderMailSyncStatusLifecycle
 } from './providerMailLifecycleOwner'
+import type { ProviderMailSyncStageEventV1 } from './providerMailSyncDiagnostics'
 
 const request = (accountId = 'work'): SyncAccountRequestV1 => ({
   version: 1,
@@ -107,9 +108,18 @@ class FakeMailMode {
 }
 
 class FakeRetention implements ProviderMailRetentionLifecycle {
+  blockNextSuspend = false
+  private releaseBlockedSuspend: (() => void) | undefined
   constructor(private readonly events: string[]) {}
   start(): void { this.events.push('retention:start') }
-  async suspend(): Promise<void> { this.events.push('retention:suspend') }
+  async suspend(): Promise<void> {
+    this.events.push('retention:suspend')
+    if (this.blockNextSuspend) {
+      this.blockNextSuspend = false
+      await new Promise<void>((resolve) => { this.releaseBlockedSuspend = resolve })
+    }
+  }
+  releaseSuspend(): void { this.releaseBlockedSuspend?.() }
   resume(): void { this.events.push('retention:resume') }
   async stop(): Promise<void> { this.events.push('retention:stop') }
 }
@@ -157,7 +167,10 @@ class FakeSyncStatus implements ProviderMailSyncStatusLifecycle {
   }
 }
 
-const harness = (mode: MailDataModeStateV1['mode'] = 'sample') => {
+const harness = (
+  mode: MailDataModeStateV1['mode'] = 'sample',
+  stageEvents?: ProviderMailSyncStageEventV1[]
+) => {
   const events: string[] = []
   const sync = new FakeSync(events)
   const mailMode = new FakeMailMode(events, mode)
@@ -170,7 +183,10 @@ const harness = (mode: MailDataModeStateV1['mode'] = 'sample') => {
     retention,
     new FakeDisconnect(events),
     projectionKey,
-    syncStatus
+    syncStatus,
+    stageEvents === undefined
+      ? undefined
+      : { report: (event) => stageEvents.push(event) }
   )
   return { events, sync, mailMode, retention, projectionKey, syncStatus, owner }
 }
@@ -322,6 +338,50 @@ describe('ProviderMailLifecycleOwner', () => {
       'retention:resume'
     ])
     expect(syncStatus.states.get('work')).toBe('error:SYNC_ATTEMPT_TIMED_OUT')
+  })
+
+  it('separates lifecycle queue entry from retention suspension', async () => {
+    const stageEvents: ProviderMailSyncStageEventV1[] = []
+    const { owner } = harness('live', stageEvents)
+    await owner.start([])
+
+    await owner.syncAccounts([request('work')])
+
+    expect(stageEvents.map(({ stage, phase }) => `${stage}:${phase}`)).toEqual([
+      'lifecycle-queue:started',
+      'lifecycle-queue:completed',
+      'retention-suspension:started',
+      'retention-suspension:completed'
+    ])
+  })
+
+  it('shows a queued manual retry and honors cancellation before retention work', async () => {
+    const stageEvents: ProviderMailSyncStageEventV1[] = []
+    const { owner, retention } = harness('live', stageEvents)
+    await owner.start([])
+    retention.blockNextSuspend = true
+    const activation = owner.activateConnectedAccount(request('personal'))
+    await flush()
+
+    const controller = new AbortController()
+    const queued = owner.syncAccounts([request('work')], controller.signal)
+    await flush()
+    expect(stageEvents.map(({ stage, phase }) => `${stage}:${phase}`)).toEqual([
+      'lifecycle-queue:started'
+    ])
+
+    controller.abort()
+    retention.releaseSuspend()
+    await activation
+    await expect(queued).resolves.toMatchObject([{
+      accountId: 'work',
+      status: 'retry-required',
+      errorCode: 'SYNC_ATTEMPT_TIMED_OUT'
+    }])
+    expect(stageEvents.map(({ stage, phase }) => `${stage}:${phase}`)).toEqual([
+      'lifecycle-queue:started',
+      'lifecycle-queue:completed'
+    ])
   })
 
   it('acts as the quiescence gate for separately confirmed full deletion', async () => {
