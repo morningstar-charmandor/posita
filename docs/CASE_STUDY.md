@@ -676,3 +676,10 @@ Electron main was idle, zero mail was stored, aggregate lifecycle state was clea
 passed. This is another useful negative result: the encrypted read itself did settle live. Posita now records the
 smaller unresolved boundary—retry eligibility/lifecycle dispatch versus command-response settlement—without guessing
 which side is responsible or presenting the run as Gmail ingestion. No tenth live request is authorized.
+
+Posita then separated that last local ambiguity without touching Google. Fixed stages now show whether the encrypted
+state is policy-eligible, whether the synchronous handoff entered the single lifecycle owner, and whether the command
+prepared a bounded safe response before IPC validation. Tests cover rejection, dispatch failure, and the full local
+encrypted-state-to-trusted-handler success path. This preserves the investigation's core discipline: increase
+evidence before spending another live request. The canonical gate passes 88 test files and 544 tests; a tenth live
+observation remains a separate owner decision.

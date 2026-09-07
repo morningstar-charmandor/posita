@@ -132,14 +132,20 @@ describe('Google sync retry encrypted-state and IPC integration', () => {
       accountId
     })).resolves.toMatchObject({ ok: true, value: { accountId, status: 'synced' } })
     expect(stages.map(({ stage, phase }) => `${stage}:${phase}`)).toEqual([
+      'sync-retry-command:started',
       'connection-preflight:started',
       'connection-preflight:completed',
       'sync-state-read:started',
       'sync-state-read:completed',
+      'sync-retry-eligibility:started',
+      'sync-retry-eligibility:completed',
+      'lifecycle-dispatch:started',
       'lifecycle-queue:started',
+      'lifecycle-dispatch:completed',
       'lifecycle-queue:completed',
       'retention-suspension:started',
-      'retention-suspension:completed'
+      'retention-suspension:completed',
+      'sync-retry-command:completed'
     ])
   })
 })

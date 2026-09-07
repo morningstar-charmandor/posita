@@ -117,6 +117,10 @@ connection preflight and encrypted sync-state reading, but emitted no lifecycle-
 It was stopped once while Electron main was idle, stored zero mail, left no unfinished lifecycle work, and recovered
 provider-inertly. This rules out a non-settling encrypted state read in that observation and narrows the remaining
 live-Electron gap to retry eligibility/dispatch or command-response settlement. No tenth request is authorized.
+That final local gap is now separated provider-inertly with fixed eligibility, lifecycle-dispatch, and command-
+settlement stages. Deterministic tests prove allowed and rejected policy paths, synchronous dispatch failure, normal
+lifecycle settlement, and diagnostic isolation without credentials or provider access. A tenth live observation
+remains a separate owner decision.
 
 The trusted backend now defines a bounded provider-independent authorization
 session contract, deterministic fake, and real Google desktop protocol

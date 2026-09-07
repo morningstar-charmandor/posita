@@ -283,6 +283,9 @@ stage now closes the one unmarked local boundary. The separately approved ninth 
 that encrypted read, but no lifecycle queue or provider stage began. It stored zero mail and recovered safely. The
 next provider-inert checkpoint must distinguish eligibility/dispatch from command-response settlement. No tenth
 request is authorized.
+That provider-inert checkpoint is now complete: fixed eligibility, lifecycle-dispatch, and command-settlement stages
+separate the remaining local boundary without credentials, provider data, timing, or raw errors. Deterministic tests
+cover normal, rejected, and synchronous-dispatch-failure paths. A tenth observation remains a separate owner decision.
 
 ## Original audit evidence
 

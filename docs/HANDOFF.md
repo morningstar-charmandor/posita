@@ -498,15 +498,23 @@ lifecycle operation. A provider-inert restart restored the attention-required UI
 out a non-settling encrypted state read in that observation, but does not distinguish retry eligibility/lifecycle
 dispatch from safe command-response settlement. No tenth request is authorized.
 
+The remaining local boundary is now separated provider-inertly. Fixed `sync-retry-eligibility`,
+`lifecycle-dispatch`, and `sync-retry-command` stages distinguish a policy-approved retry, the synchronous handoff
+into the existing lifecycle owner, and preparation of a bounded safe command response before IPC validation. Tests
+cover normal settlement, rejected eligibility, synchronous dispatch failure, and the exact encrypted-state-to-
+trusted-handler path. Diagnostics remain best-effort and receive no state value, policy code, queue detail, timing,
+provider payload, raw error, or credential. No provider request occurred. Canonical verification passes 88 test
+files and 544 tests. A tenth live observation remains a separate owner decision.
+
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,
 safe status, full-deletion startup recovery, read-only lifecycle UI, and explicitly
 confirmed local deletion are complete at their current layers. Continue in this order:
 
-1. Treat the ninth observation as a completed pre-provider result: connection preflight and encrypted sync-state
-   reading both completed, while lifecycle queue entry and every provider stage did not begin. Separate retry
-   eligibility/lifecycle dispatch from command-response settlement provider-inertly before any further live action.
-   The message-batch split remains live-unobserved. Do not issue a tenth request without a new owner decision.
+1. Treat the ninth observation and provider-inert local-settlement separation as complete. The next controlled live
+   observation, if separately approved, can distinguish eligibility, lifecycle dispatch/queue, and safe command
+   settlement using fixed non-reflective stages. The message-batch split remains live-unobserved. Do not issue a
+   tenth request without a new owner decision.
 2. Treat the local account-connection recovery UI as complete at its current boundary. Do not add
    automatic account-pair repair; failed execution must continue to require fresh review.
 3. Treat automatic retention scheduling and its Settings status as complete at
@@ -699,7 +707,7 @@ credential, personal data, provider request, or mailbox mutation was added.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 88 test files, 542 tests, strict typecheck, structure
+- Current verified baseline: 88 test files, 544 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,

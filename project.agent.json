@@ -7,7 +7,7 @@
     "repository": "https://github.com/morningstar-charmandor/posita",
     "repositoryVisibility": "public",
     "canonicalBranch": "main",
-    "currentMilestone": "gate-2d-ninth-post-sync-state-pre-lifecycle-wait-awaiting-provider-inert-settlement-separation",
+    "currentMilestone": "gate-2d-provider-inert-retry-settlement-separation-verified-awaiting-tenth-owner-decision",
     "dataMode": "live-empty-with-connected-google-account-and-sync-attention",
     "mailSendingEnabled": false
   },
@@ -108,6 +108,9 @@
       "tenthReadOnlySyncRetryAuthorized": false,
       "privacySafeConnectionPreflightStageImplemented": true,
       "privacySafeSyncStateReadStageImplemented": true,
+      "privacySafeSyncRetryEligibilityStageImplemented": true,
+      "privacySafeLifecycleDispatchStageImplemented": true,
+      "privacySafeSyncRetryCommandSettlementStageImplemented": true,
       "privacySafeLifecycleQueueStageImplemented": true,
       "privacySafeRetentionSuspensionStageImplemented": true,
       "privacySafeCheckpointPreparationStageImplemented": true,

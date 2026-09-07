@@ -85,7 +85,11 @@ exists deeper in the tree.
   zero mail. Electron main remained idle; the attempt was stopped once, aggregate lifecycle state was clean, and a
   provider-inert restart restored the attention-required UI. This rules out a non-settling encrypted state read in
   that live run and narrows the remaining local gap to retry eligibility/dispatch or command-response settlement.
-  No tenth request is authorized. The next milestone is provider-inert separation of those fixed boundaries.
+  No tenth request is authorized. Provider-inert separation of those fixed boundaries is now complete: fixed
+  `sync-retry-eligibility`, `lifecycle-dispatch`, and `sync-retry-command` stages distinguish policy rejection,
+  synchronous dispatch, lifecycle settlement, and safe command-response preparation. Tests cover normal settlement,
+  eligibility rejection, synchronous dispatch failure, and reporter isolation. Canonical verification passes with
+  544 tests. A tenth live observation remains a separate owner decision.
 - Current data: the local installation is live-empty; deterministic fixtures remain
   repository/test assets but were atomically removed from the live installation.
 - Encrypted provider-account and sync-state storage contains one real connected account.

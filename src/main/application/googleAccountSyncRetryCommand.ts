@@ -88,6 +88,21 @@ export class GoogleAccountSyncRetryCommandService {
       return error('SYNC_IN_PROGRESS', 'A Gmail synchronization is already running for this account.', false)
     }
     this.activeAccounts.add(request.accountId)
+    reportProviderMailSyncStage(this.syncStages, {
+      version: 1,
+      accountId: request.accountId,
+      stage: 'sync-retry-command',
+      phase: 'started'
+    })
+    const settle = (response: RetryGoogleAccountSyncResponseV1): RetryGoogleAccountSyncResponseV1 => {
+      reportProviderMailSyncStage(this.syncStages, {
+        version: 1,
+        accountId: request.accountId,
+        stage: 'sync-retry-command',
+        phase: 'completed'
+      })
+      return response
+    }
     const controller = new AbortController()
     let releaseOnReturn = true
     let timeoutHandle: ReturnType<typeof setTimeout> | undefined
@@ -112,19 +127,19 @@ export class GoogleAccountSyncRetryCommandService {
           () => this.activeAccounts.delete(request.accountId),
           () => this.activeAccounts.delete(request.accountId)
         )
-        return error(
+        return settle(error(
           'SYNC_FAILED',
           'Gmail synchronization took too long and Posita cancelled the bounded attempt safely.',
           true
-        )
+        ))
       }
-      return result
+      return settle(result)
     } catch {
-      return error(
+      return settle(error(
         'SYNC_FAILED',
         'Posita could not complete the Gmail synchronization safely.',
         true
-      )
+      ))
     } finally {
       if (timeoutHandle !== undefined) clearTimeout(timeoutHandle)
       if (releaseOnReturn) this.activeAccounts.delete(request.accountId)
@@ -187,24 +202,59 @@ export class GoogleAccountSyncRetryCommandService {
       })
       throw error
     }
+    reportProviderMailSyncStage(this.syncStages, {
+      version: 1,
+      accountId: request.accountId,
+      stage: 'sync-retry-eligibility',
+      phase: 'started'
+    })
+    const rejectEligibility = (
+      response: RetryGoogleAccountSyncResponseV1
+    ): RetryGoogleAccountSyncResponseV1 => {
+      reportProviderMailSyncStage(this.syncStages, {
+        version: 1,
+        accountId: request.accountId,
+        stage: 'sync-retry-eligibility',
+        phase: 'failed'
+      })
+      return response
+    }
     if (syncState === undefined || !isProviderSyncStateV1(syncState) ||
         syncState.accountId !== request.accountId || syncState.provider !== 'google') {
-      return error(
+      return rejectEligibility(error(
         'SYNC_RETRY_NOT_ALLOWED',
         'This Google account does not have a valid retryable synchronization state.',
         false
-      )
+      ))
     }
     if (syncState.status === 'syncing') {
-      return error('SYNC_IN_PROGRESS', 'A Gmail synchronization is already recorded for this account.', false)
+      return rejectEligibility(error(
+        'SYNC_IN_PROGRESS',
+        'A Gmail synchronization is already recorded for this account.',
+        false
+      ))
     }
     if (syncState.status !== 'error' || syncState.lastErrorCode === undefined) {
-      return error('SYNC_RETRY_NOT_ALLOWED', 'This Google account does not currently need a synchronization retry.', false)
+      return rejectEligibility(error(
+        'SYNC_RETRY_NOT_ALLOWED',
+        'This Google account does not currently need a synchronization retry.',
+        false
+      ))
     }
     const policy = providerMailSyncRetryPolicy(syncState.lastErrorCode)
     if (policy.disposition !== 'retry-allowed') {
-      return error('SYNC_RETRY_NOT_ALLOWED', notAllowedMessage[policy.disposition], false)
+      return rejectEligibility(error(
+        'SYNC_RETRY_NOT_ALLOWED',
+        notAllowedMessage[policy.disposition],
+        false
+      ))
     }
+    reportProviderMailSyncStage(this.syncStages, {
+      version: 1,
+      accountId: request.accountId,
+      stage: 'sync-retry-eligibility',
+      phase: 'completed'
+    })
     if (signal.aborted) {
       return error(
         'SYNC_FAILED',
@@ -212,11 +262,34 @@ export class GoogleAccountSyncRetryCommandService {
         true
       )
     }
-    const lifecycleResult = lifecycle.syncAccounts([{
-      version: POSITA_PROTOCOL_VERSION,
+    reportProviderMailSyncStage(this.syncStages, {
+      version: 1,
       accountId: request.accountId,
-      provider: 'google'
-    }], signal)
+      stage: 'lifecycle-dispatch',
+      phase: 'started'
+    })
+    let lifecycleResult: ReturnType<GoogleAccountSyncRetryLifecycle['syncAccounts']>
+    try {
+      lifecycleResult = lifecycle.syncAccounts([{
+        version: POSITA_PROTOCOL_VERSION,
+        accountId: request.accountId,
+        provider: 'google'
+      }], signal)
+      reportProviderMailSyncStage(this.syncStages, {
+        version: 1,
+        accountId: request.accountId,
+        stage: 'lifecycle-dispatch',
+        phase: 'completed'
+      })
+    } catch (error) {
+      reportProviderMailSyncStage(this.syncStages, {
+        version: 1,
+        accountId: request.accountId,
+        stage: 'lifecycle-dispatch',
+        phase: 'failed'
+      })
+      throw error
+    }
     return this.mapOutcome(request.accountId, await lifecycleResult)
   }
 

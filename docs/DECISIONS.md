@@ -1265,6 +1265,15 @@ rules out a non-settling encrypted state read in that live run. It does not prov
 failed to advance or whether a safe command response failed to settle through Electron. Separate those fixed local
 boundaries provider-inertly before any tenth request; no tenth request is authorized.
 
+Provider-inert implementation evidence: the fixed vocabulary now also includes `sync-retry-eligibility`,
+`lifecycle-dispatch`, and `sync-retry-command`. Eligibility completes only for a validated policy-approved retry and
+fails generically for any rejected state. Dispatch brackets only the synchronous call into the existing lifecycle
+owner; the existing queue stage still owns queued execution. Command completion means a bounded safe response has
+been prepared before IPC validation. Tests cover normal settlement, rejected eligibility, synchronous dispatch
+failure, and the real encrypted-state-to-trusted-handler integration. No provider request, credential read, public
+contract, persistence, timing value, dependency, or private field was added. A tenth observation remains a separate
+owner decision.
+
 ## ADR-060: Normalize only Google's documented email-scope alias at token validation
 
 - Status: accepted for Gate 2D provider-inert compatibility

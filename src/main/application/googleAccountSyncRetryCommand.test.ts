@@ -77,31 +77,17 @@ describe('GoogleAccountSyncRetryCommandService', () => {
       }],
       expect.any(AbortSignal)
     )
-    expect(events).toEqual([
-      {
-        version: 1,
-        accountId: request.accountId,
-        stage: 'connection-preflight',
-        phase: 'started'
-      },
-      {
-        version: 1,
-        accountId: request.accountId,
-        stage: 'connection-preflight',
-        phase: 'completed'
-      },
-      {
-        version: 1,
-        accountId: request.accountId,
-        stage: 'sync-state-read',
-        phase: 'started'
-      },
-      {
-        version: 1,
-        accountId: request.accountId,
-        stage: 'sync-state-read',
-        phase: 'completed'
-      }
+    expect(events.map(({ stage, phase }) => `${stage}:${phase}`)).toEqual([
+      'sync-retry-command:started',
+      'connection-preflight:started',
+      'connection-preflight:completed',
+      'sync-state-read:started',
+      'sync-state-read:completed',
+      'sync-retry-eligibility:started',
+      'sync-retry-eligibility:completed',
+      'lifecycle-dispatch:started',
+      'lifecycle-dispatch:completed',
+      'sync-retry-command:completed'
     ])
   })
 
@@ -121,8 +107,10 @@ describe('GoogleAccountSyncRetryCommandService', () => {
       error: { code: 'SYNC_FAILED', retryable: true }
     })
     expect(events.map(({ stage, phase }) => `${stage}:${phase}`)).toEqual([
+      'sync-retry-command:started',
       'connection-preflight:started',
-      'connection-preflight:failed'
+      'connection-preflight:failed',
+      'sync-retry-command:completed'
     ])
     expect(syncAccounts).not.toHaveBeenCalled()
   })
@@ -143,10 +131,12 @@ describe('GoogleAccountSyncRetryCommandService', () => {
       error: { code: 'SYNC_FAILED', retryable: true }
     })
     expect(events.map(({ stage, phase }) => `${stage}:${phase}`)).toEqual([
+      'sync-retry-command:started',
       'connection-preflight:started',
       'connection-preflight:completed',
       'sync-state-read:started',
-      'sync-state-read:failed'
+      'sync-state-read:failed',
+      'sync-retry-command:completed'
     ])
     expect(syncAccounts).not.toHaveBeenCalled()
   })
@@ -200,6 +190,62 @@ describe('GoogleAccountSyncRetryCommandService', () => {
       })
     }
     expect(syncAccounts).not.toHaveBeenCalled()
+  })
+
+  it('separates retry eligibility rejection from lifecycle dispatch', async () => {
+    const events: ProviderMailSyncStageEventV1[] = []
+    const syncAccounts = vi.fn(async () => [synced()])
+    const service = new GoogleAccountSyncRetryCommandService(
+      connection(),
+      { loadSyncState: () => syncState('AUTHENTICATION_EXPIRED') },
+      { syncAccounts },
+      undefined,
+      { report: (event) => events.push(event) }
+    )
+
+    await expect(service.execute(request)).resolves.toMatchObject({
+      ok: false,
+      error: { code: 'SYNC_RETRY_NOT_ALLOWED', retryable: false }
+    })
+    expect(events.map(({ stage, phase }) => `${stage}:${phase}`)).toEqual([
+      'sync-retry-command:started',
+      'connection-preflight:started',
+      'connection-preflight:completed',
+      'sync-state-read:started',
+      'sync-state-read:completed',
+      'sync-retry-eligibility:started',
+      'sync-retry-eligibility:failed',
+      'sync-retry-command:completed'
+    ])
+    expect(syncAccounts).not.toHaveBeenCalled()
+  })
+
+  it('marks a synchronous lifecycle dispatch failure and still settles the safe command', async () => {
+    const events: ProviderMailSyncStageEventV1[] = []
+    const service = new GoogleAccountSyncRetryCommandService(
+      connection(),
+      { loadSyncState: () => syncState() },
+      { syncAccounts: () => { throw new Error('test-only dispatch failure') } },
+      undefined,
+      { report: (event) => events.push(event) }
+    )
+
+    await expect(service.execute(request)).resolves.toMatchObject({
+      ok: false,
+      error: { code: 'SYNC_FAILED', retryable: true }
+    })
+    expect(events.map(({ stage, phase }) => `${stage}:${phase}`)).toEqual([
+      'sync-retry-command:started',
+      'connection-preflight:started',
+      'connection-preflight:completed',
+      'sync-state-read:started',
+      'sync-state-read:completed',
+      'sync-retry-eligibility:started',
+      'sync-retry-eligibility:completed',
+      'lifecycle-dispatch:started',
+      'lifecycle-dispatch:failed',
+      'sync-retry-command:completed'
+    ])
   })
 
   it('refuses overlapping retries for the same account', async () => {
@@ -290,7 +336,9 @@ describe('GoogleAccountSyncRetryCommandService', () => {
       }
     })
     expect(events.map(({ stage, phase }) => `${stage}:${phase}`)).toEqual([
-      'connection-preflight:started'
+      'sync-retry-command:started',
+      'connection-preflight:started',
+      'sync-retry-command:completed'
     ])
     expect(syncAccounts).not.toHaveBeenCalled()
     await expect(service.execute(request)).resolves.toMatchObject({

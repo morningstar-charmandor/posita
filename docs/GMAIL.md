@@ -64,6 +64,10 @@ The separately approved ninth command then completed that encrypted read as well
 lifecycle-queue or provider stage. It was stopped once, stored zero mail, left no unfinished lifecycle operation,
 and recovered provider-inertly. The remaining local boundary is eligibility/dispatch or command-response settlement,
 not a proven Gmail or encrypted-state failure. No tenth request is authorized.
+Provider-inert fixed stages now separately mark retry eligibility, synchronous lifecycle dispatch, and safe retry-
+command response preparation. They expose only the existing opaque account scope and fixed phase, and deterministic
+tests cover allowed, rejected, dispatch-failure, and settlement paths. No Google request occurred. A tenth live
+observation remains a separate owner decision.
 
 Posita can now project its durable `live` installation mode through a bounded
 worker-backed application snapshot. That local read model is not Gmail access: it

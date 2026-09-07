@@ -2845,6 +2845,20 @@ This rules out a non-settling encrypted state read in the ninth observation. It 
 retry eligibility/lifecycle-dispatch boundary from safe command-response settlement through Electron. The next
 milestone is provider-inert fixed-boundary separation; no tenth request is authorized.
 
+### 2026-09-07 — Provider-inert retry settlement separation
+
+- added fixed `sync-retry-eligibility`, `lifecycle-dispatch`, and `sync-retry-command` diagnostic stages,
+- distinguished policy approval from synchronous lifecycle handoff and bounded safe response preparation,
+- retained the existing lifecycle queue as the sole owner of queued execution,
+- added deterministic rejected-eligibility and synchronous-dispatch-failure coverage,
+- extended the exact encrypted repository through trusted-handler integration expectation,
+- kept diagnostics best-effort and non-reflective, with no state value, policy code, queue detail, timing, raw error,
+  credential, or provider data,
+- made no provider request, schema, dependency, public contract, IPC/UI behavior, AI, or mailbox mutation change.
+
+Canonical verification passes 88 test files and 544 tests plus all standard checks. This checkpoint can classify the
+remaining local path without guessing; a tenth live observation remains a separate owner decision.
+
 ## How future entries should be written
 
 For each material milestone, record:
