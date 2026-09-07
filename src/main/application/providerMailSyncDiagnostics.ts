@@ -2,6 +2,7 @@ import { isAccountId } from './accountState'
 
 export const PROVIDER_MAIL_SYNC_STAGES = [
   'connection-preflight',
+  'sync-state-read',
   'lifecycle-queue',
   'retention-suspension',
   'sync-checkpoint-preparation',

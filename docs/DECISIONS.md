@@ -1251,6 +1251,13 @@ The fixed whole-attempt deadline now starts before these stages, including conne
 surface, persistence, dependency, provider request, timing value, or private data is added. An eighth
 live observation remains a separate owner decision.
 
+Eighth-observation evidence: connection preflight completed, but no lifecycle-queue or provider stage began before
+the attempt was stopped. Zero provider mail was stored, aggregate lifecycle state was clean, and a provider-inert
+restart recovered the UI. Code inspection found one unmarked local operation between those stages: encrypted sync-
+state loading. The fixed vocabulary now includes `sync-state-read`, which wraps only that local read and exposes no
+state value, status, error, or storage detail. Deterministic tests cover completion and failure. No ninth request is
+authorized.
+
 ## ADR-060: Normalize only Google's documented email-scope alias at token validation
 
 - Status: accepted for Gate 2D provider-inert compatibility

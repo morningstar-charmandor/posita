@@ -660,3 +660,9 @@ gap: its “whole-attempt” timer started only after connection preflight. Movi
 means even a non-cooperative local preflight returns a bounded safe result, while duplicate work stays excluded until
 the late check settles and cannot continue into provider work. Canonical verification passes 87 test files and 540 tests;
 an eighth live observation remains an explicit owner decision.
+
+That approved eighth observation completed connection preflight but stopped before the lifecycle queue and every
+provider stage. The idle process, zero stored mail, clean lifecycle aggregate, and successful provider-inert recovery
+make this a local boundary result—not a Gmail failure. Reviewing the exact sequence exposed one missing checkpoint:
+the encrypted sync-state read between preflight and lifecycle dispatch. Posita now marks that read without exposing
+the stored state or failure detail. The canonical gate passes 87 test files and 541 tests; no ninth request is authorized.

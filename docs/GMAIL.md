@@ -54,7 +54,13 @@ the queued operation enters its owner; a cancellation observed before entry skip
 Deterministic tests cover settlement and failure paths without credentials, network access, or provider data.
 The command's fixed deadline now begins before connection preflight, so a non-cooperative local check returns the
 safe bounded result and cannot continue into provider work after its late settlement. No eighth request has been
-made or authorized.
+made or authorized at that checkpoint.
+
+The owner later approved exactly one eighth read-only command. It completed connection preflight but emitted no
+lifecycle-queue, credential, or Google stage. It was stopped without another control, stored zero provider mail,
+left no unfinished lifecycle operation, and recovered provider-inertly. The encrypted sync-state read between
+preflight and lifecycle dispatch now has a fixed `sync-state-read` marker with no state value or storage detail.
+No ninth request is authorized.
 
 Posita can now project its durable `live` installation mode through a bounded
 worker-backed application snapshot. That local read model is not Gmail access: it

@@ -108,6 +108,10 @@ cancellation while queued before retention work. No Google request was made; an 
 a separate owner decision. Code inspection also found that the command timer previously began after connection
 preflight. It now begins before preflight, returns the bounded safe result if that local check stalls, and retains
 overlap exclusion until the late check settles.
+The owner-approved eighth command then completed connection preflight but emitted no lifecycle-queue or provider
+stage. It was stopped once, stored zero mail, left no unfinished lifecycle work, and recovered provider-inertly.
+The previously unmarked encrypted sync-state read between those boundaries now has its own fixed privacy-safe stage.
+No ninth request is authorized.
 
 The trusted backend now defines a bounded provider-independent authorization
 session contract, deterministic fake, and real Google desktop protocol

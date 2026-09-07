@@ -24,6 +24,7 @@ import type {
 } from './providerMailLifecycleOwner'
 import {
   observeProviderMailSyncStage,
+  reportProviderMailSyncStage,
   silentProviderMailSyncStageReporter,
   type ProviderMailSyncStageReporter
 } from './providerMailSyncDiagnostics'
@@ -162,7 +163,30 @@ export class GoogleAccountSyncRetryCommandService {
       )
     }
 
-    const syncState = accountState.loadSyncState(request.accountId)
+    reportProviderMailSyncStage(this.syncStages, {
+      version: 1,
+      accountId: request.accountId,
+      stage: 'sync-state-read',
+      phase: 'started'
+    })
+    let syncState: ReturnType<GoogleAccountSyncRetryState['loadSyncState']>
+    try {
+      syncState = accountState.loadSyncState(request.accountId)
+      reportProviderMailSyncStage(this.syncStages, {
+        version: 1,
+        accountId: request.accountId,
+        stage: 'sync-state-read',
+        phase: 'completed'
+      })
+    } catch (error) {
+      reportProviderMailSyncStage(this.syncStages, {
+        version: 1,
+        accountId: request.accountId,
+        stage: 'sync-state-read',
+        phase: 'failed'
+      })
+      throw error
+    }
     if (syncState === undefined || !isProviderSyncStateV1(syncState) ||
         syncState.accountId !== request.accountId || syncState.provider !== 'google') {
       return error(

@@ -89,6 +89,18 @@ describe('GoogleAccountSyncRetryCommandService', () => {
         accountId: request.accountId,
         stage: 'connection-preflight',
         phase: 'completed'
+      },
+      {
+        version: 1,
+        accountId: request.accountId,
+        stage: 'sync-state-read',
+        phase: 'started'
+      },
+      {
+        version: 1,
+        accountId: request.accountId,
+        stage: 'sync-state-read',
+        phase: 'completed'
       }
     ])
   })
@@ -111,6 +123,30 @@ describe('GoogleAccountSyncRetryCommandService', () => {
     expect(events.map(({ stage, phase }) => `${stage}:${phase}`)).toEqual([
       'connection-preflight:started',
       'connection-preflight:failed'
+    ])
+    expect(syncAccounts).not.toHaveBeenCalled()
+  })
+
+  it('marks encrypted sync-state read failure without entering lifecycle work', async () => {
+    const events: ProviderMailSyncStageEventV1[] = []
+    const syncAccounts = vi.fn(async () => [synced()])
+    const service = new GoogleAccountSyncRetryCommandService(
+      connection(),
+      { loadSyncState: () => { throw new Error('test-only private state failure') } },
+      { syncAccounts },
+      undefined,
+      { report: (event) => events.push(event) }
+    )
+
+    await expect(service.execute(request)).resolves.toMatchObject({
+      ok: false,
+      error: { code: 'SYNC_FAILED', retryable: true }
+    })
+    expect(events.map(({ stage, phase }) => `${stage}:${phase}`)).toEqual([
+      'connection-preflight:started',
+      'connection-preflight:completed',
+      'sync-state-read:started',
+      'sync-state-read:failed'
     ])
     expect(syncAccounts).not.toHaveBeenCalled()
   })

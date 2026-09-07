@@ -426,7 +426,7 @@ quota-aware, and isolated per account.
 
 ADR-059 adds one best-effort trusted-main diagnostic reporter to this existing path. Production may
 emit only an opaque Posita account ID, one fixed stage, and a fixed started/completed/failed phase for
-connection preflight, lifecycle queue entry, retention suspension, encrypted checkpoint preparation,
+connection preflight, encrypted sync-state read, lifecycle queue entry, retention suspension, encrypted checkpoint preparation,
 credential read, token exchange, Gmail profile/list/message-batch read, and projection commit. It has
 no renderer or IPC surface and receives no token, address, message, cursor, provider payload, URL, or
 raw error. Reporter failure is swallowed so observability cannot change sync behavior.

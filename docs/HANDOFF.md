@@ -478,14 +478,23 @@ after connection preflight. It now starts before that check, returns the safe ti
 cooperate, retains overlap exclusion until late settlement, and prevents an aborted late result from entering
 retention or provider work. No credential was read and no Google request occurred. No eighth request is authorized.
 
+The owner then approved exactly one eighth read-only command. It completed `connection-preflight`, emitted no
+`lifecycle-queue`, credential, or Google stage, and remained visibly busy while Electron main sampled idle. The
+runtime was stopped once without another control. Aggregate-only storage inspection found zero provider-mail records,
+one encrypted account, one encrypted sync state, and no unfinished lifecycle operation. A provider-inert restart
+restored the attention-required UI with retry available. This is not a Gmail result. Code inspection identified the
+unmarked local boundary between those stages: encrypted sync-state loading and eligibility checks. A new fixed
+`sync-state-read` stage wraps only the encrypted read and exposes no state value, policy result, path, timing, or raw
+error. Deterministic completion and failure tests pass. No ninth request is authorized.
+
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,
 safe status, full-deletion startup recovery, read-only lifecycle UI, and explicitly
 confirmed local deletion are complete at their current layers. Continue in this order:
 
-1. Treat provider-inert separation of connection inspection, lifecycle queue entry, retention suspension, and
-   encrypted checkpoint preparation as complete. The message-batch split remains live-unobserved. Do not issue an
-   eighth request without a new owner decision; if approved, run exactly once and classify only the last fixed stage.
+1. Treat the eighth observation as a completed pre-provider result and the added encrypted sync-state-read marker as
+   provider-inert complete. The message-batch split remains live-unobserved. Do not issue a ninth request without a
+   new owner decision; if approved, run exactly once and classify only the last fixed stage.
 2. Treat the local account-connection recovery UI as complete at its current boundary. Do not add
    automatic account-pair repair; failed execution must continue to require fresh review.
 3. Treat automatic retention scheduling and its Settings status as complete at
@@ -678,7 +687,7 @@ credential, personal data, provider request, or mailbox mutation was added.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 87 test files, 540 tests, strict typecheck, structure
+- Current verified baseline: 87 test files, 541 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,

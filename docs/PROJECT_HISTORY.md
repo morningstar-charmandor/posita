@@ -2812,6 +2812,22 @@ This checkpoint can distinguish a connection check, lifecycle queue wait, retent
 boundary before any provider access. The message retrieval/normalization split remains live-unobserved, and no eighth
 request is authorized. Canonical verification passes 87 test files and 540 tests plus all standard checks.
 
+### 2026-09-07 — Eighth command isolated the encrypted sync-state boundary
+
+- executed the separately approved eighth read-only command exactly once,
+- observed connection preflight complete and no lifecycle-queue, credential, or Google stage begin,
+- sampled Electron main as idle and stopped the runtime without a second click or any ninth request,
+- confirmed aggregate-only that zero provider mail was stored, one protected account pair remained, and no lifecycle
+  operation was unfinished,
+- restarted provider-inert and visually confirmed the truthful attention-required UI recovered,
+- added one fixed `sync-state-read` marker around the previously unmarked encrypted local read,
+- added deterministic completion, failure, and non-reflective reporter coverage,
+- made no schema, dependency, credential, provider behavior, IPC/UI, AI, or mailbox mutation change.
+
+The evidence does not prove a sync-state storage failure or a Gmail failure; it only narrows the live wait to the
+local state/policy or command-response handoff after preflight and before lifecycle entry. No ninth request is
+authorized. Canonical verification passes 87 test files and 541 tests plus all standard checks.
+
 ## How future entries should be written
 
 For each material milestone, record:

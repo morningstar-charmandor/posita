@@ -73,8 +73,12 @@ exists deeper in the tree.
   normal settlement, failure classification, queued cancellation before retention work, and reporter-failure
   isolation. The fixed command deadline now starts before connection preflight, closing the exact unbounded local
   gap exposed by code inspection while retaining overlap until late work settles. No provider request occurred.
-  Canonical verification passes with 540 tests. An eighth read-only
-  observation remains a separate owner decision.
+  Canonical verification passed with 540 tests. The owner approved exactly one eighth read-only observation. It
+  completed connection preflight, emitted no lifecycle-queue or provider stage, and stored zero mail. Electron main
+  remained idle; the attempt was stopped once without another control, aggregate lifecycle state was clean, and a
+  provider-inert restart recovered the attention-required UI. The missing local boundary is now instrumented as a
+  fixed `sync-state-read` stage with deterministic failure/non-reflection coverage. Canonical verification passes
+  with 541 tests. No ninth request is authorized.
 - Current data: the local installation is live-empty; deterministic fixtures remain
   repository/test assets but were atomically removed from the live installation.
 - Encrypted provider-account and sync-state storage contains one real connected account.

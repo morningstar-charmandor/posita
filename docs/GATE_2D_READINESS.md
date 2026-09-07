@@ -277,6 +277,9 @@ That provider-inert separation is now complete with fixed connection-preflight, 
 retention-suspension, and encrypted-checkpoint stages plus deterministic settlement, failure, and queued-cancellation
 tests. The fixed command deadline now begins before connection preflight and blocks late aborted work from reaching
 the provider. No Google request occurred. An eighth read-only observation requires a separate owner decision.
+That eighth command was later approved and run exactly once. Connection preflight completed, but no lifecycle queue
+or provider stage began; zero mail was stored and provider-inert recovery passed. A fixed encrypted sync-state-read
+stage now closes the one unmarked local boundary. No ninth request is authorized.
 
 ## Original audit evidence
 
