@@ -490,14 +490,23 @@ encrypted SQLite account-state repository, presence-only connection consistency 
 suspension, and trusted IPC handler; it settles with the full expected fixed-stage sequence. This rules out that
 ordinary path in isolation but does not explain the live Electron-only wait. No ninth request is authorized.
 
+The owner then approved exactly one ninth read-only command. It completed both `connection-preflight` and
+`sync-state-read`, emitted no `lifecycle-queue`, credential, token, Gmail, or projection stage, and remained visibly
+busy while Electron main sampled idle. The runtime was stopped once without another control. Aggregate-only storage
+inspection found zero provider-mail records, one encrypted account, one encrypted sync state, and no unfinished
+lifecycle operation. A provider-inert restart restored the attention-required UI with retry available. This rules
+out a non-settling encrypted state read in that observation, but does not distinguish retry eligibility/lifecycle
+dispatch from safe command-response settlement. No tenth request is authorized.
+
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,
 safe status, full-deletion startup recovery, read-only lifecycle UI, and explicitly
 confirmed local deletion are complete at their current layers. Continue in this order:
 
-1. Treat the eighth observation as a completed pre-provider result and the added encrypted sync-state-read marker as
-   provider-inert complete. The message-batch split remains live-unobserved. Do not issue a ninth request without a
-   new owner decision; if approved, run exactly once and classify only the last fixed stage.
+1. Treat the ninth observation as a completed pre-provider result: connection preflight and encrypted sync-state
+   reading both completed, while lifecycle queue entry and every provider stage did not begin. Separate retry
+   eligibility/lifecycle dispatch from command-response settlement provider-inertly before any further live action.
+   The message-batch split remains live-unobserved. Do not issue a tenth request without a new owner decision.
 2. Treat the local account-connection recovery UI as complete at its current boundary. Do not add
    automatic account-pair repair; failed execution must continue to require fresh review.
 3. Treat automatic retention scheduling and its Settings status as complete at

@@ -2830,6 +2830,21 @@ The evidence does not prove a sync-state storage failure or a Gmail failure; it 
 local state/policy or command-response handoff after preflight and before lifecycle entry. No ninth request is
 authorized. Canonical verification passes 88 test files and 542 tests plus all standard checks.
 
+### 2026-09-07 — Ninth command completed encrypted sync-state reading
+
+- executed the separately approved ninth read-only command exactly once,
+- observed connection preflight and encrypted sync-state reading complete before lifecycle queue entry,
+- observed no credential, token, Gmail, message, or projection stage,
+- sampled Electron main as idle and stopped the runtime without a second click or any tenth request,
+- confirmed aggregate-only that zero provider mail was stored, one protected account pair remained, and no lifecycle
+  operation was unfinished,
+- restarted provider-inert and visually confirmed the truthful attention-required UI recovered,
+- made no code, schema, dependency, credential, provider behavior, AI, or mailbox mutation change.
+
+This rules out a non-settling encrypted state read in the ninth observation. It does not yet distinguish the pure
+retry eligibility/lifecycle-dispatch boundary from safe command-response settlement through Electron. The next
+milestone is provider-inert fixed-boundary separation; no tenth request is authorized.
+
 ## How future entries should be written
 
 For each material milestone, record:

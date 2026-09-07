@@ -79,8 +79,13 @@ exists deeper in the tree.
   provider-inert restart recovered the attention-required UI. The missing local boundary is now instrumented as a
   fixed `sync-state-read` stage with deterministic failure/non-reflection coverage. Canonical verification passes
   with 542 tests. An exact provider-inert integration through encrypted state, connection consistency, lifecycle
-  queue, retention suspension, and trusted IPC settles correctly, so the live-only wait remains uncorrected and
-  must not be guessed at. No ninth request is authorized.
+  queue, retention suspension, and trusted IPC settles correctly, so the live-only wait remained uncorrected and
+  was not guessed at. The owner then approved exactly one ninth read-only observation. It completed both connection
+  preflight and encrypted sync-state reading, emitted no lifecycle-queue, credential, or Google stage, and stored
+  zero mail. Electron main remained idle; the attempt was stopped once, aggregate lifecycle state was clean, and a
+  provider-inert restart restored the attention-required UI. This rules out a non-settling encrypted state read in
+  that live run and narrows the remaining local gap to retry eligibility/dispatch or command-response settlement.
+  No tenth request is authorized. The next milestone is provider-inert separation of those fixed boundaries.
 - Current data: the local installation is live-empty; deterministic fixtures remain
   repository/test assets but were atomically removed from the live installation.
 - Encrypted provider-account and sync-state storage contains one real connected account.

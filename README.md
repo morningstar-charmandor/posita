@@ -112,8 +112,11 @@ The owner-approved eighth command then completed connection preflight but emitte
 stage. It was stopped once, stored zero mail, left no unfinished lifecycle work, and recovered provider-inertly.
 The previously unmarked encrypted sync-state read between those boundaries now has its own fixed privacy-safe stage.
 An exact provider-inert integration using the real encrypted repository then settled through connection consistency,
-lifecycle queue, retention suspension, and trusted IPC. The remaining wait is live-Electron-specific, not a proven
-storage or Gmail defect. No ninth request is authorized.
+lifecycle queue, retention suspension, and trusted IPC. The separately approved ninth command completed both
+connection preflight and encrypted sync-state reading, but emitted no lifecycle-queue, credential, or Google stage.
+It was stopped once while Electron main was idle, stored zero mail, left no unfinished lifecycle work, and recovered
+provider-inertly. This rules out a non-settling encrypted state read in that observation and narrows the remaining
+live-Electron gap to retry eligibility/dispatch or command-response settlement. No tenth request is authorized.
 
 The trusted backend now defines a bounded provider-independent authorization
 session contract, deterministic fake, and real Google desktop protocol

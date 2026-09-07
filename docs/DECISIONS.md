@@ -1256,7 +1256,14 @@ the attempt was stopped. Zero provider mail was stored, aggregate lifecycle stat
 restart recovered the UI. Code inspection found one unmarked local operation between those stages: encrypted sync-
 state loading. The fixed vocabulary now includes `sync-state-read`, which wraps only that local read and exposes no
 state value, status, error, or storage detail. Deterministic tests cover completion and failure. No ninth request is
-authorized.
+authorized at that checkpoint.
+
+Ninth-observation evidence: after separate approval, connection preflight and `sync-state-read` both completed, but
+no lifecycle-queue, credential, or Google stage began. Electron main was idle; the attempt was stopped once, zero
+provider mail was stored, aggregate lifecycle state was clean, and provider-inert restart recovery passed. This
+rules out a non-settling encrypted state read in that live run. It does not prove whether retry eligibility/dispatch
+failed to advance or whether a safe command response failed to settle through Electron. Separate those fixed local
+boundaries provider-inertly before any tenth request; no tenth request is authorized.
 
 ## ADR-060: Normalize only Google's documented email-scope alias at token validation
 

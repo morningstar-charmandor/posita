@@ -669,3 +669,10 @@ the stored state or failure detail. An exact provider-inert integration then set
 repository, connection consistency check, lifecycle queue, retention gate, and trusted IPC handler. That negative
 evidence prevents mislabeling the live-only wait as a proven storage or Gmail defect. The canonical gate passes 88
 test files and 542 tests; no ninth request is authorized.
+
+The separately approved ninth observation advanced one checkpoint further: both connection preflight and encrypted
+sync-state reading completed, while lifecycle queue entry and every credential/provider stage remained untouched.
+Electron main was idle, zero mail was stored, aggregate lifecycle state was clean, and provider-inert restart recovery
+passed. This is another useful negative result: the encrypted read itself did settle live. Posita now records the
+smaller unresolved boundary—retry eligibility/lifecycle dispatch versus command-response settlement—without guessing
+which side is responsible or presenting the run as Gmail ingestion. No tenth live request is authorized.

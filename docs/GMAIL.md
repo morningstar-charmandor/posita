@@ -60,7 +60,10 @@ The owner later approved exactly one eighth read-only command. It completed conn
 lifecycle-queue, credential, or Google stage. It was stopped without another control, stored zero provider mail,
 left no unfinished lifecycle operation, and recovered provider-inertly. The encrypted sync-state read between
 preflight and lifecycle dispatch now has a fixed `sync-state-read` marker with no state value or storage detail.
-No ninth request is authorized.
+The separately approved ninth command then completed that encrypted read as well as preflight, but emitted no
+lifecycle-queue or provider stage. It was stopped once, stored zero mail, left no unfinished lifecycle operation,
+and recovered provider-inertly. The remaining local boundary is eligibility/dispatch or command-response settlement,
+not a proven Gmail or encrypted-state failure. No tenth request is authorized.
 
 Posita can now project its durable `live` installation mode through a bounded
 worker-backed application snapshot. That local read model is not Gmail access: it

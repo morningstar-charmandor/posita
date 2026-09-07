@@ -279,7 +279,10 @@ tests. The fixed command deadline now begins before connection preflight and blo
 the provider. No Google request occurred. An eighth read-only observation requires a separate owner decision.
 That eighth command was later approved and run exactly once. Connection preflight completed, but no lifecycle queue
 or provider stage began; zero mail was stored and provider-inert recovery passed. A fixed encrypted sync-state-read
-stage now closes the one unmarked local boundary. No ninth request is authorized.
+stage now closes the one unmarked local boundary. The separately approved ninth command completed both preflight and
+that encrypted read, but no lifecycle queue or provider stage began. It stored zero mail and recovered safely. The
+next provider-inert checkpoint must distinguish eligibility/dispatch from command-response settlement. No tenth
+request is authorized.
 
 ## Original audit evidence
 
