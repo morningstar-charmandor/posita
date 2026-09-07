@@ -2822,11 +2822,13 @@ request is authorized. Canonical verification passes 87 test files and 540 tests
 - restarted provider-inert and visually confirmed the truthful attention-required UI recovered,
 - added one fixed `sync-state-read` marker around the previously unmarked encrypted local read,
 - added deterministic completion, failure, and non-reflective reporter coverage,
+- proved an exact provider-inert path through the real encrypted repository, connection consistency, lifecycle queue,
+  retention suspension, and trusted IPC handler settles with the expected fixed-stage sequence,
 - made no schema, dependency, credential, provider behavior, IPC/UI, AI, or mailbox mutation change.
 
 The evidence does not prove a sync-state storage failure or a Gmail failure; it only narrows the live wait to the
 local state/policy or command-response handoff after preflight and before lifecycle entry. No ninth request is
-authorized. Canonical verification passes 87 test files and 541 tests plus all standard checks.
+authorized. Canonical verification passes 88 test files and 542 tests plus all standard checks.
 
 ## How future entries should be written
 

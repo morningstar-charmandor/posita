@@ -665,4 +665,7 @@ That approved eighth observation completed connection preflight but stopped befo
 provider stage. The idle process, zero stored mail, clean lifecycle aggregate, and successful provider-inert recovery
 make this a local boundary result—not a Gmail failure. Reviewing the exact sequence exposed one missing checkpoint:
 the encrypted sync-state read between preflight and lifecycle dispatch. Posita now marks that read without exposing
-the stored state or failure detail. The canonical gate passes 87 test files and 541 tests; no ninth request is authorized.
+the stored state or failure detail. An exact provider-inert integration then settled through the real encrypted
+repository, connection consistency check, lifecycle queue, retention gate, and trusted IPC handler. That negative
+evidence prevents mislabeling the live-only wait as a proven storage or Gmail defect. The canonical gate passes 88
+test files and 542 tests; no ninth request is authorized.

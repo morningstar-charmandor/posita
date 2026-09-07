@@ -78,7 +78,9 @@ exists deeper in the tree.
   remained idle; the attempt was stopped once without another control, aggregate lifecycle state was clean, and a
   provider-inert restart recovered the attention-required UI. The missing local boundary is now instrumented as a
   fixed `sync-state-read` stage with deterministic failure/non-reflection coverage. Canonical verification passes
-  with 541 tests. No ninth request is authorized.
+  with 542 tests. An exact provider-inert integration through encrypted state, connection consistency, lifecycle
+  queue, retention suspension, and trusted IPC settles correctly, so the live-only wait remains uncorrected and
+  must not be guessed at. No ninth request is authorized.
 - Current data: the local installation is live-empty; deterministic fixtures remain
   repository/test assets but were atomically removed from the live installation.
 - Encrypted provider-account and sync-state storage contains one real connected account.

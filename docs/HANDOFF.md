@@ -485,7 +485,10 @@ one encrypted account, one encrypted sync state, and no unfinished lifecycle ope
 restored the attention-required UI with retry available. This is not a Gmail result. Code inspection identified the
 unmarked local boundary between those stages: encrypted sync-state loading and eligibility checks. A new fixed
 `sync-state-read` stage wraps only the encrypted read and exposes no state value, policy result, path, timing, or raw
-error. Deterministic completion and failure tests pass. No ninth request is authorized.
+error. Deterministic completion and failure tests pass. A separate exact provider-inert integration uses the real
+encrypted SQLite account-state repository, presence-only connection consistency check, lifecycle queue, retention
+suspension, and trusted IPC handler; it settles with the full expected fixed-stage sequence. This rules out that
+ordinary path in isolation but does not explain the live Electron-only wait. No ninth request is authorized.
 
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,
@@ -687,7 +690,7 @@ credential, personal data, provider request, or mailbox mutation was added.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 87 test files, 541 tests, strict typecheck, structure
+- Current verified baseline: 88 test files, 542 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,
