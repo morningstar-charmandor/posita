@@ -523,17 +523,25 @@ encrypted-state-through-trusted-handler stage order. No public contract, retry p
 dependency, credential, or provider action changed. Canonical verification passes 88 test files and 545 tests. An
 eleventh live observation remains a separate owner decision.
 
+The owner then approved exactly one eleventh read-only observation. Retry eligibility failed, the safe command
+completed, and `sync-retry-ipc-response` started and completed. The renderer remained visibly busy for a further
+observation after the trusted handler returned. No lifecycle dispatch/queue, credential, token, Gmail, message, or
+projection stage began. The runtime was stopped once without another control. Aggregate-only storage inspection found
+zero provider-mail records, one encrypted account, one encrypted sync state, and no unfinished lifecycle operation.
+A provider-inert restart restored the attention-required UI. This rules out the command and main IPC handler; the
+remaining response defect is in Electron delivery, preload validation, or renderer promise settlement. No twelfth
+request is authorized.
+
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,
 safe status, full-deletion startup recovery, read-only lifecycle UI, and explicitly
 confirmed local deletion are complete at their current layers. Continue in this order:
 
-1. Treat the tenth observation and trusted IPC response-stage separation as complete. If an eleventh observation is
-   separately approved, classify whether the IPC response stage begins/completes after command settlement. That
-   distinguishes the main handler from Electron delivery/preload/renderer settlement without guessing.
+1. Treat the eleventh observation as a completed post-main response-boundary result. Separate Electron response
+   delivery, preload validation, and renderer promise settlement provider-inertly before changing behavior.
    Reconcile retry-control visibility with the fixed backend retry policy from one shared safe projection; do not
    broaden the policy or expose private error state by assumption. The message-batch split remains live-unobserved.
-   Do not issue an eleventh request without a new owner decision.
+   Do not issue a twelfth request without a new owner decision.
 2. Treat the local account-connection recovery UI as complete at its current boundary. Do not add
    automatic account-pair repair; failed execution must continue to require fresh review.
 3. Treat automatic retention scheduling and its Settings status as complete at

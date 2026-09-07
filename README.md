@@ -130,6 +130,10 @@ A provider-inert IPC checkpoint now marks exact response validation after the co
 before the trusted handler returns. Reporter failure remains behaviorally inert, and the real encrypted-state-through-
 handler integration proves the full fixed-stage order. This changes no retry policy or UI behavior. An eleventh live
 observation remains a separate owner decision.
+The separately approved eleventh observation completed the trusted IPC response marker while the renderer remained
+busy. No lifecycle or Google work began, zero mail was stored, and provider-inert recovery passed. This rules out the
+main command and handler: the unresolved response defect is now after trusted main, within Electron delivery, preload
+validation, or renderer promise settlement. No twelfth request is authorized.
 
 The trusted backend now defines a bounded provider-independent authorization
 session contract, deterministic fake, and real Google desktop protocol

@@ -100,6 +100,12 @@ exists deeper in the tree.
   Production reuses the same non-reflective reporter; deterministic handler, reporter-failure, and encrypted-state-
   through-IPC tests pass. Canonical verification passes with 545 tests. An eleventh live observation remains a
   separate owner decision.
+  The owner then approved exactly one eleventh read-only observation. Eligibility failed, the command completed, and
+  `sync-retry-ipc-response` started and completed, while the renderer remained busy for a further observation. No
+  lifecycle dispatch, credential, or Google stage began. Zero provider mail was stored, aggregate lifecycle state was
+  clean, and provider-inert recovery passed. The unresolved response defect is now strictly after trusted main's IPC
+  handler return—in Electron delivery, preload validation, or renderer promise settlement. No twelfth request is
+  authorized. Separate those post-main boundaries provider-inertly before changing behavior.
 - Current data: the local installation is live-empty; deterministic fixtures remain
   repository/test assets but were atomically removed from the live installation.
 - Encrypted provider-account and sync-state storage contains one real connected account.

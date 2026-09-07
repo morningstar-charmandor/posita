@@ -697,3 +697,9 @@ before the handler returns. Production reuses the same structurally bounded repo
 results and reporter failure cannot alter the safe response. This prepares one decisive future observation: if the
 IPC marker completes but the control remains busy, the defect is after trusted main; if it does not begin, the handler
 continuation is responsible. The canonical gate passes 88 test files and 545 tests, with no provider request.
+
+The separately approved eleventh observation completed that IPC marker, yet the visible control remained busy. This
+rules out both the backend command and trusted main handler in the real runtime. No provider work began, zero mail was
+stored, and recovery passed. The remaining defect is now a small post-main boundary—Electron response delivery,
+preload validation, or renderer promise settlement—while the independent retry-visibility policy mismatch remains
+explicit. No twelfth live request is authorized.

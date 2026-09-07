@@ -80,6 +80,10 @@ validation and return. It receives only the opaque account scope and fixed phase
 the response. No provider request occurred and no retry/UI policy changed. An eleventh observation remains a separate
 owner decision.
 
+The separately approved eleventh observation completed the fixed IPC response marker while the renderer remained
+busy. No lifecycle or provider work began, zero mail was stored, and recovery passed. This is a post-main local
+response-delivery defect, not a Gmail failure. No twelfth request is authorized.
+
 Posita can now project its durable `live` installation mode through a bounded
 worker-backed application snapshot. That local read model is not Gmail access: it
 starts no sync, uses no credential, and exposes no remote provider IDs or cursor.

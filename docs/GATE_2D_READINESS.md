@@ -293,6 +293,10 @@ alignment. No eleventh request is authorized.
 The trusted main-process response boundary is now separated provider-inertly: a fixed IPC stage runs only after the
 command settles and completes immediately before handler return. Tests cover valid, malformed, and reporter-failure
 paths without credentials or provider access. An eleventh observation remains a separate owner decision.
+That eleventh observation was separately approved and ran once. The trusted IPC response stage completed, but the
+renderer remained busy. No lifecycle/provider work began, zero mail was stored, and recovery passed. The next
+provider-inert boundary is Electron delivery, preload validation, and renderer promise settlement. No twelfth request
+is authorized.
 
 ## Original audit evidence
 

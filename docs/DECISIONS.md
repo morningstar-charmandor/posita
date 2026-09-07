@@ -1290,6 +1290,13 @@ validation, malformed-response replacement, reporter-failure isolation, and the 
 order. No public contract, policy, UI behavior, persistence, dependency, provider request, or private value changed.
 An eleventh observation remains a separate owner decision.
 
+Eleventh-observation evidence: after separate approval, eligibility failed, the safe command completed, and
+`sync-retry-ipc-response` both started and completed. The renderer remained in its running state after the trusted
+handler returned. No lifecycle dispatch, credential, or Google stage began; zero provider mail was stored and
+provider-inert recovery passed. This rules out command settlement and trusted-handler response validation/return.
+The remaining response path is Electron delivery, preload validation, or renderer promise settlement. Separate those
+boundaries provider-inertly; no twelfth request is authorized.
+
 ## ADR-060: Normalize only Google's documented email-scope alias at token validation
 
 - Status: accepted for Gate 2D provider-inert compatibility

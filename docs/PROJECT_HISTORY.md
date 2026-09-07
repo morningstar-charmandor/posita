@@ -2889,6 +2889,21 @@ Canonical verification passes 88 test files and 545 tests plus all standard chec
 observation can distinguish main-handler return from Electron/preload/renderer delivery; no eleventh request is
 authorized.
 
+### 2026-09-07 — Eleventh command isolated the post-main response path
+
+- executed the separately approved eleventh read-only command exactly once,
+- observed retry eligibility fail, the bounded command complete, and trusted IPC response validation/return complete,
+- confirmed the renderer remained in its running state after the main handler returned,
+- observed no lifecycle dispatch/queue, credential, token, Gmail, message, or projection stage,
+- stopped without a second click or any twelfth request,
+- confirmed aggregate-only that zero provider mail was stored, one protected account pair remained, and no lifecycle
+  operation was unfinished,
+- restarted provider-inert and visually confirmed the truthful attention-required UI recovered,
+- made no code, schema, dependency, credential, provider behavior, AI, or mailbox mutation change.
+
+This rules out trusted command and IPC-handler settlement. The remaining local response defect is Electron delivery,
+preload validation, or renderer promise settlement. It is not a Gmail result. No twelfth request is authorized.
+
 ## How future entries should be written
 
 For each material milestone, record:
