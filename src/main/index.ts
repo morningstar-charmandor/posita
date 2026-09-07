@@ -23,7 +23,11 @@ import { GoogleAccountConnectionCommandService } from './application/googleAccou
 import { GoogleAccountDisconnectCommandService } from './application/googleAccountDisconnectCommand'
 import { GoogleAccountSyncRetryCommandService } from './application/googleAccountSyncRetryCommand'
 import { inspectAccountConnectionConsistency } from './application/accountConnection'
-import { SafeConsoleProviderMailSyncStageReporter } from './application/providerMailSyncDiagnostics'
+import {
+  SafeConsoleProviderMailSyncStageReporter,
+  silentProviderMailSyncStageReporter,
+  type ProviderMailSyncStageReporter
+} from './application/providerMailSyncDiagnostics'
 
 const isTrustedExternalUrl = (candidate: string): boolean => {
   try {
@@ -116,6 +120,7 @@ app.whenReady().then(async () => {
   let googleAccountConnectionCommand = new GoogleAccountConnectionCommandService()
   let googleAccountSyncRetryCommand = new GoogleAccountSyncRetryCommandService()
   let googleAccountDisconnectCommand = new GoogleAccountDisconnectCommandService()
+  let providerMailSyncStages: ProviderMailSyncStageReporter = silentProviderMailSyncStageReporter
 
   try {
     const runtime = await bootstrapLocalData(
@@ -140,6 +145,7 @@ app.whenReady().then(async () => {
       if (googleConfiguration.status === 'available' &&
           providerMailReadWorker !== undefined) {
         const syncStages = new SafeConsoleProviderMailSyncStageReporter()
+        providerMailSyncStages = syncStages
         const composition = composeGoogleProviderLifecycle({
           configuration: googleConfiguration.configuration,
           secretVault: runtime.secretVault,
@@ -222,7 +228,8 @@ app.whenReady().then(async () => {
     googleAccountConnectionPreflight,
     googleAccountConnectionCommand,
     googleAccountSyncRetryCommand,
-    googleAccountDisconnectCommand
+    googleAccountDisconnectCommand,
+    providerMailSyncStages
   })
   const openWindow = (): void => {
     const window = createWindow()

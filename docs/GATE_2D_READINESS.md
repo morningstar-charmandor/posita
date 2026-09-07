@@ -290,6 +290,9 @@ That tenth observation was separately approved and ran once. Eligibility failed 
 completed before lifecycle or provider work, while the renderer remained busy. Zero mail was stored and recovery
 passed. The next provider-inert checkpoint is the IPC/preload/renderer response handoff and retry-visibility policy
 alignment. No eleventh request is authorized.
+The trusted main-process response boundary is now separated provider-inertly: a fixed IPC stage runs only after the
+command settles and completes immediately before handler return. Tests cover valid, malformed, and reporter-failure
+paths without credentials or provider access. An eleventh observation remains a separate owner decision.
 
 ## Original audit evidence
 

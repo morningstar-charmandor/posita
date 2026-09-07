@@ -2876,6 +2876,19 @@ The evidence proves a local retry-visibility/policy mismatch and narrows the unr
 Electron response delivery, preload validation, or renderer promise settlement. It is not a Gmail result. The next
 milestone is provider-inert response-handoff separation; no eleventh request is authorized.
 
+### 2026-09-07 — Provider-inert trusted IPC response separation
+
+- added one fixed `sync-retry-ipc-response` stage after retry-command promise settlement,
+- completed that stage only after exact response validation immediately before trusted-handler return,
+- injected the existing non-reflective reporter into production IPC registration without exposing a new channel,
+- covered valid response return, malformed-response replacement, and arbitrary reporter failure,
+- extended the real encrypted repository through trusted-handler integration to prove exact stage ordering,
+- made no retry-policy, UI behavior, public contract, schema, dependency, credential, provider, AI, or mailbox change.
+
+Canonical verification passes 88 test files and 545 tests plus all standard checks. The next separately approved live
+observation can distinguish main-handler return from Electron/preload/renderer delivery; no eleventh request is
+authorized.
+
 ## How future entries should be written
 
 For each material milestone, record:

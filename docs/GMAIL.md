@@ -75,6 +75,10 @@ token, Gmail, message, or projection stage began. The renderer still remained bu
 handoff result rather than a Gmail failure. Zero mail was stored and provider-inert recovery passed. The read-model
 also currently offers retry for an attention state rejected by the command's fixed policy. No eleventh request is
 authorized; separate IPC, preload, and renderer settlement provider-inertly before changing behavior.
+A fixed provider-inert `sync-retry-ipc-response` stage now separates command settlement from exact trusted-handler
+validation and return. It receives only the opaque account scope and fixed phase, and reporter failure cannot affect
+the response. No provider request occurred and no retry/UI policy changed. An eleventh observation remains a separate
+owner decision.
 
 Posita can now project its durable `live` installation mode through a bounded
 worker-backed application snapshot. That local read model is not Gmail access: it

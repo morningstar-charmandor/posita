@@ -52,6 +52,7 @@ import {
   isPrepareGoogleAccountConnectionResponse,
   isConnectGoogleAccountResponse,
   isCancelGoogleAccountConnectionResponse,
+  isRetryGoogleAccountSyncRequest,
   isRetryGoogleAccountSyncResponse,
   isPrepareGoogleAccountDisconnectResponse,
   isExecuteGoogleAccountDisconnectResponse,
@@ -68,6 +69,11 @@ import type { GoogleAccountConnectionPreflightService } from '../application/goo
 import type { GoogleAccountConnectionCommandService } from '../application/googleAccountConnectionCommand'
 import type { GoogleAccountDisconnectCommandService } from '../application/googleAccountDisconnectCommand'
 import type { GoogleAccountSyncRetryCommandService } from '../application/googleAccountSyncRetryCommand'
+import {
+  reportProviderMailSyncStage,
+  silentProviderMailSyncStageReporter,
+  type ProviderMailSyncStageReporter
+} from '../application/providerMailSyncDiagnostics'
 
 type TrustPredicate = (event: IpcMainInvokeEvent) => boolean
 
@@ -437,7 +443,8 @@ export const createCancelGoogleAccountConnectionHandler = (
 
 export const createRetryGoogleAccountSyncHandler = (
   service: Pick<GoogleAccountSyncRetryCommandService, 'execute'>,
-  isTrusted: TrustPredicate
+  isTrusted: TrustPredicate,
+  syncStages: ProviderMailSyncStageReporter = silentProviderMailSyncStageReporter
 ) => async (
   event: IpcMainInvokeEvent,
   request: unknown
@@ -454,7 +461,14 @@ export const createRetryGoogleAccountSyncHandler = (
     }
   }
   const response = await service.execute(request)
-  return isRetryGoogleAccountSyncResponse(response)
+  const accountId = isRetryGoogleAccountSyncRequest(request) ? request.accountId : undefined
+  if (accountId !== undefined) reportProviderMailSyncStage(syncStages, {
+    version: 1,
+    accountId,
+    stage: 'sync-retry-ipc-response',
+    phase: 'started'
+  })
+  const result: RetryGoogleAccountSyncResponseV1 = isRetryGoogleAccountSyncResponse(response)
     ? response
     : {
         ok: false,
@@ -465,6 +479,13 @@ export const createRetryGoogleAccountSyncHandler = (
           retryable: false
         }
       }
+  if (accountId !== undefined) reportProviderMailSyncStage(syncStages, {
+    version: 1,
+    accountId,
+    stage: 'sync-retry-ipc-response',
+    phase: 'completed'
+  })
+  return result
 }
 
 export class GoogleAccountDisconnectIpcAuthorization {
@@ -567,6 +588,7 @@ export interface ApplicationIpcServices {
   googleAccountConnectionPreflight: GoogleAccountConnectionPreflightService
   googleAccountConnectionCommand: GoogleAccountConnectionCommandService
   googleAccountSyncRetryCommand: GoogleAccountSyncRetryCommandService
+  providerMailSyncStages?: ProviderMailSyncStageReporter
   googleAccountDisconnectCommand: GoogleAccountDisconnectCommandService
 }
 
@@ -621,7 +643,8 @@ export const registerApplicationIpc = (services: ApplicationIpcServices): Applic
   )
   const retryGoogleAccountSync = createRetryGoogleAccountSyncHandler(
     services.googleAccountSyncRetryCommand,
-    isTrusted
+    isTrusted,
+    services.providerMailSyncStages
   )
   const disconnectAuthorization = new GoogleAccountDisconnectIpcAuthorization()
   const prepareGoogleAccountDisconnect = createPrepareGoogleAccountDisconnectHandler(

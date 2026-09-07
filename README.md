@@ -126,6 +126,10 @@ retry-eligibility policy, and trusted main completed a bounded safe response, wh
 mail was stored and provider-inert restart recovery passed. This proves a local mismatch between retry-control
 visibility and backend policy, plus an unresolved Electron IPC/preload response handoff after command settlement.
 No eleventh request is authorized.
+A provider-inert IPC checkpoint now marks exact response validation after the command promise settles and immediately
+before the trusted handler returns. Reporter failure remains behaviorally inert, and the real encrypted-state-through-
+handler integration proves the full fixed-stage order. This changes no retry policy or UI behavior. An eleventh live
+observation remains a separate owner decision.
 
 The trusted backend now defines a bounded provider-independent authorization
 session contract, deterministic fake, and real Google desktop protocol

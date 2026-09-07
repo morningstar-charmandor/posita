@@ -124,7 +124,7 @@ describe('Google sync retry encrypted-state and IPC integration', () => {
       undefined,
       reporter
     )
-    const handler = createRetryGoogleAccountSyncHandler(command, () => true)
+    const handler = createRetryGoogleAccountSyncHandler(command, () => true, reporter)
 
     await expect(handler({} as IpcMainInvokeEvent, {
       version: 1,
@@ -145,7 +145,9 @@ describe('Google sync retry encrypted-state and IPC integration', () => {
       'lifecycle-queue:completed',
       'retention-suspension:started',
       'retention-suspension:completed',
-      'sync-retry-command:completed'
+      'sync-retry-command:completed',
+      'sync-retry-ipc-response:started',
+      'sync-retry-ipc-response:completed'
     ])
   })
 })

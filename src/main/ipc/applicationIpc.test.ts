@@ -156,10 +156,17 @@ describe('Google account sync retry IPC handler', () => {
   })
 
   it('returns only an exact bounded cursor-free result', async () => {
+    const stages: string[] = []
     const handler = createRetryGoogleAccountSyncHandler({
       execute: async () => ({ ok: true, value: result })
-    }, () => true)
+    }, () => true, {
+      report: ({ stage, phase }) => stages.push(`${stage}:${phase}`)
+    })
     await expect(handler(event, request)).resolves.toEqual({ ok: true, value: result })
+    expect(stages).toEqual([
+      'sync-retry-ipc-response:started',
+      'sync-retry-ipc-response:completed'
+    ])
 
     const widened = createRetryGoogleAccountSyncHandler({
       execute: async () => ({
@@ -171,6 +178,16 @@ describe('Google account sync retry IPC handler', () => {
       ok: false,
       error: { code: 'PROTOCOL_ERROR', retryable: false }
     })
+  })
+
+  it('settles the IPC response when the diagnostic reporter fails', async () => {
+    const handler = createRetryGoogleAccountSyncHandler({
+      execute: async () => ({ ok: true, value: result })
+    }, () => true, {
+      report: () => { throw new Error('test-only reporter failure') }
+    })
+
+    await expect(handler(event, request)).resolves.toEqual({ ok: true, value: result })
   })
 })
 

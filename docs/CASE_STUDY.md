@@ -690,3 +690,10 @@ renderer continued to show “Syncing Gmail.” Zero mail was stored and recover
 product defects rather than another Gmail problem: the read model can show a retry control for a state the command
 rejects, and a completed backend response is not settling the visible UI through the real Electron path. The next
 work separates IPC, preload, and renderer delivery provider-inertly; no eleventh live request is authorized.
+
+The next checkpoint added evidence at the trusted IPC boundary without creating another renderer capability. A fixed
+stage begins only after the backend command promise settles and completes after exact response validation immediately
+before the handler returns. Production reuses the same structurally bounded reporter, while tests prove malformed
+results and reporter failure cannot alter the safe response. This prepares one decisive future observation: if the
+IPC marker completes but the control remains busy, the defect is after trusted main; if it does not begin, the handler
+continuation is responsible. The canonical gate passes 88 test files and 545 tests, with no provider request.

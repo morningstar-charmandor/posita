@@ -1283,6 +1283,13 @@ response did not settle the visible control. It does not prove whether IPC valid
 preload validation, or renderer promise delivery is responsible. Separate that response path provider-inertly before
 changing policy or UI behavior. No eleventh request is authorized.
 
+Provider-inert follow-up: `sync-retry-ipc-response` begins only after the command promise settles, then completes
+after exact response validation immediately before the trusted handler returns. The existing production reporter is
+injected into IPC registration; no diagnostic channel is exposed to preload or renderer. Tests prove exact result
+validation, malformed-response replacement, reporter-failure isolation, and the encrypted-state-through-handler stage
+order. No public contract, policy, UI behavior, persistence, dependency, provider request, or private value changed.
+An eleventh observation remains a separate owner decision.
+
 ## ADR-060: Normalize only Google's documented email-scope alias at token validation
 
 - Status: accepted for Gate 2D provider-inert compatibility

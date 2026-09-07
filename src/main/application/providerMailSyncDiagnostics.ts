@@ -2,6 +2,7 @@ import { isAccountId } from './accountState'
 
 export const PROVIDER_MAIL_SYNC_STAGES = [
   'sync-retry-command',
+  'sync-retry-ipc-response',
   'connection-preflight',
   'sync-state-read',
   'sync-retry-eligibility',

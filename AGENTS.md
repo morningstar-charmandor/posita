@@ -95,6 +95,11 @@ exists deeper in the tree.
   was clean, and provider-inert restart recovery passed. This proves a local retry-availability policy mismatch and
   narrows the unresolved busy state to Electron IPC/preload response handoff after backend command settlement. No
   eleventh request is authorized. Separate that response boundary provider-inertly before changing behavior.
+  That provider-inert checkpoint is now complete: a fixed `sync-retry-ipc-response` stage begins only after the
+  command promise settles and completes after exact response validation immediately before the handler returns.
+  Production reuses the same non-reflective reporter; deterministic handler, reporter-failure, and encrypted-state-
+  through-IPC tests pass. Canonical verification passes with 545 tests. An eleventh live observation remains a
+  separate owner decision.
 - Current data: the local installation is live-empty; deterministic fixtures remain
   repository/test assets but were atomically removed from the live installation.
 - Encrypted provider-account and sync-state storage contains one real connected account.

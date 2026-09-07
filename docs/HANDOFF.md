@@ -515,13 +515,22 @@ lifecycle operation. A provider-inert restart restored the attention-required UI
 visibility/policy mismatch and narrows the unresolved busy state to IPC validation, Electron serialization, preload
 validation, or renderer promise delivery. No eleventh request is authorized.
 
+The trusted main IPC response boundary is now separated provider-inertly. Fixed `sync-retry-ipc-response` starts
+only after the retry command promise settles and completes after exact response validation immediately before the
+handler returns. Production injects the existing non-reflective reporter into IPC registration. Deterministic tests
+cover valid response return, malformed-response replacement, arbitrary reporter failure, and the complete real
+encrypted-state-through-trusted-handler stage order. No public contract, retry policy, UI behavior, persistence,
+dependency, credential, or provider action changed. Canonical verification passes 88 test files and 545 tests. An
+eleventh live observation remains a separate owner decision.
+
 Encrypted account state, ownership, the crash-resume journal, deterministic
 retention, account removal, disconnect, full local deletion, explicit confirmation,
 safe status, full-deletion startup recovery, read-only lifecycle UI, and explicitly
 confirmed local deletion are complete at their current layers. Continue in this order:
 
-1. Treat the tenth observation as a completed local response-handoff result, not a Gmail failure. Separate trusted
-   IPC validation/return, Electron delivery, preload validation, and renderer promise settlement provider-inertly.
+1. Treat the tenth observation and trusted IPC response-stage separation as complete. If an eleventh observation is
+   separately approved, classify whether the IPC response stage begins/completes after command settlement. That
+   distinguishes the main handler from Electron delivery/preload/renderer settlement without guessing.
    Reconcile retry-control visibility with the fixed backend retry policy from one shared safe projection; do not
    broaden the policy or expose private error state by assumption. The message-batch split remains live-unobserved.
    Do not issue an eleventh request without a new owner decision.
@@ -717,7 +726,7 @@ credential, personal data, provider request, or mailbox mutation was added.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 88 test files, 544 tests, strict typecheck, structure
+- Current verified baseline: 88 test files, 545 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,
