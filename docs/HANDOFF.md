@@ -19,12 +19,15 @@ live-empty, with policy-disallowed Retry hidden. No credentials/private configur
 were read, no product runtime was launched, and no twelfth Gmail attempt was authorized
 or made during this investigation. Public documentation requests are not Gmail API reads.
 
-**Next decision:** owner approval for one account-scoped, one-use reviewed recovery and
-exactly one controlled read-only sync. The existing command cannot retry a review-required
-state; its policy was not bypassed, durable errors were not rewritten, and no reviewed-retry
-capability was added. After approval, specify and verify that narrow extension of the
-existing command/lifecycle path before using it once. Do not reconnect, broaden global
-retry policy, or repeat hidden-button instructions. Until approval, keep this checkpoint.
+**Approved next action (2026-09-08):** the owner approved one-use reviewed recovery and
+exactly one controlled twelfth read-only sync. ADR-065 extends only the trusted main
+command for the reviewed `MALFORMED_PAYLOAD` state. Development menu **Diagnostics →
+Reviewed Gmail read once…** selects the sole complete startup account and uses a native,
+default-Cancel confirmation. After fresh connection/state validation, a fixed receipt
+in existing `audit_events` is consumed before lifecycle dispatch. Restart, failure and
+cancellation cannot renew it. The normal renderer/IPC retry policy remains unchanged.
+Do not reconnect, rewrite durable errors, or run a thirteenth request. Implementation
+is provider-inert verified; live execution and its result are not yet claimed here.
 
 Change report: no dependency, schema, public IPC contract or renderer change. The existing
 HTTP helper and batch diagnostic tracker were extracted into named infrastructure modules,
@@ -33,6 +36,11 @@ strict padded/unpadded decoder, not retained as a fallback. Existing retention, 
 retry policy, credential ownership and encrypted-worker boundaries remain unchanged.
 The cumulative narrative below is historical; this current summary and the diagnosis
 document supersede its older next-step statements and test totals.
+
+Reviewed-recovery change report: the new native menu adapter and SQLite receipt reuse
+the existing command and `audit_events`; no duplicate sync owner or schema was added.
+The trusted-only approval interface is absent from preload/IPC. Verification passes
+94 test files / 609 tests, structure/security, typecheck and production build.
 
 Posita has completed the **Gate 2D credential-free lifecycle foundation, Google
 desktop authorization protocol, bounded loopback/browser infrastructure, trusted
@@ -424,7 +432,7 @@ Not implemented:
 
 ## Next recommended milestone
 
-Current next step (2026-09-08): the approval-gated one-use reviewed recovery/read described
+Current next step (2026-09-08): the approved one-use reviewed recovery/read described
 above and in `GMAIL_READ_DIAGNOSIS.md`. The following chronology preserves earlier evidence;
 it does not authorize another provider action or identify the actual failing message format.
 
@@ -782,7 +790,7 @@ credential, personal data, provider request, or mailbox mutation was added.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 91 test files, 592 tests, strict typecheck, structure
+- Current verified baseline: 94 test files, 609 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,

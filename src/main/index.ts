@@ -23,6 +23,7 @@ import { GoogleAccountConnectionCommandService } from './application/googleAccou
 import { GoogleAccountDisconnectCommandService } from './application/googleAccountDisconnectCommand'
 import { GoogleAccountSyncRetryCommandService } from './application/googleAccountSyncRetryCommand'
 import { inspectAccountConnectionConsistency } from './application/accountConnection'
+import { installReviewedGoogleSyncRetryMenu } from './reviewedGoogleSyncRetryMenu'
 import {
   SafeConsoleProviderMailSyncStageReporter,
   silentProviderMailSyncStageReporter,
@@ -81,6 +82,7 @@ let retentionMaintenance: RetentionMaintenanceOwner | undefined
 let shutdownProviderMailRead: (() => Promise<void>) | undefined
 let googleProviderComposition: GoogleProviderLifecycleComposition | undefined
 let shutdownStarted = false
+let trustedWindow: BrowserWindow | undefined
 
 app.on('before-quit', (event) => {
   lifecycleRecoveryAbort.abort()
@@ -184,6 +186,16 @@ app.whenReady().then(async () => {
           undefined,
           syncStages
         )
+        if (!app.isPackaged && runtime.providerMailStartupInventory.status === 'ready' &&
+            runtime.providerMailStartupInventory.accounts.length === 1) {
+          installReviewedGoogleSyncRetryMenu({
+            accountId: runtime.providerMailStartupInventory.accounts[0]!.accountId,
+            command: googleAccountSyncRetryCommand,
+            receipt: runtime.reviewedGoogleSyncRetryReceipt,
+            getWindow: () => trustedWindow,
+            notify: () => applicationIpc?.notifyApplicationStateChanged()
+          })
+        }
         googleAccountDisconnectCommand = new GoogleAccountDisconnectCommandService(
           connectionConsistency,
           composition.lifecycle,
@@ -233,6 +245,7 @@ app.whenReady().then(async () => {
   })
   const openWindow = (): void => {
     const window = createWindow()
+    trustedWindow = window
     applicationIpc?.allowWindow(window)
   }
 

@@ -2959,7 +2959,25 @@ twelfth live request is authorized.
   retry capability in the existing command, plus exactly one controlled read-only attempt.
   No twelfth attempt is authorized and no review gate was bypassed.
 
-## Future entry guidance
+### 2026-09-08 — Owner-approved one-use reviewed Gmail retry
+
+- Owner approved implementation/testing of one-use reviewed recovery and exactly one
+  read-only twelfth sync; no broader provider permission was inferred.
+- ADR-065 adds a main-only reviewed entry to the existing retry command, not a renderer
+  override. It requires complete connection, exactly `MALFORMED_PAYLOAD`, native confirmation,
+  unchanged state and durable receipt consumption before the existing lifecycle dispatch.
+- Development-only native menu refuses ambiguous startup account inventory. The fixed
+  correction receipt survives restart and cannot be rebound or reused after failure.
+- Tests cover ordinary-policy rejection, unrelated errors, wrong account, cancel, stale
+  state/connection, storage failure, overlap, late confirmation, native default-Cancel,
+  consumed-menu refusal and a real temporary database close/reopen.
+- No dependency, schema, public IPC/preload capability, durable-error rewrite, credential
+  rotation, reconnect, automatic provider action or mailbox mutation was introduced.
+- This implementation checkpoint precedes the single authorized live observation; its
+  outcome must be recorded separately. No live success is claimed by these synthetic tests.
+- `npm run verify` passes 94 files / 609 tests, typecheck, structure/security and build.
+
+## Future history-entry guidance
 
 For each material milestone, record:
 

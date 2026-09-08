@@ -63,6 +63,7 @@ import { EncryptedSqliteMailSyncProjection } from './infrastructure/sqlite/encry
 import { WorkerThreadMailSyncProjection } from './infrastructure/sqlite/workerThreadMailSyncProjection'
 import type { GoogleAccountDisconnectAuditRepository } from './application/googleAccountDisconnectCommand'
 import { SqliteGoogleAccountDisconnectAuditRepository } from './infrastructure/sqlite/sqliteGoogleAccountDisconnectAuditRepository'
+import { SqliteReviewedGoogleSyncRetryReceipt } from './infrastructure/sqlite/sqliteReviewedGoogleSyncRetryReceipt'
 
 interface LocalDataRuntimeBase {
   mode: 'ready' | 'local-data-deleted'
@@ -88,6 +89,7 @@ export interface ReadyLocalDataRuntime extends LocalDataRuntimeBase {
   providerMailStartupInventory: ProviderMailStartupInventoryV1
   providerMailSyncStatusService: ProviderMailSyncStatusService
   googleAccountDisconnectAuditRepository: GoogleAccountDisconnectAuditRepository
+  reviewedGoogleSyncRetryReceipt: SqliteReviewedGoogleSyncRetryReceipt
 }
 
 export interface DeletedLocalDataRuntime extends LocalDataRuntimeBase {
@@ -292,6 +294,7 @@ export const bootstrapLocalDataWithDependencies = async (
       providerMailSyncStatusService,
       googleAccountDisconnectAuditRepository:
         new SqliteGoogleAccountDisconnectAuditRepository(database),
+      reviewedGoogleSyncRetryReceipt: new SqliteReviewedGoogleSyncRetryReceipt(database, systemClock.now),
       ...(mailDataMode.mode === 'live' ? { providerMailSourceDetailSource: source } : {}),
       ...(mailDataMode.mode === 'live'
         ? { providerMailOriginalSourceLocatorSource: source }

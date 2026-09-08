@@ -4,7 +4,8 @@
 
 Current focused checkpoint (2026-09-08): [Gmail read diagnosis](docs/GMAIL_READ_DIAGNOSIS.md).
 Standards-backed body decoding and cancellation defects are corrected offline; real mail
-is still last-observed live-empty. A one-use reviewed recovery and read require owner approval.
+is still last-observed live-empty. The owner approved one reviewed read; the development-only
+Diagnostics menu confirms it and consumes a durable one-use receipt before dispatch.
 
 Posita is a desktop-first personal mail hub organized around people, topics,
 context, and actions rather than separate inboxes.

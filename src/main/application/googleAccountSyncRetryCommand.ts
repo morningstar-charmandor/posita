@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from 'node:util'
 import {
   POSITA_PROTOCOL_VERSION,
   type GoogleAccountSyncRetryErrorCodeV1,
@@ -60,6 +61,13 @@ export interface GoogleAccountSyncRetryLifecycle {
   ): Promise<ProviderMailLifecycleAccountOutcomeV1[]>
 }
 
+/** Trusted native confirmation only. This authority never crosses preload/IPC. */
+export interface ReviewedGoogleSyncRetryApproval {
+  accountId: string
+  confirm(): Promise<boolean>
+  consume(): boolean
+}
+
 /**
  * Trusted command boundary for one user-requested read-only provider retry. It
  * accepts only a complete connected account whose durable failure policy allows
@@ -77,6 +85,18 @@ export class GoogleAccountSyncRetryCommandService {
   ) {}
 
   async execute(requestValue: unknown): Promise<RetryGoogleAccountSyncResponseV1> {
+    return this.executeAttempt(requestValue)
+  }
+
+  async executeReviewed(
+    requestValue: unknown, approval: ReviewedGoogleSyncRetryApproval
+  ): Promise<RetryGoogleAccountSyncResponseV1> {
+    return this.executeAttempt(requestValue, approval)
+  }
+
+  private async executeAttempt(
+    requestValue: unknown, approval?: ReviewedGoogleSyncRetryApproval
+  ): Promise<RetryGoogleAccountSyncResponseV1> {
     if (!isRetryGoogleAccountSyncRequest(requestValue)) {
       return error('INVALID_REQUEST', 'The Gmail synchronization retry request was invalid.', false)
     }
@@ -117,7 +137,8 @@ export class GoogleAccountSyncRetryCommandService {
       controller.signal,
       this.connection,
       this.accountState,
-      this.lifecycle
+      this.lifecycle,
+      approval
     )
     try {
       const result = await Promise.race([attempt, timedOut])
@@ -151,7 +172,8 @@ export class GoogleAccountSyncRetryCommandService {
     signal: AbortSignal,
     connection: AccountConnectionConsistencyInspector,
     accountState: GoogleAccountSyncRetryState,
-    lifecycle: GoogleAccountSyncRetryLifecycle
+    lifecycle: GoogleAccountSyncRetryLifecycle,
+    approval?: ReviewedGoogleSyncRetryApproval
   ): Promise<RetryGoogleAccountSyncResponseV1> {
     const consistency = await observeProviderMailSyncStage(
       this.syncStages,
@@ -242,7 +264,19 @@ export class GoogleAccountSyncRetryCommandService {
       ))
     }
     const policy = providerMailSyncRetryPolicy(syncState.lastErrorCode)
-    if (policy.disposition !== 'retry-allowed') {
+    if (approval !== undefined) {
+      const reviewedState = structuredClone(syncState)
+      if (approval.accountId !== request.accountId || syncState.lastErrorCode !== 'MALFORMED_PAYLOAD' ||
+          signal.aborted || !await approval.confirm()) {
+        return rejectEligibility(error('SYNC_RETRY_NOT_ALLOWED', 'The reviewed retry was not authorized.', false))
+      }
+      const currentConnection = await connection.inspect(request.accountId)
+      if (signal.aborted || !isAccountConnectionConsistencyV1(currentConnection) ||
+          currentConnection.accountId !== request.accountId || currentConnection.status !== 'connected' ||
+          !isDeepStrictEqual(accountState.loadSyncState(request.accountId), reviewedState) || !approval.consume()) {
+        return rejectEligibility(error('SYNC_RETRY_NOT_ALLOWED', 'The reviewed retry is unavailable or its state changed.', false))
+      }
+    } else if (policy.disposition !== 'retry-allowed') {
       return rejectEligibility(error(
         'SYNC_RETRY_NOT_ALLOWED',
         notAllowedMessage[policy.disposition],

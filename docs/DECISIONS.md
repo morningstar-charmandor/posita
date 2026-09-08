@@ -1415,3 +1415,22 @@ retrieval or normalization result.
   explicit follow-ups if implicated. No dependency, schema, new public command, parallel
   coordinator, secret access, live request or mailbox capability is introduced. One-use
   reviewed recovery is only a proposal awaiting the owner; no durable error is rewritten.
+
+## ADR-065: One-use reviewed retry for the Gmail decoding correction
+
+- Status: owner approved on 2026-09-08, including exactly one controlled read-only sync.
+- Decision: extend the existing trusted retry command with a main-only reviewed entry point.
+  It accepts only a complete account in `MALFORMED_PAYLOAD` error state, after native-window
+  confirmation and revalidation. The ordinary renderer/IPC command and fixed retry policy
+  remain unchanged. No durable error is rewritten to manufacture eligibility.
+- Scope: this development-only recovery is bound to correction `7766702`. A single fixed
+  receipt in the existing `audit_events` table is consumed atomically before lifecycle
+  dispatch; it contains only fixed review metadata, opaque account scope and confirmation
+  time. Failure, cancellation or restart cannot replenish it. No automatic startup action,
+  new provider owner, schema, dependency, credential rotation or reconnect is introduced.
+- Native menu selects only the sole complete startup account, refuses ambiguity, and opens
+  a default-Cancel confirmation in the trusted Posita window. It delegates to the existing
+  command deadline, overlap protection, lifecycle, retention and sync coordinator. No review
+  authority or override is exposed through preload or IPC. Timeout/stale state before
+  consumption prevents dispatch. Once consumed, exactly one dispatch is possible even if
+  its result is uncertain. Any further attempt requires a new owner decision.

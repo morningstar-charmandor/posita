@@ -125,6 +125,12 @@ Current limitations remain explicit:
 
 ## One controlled attempt — approval required, not executed
 
+Update 2026-09-08: the owner approved the recovery and exactly one twelfth read. ADR-065
+now implements the main-only native confirmation and durable one-use receipt through
+the existing command/lifecycle path. The following proposal is retained as the approved
+scope; its former statement that the capability did not exist is historical. Live outcome
+must be recorded in the handoff after execution; no thirteenth request is authorized.
+
 The necessary next evidence is one read-only sync through this corrected production path:
 token/profile/list → retrieval → normalization → encrypted projection, or the first fixed
 failure category. It is **one sync attempt, not one HTTP request**: existing pagination,

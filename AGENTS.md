@@ -13,9 +13,10 @@ exists deeper in the tree.
   boundaries. The sixth live message-batch failure is still not diagnosed live;
   no credentials or Gmail were accessed for this checkpoint. The existing account
   remains last-observed live-empty with retry hidden by the trusted policy.
-  No twelfth attempt or one-use reviewed-retry extension is authorized. The next
-  owner decision must cover that narrow recovery gate and exactly one read-only
-  attempt; do not bypass it, rewrite errors, or reconnect. The narrative below is
+  The owner subsequently approved the one-use reviewed-retry extension and exactly
+  one twelfth read-only attempt. ADR-065 implements that permission through a native
+  confirmation and durable single-use receipt; no thirteenth attempt is authorized.
+  Do not bypass the gate, rewrite errors, or reconnect. The narrative below is
   historical; the handoff's current summary wins over earlier next-step statements.
 
 - Current milestone: Gate 2D Google desktop authorization, bounded loopback/browser,

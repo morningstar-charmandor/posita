@@ -744,3 +744,10 @@ call, mailbox change, new dependency or fabricated user outcome was involved. Se
 
 Verification evidence for this checkpoint: 91 test files / 592 tests and the complete
 `npm run verify` gate pass, including 45 new synthetic cases. No live-success claim is made.
+
+The owner then approved a narrowly reviewed recovery instead of reconnecting a healthy
+account. A native confirmation now authorizes the existing trusted sync path once for
+the specific malformed-payload correction. A durable receipt is consumed before dispatch,
+so an uncertain result or restart cannot repeat the provider action. The ordinary retry
+policy stays intact. Tests include cancellation, stale state, unrelated errors and a real
+temporary database reopen. This is implementation evidence; the live result is separate.

@@ -5,7 +5,9 @@
 2026-09-08 provider-inert update: [Gmail read diagnosis](GMAIL_READ_DIAGNOSIS.md)
 records standards-backed decoding corrections, bounded transport/cancellation fixes,
 fixed failure categories and remaining unsupported source forms. It does not change
-consent or authorize a live read. The retry gate still requires an owner-reviewed recovery.
+consent or itself authorize a live read. The owner subsequently approved ADR-065's native,
+durably single-use reviewed recovery and exactly one twelfth read. Ordinary retry policy
+and all mailbox-mutation prohibitions remain unchanged; no thirteenth read is authorized.
 
 One owner-approved test Gmail account is connected locally. Posita's public repository
 does not contain a Google OAuth client ID, secret, user credential, token, or mailbox data.
