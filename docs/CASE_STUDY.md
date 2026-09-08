@@ -719,3 +719,28 @@ observations to a local lifecycle error, then converted the fix into a versioned
 88 test files and 547 tests. A later unlocked real-window check confirmed the current account remains honestly marked
 "Needs attention" while the policy-disallowed Retry control is absent. Disconnect and local-status reload remain
 available. No control was invoked, and no twelfth Gmail request was made or authorized.
+
+### Evidence-led message decoding correction (2026-09-08)
+
+The next investigation returned to the last observation that actually reached Gmail,
+rather than treating every subsequent busy indicator as a provider failure. Code and
+primary standards exposed a test blind spot: fixtures always generated unpadded base64url,
+while the decoder rejected valid padded bodies. New synthetic fixtures failed before the
+correction. A separate documented shape—empty inline data with an external text reference—
+was silently losing source text. Both are now handled by one strict decoder/read path.
+
+The same bounded review found that parallel reads could outlive a failed batch and that
+a late provider result could be stored after cancellation. Regression tests now cover
+those lifetime boundaries, streamed-body deadlines and encrypted worker round-trips.
+Diagnostics identify a fixed failure class without exposing mail content or metadata.
+Unsupported header forms, charsets, drafts and product limits remain visible in the audit
+rather than being hidden by lossy parsing or silently skipped mail.
+
+This is offline engineering evidence, not a live success metric. The account remains
+last-observed connected with no stored provider mail. The next live check must also respect
+the correctly enforced review-required retry gate. No credential, provider request, model
+call, mailbox change, new dependency or fabricated user outcome was involved. See
+[Gmail read diagnosis](GMAIL_READ_DIAGNOSIS.md) for reproducible tests and the approval boundary.
+
+Verification evidence for this checkpoint: 91 test files / 592 tests and the complete
+`npm run verify` gate pass, including 45 new synthetic cases. No live-success claim is made.

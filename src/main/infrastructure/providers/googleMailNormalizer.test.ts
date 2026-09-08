@@ -42,6 +42,33 @@ const gmailMessage = () => ({
 })
 
 describe('normalizeGoogleMessage', () => {
+  it.each([
+    ['Zg==', 'f'], ['Zm8=', 'fo'], ['Zm9v', 'foo'],
+    ['Zg', 'f'], ['Zm8', 'fo'], ['8J-YgA==', '😀']
+  ])('decodes canonical padded and unpadded base64url %s', (data, plain) => {
+    const value = gmailMessage()
+    value.payload.parts[0]!.body.data = data
+    expect(normalizeGoogleMessage(value, 'account-work-1')?.message.body.plain).toBe(plain)
+  })
+
+  it.each(['Z', 'Zg=', 'Zg===', '=Zg', 'Z=g=', 'Zm9v=', 'Zh==', 'Zm9=', 'Zg\n', '+w=='])
+    ('rejects malformed or noncanonical base64url %s', (data) => {
+      const value = gmailMessage()
+      value.payload.parts[0]!.body.data = data
+      expect(normalizeGoogleMessage(value, 'account-work-1')).toBeUndefined()
+    })
+
+  it('requires and uses external text even when Gmail supplies an empty data field', () => {
+    const value = gmailMessage()
+    const external = { ...value, payload: { ...value.payload, parts: [{
+      mimeType: 'text/plain', body: { size: 2, data: '', attachmentId: 'external-text' }
+    }] } }
+    expect(normalizeGoogleMessage(external, 'account-work-1')).toBeUndefined()
+    expect(normalizeGoogleMessage(external, 'account-work-1', new Map([
+      ['external-text', 'Zm8=']
+    ]))?.message.body.plain).toBe('fo')
+  })
+
   it('creates one bounded canonical source without retaining provider HTML', () => {
     const result = normalizeGoogleMessage(gmailMessage(), 'account-work-1')
 

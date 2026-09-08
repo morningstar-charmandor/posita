@@ -1,5 +1,4 @@
 import {
-  ProviderMailAdapterError,
   SYNC_BATCH_SIZE,
   isProviderMailBatchRequestV1,
   isProviderMailBatchV2,
@@ -23,25 +22,22 @@ import {
   GoogleAccessTokenError,
   type GoogleAccessTokenSource
 } from './googleOAuthAccessTokenSource'
+import {
+  getGoogleMailJson,
+  googleMailFailure as failure,
+  GoogleMissingMessageError,
+  type GoogleMailFetch,
+  type NotFoundMeaning
+} from './googleMailHttp'
+import { GoogleMessageBatchStageTracker } from './googleMessageBatchDiagnostics'
+export type { GoogleMailFetch } from './googleMailHttp'
 
-const GMAIL_API_ORIGIN = 'https://gmail.googleapis.com'
 const MAX_LIST_RESPONSE_BYTES = 512 * 1024
 const MAX_MESSAGE_RESPONSE_BYTES = 2_800_000
 const DEFAULT_TIMEOUT_MS = 20_000
 const MAX_PARALLEL_MESSAGE_READS = 4
-type NotFoundMeaning = 'provider-failure' | 'invalid-cursor' | 'missing-message'
 
 type JsonRecord = Record<string, unknown>
-
-export type GoogleMailFetch = (
-  url: string,
-  init: {
-    method: 'GET'
-    headers: Readonly<Record<string, string>>
-    redirect: 'error'
-    signal: AbortSignal
-  }
-) => Promise<{ status: number; body: ReadableStream<Uint8Array> | null }>
 
 type GoogleCursor =
   | { version: 1; mode: 'full'; receivedAfter: string; pageToken: string; historyId: string }
@@ -105,69 +101,6 @@ const decodeCursor = (value: string): GoogleCursor | undefined => {
   }
 }
 
-const failure = (
-  code: ConstructorParameters<typeof ProviderMailAdapterError>[0],
-  retryable: boolean,
-  cause?: unknown
-): ProviderMailAdapterError => new ProviderMailAdapterError(
-  code,
-  code === 'AUTHENTICATION_EXPIRED'
-    ? 'The Google authorization has expired.'
-    : code === 'PERMISSION_REVOKED'
-      ? 'Google mail permission is no longer available.'
-      : code === 'QUOTA_EXHAUSTED'
-        ? 'Google mail access is temporarily rate limited.'
-        : code === 'INVALID_CURSOR'
-          ? 'The Google mail history checkpoint is no longer available.'
-          : code === 'MALFORMED_PAYLOAD'
-            ? 'Google returned an invalid mail response.'
-            : 'Google mail is temporarily unavailable.',
-  retryable,
-  { cause }
-)
-
-const readBody = async (
-  body: ReadableStream<Uint8Array> | null,
-  maximumBytes: number
-): Promise<string> => {
-  if (body === null) return ''
-  const reader = body.getReader()
-  const chunks: Uint8Array[] = []
-  let length = 0
-  try {
-    while (true) {
-      const item = await reader.read()
-      if (item.done) break
-      length += item.value.byteLength
-      if (length > maximumBytes) {
-        await reader.cancel()
-        throw failure('MALFORMED_PAYLOAD', false)
-      }
-      chunks.push(item.value)
-    }
-  } finally {
-    reader.releaseLock()
-  }
-  const bytes = new Uint8Array(length)
-  let offset = 0
-  for (const chunk of chunks) {
-    bytes.set(chunk, offset)
-    offset += chunk.byteLength
-  }
-  try {
-    return new TextDecoder('utf-8', { fatal: true }).decode(bytes)
-  } catch (error) {
-    throw failure('MALFORMED_PAYLOAD', false, error)
-  }
-}
-
-const quotaReason = (value: unknown): boolean => {
-  if (!isRecord(value) || !isRecord(value.error) || !Array.isArray(value.error.errors)) return false
-  return value.error.errors.some((item) => isRecord(item) &&
-    (item.reason === 'rateLimitExceeded' || item.reason === 'userRateLimitExceeded' ||
-      item.reason === 'dailyLimitExceeded'))
-}
-
 export class GoogleMailReadAdapter implements ProviderMailAdapter {
   constructor(
     private readonly tokens: GoogleAccessTokenSource,
@@ -190,11 +123,11 @@ export class GoogleMailReadAdapter implements ProviderMailAdapter {
       if (signal.aborted) throw error
       if (error instanceof GoogleAccessTokenError) {
         if (error.code === 'ACCESS_TOKEN_AUTHORIZATION_EXPIRED') {
-          throw failure('AUTHENTICATION_EXPIRED', false, error)
+          throw failure('AUTHENTICATION_EXPIRED', false)
         }
-        throw failure('PROVIDER_UNAVAILABLE', error.retryable, error)
+        throw failure('PROVIDER_UNAVAILABLE', error.retryable)
       }
-      throw failure('PROVIDER_UNAVAILABLE', true, error)
+      throw failure('PROVIDER_UNAVAILABLE', true)
     }
     if (signal.aborted) throw new DOMException('Aborted', 'AbortError')
     if (token === undefined) throw failure('AUTHENTICATION_EXPIRED', false)
@@ -388,27 +321,46 @@ export class GoogleMailReadAdapter implements ProviderMailAdapter {
     const missing: string[] = []
     const stages = new GoogleMessageBatchStageTracker(this.syncStages, accountId)
     for (let offset = 0; offset < ids.length; offset += MAX_PARALLEL_MESSAGE_READS) {
+      if (signal.aborted) throw new DOMException('Aborted', 'AbortError')
       const group = ids.slice(offset, offset + MAX_PARALLEL_MESSAGE_READS)
       stages.startRetrieval()
       let values: Array<GoogleMessageRead | undefined>
       try {
-        values = await Promise.all(group.map((id) =>
-          this.readMessageAllowMissing(id, token, signal)))
+        const groupController = new AbortController()
+        const groupSignal = AbortSignal.any([signal, groupController.signal])
+        let firstFailure: { error: unknown } | undefined
+        const outcomes = await Promise.allSettled(group.map(async (id) => {
+          try {
+            return await this.readMessageAllowMissing(id, token, groupSignal, stages)
+          } catch (error) {
+            firstFailure ??= { error }
+            groupController.abort()
+            throw error
+          }
+        }))
+        if (firstFailure !== undefined) throw firstFailure.error
+        values = outcomes.map((outcome) => {
+          if (outcome.status === 'rejected') throw outcome.reason
+          return outcome.value
+        })
       } catch (error) {
         stages.failRetrieval()
         throw error
       }
       const present = values.filter((value): value is GoogleMessageRead => value !== undefined)
+      if (signal.aborted) throw new DOMException('Aborted', 'AbortError')
       if (present.length > 0) stages.startNormalization()
       try {
         for (const value of present) {
           const normalized = normalizeGoogleMessage(
             value.payload,
             accountId,
-            value.externalBodies
+            value.externalBodies,
+            (stage) => stages.failure(stage)
           )
           if (normalized === undefined ||
               normalized.message.source.providerMessageId !== value.providerMessageId) {
+            if (normalized !== undefined) stages.failure('gmail-message-identity')
             throw failure('MALFORMED_PAYLOAD', false)
           }
           loaded.push(normalized)
@@ -428,28 +380,43 @@ export class GoogleMailReadAdapter implements ProviderMailAdapter {
   private async readMessageAllowMissing(
     id: string,
     token: string,
-    signal: AbortSignal
+    signal: AbortSignal,
+    stages: GoogleMessageBatchStageTracker
   ): Promise<GoogleMessageRead | undefined> {
     try {
       const payload = await this.getJson(
-        `/gmail/v1/users/me/messages/${encodeURIComponent(id)}?format=FULL`,
+        `/gmail/v1/users/me/messages/${encodeURIComponent(id)}?format=full`,
         token,
         signal,
         MAX_MESSAGE_RESPONSE_BYTES,
-        'missing-message'
+        'missing-message',
+        stages
       )
       const textBodyIds = googleExternalTextBodyIds(payload)
-      if (textBodyIds.length > 16) throw failure('MALFORMED_PAYLOAD', false)
+      if (textBodyIds.length > 16) {
+        stages.failure('gmail-message-external-body')
+        throw failure('MALFORMED_PAYLOAD', false)
+      }
       const externalBodies = new Map<string, string>()
       for (const attachmentId of textBodyIds) {
-        const attachment = await this.getJson(
-          `/gmail/v1/users/me/messages/${encodeURIComponent(id)}/attachments/${
-            encodeURIComponent(attachmentId)}`,
-          token,
-          signal,
-          MAX_MESSAGE_RESPONSE_BYTES
-        )
-        if (!isRecord(attachment) || !safeString(attachment.data, 2_700_000)) {
+        let attachment: unknown
+        try {
+          attachment = await this.getJson(
+            `/gmail/v1/users/me/messages/${encodeURIComponent(id)}/attachments/${
+              encodeURIComponent(attachmentId)}`,
+            token,
+            signal,
+            MAX_MESSAGE_RESPONSE_BYTES,
+            'provider-failure',
+            stages
+          )
+        } catch (error) {
+          if (!signal.aborted) stages.failure('gmail-message-external-body')
+          throw error
+        }
+        if (!isRecord(attachment) || typeof attachment.data !== 'string' ||
+            attachment.data.length > 2_700_000) {
+          stages.failure('gmail-message-external-body')
           throw failure('MALFORMED_PAYLOAD', false)
         }
         externalBodies.set(attachmentId, attachment.data)
@@ -466,103 +433,16 @@ export class GoogleMailReadAdapter implements ProviderMailAdapter {
     token: string,
     signal: AbortSignal,
     maximumBytes: number,
-    notFoundMeaning: NotFoundMeaning = 'provider-failure'
+    notFoundMeaning: NotFoundMeaning = 'provider-failure',
+    stages?: GoogleMessageBatchStageTracker
   ): Promise<unknown> {
-    let response: Awaited<ReturnType<GoogleMailFetch>>
-    try {
-      response = await this.fetchRequest(`${GMAIL_API_ORIGIN}${path}`, {
-        method: 'GET',
-        headers: { authorization: `Bearer ${token}`, accept: 'application/json' },
-        redirect: 'error',
-        signal: AbortSignal.any([signal, AbortSignal.timeout(this.timeoutMs)])
-      })
-    } catch (error) {
-      if (signal.aborted) throw error
-      if (error instanceof ProviderMailAdapterError) throw error
-      throw failure('PROVIDER_UNAVAILABLE', true, error)
-    }
-    if (response.status === 404) {
-      try { await response.body?.cancel() } catch { /* Preserve classification. */ }
-      if (notFoundMeaning === 'invalid-cursor') throw failure('INVALID_CURSOR', true)
-      if (notFoundMeaning === 'missing-message') throw new GoogleMissingMessageError()
-      throw failure('PROVIDER_UNAVAILABLE', false)
-    }
-    if (!Number.isSafeInteger(response.status) || response.status < 100 || response.status > 599) {
-      try { await response.body?.cancel() } catch { /* Preserve classification. */ }
-      throw failure('MALFORMED_PAYLOAD', false)
-    }
-    if (response.status !== 200) {
-      const text = await readBody(response.body, MAX_LIST_RESPONSE_BYTES)
-      let payload: unknown
-      try { payload = text.length === 0 ? undefined : JSON.parse(text) } catch { /* Safe class below. */ }
-      if (response.status === 401) throw failure('AUTHENTICATION_EXPIRED', false)
-      if (response.status === 429 || quotaReason(payload)) throw failure('QUOTA_EXHAUSTED', true)
-      if (response.status === 403) throw failure('PERMISSION_REVOKED', false)
-      throw failure('PROVIDER_UNAVAILABLE', response.status >= 500)
-    }
-    const text = await readBody(response.body, maximumBytes)
-    try {
-      return JSON.parse(text)
-    } catch (error) {
-      throw failure('MALFORMED_PAYLOAD', false, error)
-    }
+    return getGoogleMailJson(this.fetchRequest, path, token, signal, maximumBytes,
+      this.timeoutMs, notFoundMeaning, (stage) => stages?.failure(stage))
   }
 }
-
-class GoogleMissingMessageError extends Error {}
 
 interface GoogleMessageRead {
   providerMessageId: string
   payload: unknown
   externalBodies: ReadonlyMap<string, string>
-}
-
-class GoogleMessageBatchStageTracker {
-  private retrieval: 'idle' | 'started' | 'failed' = 'idle'
-  private normalization: 'idle' | 'started' | 'failed' = 'idle'
-
-  constructor(
-    private readonly reporter: ProviderMailSyncStageReporter,
-    private readonly accountId: string
-  ) {}
-
-  startRetrieval(): void {
-    if (this.retrieval !== 'idle') return
-    this.retrieval = 'started'
-    this.report('gmail-message-retrieval', 'started')
-  }
-
-  startNormalization(): void {
-    if (this.normalization !== 'idle') return
-    this.normalization = 'started'
-    this.report('gmail-message-normalization', 'started')
-  }
-
-  failRetrieval(): void {
-    if (this.retrieval !== 'started') return
-    this.retrieval = 'failed'
-    this.report('gmail-message-retrieval', 'failed')
-  }
-
-  failNormalization(): void {
-    if (this.normalization !== 'started') return
-    this.normalization = 'failed'
-    this.report('gmail-message-normalization', 'failed')
-  }
-
-  complete(): void {
-    if (this.retrieval === 'started') this.report('gmail-message-retrieval', 'completed')
-    if (this.normalization === 'started') this.report('gmail-message-normalization', 'completed')
-  }
-
-  private report(
-    stage: 'gmail-message-retrieval' | 'gmail-message-normalization',
-    phase: 'started' | 'completed' | 'failed'
-  ): void {
-    try {
-      this.reporter.report({ version: 1, accountId: this.accountId, stage, phase })
-    } catch {
-      // Diagnostics must never alter provider behavior.
-    }
-  }
 }

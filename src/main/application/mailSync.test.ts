@@ -79,6 +79,27 @@ const request = (accountId = 'account-work-1') => ({
 })
 
 describe('MailSyncCoordinator', () => {
+  it('does not commit a valid batch delivered after cancellation', async () => {
+    let deliver!: (value: ProviderMailBatchV2) => void
+    let entered!: () => void
+    const started = new Promise<void>((resolve) => { entered = resolve })
+    const provider: ProviderMailAdapter = { fetchBatch: async () => {
+      entered()
+      return new Promise((resolve) => { deliver = resolve })
+    } }
+    const projection = new DeterministicFakeMailSyncProjection()
+    const commit = vi.spyOn(projection, 'commitBatch')
+    const coordinator = new MailSyncCoordinator(provider, projection, clock)
+    const running = coordinator.syncAccount(request())
+    await started
+    const stopping = coordinator.suspend()
+    deliver(batch())
+    await expect(running).rejects.toMatchObject({ code: 'SYNC_CANCELLED' })
+    await stopping
+    expect(commit).not.toHaveBeenCalled()
+    await coordinator.shutdown()
+  })
+
   it('requires the versioned deletion-aware provider batch contract', () => {
     const valid = batch()
     expect(isProviderMailBatchV2(valid)).toBe(true)

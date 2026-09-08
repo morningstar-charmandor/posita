@@ -19,6 +19,19 @@ export const PROVIDER_MAIL_SYNC_STAGES = [
   'gmail-message-batch',
   'gmail-message-retrieval',
   'gmail-message-normalization',
+  'gmail-message-transport',
+  'gmail-message-http',
+  'gmail-message-response-body',
+  'gmail-message-response-limit',
+  'gmail-message-response-encoding',
+  'gmail-message-json',
+  'gmail-message-external-body',
+  'gmail-message-identity',
+  'gmail-message-headers',
+  'gmail-message-mime',
+  'gmail-message-base64',
+  'gmail-message-text-decoding',
+  'gmail-message-contract',
   'projection-commit'
 ] as const
 

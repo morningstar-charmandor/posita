@@ -1387,3 +1387,31 @@ retrieval or normalization result.
   or mailbox mutation is added. The v2 live-read shape is rejected rather than retained as a parallel compatibility
   path. Automated verification passes 88 test files and 547 tests. A later unlocked provider-inert startup inspection
   confirmed the current policy-rejected account no longer renders Retry; no control or provider request was invoked.
+
+## ADR-064: Correct standards-backed body decoding and bound failed read lifetimes
+
+- Status: implemented provider-inert refinement of the existing Google reader and ADR-062
+  diagnostics; no expansion of the retry/consent boundary.
+- Context: the sixth live retry failed before projection, with no message-derived evidence.
+  Synthetic tests reproduced the unpadded-only decoder rejecting RFC 4648 padding, external
+  text being ignored when Gmail supplies empty inline data, and a late cancelled batch
+  still being committed. Inspection also found fail-fast parallel reads without sibling
+  cancellation and no independent settlement deadline across a non-cooperative body read.
+- Decision: replace the decoder with one strict canonical padded/unpadded implementation;
+  resolve empty-inline external text, retain fatal UTF-8 and canonical limits, and use the
+  documented `full` query enum without fallback. Extract existing HTTP and batch-tracker
+  internals into small named infrastructure modules. A referenced request deadline covers
+  headers/body; abort cancels readers without awaiting unbounded cleanup; late responses
+  are discarded. A failed group cancels and settles its bounded sibling wrappers. The
+  coordinator refuses successful provider results delivered after cancellation before commit.
+  Bound MIME traversal to depth 32/2048 parts before recursion (local limits, not Gmail limits).
+- Diagnostics: retain the exact existing event contract and per-batch deduplication; fixed
+  failure categories distinguish transport, HTTP, streamed body, response limit/encoding,
+  JSON, external-body structure, identity, headers, MIME, base64, text and canonical contract.
+  No provider-derived strings, counts, sizes or timestamps are accepted. Reporter exceptions
+  cannot change behavior. Public error codes and retry policy remain unchanged.
+- Consequences: tests establish offline correctness, not the actual mailbox cause. Full RFC
+  header parsing, legacy charset support, senderless drafts and limit-policy changes remain
+  explicit follow-ups if implicated. No dependency, schema, new public command, parallel
+  coordinator, secret access, live request or mailbox capability is introduced. One-use
+  reviewed recovery is only a proposal awaiting the owner; no durable error is rewritten.

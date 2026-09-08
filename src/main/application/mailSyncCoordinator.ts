@@ -269,6 +269,8 @@ export class MailSyncCoordinator {
         }
         throw this.providerFailure(error)
       }
+      // A provider may settle successfully after cancellation; never project that late batch.
+      if (signal.aborted) throw cancelled()
       if (!isProviderMailBatchV2(unknownBatch) ||
           unknownBatch.accountId !== request.accountId ||
           unknownBatch.provider !== request.provider ||

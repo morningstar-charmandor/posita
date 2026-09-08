@@ -60,6 +60,31 @@ const queuedFetch = (...responses: Response[]): GoogleMailFetch & { calls: [stri
 }
 
 describe('GoogleMailReadAdapter', () => {
+  it('cancels and settles sibling message reads before reporting a failed group', async () => {
+    const signals: AbortSignal[] = []
+    const cancel = vi.fn()
+    let messageRequests = 0
+    const events: ProviderMailSyncStageEventV1[] = []
+    const fetchRequest: GoogleMailFetch = async (url, init) => {
+      if (url.endsWith('/profile')) return body({ historyId: '100' })
+      if (url.includes('maxResults=')) return body({ messages: Array.from({ length: 5 },
+        (_, index) => ({ id: `synthetic-${index}` })) })
+      messageRequests += 1
+      signals.push(init.signal)
+      if (url.includes('/synthetic-0?')) return new Response('private-detail', { status: 503 })
+      return new Response(new ReadableStream({ cancel }))
+    }
+    const adapter = new GoogleMailReadAdapter(tokenSource(), fetchRequest, 20_000,
+      { report: (event) => events.push(event) })
+    await expect(adapter.fetchBatch(request(), new AbortController().signal))
+      .rejects.toMatchObject({ code: 'PROVIDER_UNAVAILABLE' })
+    expect(messageRequests).toBe(4)
+    expect(signals.slice(1).every((signal) => signal.aborted)).toBe(true)
+    expect(cancel).toHaveBeenCalledTimes(3)
+    expect(events.filter(({ stage }) => stage === 'gmail-message-http')).toHaveLength(1)
+    expect(JSON.stringify(events)).not.toMatch(/synthetic-|private-detail/)
+  })
+
   it('integrates credential-free with the single coordinator through initial and deletion sync', async () => {
     const fetchRequest = queuedFetch(
       body({ historyId: '100' }),
@@ -112,7 +137,7 @@ describe('GoogleMailReadAdapter', () => {
     expect(fetchRequest.calls.map(([url]) => url)).toEqual([
       'https://gmail.googleapis.com/gmail/v1/users/me/profile',
       'https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=100&q=after%3A1780574400&includeSpamTrash=false',
-      'https://gmail.googleapis.com/gmail/v1/users/me/messages/message-1?format=FULL'
+      'https://gmail.googleapis.com/gmail/v1/users/me/messages/message-1?format=full'
     ])
     expect(tokens.getAccessToken).toHaveBeenCalledWith(
       'account-work-1',
@@ -174,9 +199,10 @@ describe('GoogleMailReadAdapter', () => {
 
     await expect(adapter.fetchBatch(request(), new AbortController().signal))
       .rejects.toMatchObject({ code: 'PROVIDER_UNAVAILABLE', retryable: true })
-    expect(events.map(({ stage, phase }) => `${stage}:${phase}`).slice(-4)).toEqual([
+    expect(events.map(({ stage, phase }) => `${stage}:${phase}`).slice(-5)).toEqual([
       'gmail-message-batch:started',
       'gmail-message-retrieval:started',
+      'gmail-message-http:failed',
       'gmail-message-retrieval:failed',
       'gmail-message-batch:failed'
     ])
@@ -198,10 +224,11 @@ describe('GoogleMailReadAdapter', () => {
 
     await expect(adapter.fetchBatch(request(), new AbortController().signal))
       .rejects.toMatchObject({ code: 'MALFORMED_PAYLOAD', retryable: false })
-    expect(events.map(({ stage, phase }) => `${stage}:${phase}`).slice(-5)).toEqual([
+    expect(events.map(({ stage, phase }) => `${stage}:${phase}`).slice(-6)).toEqual([
       'gmail-message-batch:started',
       'gmail-message-retrieval:started',
       'gmail-message-normalization:started',
+      'gmail-message-identity:failed',
       'gmail-message-normalization:failed',
       'gmail-message-batch:failed'
     ])
@@ -286,7 +313,7 @@ describe('GoogleMailReadAdapter', () => {
           mimeType: 'text/plain',
           filename: '',
           headers: [],
-          body: { attachmentId: 'text-body-1', size: 18 }
+          body: { attachmentId: 'text-body-1', size: 18, data: '' }
         },
         {
           mimeType: 'application/pdf',
@@ -315,6 +342,22 @@ describe('GoogleMailReadAdapter', () => {
       providerAttachmentId: 'binary-1',
       filename: 'private.pdf'
     }])
+  })
+
+  it('identifies failure of an external text request without reflecting its reference', async () => {
+    const external = message()
+    Object.assign(external.payload.body, { data: '', attachmentId: 'private-external-reference' })
+    const events: ProviderMailSyncStageEventV1[] = []
+    const adapter = new GoogleMailReadAdapter(tokenSource(), queuedFetch(
+      body({ historyId: '100' }), body({ messages: [{ id: 'message-1' }] }),
+      body(external), new Response(null, { status: 503 })
+    ), 20_000, { report: (event) => events.push(event) })
+    await expect(adapter.fetchBatch(request(), new AbortController().signal))
+      .rejects.toMatchObject({ code: 'PROVIDER_UNAVAILABLE' })
+    expect(events.filter(({ phase }) => phase === 'failed').map(({ stage }) => stage)).toEqual([
+      'gmail-message-http', 'gmail-message-external-body', 'gmail-message-retrieval', 'gmail-message-batch'
+    ])
+    expect(JSON.stringify(events)).not.toContain('private-external-reference')
   })
 
   it('normalizes history updates and permanent or concurrent deletions', async () => {

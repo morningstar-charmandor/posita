@@ -7,6 +7,7 @@ import {
   type ProviderMailMessageV1,
   type ProviderMailThreadV1
 } from '../../../shared/providerMail'
+import type { GoogleMessageNormalizationFailureStage } from './googleMessageBatchDiagnostics'
 
 type JsonRecord = Record<string, unknown>
 
@@ -16,20 +17,49 @@ const isRecord = (value: unknown): value is JsonRecord =>
 const bounded = (value: unknown, maximum: number): string | undefined =>
   typeof value === 'string' && value.length <= maximum ? value : undefined
 
+// Bound recursion before either external-body discovery or canonical parsing.
+// These are local resource limits, not claims about Gmail's accepted MIME limits.
+const boundedMimeTree = (payload: JsonRecord): boolean => {
+  const pending: Array<{ part: unknown; depth: number }> = [{ part: payload, depth: 0 }]
+  let visited = 0
+  while (pending.length > 0) {
+    const { part, depth } = pending.pop()!
+    if (++visited > 2048 || depth > 32) return false
+    if (isRecord(part) && Array.isArray(part.parts)) {
+      if (part.parts.length + pending.length + visited > 2048) return false
+      for (const child of part.parts) pending.push({ part: child, depth: depth + 1 })
+    }
+  }
+  return true
+}
+
 const localId = (kind: 'message' | 'thread', accountId: string, providerId: string): string =>
   `${kind === 'message' ? 'gm' : 'gt'}_${createHash('sha256')
     .update(`${accountId}\u0000${providerId}`)
     .digest('base64url')}`
 
-const decodeBase64Url = (value: unknown, maximumBytes = 2_000_000): string | undefined => {
+const decodeBase64Url = (
+  value: unknown,
+  fail: (stage: GoogleMessageNormalizationFailureStage) => undefined,
+  maximumBytes = 2_000_000
+): string | undefined => {
+  if (value === undefined) return undefined
   if (typeof value !== 'string' || value.length > Math.ceil(maximumBytes * 4 / 3) + 4 ||
-      !/^[A-Za-z0-9_-]*$/.test(value)) return undefined
+      !/^[A-Za-z0-9_-]*={0,2}$/.test(value)) return fail('gmail-message-base64')
+  const unpadded = value.replace(/=+$/, '')
+  const remainder = unpadded.length % 4
+  if (remainder === 1 || (value !== unpadded &&
+      (value.length % 4 !== 0 || value.length - unpadded.length !== 4 - remainder))) {
+    return fail('gmail-message-base64')
+  }
   try {
     const bytes = Buffer.from(value, 'base64url')
-    if (bytes.byteLength > maximumBytes) return undefined
+    if (bytes.byteLength > maximumBytes || bytes.toString('base64url') !== unpadded) {
+      return fail('gmail-message-base64')
+    }
     return new TextDecoder('utf-8', { fatal: true }).decode(bytes)
   } catch {
-    return undefined
+    return fail('gmail-message-text-decoding')
   }
 }
 
@@ -91,7 +121,7 @@ interface ParsedPart {
   plainParts: string[]
   htmlParts: string[]
   attachments: ProviderMailMessageV1['attachments']
-  invalid: boolean
+  invalid?: GoogleMessageNormalizationFailureStage
 }
 
 const codePoint = (value: number): string =>
@@ -132,11 +162,11 @@ const parsePart = (
   const size = validSize ? body.size as number : 0
   if (attachmentId !== undefined && filename.length > 0) {
     if (result.attachments.length >= 256) {
-      result.invalid = true
+      result.invalid = 'gmail-message-mime'
       return
     }
     if (!validSize) {
-      result.invalid = true
+      result.invalid = 'gmail-message-mime'
       return
     }
     const headers = headersOf(value)
@@ -152,11 +182,14 @@ const parsePart = (
     })
   } else if (mimeType.toLowerCase() === 'text/plain' ||
       mimeType.toLowerCase() === 'text/html') {
-    const encodedBody = typeof body.data === 'string'
-      ? body.data
-      : attachmentId === undefined ? undefined : externalBodies.get(attachmentId)
-    const decoded = decodeBase64Url(encodedBody)
-    if (encodedBody !== undefined && decoded === undefined) result.invalid = true
+    const encodedBody = attachmentId !== undefined &&
+        (body.data === undefined || body.data === '')
+      ? externalBodies.get(attachmentId)
+      : body.data
+    const decoded = decodeBase64Url(encodedBody, (stage) => {
+      result.invalid ??= stage
+      return undefined
+    })
     if (decoded !== undefined) {
       if (mimeType.toLowerCase() === 'text/plain') result.plainParts.push(decoded)
       else result.htmlParts.push(decoded)
@@ -175,12 +208,13 @@ export const googleExternalTextBodyIds = (value: unknown): string[] => {
     const filename = bounded(part.filename, 1024) ?? ''
     const body = isRecord(part.body) ? part.body : undefined
     if ((mimeType === 'text/plain' || mimeType === 'text/html') && filename.length === 0 &&
-        body !== undefined && body.data === undefined && safeAttachmentId(body.attachmentId)) {
+        body !== undefined && (body.data === undefined || body.data === '') &&
+        safeAttachmentId(body.attachmentId)) {
       ids.push(body.attachmentId)
     }
     if (Array.isArray(part.parts)) part.parts.forEach(visit)
   }
-  if (isRecord(value) && isRecord(value.payload)) visit(value.payload)
+  if (isRecord(value) && isRecord(value.payload) && boundedMimeTree(value.payload)) visit(value.payload)
   return [...new Set(ids)]
 }
 
@@ -196,9 +230,14 @@ export interface NormalizedGoogleMessage {
 export const normalizeGoogleMessage = (
   value: unknown,
   accountId: string,
-  externalBodies: ReadonlyMap<string, string> = new Map()
+  externalBodies: ReadonlyMap<string, string> = new Map(),
+  onFailure: (stage: GoogleMessageNormalizationFailureStage) => void = () => undefined
 ): NormalizedGoogleMessage | undefined => {
-  if (!isRecord(value)) return undefined
+  const fail = (stage: GoogleMessageNormalizationFailureStage): undefined => {
+    try { onFailure(stage) } catch { /* Diagnostics never affect parsing. */ }
+    return undefined
+  }
+  if (!isRecord(value)) return fail('gmail-message-identity')
   const providerMessageId = bounded(value.id, 512)
   const providerThreadId = bounded(value.threadId, 512)
   const historyId = bounded(value.historyId, 16_384)
@@ -206,24 +245,24 @@ export const normalizeGoogleMessage = (
   if (providerMessageId === undefined || providerMessageId.length === 0 ||
       providerThreadId === undefined || providerThreadId.length === 0 ||
       historyId === undefined || historyId.length === 0 || internalDate === undefined ||
-      !/^\d+$/.test(internalDate)) return undefined
+      !/^\d+$/.test(internalDate)) return fail('gmail-message-identity')
   const received = new Date(Number(internalDate))
-  if (!Number.isFinite(received.getTime())) return undefined
+  if (!Number.isFinite(received.getTime())) return fail('gmail-message-identity')
   const payload = isRecord(value.payload) ? value.payload : undefined
-  if (payload === undefined) return undefined
+  if (payload === undefined || !boundedMimeTree(payload)) return fail('gmail-message-mime')
   const headers = headersOf(payload)
   const explicitSenders = mailboxes(headers.get('sender') ?? [])
   const authors = mailboxes(headers.get('from') ?? [])
   if (explicitSenders === undefined || authors === undefined || explicitSenders.length > 1) {
-    return undefined
+    return fail('gmail-message-headers')
   }
   const sender = explicitSenders[0] ?? (authors.length === 1 ? authors[0] : undefined)
-  if (sender === undefined) return undefined
+  if (sender === undefined) return fail('gmail-message-headers')
   const expectedExternalBodies = googleExternalTextBodyIds(value)
-  if (expectedExternalBodies.some((id) => !externalBodies.has(id))) return undefined
-  const parsed: ParsedPart = { plainParts: [], htmlParts: [], attachments: [], invalid: false }
+  if (expectedExternalBodies.some((id) => !externalBodies.has(id))) return fail('gmail-message-mime')
+  const parsed: ParsedPart = { plainParts: [], htmlParts: [], attachments: [] }
   parsePart(payload, parsed, externalBodies)
-  if (parsed.invalid) return undefined
+  if (parsed.invalid) return fail(parsed.invalid)
   const snippet = bounded(value.snippet, 2_000_000) ?? ''
   const sentHeader = headers.get('date')?.[0]
   const sent = sentHeader === undefined ? received : new Date(sentHeader)
@@ -235,7 +274,7 @@ export const normalizeGoogleMessage = (
   const bcc = mailboxes(headers.get('bcc') ?? [])
   const replyTo = mailboxes(headers.get('reply-to') ?? [])
   if (to === undefined || cc === undefined || bcc === undefined || replyTo === undefined) {
-    return undefined
+    return fail('gmail-message-headers')
   }
   const recipients: MailRecipientV1[] = [
     ...to.map((item) => ({ role: 'to' as const, mailbox: item })),
@@ -246,16 +285,16 @@ export const normalizeGoogleMessage = (
       mailbox: item
     }))
   ]
-  if (recipients.length > 256) return undefined
+  if (recipients.length > 256) return fail('gmail-message-headers')
   const labels = Array.isArray(value.labelIds)
     ? [...new Set(value.labelIds.filter((item): item is string =>
       typeof item === 'string' && item.length > 0 && item.length <= 256))]
     : []
-  if (labels.length > 256) return undefined
+  if (labels.length > 256) return fail('gmail-message-contract')
   const plainSource = parsed.plainParts.length > 0
     ? parsed.plainParts.join('\n')
     : parsed.htmlParts.map(htmlToPlainText).join('\n')
-  if (plainSource.length > 2_000_000) return undefined
+  if (plainSource.length > 2_000_000) return fail('gmail-message-contract')
   const plain = plainSource || snippet
   const message: ProviderMailMessageV1 = {
     version: 1,
@@ -283,5 +322,5 @@ export const normalizeGoogleMessage = (
   }
   return isProviderMailMessageV1(message) && isProviderMailThreadV1(thread)
     ? { message, thread, historyId }
-    : undefined
+    : fail('gmail-message-contract')
 }

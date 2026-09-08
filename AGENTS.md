@@ -6,6 +6,18 @@ exists deeper in the tree.
 
 ## Product state
 
+- Latest provider-inert checkpoint (2026-09-08): see `docs/GMAIL_READ_DIAGNOSIS.md`.
+  Reproduced and corrected valid padded-base64url rejection, empty-inline external
+  text handling, sibling-read cancellation and late-cancelled batch projection.
+  Fixed, batch-deduplicated failure categories now distinguish the remaining read
+  boundaries. The sixth live message-batch failure is still not diagnosed live;
+  no credentials or Gmail were accessed for this checkpoint. The existing account
+  remains last-observed live-empty with retry hidden by the trusted policy.
+  No twelfth attempt or one-use reviewed-retry extension is authorized. The next
+  owner decision must cover that narrow recovery gate and exactly one read-only
+  attempt; do not bypass it, rewrite errors, or reconnect. The narrative below is
+  historical; the handoff's current summary wins over earlier next-step statements.
+
 - Current milestone: Gate 2D Google desktop authorization, bounded loopback/browser,
   trusted connection activation, read, refresh, and revocation are credential-free
   complete; isolated Google Cloud/API/consent/desktop-client configuration is complete;

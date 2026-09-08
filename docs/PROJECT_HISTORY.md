@@ -2935,7 +2935,31 @@ offer Retry. No twelfth live request is authorized.
 The UI correction is now visually verified. The next provider-affecting recovery choice belongs to the owner; no
 twelfth live request is authorized.
 
-## How future entries should be written
+### 2026-09-08 — Evidence-led offline Gmail body and lifetime correction
+
+- Established clean local/fetched `main` and `staging` at `dd69c5d`; baseline verification
+  passed 88 files and 547 tests. Worked on `codex/gmail-message-read-correction`.
+- Reconstructed the sixth provider attempt separately from later pre-provider eligibility
+  rejection and the already-fixed Strict Mode response defect. No credentials or live mail
+  were inspected; the connected live-empty state remains an inherited observation.
+- Synthetic tests reproduced rejection of valid padded base64url and ignored external text
+  with empty inline data. Corrected those shapes strictly and used documented `format=full`.
+- Separated fixed failure categories without provider-derived diagnostic values. Extracted
+  existing HTTP/tracker internals rather than adding another provider owner or fallback.
+- Bounded transport plus body settlement, cancelled sibling reads, bounded MIME traversal,
+  and reproduced/fixed a valid late batch being committed after cancellation.
+- Exercised standards edge cases, explicit unsupported headers/charsets/drafts, body limits,
+  cancellation and reporter failure; real temporary encrypted-worker integration proves
+  padded text round-trips and malformed text commits neither messages nor cursor.
+- Added `GMAIL_READ_DIAGNOSIS.md` and ADR-064. No dependency, migration, public command,
+  credential/consent change, runtime launch, Gmail API call, AI call or mailbox mutation.
+- Final `npm run verify`: 91 test files / 592 tests, strict typecheck, structure/security
+  boundary and production build pass (45 additional synthetic cases).
+- The actual mailbox trigger remains unverified. Next: owner decision on a one-use reviewed
+  retry capability in the existing command, plus exactly one controlled read-only attempt.
+  No twelfth attempt is authorized and no review gate was bypassed.
+
+## Future entry guidance
 
 For each material milestone, record:
 

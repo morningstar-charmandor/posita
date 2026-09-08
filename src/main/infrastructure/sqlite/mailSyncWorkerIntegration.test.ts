@@ -11,6 +11,8 @@ import {
 } from '../../application/mailSync'
 import { MailSyncCoordinator } from '../../application/mailSyncCoordinator'
 import { DeterministicFakeMailProviderAdapter } from '../providers/deterministicFakeMailSync'
+import { GoogleMailReadAdapter } from '../providers/googleMailReadAdapter'
+import { normalizeGoogleMessage } from '../providers/googleMailNormalizer'
 import type { ProviderMailMessageV1, ProviderMailThreadV1 } from '../../../shared/providerMail'
 import { openPositaDatabase } from './database'
 import { applyMigrations } from './migrations'
@@ -129,6 +131,49 @@ afterEach(async () => {
 })
 
 describe('credential-free worker-backed mail sync integration', () => {
+  it.each(['Zm8=', 'Z'] as const)('passes synthetic Gmail body %s through the real encrypted commit boundary', async (data) => {
+    const { database, projection } = await createFileProjection()
+    const responses = [
+      { historyId: '100' },
+      { messages: [{ id: 'synthetic-google-message' }] },
+      { id: 'synthetic-google-message', threadId: 'synthetic-google-thread', historyId: '101',
+        internalDate: String(Date.parse('2026-08-30T10:00:00.000Z')),
+        payload: { mimeType: 'text/plain', headers: [
+          { name: 'From', value: 'synthetic-sender@example.test' },
+          { name: 'Subject', value: 'Synthetic encrypted Gmail source' }
+        ], body: { data, size: 2 } } }
+    ]
+    const normalized = normalizeGoogleMessage(responses[2], 'account-work-1')
+    const provider = new GoogleMailReadAdapter({ getAccessToken: async () => 'synthetic-token' },
+      async () => new Response(JSON.stringify(responses.shift())))
+    const coordinator = new MailSyncCoordinator(provider, projection, clock)
+    try {
+      if (data === 'Z') {
+        await expect(coordinator.syncAccount(request())).rejects.toMatchObject({ code: 'MALFORMED_PAYLOAD' })
+        expect(database.prepare('SELECT COUNT(*) AS count FROM encrypted_provider_mail_records').get())
+          .toEqual({ count: 0 })
+        await expect(projection.loadCheckpoint('account-work-1')).resolves.toBeUndefined()
+      } else {
+        await expect(coordinator.syncAccount(request())).resolves.toMatchObject({ insertedMessages: 1 })
+        await expect(projection.loadCheckpoint('account-work-1')).resolves.toMatchObject({ cursor: expect.any(String) })
+        expect(normalized).toBeDefined()
+        await expect(projection.loadMessageDetail({ version: 1,
+          accountId: 'account-work-1', messageId: normalized!.message.id
+        })).resolves.toMatchObject({ status: 'found', detail: { body: { plainText: 'fo', truncated: false } } })
+        const rows = database.prepare('SELECT payload FROM encrypted_provider_mail_records').all() as unknown as
+          { payload: Uint8Array }[]
+        expect(rows).toHaveLength(2)
+        const ciphertext = Buffer.concat(rows.map(({ payload }) => Buffer.from(payload)))
+        for (const secret of ['synthetic-google-message', 'synthetic-sender@example.test', 'Synthetic encrypted Gmail source']) {
+          expect(ciphertext.includes(Buffer.from(secret))).toBe(false)
+        }
+      }
+    } finally {
+      await coordinator.shutdown()
+      projection.destroyEncryptionContext()
+    }
+  })
+
   it('commits multiple pages, resumes from the encrypted cursor, and classifies replay', async () => {
     const { database, projection } = await createFileProjection()
     const provider = new DeterministicFakeMailProviderAdapter([
