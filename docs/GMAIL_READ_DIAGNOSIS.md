@@ -3,6 +3,14 @@
 Reviewed 2026-09-08. This is the current focused investigation; older attempt narratives
 remain historical evidence, not permission to make another request.
 
+Live update after verified implementation `d8e1ef3`: the one approved reviewed sync
+completed message retrieval, normalization and encrypted projection, then a later message
+HTTP request failed. The command settled. Encrypted provider-message presence and consumed
+receipt were verified with keyless boolean checks; local reload showed retained mail.
+No additional provider attempt is authorized. This proves the corrected ingestion path
+works with real mail, not which original encoding caused the sixth observation, nor full
+sync completion. The exact remaining HTTP reason is not yet known. See the handoff.
+
 ## Verified starting point
 
 - `dd69c5d` on local and fetched origin `main`/`staging`; initially clean.

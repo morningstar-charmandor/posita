@@ -2977,7 +2977,25 @@ twelfth live request is authorized.
   outcome must be recorded separately. No live success is claimed by these synthetic tests.
 - `npm run verify` passes 94 files / 609 tests, typecheck, structure/security and build.
 
-## Future history-entry guidance
+### 2026-09-08 — First verified real Gmail ingestion; partial sync retained
+
+- Ran the verified `d8e1ef3` build. An initial native confirmation expired while the
+  user paused; no credential/provider stage ran, and the durable receipt was still unused.
+  Cancelled that stale dialog. The user's continuation resumed the original unused approval.
+- Exactly one reviewed provider sync then passed token/profile/list, message retrieval,
+  normalization and encrypted projection. A later batch failed at `gmail-message-http`.
+  The command and native result settled; no second provider sync was attempted.
+- Keyless read-only checks recorded only receipt-consumed and provider-message-present
+  booleans. Local-only reload visibly exposed Recent retained mail. No private mailbox
+  content, counts, remote IDs, addresses, subjects, credentials or timing were persisted
+  in repository evidence. The app was left open for the owner.
+- This establishes the first real ingestion/display evidence, not full sync completion
+  or retrospective proof that padding was the sixth attempt's exact trigger. The remaining
+  HTTP status/reason is unobserved and must not be guessed. No thirteenth read is authorized.
+- Production source remains the 94-file/609-test verified checkpoint; this follow-up records
+  live facts only. The one-use receipt remains consumed and no mailbox was modified.
+
+## Future history-writing guidance
 
 For each material milestone, record:
 

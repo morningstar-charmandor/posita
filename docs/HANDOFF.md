@@ -37,6 +37,34 @@ retry policy, credential ownership and encrypted-worker boundaries remain unchan
 The cumulative narrative below is historical; this current summary and the diagnosis
 document supersede its older next-step statements and test totals.
 
+### Latest live result — 2026-09-08 (supersedes the live-empty descriptions below)
+
+Implementation checkpoint `d8e1ef3` was fully verified and published before the owner-approved
+observation. The first native confirmation expired during a long user pause: no credential
+or provider stage ran and a read-only boolean check proved the fixed receipt was still unused.
+That expired dialog was cancelled. On the user's continuation, the still-unused approval was
+confirmed and **exactly one provider sync** ran; this was not a second Gmail request attempt.
+
+The stage record proves credential refresh, token validation, profile/list, message retrieval,
+canonical normalization and encrypted projection commit completed. A subsequent batch failed
+at the fixed `gmail-message-http` boundary, then the trusted command and native result dialog
+settled normally. There was no second provider sync. A read-only, keyless inspection confirmed
+only two booleans: the one-use receipt is consumed and encrypted provider messages are present.
+No counts, private payloads, message IDs, addresses, subjects or precise provider timing were
+recorded. The original specific message-format trigger is not retrospectively proven.
+
+A local-only Reload confirmed **Recent retained mail is visible in the app**. The app is left
+open for the owner. The current installation is no longer live-empty: partial real Gmail mail
+is retained encrypted, but the full sync is incomplete. Ordinary status remains truthful and
+no sending, marking read, other mailbox mutation, reconnect, rotation or AI action occurred.
+
+**Exact next step:** investigate the remaining HTTP rejection using only safe local evidence
+or provider-inert diagnostics; its precise status/reason was not exposed by the current stage.
+Do not call it quota, authentication, or another provider condition without evidence. The
+review receipt stays consumed; no thirteenth provider attempt is authorized. Do not reset the
+receipt or repeat the reviewed menu action. `npm run verify` remains 94 files / 609 tests;
+this follow-up changes continuity records only, not the verified production implementation.
+
 Reviewed-recovery change report: the new native menu adapter and SQLite receipt reuse
 the existing command and `audit_events`; no duplicate sync owner or schema was added.
 The trusted-only approval interface is absent from preload/IPC. Verification passes

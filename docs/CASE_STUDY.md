@@ -751,3 +751,13 @@ the specific malformed-payload correction. A durable receipt is consumed before 
 so an uncertain result or restart cannot repeat the provider action. The ordinary retry
 policy stays intact. Tests include cancellation, stale state, unrelated errors and a real
 temporary database reopen. This is implementation evidence; the live result is separate.
+
+The single authorized live observation then crossed the previously failing boundary:
+real Gmail retrieval and normalization completed, encrypted records were committed, and
+the retained-mail view displayed them after local-only reload. A later HTTP rejection
+stopped the remainder of the sync, while the completed local transaction remained usable.
+The result is deliberately described as a partial import, not a finished mailbox sync.
+No mail content, counts, provider IDs or precise timing were recorded as portfolio evidence.
+The consumed one-use receipt and normally settled command prevented another diagnostic
+read from happening automatically. The next question is the exact HTTP failure, not
+another speculative reconnect or a claim that the original encoding trigger is proven.

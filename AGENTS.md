@@ -6,6 +6,15 @@ exists deeper in the tree.
 
 ## Product state
 
+- Latest observed live result (2026-09-08): the single approved reviewed read on
+  `d8e1ef3` completed Gmail retrieval, normalization and encrypted projection commit.
+  A later batch failed at the fixed HTTP boundary, and the command settled normally.
+  Real retained mail is now visible after local-only reload; full sync is incomplete.
+  The durable one-use receipt is consumed. No thirteenth provider attempt is authorized.
+  Investigate the remaining HTTP failure offline; do not guess its status/reason,
+  reset the receipt, reconnect, or imply all mail was synchronized. The older
+  live-empty/zero-mail descriptions below are historical, superseded by this result.
+
 - Latest provider-inert checkpoint (2026-09-08): see `docs/GMAIL_READ_DIAGNOSIS.md`.
   Reproduced and corrected valid padded-base64url rejection, empty-inline external
   text handling, sibling-read cancellation and late-cancelled batch projection.
@@ -127,7 +136,7 @@ exists deeper in the tree.
   tests. A later unlocked provider-inert startup inspection confirmed the real account remains truthfully
   attention-required, exposes local reload and confirmed disconnect, and no longer offers the policy-disallowed Retry
   control. No control was invoked, no provider request occurred, and no twelfth request is authorized.
-- Current data: the local installation is live-empty; deterministic fixtures remain
+- Current data: the local installation contains partially imported encrypted Gmail mail; deterministic fixtures remain
   repository/test assets but were atomically removed from the live installation.
 - Encrypted provider-account and sync-state storage contains one real connected account.
 - A non-sensitive lifecycle journal and confirmed full local-deletion execution are implemented.

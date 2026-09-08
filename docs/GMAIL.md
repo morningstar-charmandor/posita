@@ -2,6 +2,11 @@
 
 ## Current status
 
+Latest live observation (2026-09-08): the one approved reviewed read completed retrieval,
+normalization and encrypted commit; later retrieval stopped at an HTTP failure. Retained
+real mail is visible after local reload, but full sync is incomplete. Permission is consumed;
+no further provider read is authorized. Older live-empty descriptions are historical.
+
 2026-09-08 provider-inert update: [Gmail read diagnosis](GMAIL_READ_DIAGNOSIS.md)
 records standards-backed decoding corrections, bounded transport/cancellation fixes,
 fixed failure categories and remaining unsupported source forms. It does not change
