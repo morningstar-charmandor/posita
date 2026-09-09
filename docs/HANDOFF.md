@@ -8,6 +8,21 @@ next move. Technical details remain in their linked source documents.
 
 ## Current state
 
+**Latest conditional approval check (2026-09-09):** the owner approved exactly one
+read-only retry only if the existing policy permits it. Privacy-filtered accessibility
+inspection of the existing running app showed retained mail and local Reload, no Retry
+control, and no active sync. No retry, reviewed-menu action, local reload, credential read,
+restart, or provider request was invoked. The conditional provider attempt did not run.
+The prior reviewed receipt remains consumed; no override or renewed receipt was created.
+
+**Immediate next step:** inspect only the saved local safe error category through an
+appropriate trusted, privacy-preserving path to explain the unavailable Retry control.
+Do not infer quota, revoked access or the exact HTTP status from button absence. The
+existing runtime was not relaunched, so do not assume it contains `c3eff6f` diagnostics;
+any later permitted observation must first run the verified build. This approval is not
+authority to reconnect, reset a receipt, change retry eligibility or bypass the control.
+The remaining HTTP status/reason is still unobserved.
+
 **Latest offline checkpoint (2026-09-09):** from clean published `d3717d5`, the
 HTTP failure boundary now records fixed status categories (bad request, unauthorized,
 forbidden, not found, rate limited, server error, unexpected status) and a single fixed

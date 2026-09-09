@@ -6,6 +6,11 @@ exists deeper in the tree.
 
 ## Product state
 
+- Latest approval check (2026-09-09): one additional read was conditionally approved
+  only through the policy-permitted Retry control. That control is absent in the running
+  app, so no attempt ran. Inspect the saved safe error locally; do not bypass policy,
+  reset the consumed receipt, or assume the running app has been relaunched with new code.
+
 - Latest offline checkpoint (2026-09-09): HTTP diagnostics distinguish fixed response
   status categories and allow-listed Google reason categories, with unclassified fallback.
   Existing error mapping, retry policy, consumed review receipt and provider ownership

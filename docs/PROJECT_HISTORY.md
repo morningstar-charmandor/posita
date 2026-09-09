@@ -3010,7 +3010,17 @@ twelfth live request is authorized.
 - Next is an explicit one-read approval decision, conditional on existing trusted Retry
   eligibility. Never bypass the policy or reuse the consumed reviewed receipt.
 
+### 2026-09-09 — Conditional retry stopped before provider work
+
+- Owner approved one read-only retry only if the existing policy permits it. Filtered
+  accessibility inspection showed retained mail, local Reload, no Retry and no active sync.
+- No retry/control, credential read, local reload, runtime restart or Gmail request ran.
+  No private accessibility content was emitted. No receipt or policy was changed.
+- Next: inspect the saved safe error category locally; button absence does not identify
+  the HTTP status. Before any later permitted read, run the verified diagnostic build.
+
 ## Future history-writing guidance
+
 
 For each material milestone, record:
 
