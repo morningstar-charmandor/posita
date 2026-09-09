@@ -1,12 +1,38 @@
 # Posita Continuity Handoff
 
-Last reviewed: 2026-09-08
+Last reviewed: 2026-09-09
 
 This is the first document to read when Posita work continues in a new AI model,
 thread, chat, or development session. It records current state and the safest
 next move. Technical details remain in their linked source documents.
 
 ## Current state
+
+**Latest offline checkpoint (2026-09-09):** from clean published `d3717d5`, the
+HTTP failure boundary now records fixed status categories (bad request, unauthorized,
+forbidden, not found, rate limited, server error, unexpected status) and a single fixed
+allow-listed reason category, or unclassified. These extend the existing batch-deduplicated
+stage contract; no raw provider strings, status numbers, headers, error messages, URLs,
+mail identifiers, counts or timing are logged. Error bodies keep their existing size/deadline
+limits. Ambiguous/unknown reason shapes stay unclassified, not guessed.
+
+The existing safe error mapping and retry policy are unchanged. Synthetic integration
+proves a later HTTP failure leaves an earlier committed page/cursor intact and only an
+explicit subsequent call resumes it. `npm run verify` passes 94 files / 642 tests, strict
+types, security/structure and production build. No new dependencies, abstractions,
+compatibility paths, schema, IPC, UI or provider capabilities; existing helpers/reporters
+are extended. No credentials/private runtime data were read, no app restart or live request
+was performed. Previously observed partial real mail remains the latest live evidence.
+
+**Exact next step:** request approval for exactly one read-only retry through the existing
+public control, only if trusted policy permits it. That attempt would resume the encrypted
+checkpoint and exercise status/reason diagnostics if an HTTP failure recurs. Stop after
+settlement or cancellation; no automatic retry, reconnect, receipt reset, policy override,
+or thirteenth read is currently authorized. If Retry is unavailable, inspect safe local
+status and return the blocker rather than bypassing it. A future successful attempt would
+not retrospectively identify the earlier HTTP response. The old one-use receipt stays consumed.
+
+### Historical investigation and implementation checkpoints
 
 **Current priority: Gmail read failure only.** The provider-inert audit from verified
 `dd69c5d` reproduced valid base64url padding rejection, ignored empty-inline external
@@ -19,7 +45,7 @@ live-empty, with policy-disallowed Retry hidden. No credentials/private configur
 were read, no product runtime was launched, and no twelfth Gmail attempt was authorized
 or made during this investigation. Public documentation requests are not Gmail API reads.
 
-**Approved next action (2026-09-08):** the owner approved one-use reviewed recovery and
+**Completed approval (2026-09-08; historical):** the owner approved one-use reviewed recovery and
 exactly one controlled twelfth read-only sync. ADR-065 extends only the trusted main
 command for the reviewed `MALFORMED_PAYLOAD` state. Development menu **Diagnostics →
 Reviewed Gmail read once…** selects the sole complete startup account and uses a native,
@@ -460,8 +486,9 @@ Not implemented:
 
 ## Next recommended milestone
 
-Current next step (2026-09-08): the approved one-use reviewed recovery/read described
-above and in `GMAIL_READ_DIAGNOSIS.md`. The following chronology preserves earlier evidence;
+Current next step (2026-09-09): the conditional single-read approval decision at the top
+of this handoff. The prior one-use reviewed read is complete and its receipt consumed.
+The following chronology preserves earlier evidence;
 it does not authorize another provider action or identify the actual failing message format.
 
 The owner-approved connection completed and left one internally consistent protected account
@@ -818,7 +845,7 @@ credential, personal data, provider request, or mailbox mutation was added.
 - `daf9f73` — Gate 2A local SQLite data foundation.
 - `0d56167` — Gate 2B privacy and credential-storage foundation.
 - Gate 2C encrypted-cache checkpoint — use `git log --oneline` for its final hash.
-- Current verified baseline: 94 test files, 609 tests, strict typecheck, structure
+- Current verified baseline: 94 test files, 642 tests, strict typecheck, structure
   checks, and production Electron build passing.
 - Desktop visual/AX check: Settings exposes the local-only recovery controls and
   an `Automatic retention status` region with next/last check, zero-removal result,

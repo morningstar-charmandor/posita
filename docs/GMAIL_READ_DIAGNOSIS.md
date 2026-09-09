@@ -13,6 +13,50 @@ sync completion. The exact remaining HTTP reason is not yet known. See the hando
 
 ## Verified starting point
 
+### Remaining HTTP failure: offline review on 2026-09-09
+
+Baseline `d3717d5` is verified and contains the first live partial-import evidence.
+The recorded `gmail-message-http` failure selects the HTTP rejection branch, not base64,
+canonical normalization or projection. In the native fetch path, a message 404 is already
+handled as disappearance, not a batch failure; an external-body failure has its own marker.
+Earlier retrieval/commit success lowers the priority of initial configuration and universal
+decoding defects. A temporary server/rate response or a request-specific rejection remain
+plausible; available evidence cannot honestly choose between them or rule out changed access.
+
+The old stage discarded status/reason distinctions. They cannot be recovered from its log,
+and the application error mapping is many-to-one. No private database, credential, or new
+Gmail response was read in this review. Google's [error guide](https://developers.google.com/workspace/gmail/api/guides/handle-errors)
+distinguishes bad requests, authorization, forbidden/quota responses, and server errors;
+403 requires its reason to distinguish policy from quota. The [quota reference](https://developers.google.com/workspace/gmail/api/reference/quota)
+does not establish this installation exceeded a limit. Posita's four concurrent reads are
+not equivalent to a multipart HTTP batch of all listed messages; no quota adjustment or
+concurrency change is justified by the current evidence.
+
+Implemented inside the existing HTTP helper: fixed status categories plus one allow-listed
+reason category for `badRequest`, `authError`, `domainPolicy`, `dailyLimitExceeded`,
+`rateLimitExceeded`, `userRateLimitExceeded`, or `backendError`. Unknown, mixed, absent,
+malformed or excessive reason lists become unclassified. Identical reasons may repeat;
+at most 16 entries are inspected diagnostically. Only fixed local strings reach the existing
+reporter; no raw reason, message, HTTP header, status number, URL, ID, count or timing does.
+Known status survives a stalled/failed/oversized error-body read without pretending a reason
+was parsed. Existing 512 KiB error-body bound, cancellation, error codes and retry mapping
+remain unchanged. Caller cancellation and expected missing-message 404 remain unreported.
+
+Verification: 94 files / 642 tests and full `npm run verify` pass. Synthetic status/reason,
+non-reflection, malformed/oversized body, cancellation, reporter isolation and batch
+deduplication tests pass. A coordinator/adapter integration commits a synthetic first page,
+fails a later page, and proves only a subsequent explicit call resumes the retained cursor.
+This is not new live evidence or a correction of the unknown real HTTP rejection.
+
+Next proposed observation: exactly one owner-approved read-only sync through the existing
+Retry control **only if policy permits**, resuming the stored checkpoint. No auto retry or
+review-receipt reset. If unavailable, stop and report safe local status. It may read mail
+and store it encrypted locally but cannot modify Gmail. Only fixed diagnostics may be
+recorded. No thirteenth attempt is currently authorized; success alone would not reveal
+the old transient response.
+
+### Original offline audit baseline (historical)
+
 - `dd69c5d` on local and fetched origin `main`/`staging`; initially clean.
 - Baseline `npm run verify`: 88 files, 547 tests, typecheck, structure and build passed.
 - Last documented real state: one connected account, protected refresh credential,

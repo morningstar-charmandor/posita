@@ -2,6 +2,13 @@
 
 ## Gate 2D boundary
 
+Current update (2026-09-09): the owner-approved read has retained partial real Gmail mail
+encrypted locally. Earlier live-empty statements below describe initial activation.
+The latest offline diagnostic refinement records only fixed HTTP status/reason categories
+through the existing reporter. It never records raw error reasons/messages, HTTP headers,
+mail IDs, content, counts or timing; unknown reasons stay unclassified. No additional live
+read or private-data inspection occurred and the consumed review receipt is unchanged.
+
 Posita's current installation is live-empty after one owner-approved test-account
 connection. The one-way schema-v10 transition atomically removed deterministic sample
 records. One refresh credential is OS-protected and one provider-account/sync pair is

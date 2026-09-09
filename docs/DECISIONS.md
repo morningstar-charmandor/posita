@@ -1416,6 +1416,17 @@ retrieval or normalization result.
   coordinator, secret access, live request or mailbox capability is introduced. One-use
   reviewed recovery is only a proposal awaiting the owner; no durable error is rewritten.
 
+### ADR-064 diagnostic refinement — 2026-09-09
+
+The first partial live import ended at an undifferentiated HTTP failure. Refine that
+existing fixed-stage boundary with status categories and allow-listed Google reason
+categories; unknown/mixed/malformed reasons stay unclassified. Inspect only the already
+bounded error body, with at most 16 diagnostic entries. Preserve per-batch deduplication,
+reporter isolation, cancellation and existing 404 reconciliation. No raw provider value
+crosses the reporter. This is observational only: do not change error mapping, retry policy,
+concurrency, consent, receipt availability or provider I/O. Synthetic verification is not
+evidence of the real status; no further read is authorized by this refinement.
+
 ## ADR-065: One-use reviewed retry for the Gmail decoding correction
 
 - Status: owner approved on 2026-09-08, including exactly one controlled read-only sync.

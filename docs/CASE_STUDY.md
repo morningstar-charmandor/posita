@@ -761,3 +761,11 @@ No mail content, counts, provider IDs or precise timing were recorded as portfol
 The consumed one-use receipt and normally settled command prevented another diagnostic
 read from happening automatically. The next question is the exact HTTP failure, not
 another speculative reconnect or a claim that the original encoding trigger is proven.
+
+On 2026-09-09, the follow-up closed the HTTP observability gap offline: the existing
+diagnostic stream distinguishes fixed response and documented reason categories without
+retaining provider error text. Unknown reasons stay explicitly unclassified. Synthetic
+integration shows already committed mail and the resume checkpoint survive a later HTTP
+failure. All 642 tests and the full verification gate pass. No additional real-mail attempt
+was made; the actual earlier HTTP cause remains unknown. This is evidence of better
+diagnostics and recovery tests, not a claim that complete sync is fixed.

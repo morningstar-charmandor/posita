@@ -2995,6 +2995,21 @@ twelfth live request is authorized.
 - Production source remains the 94-file/609-test verified checkpoint; this follow-up records
   live facts only. The one-use receipt remains consumed and no mailbox was modified.
 
+### 2026-09-09 — Distinguish HTTP rejection categories without another Gmail read
+
+- Started from clean published `d3717d5`. The real HTTP status/reason is not recoverable
+  from its coarse stage marker; no speculative token, concurrency or retry change was made.
+- Extended existing HTTP/tracker/reporter helpers with fixed status and allow-listed reason
+  categories. Unknown or mixed reasons remain unclassified. No raw provider strings or
+  extra private data enter diagnostics; body bounds and failure policy are unchanged.
+- Added 33 synthetic tests covering statuses/reasons, malformed/oversized error bodies,
+  non-reflection, cancellation, sink isolation, batch deduplication, and partial-page
+  preservation with an explicit subsequent resume. Full verification: 94 files / 642 tests.
+- No dependency, new service, compatibility path, schema, IPC/UI or provider capability.
+  No credential/private-store access, app restart, Gmail read, receipt reset or mailbox action.
+- Next is an explicit one-read approval decision, conditional on existing trusted Retry
+  eligibility. Never bypass the policy or reuse the consumed reviewed receipt.
+
 ## Future history-writing guidance
 
 For each material milestone, record:

@@ -60,6 +60,40 @@ const queuedFetch = (...responses: Response[]): GoogleMailFetch & { calls: [stri
 }
 
 describe('GoogleMailReadAdapter', () => {
+  it('preserves a committed page and resumes it only on an explicit call after a later HTTP failure', async () => {
+    const events: ProviderMailSyncStageEventV1[] = []
+    const fetchRequest = queuedFetch(
+      body({ historyId: '100' }),
+      body({ messages: [{ id: 'message-1' }], nextPageToken: 'synthetic-next-page' }),
+      body(message()),
+      body({ messages: [{ id: 'message-2' }] }),
+      new Response(JSON.stringify({ error: { errors: [{ reason: 'backendError' }] } }), { status: 503 }),
+      body({ messages: [{ id: 'message-2' }] }),
+      body(message('message-2', 'thread-2'))
+    )
+    const projection = new DeterministicFakeMailSyncProjection()
+    const reporter = { report: (event: ProviderMailSyncStageEventV1) => events.push(event) }
+    const coordinator = new MailSyncCoordinator(
+      new GoogleMailReadAdapter(tokenSource(), fetchRequest, 20_000, reporter), projection,
+      { now: () => new Date('2026-09-02T12:00:00.000Z') }, 2, reporter
+    )
+    const syncRequest = { version: 1, accountId: 'account-work-1', provider: 'google' } as const
+    await expect(coordinator.syncAccount(syncRequest)).rejects.toMatchObject({ code: 'PROVIDER_UNAVAILABLE' })
+    const retained = projection.snapshot('account-work-1')
+    expect(retained.messages).toHaveLength(1)
+    expect(retained.checkpoint?.cursor).toBeDefined()
+    expect(fetchRequest.calls).toHaveLength(5)
+    expect(events.filter(({ stage, phase }) => stage === 'projection-commit' && phase === 'completed'))
+      .toHaveLength(1)
+    expect(events.some(({ stage }) => stage === 'gmail-message-http-reason-backend-error')).toBe(true)
+    expect(JSON.stringify(events)).not.toMatch(/synthetic-next-page|message-[12]|sender@|Message body/)
+
+    // Synthetic explicit call only: no retry is scheduled by the adapter or coordinator.
+    await expect(coordinator.syncAccount(syncRequest)).resolves.toMatchObject({ mode: 'incremental' })
+    expect(fetchRequest.calls[5]?.[0]).toBe(fetchRequest.calls[3]?.[0])
+    expect(projection.snapshot('account-work-1').messages).toHaveLength(2)
+  })
+
   it('cancels and settles sibling message reads before reporting a failed group', async () => {
     const signals: AbortSignal[] = []
     const cancel = vi.fn()
@@ -199,9 +233,11 @@ describe('GoogleMailReadAdapter', () => {
 
     await expect(adapter.fetchBatch(request(), new AbortController().signal))
       .rejects.toMatchObject({ code: 'PROVIDER_UNAVAILABLE', retryable: true })
-    expect(events.map(({ stage, phase }) => `${stage}:${phase}`).slice(-5)).toEqual([
+    expect(events.map(({ stage, phase }) => `${stage}:${phase}`).slice(-7)).toEqual([
       'gmail-message-batch:started',
       'gmail-message-retrieval:started',
+      'gmail-message-http-server-error:failed',
+      'gmail-message-http-reason-unclassified:failed',
       'gmail-message-http:failed',
       'gmail-message-retrieval:failed',
       'gmail-message-batch:failed'
@@ -355,6 +391,7 @@ describe('GoogleMailReadAdapter', () => {
     await expect(adapter.fetchBatch(request(), new AbortController().signal))
       .rejects.toMatchObject({ code: 'PROVIDER_UNAVAILABLE' })
     expect(events.filter(({ phase }) => phase === 'failed').map(({ stage }) => stage)).toEqual([
+      'gmail-message-http-server-error', 'gmail-message-http-reason-unclassified',
       'gmail-message-http', 'gmail-message-external-body', 'gmail-message-retrieval', 'gmail-message-batch'
     ])
     expect(JSON.stringify(events)).not.toContain('private-external-reference')

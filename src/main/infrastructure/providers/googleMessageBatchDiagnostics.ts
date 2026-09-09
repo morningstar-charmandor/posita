@@ -12,7 +12,10 @@ export type GoogleMessageNormalizationFailureStage =
   | 'gmail-message-text-decoding'
   | 'gmail-message-contract'
 
+export type GoogleMessageHttpFailureStage = Extract<ProviderMailSyncStage, `gmail-message-http-${string}`>
+
 export type GoogleMessageRetrievalFailureStage =
+  | GoogleMessageHttpFailureStage
   | 'gmail-message-transport'
   | 'gmail-message-http'
   | 'gmail-message-response-body'

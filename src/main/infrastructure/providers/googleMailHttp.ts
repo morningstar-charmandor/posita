@@ -1,5 +1,8 @@
 import { ProviderMailAdapterError } from '../../application/mailSync'
-import type { GoogleMessageRetrievalFailureStage } from './googleMessageBatchDiagnostics'
+import type {
+  GoogleMessageHttpFailureStage,
+  GoogleMessageRetrievalFailureStage
+} from './googleMessageBatchDiagnostics'
 
 export type GoogleMailFetch = (
   url: string,
@@ -41,6 +44,43 @@ const quotaReason = (value: unknown): boolean => {
   return value.error.errors.some((item) => isRecord(item) &&
     (item.reason === 'rateLimitExceeded' || item.reason === 'userRateLimitExceeded' ||
       item.reason === 'dailyLimitExceeded'))
+}
+
+// Diagnostic-only: the existing error mapping below remains the retry-policy input.
+const httpStatusStage = (status: number): GoogleMessageHttpFailureStage => {
+  switch (status) {
+    case 400: return 'gmail-message-http-bad-request'
+    case 401: return 'gmail-message-http-unauthorized'
+    case 403: return 'gmail-message-http-forbidden'
+    case 404: return 'gmail-message-http-not-found'
+    case 429: return 'gmail-message-http-rate-limited'
+    default: return Number.isSafeInteger(status) && status >= 500 && status <= 599
+      ? 'gmail-message-http-server-error' : 'gmail-message-http-unexpected-status'
+  }
+}
+
+const httpReasonStage = (payload: unknown): GoogleMessageHttpFailureStage => {
+  const unclassified = 'gmail-message-http-reason-unclassified'
+  if (!isRecord(payload) || !isRecord(payload.error) || !Array.isArray(payload.error.errors) ||
+      payload.error.errors.length === 0 || payload.error.errors.length > 16) return unclassified
+  let result: GoogleMessageHttpFailureStage | undefined
+  for (const item of payload.error.errors) {
+    if (!isRecord(item)) return unclassified
+    let next: GoogleMessageHttpFailureStage
+    switch (item.reason) {
+      case 'badRequest': next = 'gmail-message-http-reason-bad-request'; break
+      case 'authError': next = 'gmail-message-http-reason-auth-error'; break
+      case 'domainPolicy': next = 'gmail-message-http-reason-domain-policy'; break
+      case 'dailyLimitExceeded': next = 'gmail-message-http-reason-daily-limit'; break
+      case 'rateLimitExceeded': next = 'gmail-message-http-reason-rate-limit'; break
+      case 'userRateLimitExceeded': next = 'gmail-message-http-reason-user-rate-limit'; break
+      case 'backendError': next = 'gmail-message-http-reason-backend-error'; break
+      default: return unclassified
+    }
+    if (result !== undefined && result !== next) return unclassified
+    result = next
+  }
+  return result ?? unclassified
 }
 
 const cancelBody = (body: ReadableStream<Uint8Array> | null): void => {
@@ -100,6 +140,8 @@ export const getGoogleMailJson = async (
 ): Promise<unknown> => {
   const controller = new AbortController()
   let stage: GoogleMessageRetrievalFailureStage = 'gmail-message-transport'
+  let httpStatus: GoogleMessageHttpFailureStage | undefined
+  let httpReason: GoogleMessageHttpFailureStage | undefined
   const abort = (): void => controller.abort()
   signal.addEventListener('abort', abort, { once: true })
   const timer = setTimeout(abort, timeoutMs)
@@ -124,6 +166,7 @@ export const getGoogleMailJson = async (
       throw new DOMException('Aborted', 'AbortError')
     }
     stage = 'gmail-message-http'
+    if (response.status !== 200) httpStatus = httpStatusStage(response.status)
     if (response.status === 404) {
       cancelBody(response.body)
       if (notFoundMeaning === 'invalid-cursor') throw googleMailFailure('INVALID_CURSOR', true)
@@ -142,6 +185,7 @@ export const getGoogleMailJson = async (
       stage = 'gmail-message-http'
       let payload: unknown
       try { payload = JSON.parse(text) } catch { /* HTTP classification needs no raw detail. */ }
+      httpReason = httpReasonStage(payload)
       if (response.status === 401) throw googleMailFailure('AUTHENTICATION_EXPIRED', false)
       if (response.status === 429 || quotaReason(payload)) throw googleMailFailure('QUOTA_EXHAUSTED', true)
       if (response.status === 403) throw googleMailFailure('PERMISSION_REVOKED', false)
@@ -155,7 +199,10 @@ export const getGoogleMailJson = async (
     return await Promise.race([work(), aborted])
   } catch (error) {
     if (!(error instanceof GoogleMissingMessageError) && !signal.aborted) {
-      try { onFailure(stage) } catch { /* Diagnostics cannot change behavior. */ }
+      for (const failureStage of [httpStatus, httpReason, stage]) {
+        if (failureStage === undefined) continue
+        try { onFailure(failureStage) } catch { /* Diagnostics cannot change behavior. */ }
+      }
     }
     if (signal.aborted || error instanceof ProviderMailAdapterError ||
         error instanceof GoogleMissingMessageError) throw error

@@ -6,6 +6,13 @@ exists deeper in the tree.
 
 ## Product state
 
+- Latest offline checkpoint (2026-09-09): HTTP diagnostics distinguish fixed response
+  status categories and allow-listed Google reason categories, with unclassified fallback.
+  Existing error mapping, retry policy, consumed review receipt and provider ownership
+  are unchanged. Verification passes 94 files / 642 tests. No further live read occurred;
+  the remaining real HTTP status/reason is still unknown. A fresh explicit retry is an
+  owner decision and may use only the existing control if its policy permits it.
+
 - Latest observed live result (2026-09-08): the single approved reviewed read on
   `d8e1ef3` completed Gmail retrieval, normalization and encrypted projection commit.
   A later batch failed at the fixed HTTP boundary, and the command settled normally.
