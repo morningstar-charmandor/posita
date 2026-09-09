@@ -13,6 +13,27 @@ sync completion. The exact remaining HTTP reason is not yet known. See the hando
 
 ## Verified starting point
 
+### Saved local error identified — 2026-09-09
+
+A read-only trusted Electron inspection of the authenticated encrypted sync state returned
+only `QUOTA_EXHAUSTED` / `retry-later`. It unlocked the existing local cache key, never
+requested Gmail credentials, never read message records, and made no provider call. Its
+temporary files were removed and no product source changed.
+
+The HTTP helper maps HTTP 429 or its recognized rate/user-rate/daily-limit reasons to this
+category. The prior batch HTTP marker plus the saved category therefore narrow the remaining
+failure to rate/usage limiting; the exact status, reason subtype and reset time are still
+unknown. Google's [error guidance](https://developers.google.com/workspace/gmail/api/guides/handle-errors)
+distinguishes several such limits and recommends backoff; elapsed time alone does not prove
+this installation is ready again. No quota configuration or concurrency change was made.
+
+Code confirms why Retry is absent: `providerMailSyncRetryPolicy` returns `retry-later`,
+while both the public command and summary projection require `retry-allowed`. A delayed
+manual resume path was deferred and does not yet exist. Next is an owner-reviewed offline
+cooldown/manual-resume design, not credential rotation, reconnect, blanket eligibility
+relaxation or reuse of the consumed review receipt. No new live attempt ran.
+
+
 ### Remaining HTTP failure: offline review on 2026-09-09
 
 Baseline `d3717d5` is verified and contains the first live partial-import evidence.

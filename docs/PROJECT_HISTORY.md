@@ -3019,7 +3019,21 @@ twelfth live request is authorized.
 - Next: inspect the saved safe error category locally; button absence does not identify
   the HTTP status. Before any later permitted read, run the verified diagnostic build.
 
+### 2026-09-09 — Saved quota failure explains unavailable Retry
+
+- A temporary trusted Electron inspector opened SQLite read-only and used the existing
+  cache-key and authenticated sync-state code. Its restricted vault wrapper could request
+  only the local data key, never a Gmail credential; no message records were read.
+- Output was exactly the validated `QUOTA_EXHAUSTED` category and `retry-later` disposition.
+  No provider request or local state write ran; key buffers and temporary files were removed.
+- Existing policy/projection/command consistently exclude `retry-later` from immediate
+  Retry. The remaining work is the deferred cooldown/manual-resume capability, subject to
+  owner review. Exact HTTP status, quota subtype and reset time remain unobserved.
+- Documentation-only checkpoint; no production change, dependency, schema, new service,
+  policy override or receipt reset. Full verification: 94 test files / 642 tests.
+
 ## Future history-writing guidance
+
 
 
 For each material milestone, record:

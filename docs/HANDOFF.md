@@ -8,6 +8,35 @@ next move. Technical details remain in their linked source documents.
 
 ## Current state
 
+**Verified local diagnosis (2026-09-09):** encrypted saved sync state returned only
+`QUOTA_EXHAUSTED` and its fixed disposition `retry-later`. The inspection used a temporary
+trusted Electron main process, read-only SQLite plus `query_only`, the existing OS cache-key
+protector, and the existing authenticated state repository/validator. Its vault wrapper
+allowed only `CACHE_DATA_KEY_NAME`; Gmail refresh/client credentials and mail records were
+not read. Only the fixed code/disposition were emitted, with no account IDs, timestamps,
+cursors, counts or private payload. The key buffers were erased, the connection closed,
+and the temporary script/bundle/directory removed. No provider graph, window, migration,
+database write or network call was created by the inspector. The running product was not
+restarted. Verification remains 94 files / 642 tests with full `npm run verify`.
+
+This explains the blocked UI: the canonical policy classifies quota as `retry-later`,
+but both public command and live-state projection permit only `retry-allowed`. The saved
+category and earlier HTTP-stage evidence identify rate/usage limiting, not a new decoding
+or authentication failure. The exact HTTP status, limit subtype and reset time were never
+stored and remain unknown. Do not claim the limit has expired or that increasing quota,
+reconnecting, or changing concurrency is the confirmed fix.
+
+**Next owner decision:** approve an offline, bounded, user-initiated quota-resume/cooldown
+flow using the existing sync owner, with safe visible paused status and no automatic retries.
+This changes the previously deferred `retry-later` recovery boundary and is not implemented
+or authorized yet. Existing conditional read approval cannot bypass that boundary; no
+thirteenth provider attempt has run. A later live read still requires its exact scope to be
+confirmed after the policy is reviewed and the verified runtime is loaded.
+Change report: documentation/evidence only; no production code, dependency, abstraction,
+schema, compatibility path, retry policy or receipt change.
+
+### Earlier conditional approval and diagnostic checkpoints
+
 **Latest conditional approval check (2026-09-09):** the owner approved exactly one
 read-only retry only if the existing policy permits it. Privacy-filtered accessibility
 inspection of the existing running app showed retained mail and local Reload, no Retry

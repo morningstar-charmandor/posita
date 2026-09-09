@@ -769,3 +769,10 @@ integration shows already committed mail and the resume checkpoint survive a lat
 failure. All 642 tests and the full verification gate pass. No additional real-mail attempt
 was made; the actual earlier HTTP cause remains unknown. This is evidence of better
 diagnostics and recovery tests, not a claim that complete sync is fixed.
+
+A subsequent local-only inspection recovered the missing actionable fact without another
+mailbox request: the encrypted status held `QUOTA_EXHAUSTED`, mapped to `retry-later`.
+The unavailable Retry control matched that policy; the product lacked the deferred delayed
+resume path. This separates a confirmed local recovery gap from the still-unknown exact
+provider limit. No messages or Gmail credentials were inspected, and no quota, connection
+or retry policy was changed. The next decision is controlled cooldown/resume behavior.

@@ -6,6 +6,14 @@ exists deeper in the tree.
 
 ## Product state
 
+- Latest local diagnosis (2026-09-09): read-only encrypted sync-state inspection
+  returned `QUOTA_EXHAUSTED` / `retry-later`. This explains unavailable Retry: public
+  retry and its projection accept only `retry-allowed`. Exact HTTP status, quota kind,
+  and reset time remain unknown. No Gmail/OAuth credential or message was read; only
+  the existing local cache key was unlocked in a temporary trusted Electron process.
+  No provider request, account change or policy override occurred. A bounded manual
+  quota-resume/cooldown design now needs owner approval; reconnect is not justified.
+
 - Latest approval check (2026-09-09): one additional read was conditionally approved
   only through the policy-permitted Retry control. That control is absent in the running
   app, so no attempt ran. Inspect the saved safe error locally; do not bypass policy,
