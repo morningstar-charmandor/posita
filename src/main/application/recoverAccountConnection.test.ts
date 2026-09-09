@@ -4,7 +4,7 @@ import { AccountConnectionService } from './accountConnection'
 import type {
   AccountStateRepository,
   ProviderAccountRecordV2,
-  ProviderSyncStateV1
+  ProviderSyncState
 } from './accountState'
 import type { AccountAuthorizationAdapter } from './accountAuthorization'
 import {
@@ -52,7 +52,7 @@ class MemoryVault implements SecretVault {
 
 class MemoryAccountState implements AccountStateRepository {
   readonly accounts = new Map<string, ProviderAccountRecordV2>()
-  readonly sync = new Map<string, ProviderSyncStateV1>()
+  readonly sync = new Map<string, ProviderSyncState>()
   failDelete = false
   deleteCalls: string[] = []
 
@@ -63,8 +63,8 @@ class MemoryAccountState implements AccountStateRepository {
   loadProviderAccount(value: string): ProviderAccountRecordV2 | undefined {
     return this.accounts.get(value)
   }
-  saveSyncState(state: ProviderSyncStateV1): void { this.sync.set(state.accountId, state) }
-  loadSyncState(value: string): ProviderSyncStateV1 | undefined { return this.sync.get(value) }
+  saveSyncState(state: ProviderSyncState): void { this.sync.set(state.accountId, state) }
+  loadSyncState(value: string): ProviderSyncState | undefined { return this.sync.get(value) }
   deleteAccountState(value: string): boolean {
     this.deleteCalls.push(value)
     if (this.failDelete) throw new Error('unsafe test-only state failure')

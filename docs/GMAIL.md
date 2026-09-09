@@ -2,6 +2,17 @@
 
 ## Current status
 
+2026-09-09 offline update (ADR-066): local saved `QUOTA_EXHAUSTED` established a
+rate/usage-limit category, not its exact HTTP subtype or reset. Durable local cooldown
+is now 15 minutes, then 30 and at most 60 after repeated quota failures. No automatic
+request, polling or reset-time claim. Legacy state requires explicit local setup;
+new quota failures save a pause. After local reload shows expiry, a separate confirmation
+permits one existing lifecycle dispatch and reserves another pause first. Setup and
+resume use distinct exact versioned intents on the existing retry request; stale/missing
+intent fails closed. Auth/review restrictions and ADR-065 receipt remain unchanged.
+Live-read V4 exposes setup/waiting/ready categories, never cooldown metadata. Offline
+implementation is verified; runtime activation and any subsequent read need owner approval.
+
 Latest live observation (2026-09-08): the one approved reviewed read completed retrieval,
 normalization and encrypted commit; later retrieval stopped at an HTTP failure. Retained
 real mail is visible after local reload, but full sync is incomplete. Permission is consumed;

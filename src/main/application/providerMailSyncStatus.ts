@@ -1,7 +1,7 @@
 import {
-  isProviderSyncStateV1,
+  isProviderSyncState,
   type AccountStateRepository,
-  type ProviderSyncStateV1,
+  type ProviderSyncState,
   type SyncFailureCode
 } from './accountState'
 import {
@@ -12,6 +12,7 @@ import {
 import {
   isProviderMailSyncFailureCode,
   providerMailSyncRetryPolicy,
+  withProviderQuotaCooldown,
   type ProviderMailSyncRetryPolicyV1
 } from './providerMailSyncRetryPolicy'
 
@@ -28,12 +29,12 @@ export class ProviderMailSyncStatusService {
     private readonly clock: { now(): Date }
   ) {}
 
-  recordStarted(request: unknown): ProviderSyncStateV1 {
+  recordStarted(request: unknown): ProviderSyncState {
     if (!isSyncAccountRequestV1(request)) throw this.invalid()
     return this.save(request, { status: 'syncing' })
   }
 
-  recordSucceeded(request: unknown, result: unknown): ProviderSyncStateV1 {
+  recordSucceeded(request: unknown, result: unknown): ProviderSyncState {
     if (!isSyncAccountRequestV1(request) || !isSyncAccountResultV1(result) ||
         result.accountId !== request.accountId || result.provider !== request.provider) {
       throw this.invalid()
@@ -48,7 +49,7 @@ export class ProviderMailSyncStatusService {
   }
 
   recordFailed(request: unknown, errorCode: unknown): {
-    state: ProviderSyncStateV1
+    state: ProviderSyncState
     policy: ProviderMailSyncRetryPolicyV1
   } {
     if (!isSyncAccountRequestV1(request) ||
@@ -57,16 +58,16 @@ export class ProviderMailSyncStatusService {
     const policy = providerMailSyncRetryPolicy(code)
     const state = policy.disposition === 'cancelled'
       ? this.save(request, { status: 'idle' })
-      : this.save(request, { status: 'error', lastErrorCode: code })
+      : this.save(request, { status: 'error', lastErrorCode: code }, code === 'QUOTA_EXHAUSTED')
     return { state, policy }
   }
 
-  recoverInterrupted(request: unknown): ProviderSyncStateV1 | undefined {
+  recoverInterrupted(request: unknown): ProviderSyncState | undefined {
     if (!isSyncAccountRequestV1(request)) throw this.invalid()
     try {
       const current = this.accountState.loadSyncState(request.accountId)
       if (current === undefined) return undefined
-      if (!isProviderSyncStateV1(current) ||
+      if (!isProviderSyncState(current) ||
           current.accountId !== request.accountId || current.provider !== request.provider) {
         throw this.invalid()
       }
@@ -84,12 +85,13 @@ export class ProviderMailSyncStatusService {
 
   private save(
     request: SyncAccountRequestV1,
-    update: Pick<ProviderSyncStateV1, 'status'> &
-      Partial<Pick<ProviderSyncStateV1, 'cursor' | 'lastSuccessAt' | 'lastErrorCode'>>
-  ): ProviderSyncStateV1 {
+    update: Pick<ProviderSyncState, 'status'> &
+      Partial<Pick<ProviderSyncState, 'cursor' | 'lastSuccessAt' | 'lastErrorCode'>>,
+    quotaFailure = false
+  ): ProviderSyncState {
     try {
       const current = this.accountState.loadSyncState(request.accountId)
-      const state: ProviderSyncStateV1 = {
+      let state: ProviderSyncState = {
         version: 1,
         accountId: request.accountId,
         provider: request.provider,
@@ -100,6 +102,11 @@ export class ProviderMailSyncStatusService {
           current?.lastSuccessAt === undefined ? {} : { lastSuccessAt: current.lastSuccessAt }),
         ...(update.lastErrorCode === undefined ? {} : { lastErrorCode: update.lastErrorCode })
       }
+      // A successful completed sync alone clears cooldown history; page commits do not.
+      if (current?.version === 2 && update.lastSuccessAt === undefined) {
+        state = { ...state, version: 2, quotaCooldown: current.quotaCooldown }
+      }
+      if (quotaFailure) state = withProviderQuotaCooldown(state, this.clock.now().getTime(), true)
       this.accountState.saveSyncState(state)
       return state
     } catch (error) {

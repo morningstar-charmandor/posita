@@ -64,7 +64,7 @@ import {
   POSITA_PROTOCOL_VERSION,
   RETENTION_MAINTENANCE_FAILURE_MESSAGE
 } from './contracts'
-import { isLiveMailSnapshotV3, type LiveMailSnapshotV3 } from './liveMail'
+import { isLiveMailSnapshotV4, type LiveMailSnapshotV4 } from './liveMail'
 import type {
   Account,
   BriefItem,
@@ -249,11 +249,11 @@ const isFixtureAppSnapshot = (value: unknown): value is AppSnapshotV1 =>
   Number.isFinite(Date.parse(value.loadedAt)) &&
   isMailDataset(value.dataset)
 
-export const isLiveMailSnapshot = isLiveMailSnapshotV3
+export const isLiveMailSnapshot = isLiveMailSnapshotV4
 
 export const isAppSnapshot = (
   value: unknown
-): value is AppSnapshotV1 | LiveMailSnapshotV3 =>
+): value is AppSnapshotV1 | LiveMailSnapshotV4 =>
   isFixtureAppSnapshot(value) || isLiveMailSnapshot(value)
 
 export const isLoadSnapshotResponse = (value: unknown): value is LoadSnapshotResponseV1 => {
@@ -689,9 +689,15 @@ export const isCancelGoogleAccountConnectionRequest = (
 export const isRetryGoogleAccountSyncRequest = (
   value: unknown
 ): value is RetryGoogleAccountSyncRequestV1 =>
-  isRecord(value) && hasOnlyKeys(value, ['version', 'action', 'accountId']) &&
+  isRecord(value) && hasOnlyKeys(value, ['version', 'action', 'accountId',
+    ...(Object.hasOwn(value, 'quotaIntent') ? ['quotaIntent'] : [])]) &&
   value.version === POSITA_PROTOCOL_VERSION &&
-  value.action === 'retry-google-account-sync' && isOperationId(value.accountId)
+  value.action === 'retry-google-account-sync' && isOperationId(value.accountId) &&
+  (!Object.hasOwn(value, 'quotaIntent') || (
+    isRecord(value.quotaIntent) && hasOnlyKeys(value.quotaIntent, ['version', 'action']) &&
+    value.quotaIntent.version === 1 &&
+    (value.quotaIntent.action === 'start-cooldown' || value.quotaIntent.action === 'resume')
+  ))
 
 const googleConnectionErrorCodes: readonly GoogleAccountConnectionErrorCodeV1[] = [
   'INVALID_REQUEST', 'UNTRUSTED_SENDER', 'CONNECTION_UNAVAILABLE',

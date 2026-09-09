@@ -18,6 +18,14 @@ be measured rather than guessed.
 
 ## Process boundary
 
+ADR-066 keeps quota recovery inside the existing sync ownership graph. One pure
+clock-based availability function is shared by trusted command and encrypted projection.
+Versioned encrypted cooldown state gates explicit dispatch; no timer schedules provider
+work. Live-read V4 passes only fixed setup/waiting/ready categories to the renderer.
+The existing retry request's exact optional versioned quota intent separates local setup
+from confirmed resume and fails closed when stale. Completed and failed command settlement
+both refresh local status. No additional service, channel, dependency or provider owner.
+
 ```text
 React renderer
   | typed, allow-listed IPC only

@@ -1,5 +1,17 @@
 # Encrypted Private-Data Cache
 
+## Quota cooldown payload evolution (ADR-066)
+
+Encrypted sync-state V2 adds exact version-1 cooldown metadata: failure streak (1–3),
+canonical ISO start and not-before timestamps with a validated 15/30/60-minute interval.
+The existing authenticated account-scoped record stores it; no SQL migration or new
+table is needed. Exact V1 records remain readable without rewrite. Explicit legacy quota
+setup or a new quota failure creates V2. Partial cursor commits, cancellation and restart
+retain metadata; completed sync success clears it and writes ordinary V1 state. Old code
+cannot read V2; do not run an older build against a newly prepared cooldown record.
+File reopen, unchanged legacy ciphertext and private-metadata encryption are synthetic
+test evidence. No private installation state was migrated during offline implementation.
+
 ## Gate 2C objective
 
 Gate 2C moves all sample source and derived mail data out of plaintext SQLite

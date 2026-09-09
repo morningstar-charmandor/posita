@@ -173,7 +173,8 @@ Implement activation in this order, without skipping or splitting the safety pai
 6. replace standalone retention start/stop, deletion suspension, and projection
    shutdown wiring with that lifecycle owner, preserving local-data-deleted startup,
 7. expose only bounded status and explicit user retry; do not add autonomous polling
-   until quota/backoff behavior is separately reviewed,
+   until quota/backoff behavior is separately reviewed (ADR-066 now implements a
+   separately approved local cooldown/manual-resume path; no live read is authorized),
 8. run credential-free integration first, then use a dedicated test account only
    after a separate credential/configuration approval and privacy-safe test plan.
 

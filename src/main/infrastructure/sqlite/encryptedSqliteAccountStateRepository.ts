@@ -3,10 +3,10 @@ import {
   AccountStateError,
   isAccountId,
   isProviderAccountRecordV2,
-  isProviderSyncStateV1,
+  isProviderSyncState,
   type AccountStateRepository,
   type ProviderAccountRecordV2,
-  type ProviderSyncStateV1
+  type ProviderSyncState
 } from '../../application/accountState.ts'
 import { MAX_PROVIDER_MAIL_STARTUP_ACCOUNTS } from '../../application/providerMailLimits.ts'
 import {
@@ -37,9 +37,9 @@ const storageFailure = (message: string, cause: unknown): AccountStateError =>
 export const saveEncryptedProviderSyncState = (
   database: DatabaseSync,
   protector: CacheRecordProtector,
-  state: ProviderSyncStateV1
+  state: ProviderSyncState
 ): void => {
-  if (!isProviderSyncStateV1(state)) {
+  if (!isProviderSyncState(state)) {
     throw new AccountStateError('INVALID_ACCOUNT_STATE', 'Provider sync state is invalid.')
   }
   const context = contextFor('sync-state', state.accountId)
@@ -121,14 +121,14 @@ export class EncryptedSqliteAccountStateRepository implements AccountStateReposi
     return value
   }
 
-  saveSyncState(state: ProviderSyncStateV1): void {
+  saveSyncState(state: ProviderSyncState): void {
     saveEncryptedProviderSyncState(this.database, this.protector, state)
   }
 
-  loadSyncState(accountId: string): ProviderSyncStateV1 | undefined {
+  loadSyncState(accountId: string): ProviderSyncState | undefined {
     const value = this.load('sync-state', accountId)
     if (value === undefined) return undefined
-    if (!isProviderSyncStateV1(value) || value.accountId !== accountId) {
+    if (!isProviderSyncState(value) || value.accountId !== accountId) {
       throw new AccountStateError('INVALID_ACCOUNT_STATE', 'Provider sync state is invalid.')
     }
     return value

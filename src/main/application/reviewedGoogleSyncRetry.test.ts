@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { GoogleAccountSyncRetryCommandService } from './googleAccountSyncRetryCommand'
-import type { ProviderSyncStateV1, SyncFailureCode } from './accountState'
+import type { ProviderSyncState, SyncFailureCode } from './accountState'
 
 const accountId = 'account-work-1'
 const request = { version: 1, action: 'retry-google-account-sync', accountId }
-const state = (lastErrorCode: SyncFailureCode = 'MALFORMED_PAYLOAD'): ProviderSyncStateV1 => ({
+const state = (lastErrorCode: SyncFailureCode = 'MALFORMED_PAYLOAD'): ProviderSyncState => ({
   version: 1, accountId, provider: 'google', status: 'error', lastErrorCode
 })
 const setup = () => {

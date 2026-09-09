@@ -156,7 +156,7 @@ describe('Posita vertical slice', () => {
         value: {
           ...successResponse.value,
           snapshot: {
-            version: 3,
+            version: 4,
             dataMode: 'live-canonical',
             loadedAt: '2026-09-01T05:00:00.000Z',
             status: 'empty',
@@ -182,7 +182,7 @@ describe('Posita vertical slice', () => {
       value: {
         ...successResponse.value,
         snapshot: {
-          version: 3 as const,
+          version: 4 as const,
           dataMode: 'live-canonical' as const,
           loadedAt: '2026-09-01T05:00:00.000Z',
           status: 'offline' as const,
@@ -222,7 +222,7 @@ describe('Posita vertical slice', () => {
         value: {
           ...successResponse.value,
           snapshot: {
-            version: 3,
+            version: 4,
             dataMode: 'live-canonical',
             loadedAt: '2026-09-01T05:00:00.000Z',
             status: 'ready',

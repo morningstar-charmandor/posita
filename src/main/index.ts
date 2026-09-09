@@ -184,7 +184,8 @@ app.whenReady().then(async () => {
           runtime.accountStateRepository,
           composition.lifecycle,
           undefined,
-          syncStages
+          syncStages,
+          systemClock
         )
         if (!app.isPackaged && runtime.providerMailStartupInventory.status === 'ready' &&
             runtime.providerMailStartupInventory.accounts.length === 1) {

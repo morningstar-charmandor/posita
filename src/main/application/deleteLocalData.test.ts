@@ -10,7 +10,7 @@ import type {
 import type {
   AccountStateRepository,
   ProviderAccountRecordV2,
-  ProviderSyncStateV1
+  ProviderSyncState
 } from './accountState'
 import {
   ComposedDeleteLocalDataActions,
@@ -90,8 +90,8 @@ class FakeAccountState implements AccountStateRepository {
   saveProviderAccount(_record: ProviderAccountRecordV2): void {}
   hasProviderAccount(): boolean { return false }
   loadProviderAccount(): ProviderAccountRecordV2 | undefined { return undefined }
-  saveSyncState(_state: ProviderSyncStateV1): void {}
-  loadSyncState(): ProviderSyncStateV1 | undefined { return undefined }
+  saveSyncState(_state: ProviderSyncState): void {}
+  loadSyncState(): ProviderSyncState | undefined { return undefined }
   deleteAccountState(): boolean { return false }
   deleteAllAccountState(): boolean {
     this.actions.push('delete-all-account-state')

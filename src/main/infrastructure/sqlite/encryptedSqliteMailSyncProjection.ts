@@ -3,9 +3,9 @@ import { randomUUID } from 'node:crypto'
 import type { DatabaseSync } from 'node:sqlite'
 import {
   isAccountId,
-  type ProviderSyncStateV1
+  type ProviderSyncState
 } from '../../application/accountState.ts'
-import { providerMailSyncRetryPolicy } from '../../application/providerMailSyncRetryPolicy.ts'
+import { providerMailSyncRetryAvailability } from '../../application/providerMailSyncRetryPolicy.ts'
 import type { ProviderMailReadModelSource } from '../../application/providerMailReadModel.ts'
 import type { ProviderMailSourceDetailSource } from '../../application/providerMailSourceDetail.ts'
 import type {
@@ -38,7 +38,7 @@ import {
 import {
   LIVE_MAIL_READ_LIMIT,
   type LiveMailAccountStatusV1,
-  type LiveMailSnapshotV3
+  type LiveMailSnapshotV4
 } from '../../../shared/liveMail.ts'
 import {
   LIVE_MAIL_DETAIL_BODY_LIMIT,
@@ -132,7 +132,7 @@ export class EncryptedSqliteMailSyncProjection implements
     }
   }
 
-  async loadReadModel(loadedAt: string): Promise<LiveMailSnapshotV3> {
+  async loadReadModel(loadedAt: string): Promise<LiveMailSnapshotV4> {
     if (!Number.isFinite(Date.parse(loadedAt))) {
       throw malformed('The live-mail read timestamp is invalid.')
     }
@@ -146,8 +146,8 @@ export class EncryptedSqliteMailSyncProjection implements
       `).all() as unknown as { account_scope: string }[]
       if (rows.length > 32) throw malformed('The live-mail account result is too large.')
 
-      const accounts: LiveMailSnapshotV3['accounts'] = []
-      const allMessages: LiveMailSnapshotV3['messages'] = []
+      const accounts: LiveMailSnapshotV4['accounts'] = []
+      const allMessages: LiveMailSnapshotV4['messages'] = []
       for (const { account_scope: accountId } of rows) {
         if (!isAccountId(accountId)) throw malformed('The stored account scope is invalid.')
         const providerAccount = this.accountState.loadProviderAccount(accountId)
@@ -160,7 +160,7 @@ export class EncryptedSqliteMailSyncProjection implements
             ? { status: 'unavailable' }
             : { status: 'available', ...providerAccount.displayIdentity },
           status,
-          syncRetry: this.readSyncRetry(providerAccount !== undefined, syncState),
+          syncRetry: this.readSyncRetry(providerAccount !== undefined, syncState, Date.parse(loadedAt)),
           ...(syncState?.lastSuccessAt === undefined
             ? {}
             : { lastSuccessAt: syncState.lastSuccessAt })
@@ -186,7 +186,7 @@ export class EncryptedSqliteMailSyncProjection implements
         left.id.localeCompare(right.id))
       const messages = allMessages.slice(0, LIVE_MAIL_READ_LIMIT)
       return {
-        version: 3,
+        version: 4,
         dataMode: 'live-canonical',
         loadedAt,
         status: this.snapshotStatus(accounts, messages.length),
@@ -409,14 +409,15 @@ export class EncryptedSqliteMailSyncProjection implements
         }
       }
 
-      const nextState: ProviderSyncStateV1 = {
+      const nextState: ProviderSyncState = {
         version: 1,
         accountId: batch.accountId,
         provider: batch.provider,
         status: 'idle',
         cursor: batch.nextCursor
       }
-      saveEncryptedProviderSyncState(this.database, this.protector, nextState)
+      saveEncryptedProviderSyncState(this.database, this.protector, currentState?.version === 2
+        ? { ...nextState, version: 2, quotaCooldown: currentState.quotaCooldown } : nextState)
       this.database.exec('COMMIT')
       return {
         version: 1,
@@ -610,7 +611,7 @@ export class EncryptedSqliteMailSyncProjection implements
 
   private readStatus(
     hasProviderAccount: boolean,
-    syncState: ProviderSyncStateV1 | undefined
+    syncState: ProviderSyncState | undefined
   ): LiveMailAccountStatusV1 {
     if (!hasProviderAccount) return 'attention-required'
     if (syncState === undefined) return 'not-synced'
@@ -624,19 +625,18 @@ export class EncryptedSqliteMailSyncProjection implements
 
   private readSyncRetry(
     hasProviderAccount: boolean,
-    syncState: ProviderSyncStateV1 | undefined
-  ): LiveMailSnapshotV3['accounts'][number]['syncRetry'] {
+    syncState: ProviderSyncState | undefined,
+    nowMs: number
+  ): LiveMailSnapshotV4['accounts'][number]['syncRetry'] {
     if (!hasProviderAccount || syncState?.status !== 'error' ||
         syncState.lastErrorCode === undefined) return 'unavailable'
-    return providerMailSyncRetryPolicy(syncState.lastErrorCode).disposition === 'retry-allowed'
-      ? 'available'
-      : 'unavailable'
+    return providerMailSyncRetryAvailability(syncState, nowMs)
   }
 
   private snapshotStatus(
     accounts: readonly { status: LiveMailAccountStatusV1 }[],
     messageCount: number
-  ): LiveMailSnapshotV3['status'] {
+  ): LiveMailSnapshotV4['status'] {
     if (accounts.some((account) => account.status === 'attention-required')) {
       return 'attention-required'
     }

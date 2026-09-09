@@ -2,6 +2,13 @@
 
 ## Gate 2D boundary
 
+ADR-066 offline update (2026-09-09): quota cooldown metadata is authenticated ciphertext
+in existing account state. Only fixed setup/waiting/ready categories reach the renderer;
+no timestamps, streaks or provider reasons are added to diagnostics. Local setup and
+status reload never read Gmail. A later separately confirmed resume uses the existing
+read-only connection; it cannot modify the remote mailbox. Nothing resumes automatically.
+No credential or private runtime data was accessed in this offline milestone.
+
 Current update (2026-09-09): the owner-approved read has retained partial real Gmail mail
 encrypted locally. Earlier live-empty statements below describe initial activation.
 The latest offline diagnostic refinement records only fixed HTTP status/reason categories

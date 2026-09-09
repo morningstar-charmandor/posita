@@ -776,3 +776,17 @@ The unavailable Retry control matched that policy; the product lacked the deferr
 resume path. This separates a confirmed local recovery gap from the still-unknown exact
 provider limit. No messages or Gmail credentials were inspected, and no quota, connection
 or retry policy was changed. The next decision is controlled cooldown/resume behavior.
+
+The owner approved that recovery work offline (ADR-066). Posita now makes the pause
+understandable: start a local waiting period, reload local status, then separately confirm
+one resume. Repeated quota failures extend the local wait from 15 to 30 to at most 60
+minutes; these are product safeguards, not a promise about Google's reset time. Saved
+mail and the cursor survive partial failures, and restart cannot erase the waiting rule.
+An outdated setup screen cannot accidentally become permission to read mail.
+
+Evidence is synthetic and reproducible: encrypted database reopen, partial-page retention,
+exact wait boundaries, failed writes, stale requests, accessible Cancel-first confirmation,
+Strict Mode settlement and the real local messaging path with a fake reader. All 668 tests
+and the full verification gate pass. No new Gmail request or private runtime inspection
+occurred. Real runtime presentation and successful live resume are explicitly unverified;
+the portfolio outcome is a tested recovery path, not a claim that sync is now complete.

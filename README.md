@@ -2,10 +2,14 @@
 
 **Your inboxes, understood as one.**
 
-Current focused checkpoint (2026-09-08): [Gmail read diagnosis](docs/GMAIL_READ_DIAGNOSIS.md).
+Current focused checkpoint (2026-09-09): [Gmail read diagnosis](docs/GMAIL_READ_DIAGNOSIS.md).
 The owner-approved reviewed read has now stored real Gmail mail encrypted locally, and
 the retained-mail UI is verified. Full sync remains incomplete after a later HTTP failure.
 The one-use permission is consumed; no further Gmail read is authorized.
+Local inspection identified a saved usage-limit failure. A durable 15/30/60-minute
+cooldown and separately confirmed manual resume are now implemented and tested offline.
+The delay is Posita's waiting rule, not Google's reset time. No automatic retry, new
+Gmail read or live verification of this flow has occurred; see [handoff](docs/HANDOFF.md).
 
 Posita is a desktop-first personal mail hub organized around people, topics,
 context, and actions rather than separate inboxes.

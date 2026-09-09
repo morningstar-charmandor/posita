@@ -2,7 +2,7 @@ import type { DatabaseSync } from 'node:sqlite'
 import type { IpcMainInvokeEvent } from 'electron'
 import { afterEach, describe, expect, it } from 'vitest'
 import { inspectAccountConnectionConsistency } from './accountConnection'
-import type { ProviderAccountRecordV2, ProviderSyncStateV1 } from './accountState'
+import type { ProviderAccountRecordV2, ProviderSyncState } from './accountState'
 import { GoogleAccountSyncRetryCommandService } from './googleAccountSyncRetryCommand'
 import type { SyncAccountResultV1 } from './mailSync'
 import { ProviderMailLifecycleOwner } from './providerMailLifecycleOwner'
@@ -13,6 +13,8 @@ import { AesGcmCacheProtector } from '../infrastructure/security/aesGcmCacheProt
 import { openPositaDatabase } from '../infrastructure/sqlite/database'
 import { EncryptedSqliteAccountStateRepository } from '../infrastructure/sqlite/encryptedSqliteAccountStateRepository'
 import { applyMigrations } from '../infrastructure/sqlite/migrations'
+import { ProviderMailSyncStatusService } from './providerMailSyncStatus'
+import { createRetryGoogleAccountSyncClient } from '../../preload/googleAccountSyncRetryClient'
 
 const accountId = 'account-work-1'
 const openDatabases: DatabaseSync[] = []
@@ -27,7 +29,7 @@ const providerAccount: ProviderAccountRecordV2 = {
   connectedAt: '2026-09-07T05:00:00.000Z'
 }
 
-const retryableState: ProviderSyncStateV1 = {
+const retryableState: ProviderSyncState = {
   version: 1,
   accountId,
   provider: 'google',
@@ -54,7 +56,7 @@ afterEach(() => {
 })
 
 describe('Google sync retry encrypted-state and IPC integration', () => {
-  it('settles from encrypted retry state through the lifecycle queue and trusted handler', async () => {
+  it.each(['ordinary', 'quota'] as const)('settles %s retry from encrypted state through lifecycle, IPC and preload', async (mode) => {
     const database = openPositaDatabase(':memory:')
     openDatabases.push(database)
     applyMigrations(database)
@@ -71,7 +73,10 @@ describe('Google sync retry encrypted-state and IPC integration', () => {
     )
     const accountState = new EncryptedSqliteAccountStateRepository(database, protector)
     accountState.saveProviderAccount(providerAccount)
-    accountState.saveSyncState(retryableState)
+    accountState.saveSyncState({ ...retryableState,
+      lastErrorCode: mode === 'quota' ? 'QUOTA_EXHAUSTED' : 'SYNC_INTERRUPTED' })
+    let now = Date.parse('2026-09-09T12:00:00.000Z')
+    const clock = { now: () => new Date(now) }
 
     const vault: SecretVault = {
       set: async () => undefined,
@@ -102,11 +107,7 @@ describe('Google sync retry encrypted-state and IPC integration', () => {
       },
       { disconnect: async () => { throw new Error('Not used by this integration.') } },
       { destroyEncryptionContext: () => undefined },
-      {
-        recordStarted: () => undefined,
-        recordSucceeded: () => undefined,
-        recordFailed: () => undefined
-      },
+      new ProviderMailSyncStatusService(accountState, clock),
       reporter
     )
     await lifecycle.start([])
@@ -122,15 +123,30 @@ describe('Google sync retry encrypted-state and IPC integration', () => {
       accountState,
       lifecycle,
       undefined,
-      reporter
+      reporter,
+      clock
     )
     const handler = createRetryGoogleAccountSyncHandler(command, () => true, reporter)
+    const client = createRetryGoogleAccountSyncClient((request) => handler({} as IpcMainInvokeEvent, request))
+    if (mode === 'quota') {
+      await expect(client({ version: 1, action: 'retry-google-account-sync', accountId,
+        quotaIntent: { version: 1, action: 'start-cooldown' } })).resolves.toMatchObject({
+        ok: false, error: { code: 'SYNC_RETRY_NOT_ALLOWED' }
+      })
+      expect(accountState.loadSyncState(accountId)).toMatchObject({ version: 2,
+        quotaCooldown: { notBefore: '2026-09-09T12:15:00.000Z' } })
+      expect(stages.some(({ stage }) => stage === 'lifecycle-dispatch')).toBe(false)
+      now += 15 * 60_000
+      stages.length = 0
+    }
 
-    await expect(handler({} as IpcMainInvokeEvent, {
+    await expect(client({
       version: 1,
       action: 'retry-google-account-sync',
-      accountId
+      accountId,
+      ...(mode === 'quota' ? { quotaIntent: { version: 1 as const, action: 'resume' as const } } : {})
     })).resolves.toMatchObject({ ok: true, value: { accountId, status: 'synced' } })
+    expect(accountState.loadSyncState(accountId)).toMatchObject({ version: 1, status: 'idle' })
     expect(stages.map(({ stage, phase }) => `${stage}:${phase}`)).toEqual([
       'sync-retry-command:started',
       'connection-preflight:started',

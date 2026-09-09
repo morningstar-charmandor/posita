@@ -11,6 +11,8 @@ import { EncryptedSqliteMailSyncProjection } from './encryptedSqliteMailSyncProj
 import { applyMigrations } from './migrations'
 import { EncryptedSqliteAccountStateRepository } from './encryptedSqliteAccountStateRepository'
 import { LIVE_MAIL_DETAIL_BODY_LIMIT } from '../../../shared/liveMailDetail'
+import { withProviderQuotaCooldown } from '../../application/providerMailSyncRetryPolicy'
+import { isLiveMailSnapshotV4 } from '../../../shared/liveMail'
 
 const testKey = Uint8Array.from({ length: 32 }, (_, index) => index * 7 + 3)
 const openDatabases: DatabaseSync[] = []
@@ -105,6 +107,37 @@ afterEach(() => {
 })
 
 describe('EncryptedSqliteMailSyncProjection', () => {
+  it('preserves cooldown across partial commit and projects only trusted bounded readiness', async () => {
+    const { accountState, projection } = createProjection()
+    accountState.saveProviderAccount({ version: 2, accountId: 'account-work-1', provider: 'google',
+      providerAccountId: 'synthetic-subject', displayIdentity: { mailboxAddress: 'owner@example.test' },
+      consentVersion: GOOGLE_CONNECT_CONSENT.consentVersion, connectedAt: '2026-09-09T10:00:00.000Z' })
+    const legacy = { version: 1 as const, accountId: 'account-work-1', provider: 'google' as const,
+      status: 'error' as const, lastErrorCode: 'QUOTA_EXHAUSTED' as const }
+    accountState.saveSyncState(legacy)
+    expect((await projection.loadReadModel('2026-09-09T12:00:00.000Z')).accounts[0]!.syncRetry).toBe('quota-setup')
+    expect(accountState.loadSyncState('account-work-1')).toEqual(legacy)
+    const quota = withProviderQuotaCooldown(legacy, Date.parse('2026-09-09T12:00:00.000Z'), true)
+    accountState.saveSyncState(quota)
+    await projection.commitBatch(commit())
+    expect(accountState.loadSyncState('account-work-1')).toMatchObject({ version: 2,
+      status: 'idle', cursor: 'cursor-1', quotaCooldown: quota.quotaCooldown })
+    accountState.saveSyncState({ ...quota, cursor: 'cursor-1' })
+    for (const [time, availability] of [['12:14:59.999', 'quota-waiting'], ['12:15:00.000', 'quota-ready']] as const) {
+      const result = await projection.loadReadModel(`2026-09-09T${time}Z`)
+      expect(isLiveMailSnapshotV4(result)).toBe(true)
+      expect(result.accounts[0]).toMatchObject({ status: 'attention-required', syncRetry: availability })
+      expect(result.messages).toHaveLength(1)
+      for (const privateField of ['quotaCooldown', 'notBefore', 'failureStreak', 'cursor-1', 'QUOTA_EXHAUSTED']) {
+        expect(JSON.stringify(result)).not.toContain(privateField)
+      }
+    }
+    accountState.saveSyncState({ ...quota, cursor: 'cursor-1', lastErrorCode: 'OFFLINE' })
+    const offline = await projection.loadReadModel('2026-09-09T12:01:00.000Z')
+    expect(offline.accounts[0]).toMatchObject({ status: 'offline', syncRetry: 'quota-waiting' })
+    expect(isLiveMailSnapshotV4(offline)).toBe(true)
+  })
+
   it('projects a bounded newest-first live read model without bodies or provider IDs', async () => {
     const { accountState, projection } = createProjection()
     accountState.saveProviderAccount({

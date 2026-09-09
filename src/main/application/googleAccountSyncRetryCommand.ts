@@ -3,6 +3,7 @@ import {
   POSITA_PROTOCOL_VERSION,
   type GoogleAccountSyncRetryErrorCodeV1,
   type GoogleAccountSyncRetryErrorV1,
+  type RetryGoogleAccountSyncRequestV1,
   type RetryGoogleAccountSyncResponseV1
 } from '../../shared/contracts'
 import {
@@ -13,10 +14,12 @@ import {
   isAccountConnectionConsistencyV1,
   type AccountConnectionConsistencyInspector
 } from './accountConnection'
-import { isProviderSyncStateV1, type AccountStateRepository } from './accountState'
+import { isProviderSyncState, type AccountStateRepository } from './accountState'
 import { isSyncAccountResultV1 } from './mailSync'
 import {
   providerMailSyncRetryPolicy,
+  providerMailSyncRetryAvailability,
+  withProviderQuotaCooldown,
   type ProviderMailSyncRetryDispositionV1
 } from './providerMailSyncRetryPolicy'
 import type {
@@ -52,6 +55,7 @@ const notAllowedMessage: Record<ProviderMailSyncRetryDispositionV1, string> = {
 
 export interface GoogleAccountSyncRetryState {
   loadSyncState: Pick<AccountStateRepository, 'loadSyncState'>['loadSyncState']
+  saveSyncState?: Pick<AccountStateRepository, 'saveSyncState'>['saveSyncState']
 }
 
 export interface GoogleAccountSyncRetryLifecycle {
@@ -81,7 +85,8 @@ export class GoogleAccountSyncRetryCommandService {
     private readonly accountState?: GoogleAccountSyncRetryState,
     private readonly lifecycle?: GoogleAccountSyncRetryLifecycle,
     private readonly timeoutMs = GOOGLE_ACCOUNT_SYNC_RETRY_TIMEOUT_MS,
-    private readonly syncStages: ProviderMailSyncStageReporter = silentProviderMailSyncStageReporter
+    private readonly syncStages: ProviderMailSyncStageReporter = silentProviderMailSyncStageReporter,
+    private readonly clock: { now(): Date } = { now: () => new Date() }
   ) {}
 
   async execute(requestValue: unknown): Promise<RetryGoogleAccountSyncResponseV1> {
@@ -168,7 +173,7 @@ export class GoogleAccountSyncRetryCommandService {
   }
 
   private async runAttempt(
-    request: { version: 1; action: 'retry-google-account-sync'; accountId: string },
+    request: RetryGoogleAccountSyncRequestV1,
     signal: AbortSignal,
     connection: AccountConnectionConsistencyInspector,
     accountState: GoogleAccountSyncRetryState,
@@ -241,7 +246,7 @@ export class GoogleAccountSyncRetryCommandService {
       })
       return response
     }
-    if (syncState === undefined || !isProviderSyncStateV1(syncState) ||
+    if (syncState === undefined || !isProviderSyncState(syncState) ||
         syncState.accountId !== request.accountId || syncState.provider !== 'google') {
       return rejectEligibility(error(
         'SYNC_RETRY_NOT_ALLOWED',
@@ -266,7 +271,7 @@ export class GoogleAccountSyncRetryCommandService {
     const policy = providerMailSyncRetryPolicy(syncState.lastErrorCode)
     if (approval !== undefined) {
       const reviewedState = structuredClone(syncState)
-      if (approval.accountId !== request.accountId || syncState.lastErrorCode !== 'MALFORMED_PAYLOAD' ||
+      if (request.quotaIntent !== undefined || approval.accountId !== request.accountId || syncState.lastErrorCode !== 'MALFORMED_PAYLOAD' ||
           signal.aborted || !await approval.confirm()) {
         return rejectEligibility(error('SYNC_RETRY_NOT_ALLOWED', 'The reviewed retry was not authorized.', false))
       }
@@ -276,12 +281,31 @@ export class GoogleAccountSyncRetryCommandService {
           !isDeepStrictEqual(accountState.loadSyncState(request.accountId), reviewedState) || !approval.consume()) {
         return rejectEligibility(error('SYNC_RETRY_NOT_ALLOWED', 'The reviewed retry is unavailable or its state changed.', false))
       }
-    } else if (policy.disposition !== 'retry-allowed') {
-      return rejectEligibility(error(
-        'SYNC_RETRY_NOT_ALLOWED',
-        notAllowedMessage[policy.disposition],
-        false
-      ))
+    } else {
+      const now = this.clock.now().getTime()
+      const availability = providerMailSyncRetryAvailability(syncState, now)
+      const expectedIntent = availability === 'quota-setup' ? 'start-cooldown'
+        : availability === 'quota-ready' ? 'resume' : undefined
+      if (request.quotaIntent?.action !== expectedIntent) {
+        return rejectEligibility(error('SYNC_RETRY_NOT_ALLOWED',
+          'The requested action no longer matches local sync status. Reload local status.', false))
+      }
+      if (availability === 'quota-setup' || availability === 'quota-ready') {
+        if (signal.aborted || accountState.saveSyncState === undefined) {
+          return rejectEligibility(error('SYNC_RETRY_NOT_ALLOWED', 'Quota resume is unavailable.', false))
+        }
+        // Synchronous durable reservation precedes dispatch; repeated setup cannot restart a wait.
+        accountState.saveSyncState(withProviderQuotaCooldown(syncState, now, false))
+        if (availability === 'quota-setup') {
+          return rejectEligibility(error('SYNC_RETRY_NOT_ALLOWED',
+            'A local cooldown has started. No Gmail request was made. Reload local status later.', false))
+        }
+      } else if (availability !== 'available') {
+        return rejectEligibility(error('SYNC_RETRY_NOT_ALLOWED',
+          availability === 'quota-waiting'
+            ? 'The local Gmail cooldown is still active. No request was made.'
+            : notAllowedMessage[policy.disposition], false))
+      }
     }
     reportProviderMailSyncStage(this.syncStages, {
       version: 1,

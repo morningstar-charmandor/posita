@@ -1,5 +1,5 @@
 import type { MailDataset } from './domain'
-import type { LiveMailSnapshotV3 } from './liveMail'
+import type { LiveMailSnapshotV4 } from './liveMail'
 import type {
   LiveMailMessageDetailRequestV1,
   LiveMailMessageDetailResultV1
@@ -112,7 +112,7 @@ export interface AppSnapshotV1 {
   dataset: MailDataset
 }
 
-export type ApplicationMailSnapshotV1 = AppSnapshotV1 | LiveMailSnapshotV3
+export type ApplicationMailSnapshotV1 = AppSnapshotV1 | LiveMailSnapshotV4
 
 export type AppErrorCodeV1 =
   | 'INVALID_REQUEST'
@@ -476,6 +476,7 @@ export interface RetryGoogleAccountSyncRequestV1 {
   version: typeof POSITA_PROTOCOL_VERSION
   action: 'retry-google-account-sync'
   accountId: string
+  quotaIntent?: { version: 1; action: 'start-cooldown' | 'resume' }
 }
 
 export interface RetryGoogleAccountSyncResultV1 {

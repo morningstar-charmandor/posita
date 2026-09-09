@@ -46,12 +46,45 @@ export interface ProviderSyncStateV1 {
   lastErrorCode?: SyncFailureCode
 }
 
+export interface ProviderQuotaCooldownV1 {
+  version: 1
+  failureStreak: number
+  startedAt: string
+  notBefore: string
+}
+
+export const PROVIDER_QUOTA_MAX_STREAK = 3
+export const providerQuotaCooldownDurationMs = (streak: number): number => 15 * 60_000 * 2 ** (streak - 1)
+
+export interface ProviderSyncStateV2 extends Omit<ProviderSyncStateV1, 'version'> {
+  version: 2
+  quotaCooldown: ProviderQuotaCooldownV1
+}
+
+/** V1 is retained for unchanged records; quota preparation explicitly upgrades to V2. */
+export type ProviderSyncState = ProviderSyncStateV1 | ProviderSyncStateV2
+
+export const isProviderQuotaCooldownV1 = (value: unknown): value is ProviderQuotaCooldownV1 => {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false
+  const item = value as Record<string, unknown>
+  if (Object.keys(item).length !== 4 || !Object.keys(item).every((key) =>
+    ['version', 'failureStreak', 'startedAt', 'notBefore'].includes(key))) return false
+  if (item.version !== 1 || !Number.isInteger(item.failureStreak) ||
+      (item.failureStreak as number) < 1 || (item.failureStreak as number) > PROVIDER_QUOTA_MAX_STREAK ||
+      typeof item.startedAt !== 'string' || typeof item.notBefore !== 'string') return false
+  const start = Date.parse(item.startedAt)
+  const end = Date.parse(item.notBefore)
+  return Number.isFinite(start) && Number.isFinite(end) &&
+    new Date(start).toISOString() === item.startedAt && new Date(end).toISOString() === item.notBefore &&
+    end - start === providerQuotaCooldownDurationMs(item.failureStreak as number)
+}
+
 export interface AccountStateRepository {
   saveProviderAccount(record: ProviderAccountRecordV2): void
   hasProviderAccount(accountId: string): boolean
   loadProviderAccount(accountId: string): ProviderAccountRecordV2 | undefined
-  saveSyncState(state: ProviderSyncStateV1): void
-  loadSyncState(accountId: string): ProviderSyncStateV1 | undefined
+  saveSyncState(state: ProviderSyncState): void
+  loadSyncState(accountId: string): ProviderSyncState | undefined
   deleteAccountState(accountId: string): boolean
   deleteAllAccountState(): boolean
 }
@@ -135,7 +168,7 @@ const syncFailureCodes = new Set<SyncFailureCode>([
   'SYNC_STORAGE_FAILED'
 ])
 
-export const isProviderSyncStateV1 = (value: unknown): value is ProviderSyncStateV1 => {
+export const isProviderSyncState = (value: unknown): value is ProviderSyncState => {
   if (typeof value !== 'object' || value === null) return false
   const state = value as Record<string, unknown>
   const statusValid = state.status === 'idle' || state.status === 'syncing' ||
@@ -149,9 +182,10 @@ export const isProviderSyncStateV1 = (value: unknown): value is ProviderSyncStat
       syncFailureCodes.has(state.lastErrorCode as SyncFailureCode))
 
   return Object.keys(state).every((key) => [
-    'version', 'accountId', 'provider', 'status', 'cursor', 'lastSuccessAt', 'lastErrorCode'
+    'version', 'accountId', 'provider', 'status', 'cursor', 'lastSuccessAt', 'lastErrorCode',
+    ...(state.version === 2 ? ['quotaCooldown'] : [])
   ].includes(key)) &&
-    state.version === 1 &&
+    (state.version === 1 || (state.version === 2 && isProviderQuotaCooldownV1(state.quotaCooldown))) &&
     isAccountId(state.accountId) &&
     state.provider === 'google' &&
     statusValid && cursorValid && successValid && errorValid &&

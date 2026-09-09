@@ -1,6 +1,6 @@
 # Gmail read failure — evidence and offline correction
 
-Reviewed 2026-09-08. This is the current focused investigation; older attempt narratives
+Reviewed 2026-09-09. This is the current focused investigation; older attempt narratives
 remain historical evidence, not permission to make another request.
 
 Live update after verified implementation `d8e1ef3`: the one approved reviewed sync
@@ -12,6 +12,21 @@ works with real mail, not which original encoding caused the sixth observation, 
 sync completion. The exact remaining HTTP reason is not yet known. See the handoff.
 
 ## Verified starting point
+
+### Approved offline quota recovery — 2026-09-09
+
+ADR-066 now implements the formerly missing delayed-resume path. Legacy quota errors
+require an explicit local-only cooldown setup; new quota failures save a wait immediately.
+The local 15/30/60-minute cap is not Google's reset time. Expiry only enables a separately
+confirmed manual resume, with exact versioned intent, fresh trusted state/time checks and
+a durable pre-dispatch reservation. Partial projection and interrupted-state recovery
+preserve cooldown metadata. Auth/review restrictions and the consumed receipt are intact.
+
+Verification: 95 files / 668 tests and full `npm run verify`; synthetic fixtures only.
+No credentials, runtime private state or Gmail were read in this implementation. No
+running app was relaunched. Exact HTTP status/reason/reset and successful live resume
+remain unverified. Next: separately approved provider-inert runtime upgrade and local
+setup; a later one-read confirmation is another owner decision, never an automatic action.
 
 ### Saved local error identified — 2026-09-09
 
@@ -27,11 +42,11 @@ unknown. Google's [error guidance](https://developers.google.com/workspace/gmail
 distinguishes several such limits and recommends backoff; elapsed time alone does not prove
 this installation is ready again. No quota configuration or concurrency change was made.
 
-Code confirms why Retry is absent: `providerMailSyncRetryPolicy` returns `retry-later`,
+At diagnosis, code confirmed why Retry was absent: `providerMailSyncRetryPolicy` returned `retry-later`,
 while both the public command and summary projection require `retry-allowed`. A delayed
-manual resume path was deferred and does not yet exist. Next is an owner-reviewed offline
-cooldown/manual-resume design, not credential rotation, reconnect, blanket eligibility
-relaxation or reuse of the consumed review receipt. No new live attempt ran.
+manual resume path was deferred. The subsequently approved implementation is recorded
+above, not credential rotation, reconnect, blanket eligibility relaxation or reuse of the
+consumed review receipt. No new live attempt ran.
 
 
 ### Remaining HTTP failure: offline review on 2026-09-09

@@ -1,14 +1,18 @@
 import type { DatabaseSync } from 'node:sqlite'
+import { mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   AccountStateError,
   type ProviderAccountRecordV2,
-  type ProviderSyncStateV1
+  type ProviderSyncState
 } from '../../application/accountState'
 import { AesGcmCacheProtector } from '../security/aesGcmCacheProtector'
 import { openPositaDatabase } from './database'
 import { EncryptedSqliteAccountStateRepository } from './encryptedSqliteAccountStateRepository'
 import { applyMigrations } from './migrations'
+import { withProviderQuotaCooldown } from '../../application/providerMailSyncRetryPolicy'
 
 const testKey = Uint8Array.from({ length: 32 }, (_, index) => index * 5 + 1)
 const openDatabases: DatabaseSync[] = []
@@ -34,7 +38,7 @@ const providerAccount = (accountId: string): ProviderAccountRecordV2 => ({
   connectedAt: '2026-08-24T10:00:00.000Z'
 })
 
-const syncState = (accountId: string): ProviderSyncStateV1 => ({
+const syncState = (accountId: string): ProviderSyncState => ({
   version: 1,
   accountId,
   provider: 'google',
@@ -61,6 +65,37 @@ afterEach(() => {
 })
 
 describe('EncryptedSqliteAccountStateRepository', () => {
+  it('reopens legacy and cooldown records without read migration or plaintext metadata', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'posita-quota-test-'))
+    const path = join(directory, 'cache.sqlite')
+    const protector = new AesGcmCacheProtector(testKey, nonceSource())
+    let database = openPositaDatabase(path)
+    try {
+      applyMigrations(database)
+      let repository = new EncryptedSqliteAccountStateRepository(database, protector)
+      const legacy = syncState('personal')
+      const quota = withProviderQuotaCooldown({ ...syncState('work'), status: 'error',
+        lastErrorCode: 'QUOTA_EXHAUSTED' }, Date.parse('2026-09-09T12:00:00.000Z'), true)
+      repository.saveSyncState(legacy)
+      repository.saveSyncState(quota)
+      const before = database.prepare('SELECT * FROM encrypted_account_records ORDER BY account_scope').all()
+      database.close()
+      database = openPositaDatabase(path)
+      repository = new EncryptedSqliteAccountStateRepository(database, protector)
+      expect(repository.loadSyncState('personal')).toEqual(legacy)
+      expect(repository.loadSyncState('work')).toEqual(quota)
+      const after = database.prepare('SELECT * FROM encrypted_account_records ORDER BY account_scope').all()
+      expect(after).toEqual(before)
+      const ciphertext = Buffer.concat(after.map((row) => Buffer.from(row.payload as Uint8Array)))
+      for (const text of [quota.quotaCooldown.startedAt, quota.quotaCooldown.notBefore, 'failureStreak', 'QUOTA_EXHAUSTED']) {
+        expect(ciphertext.includes(Buffer.from(text))).toBe(false)
+      }
+    } finally {
+      if (database.isOpen) database.close()
+      rmSync(directory, { recursive: true, force: true })
+    }
+  })
+
   it('round-trips provider and sync state without plaintext payloads', () => {
     const { database, repository } = createRepository()
     const account = providerAccount('work')
@@ -84,7 +119,7 @@ describe('EncryptedSqliteAccountStateRepository', () => {
   it('replaces sync state idempotently for one account', () => {
     const { database, repository } = createRepository()
     repository.saveSyncState(syncState('work'))
-    const replacement: ProviderSyncStateV1 = {
+    const replacement: ProviderSyncState = {
       version: 1,
       accountId: 'work',
       provider: 'google',
@@ -174,7 +209,7 @@ describe('EncryptedSqliteAccountStateRepository', () => {
 
   it('rejects invalid state before persistence', () => {
     const { database, repository } = createRepository()
-    const invalidState: ProviderSyncStateV1 = {
+    const invalidState: ProviderSyncState = {
       version: 1,
       accountId: 'work',
       provider: 'google',

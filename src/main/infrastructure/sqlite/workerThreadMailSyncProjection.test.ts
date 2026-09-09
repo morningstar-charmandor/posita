@@ -282,7 +282,7 @@ describe('WorkerThreadMailSyncProjection', () => {
           ok: true,
           operation: 'load-read-model',
           snapshot: {
-            version: 3,
+            version: 4,
             dataMode: 'live-canonical',
             loadedAt: '2026-09-01T05:00:00.000Z',
             status: 'empty',

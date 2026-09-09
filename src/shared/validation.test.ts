@@ -53,6 +53,13 @@ describe('shared contract validation', () => {
       accountId: 'account-work-1'
     }
     expect(isRetryGoogleAccountSyncRequest(request)).toBe(true)
+    for (const action of ['start-cooldown', 'resume']) {
+      expect(isRetryGoogleAccountSyncRequest({ ...request, quotaIntent: { version: 1, action } })).toBe(true)
+    }
+    for (const quotaIntent of [undefined, null, {}, { version: 2, action: 'resume' },
+      { version: 1, action: 'force' }, { version: 1, action: 'resume', notBefore: 0 }]) {
+      expect(isRetryGoogleAccountSyncRequest({ ...request, quotaIntent })).toBe(false)
+    }
     expect(isRetryGoogleAccountSyncRequest({ ...request, force: true })).toBe(false)
     const response = {
       ok: true,
@@ -157,7 +164,7 @@ describe('shared contract validation', () => {
         version: 1,
         mode: 'ready',
         snapshot: {
-          version: 3,
+          version: 4,
           dataMode: 'live-canonical',
           loadedAt: '2026-09-01T05:00:00.000Z',
           status: 'empty',

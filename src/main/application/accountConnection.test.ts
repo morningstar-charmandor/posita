@@ -14,7 +14,7 @@ import {
 import type {
   AccountStateRepository,
   ProviderAccountRecordV2,
-  ProviderSyncStateV1
+  ProviderSyncState
 } from './accountState'
 import type { SecretName, SecretVault } from './secretVault'
 import { DeterministicFakeAccountAuthorizationAdapter } from '../infrastructure/providers/deterministicFakeAccountAuthorizationAdapter'
@@ -83,8 +83,8 @@ class MemoryAccountState implements AccountStateRepository {
     return this.accounts.get(accountId)
   }
 
-  saveSyncState(_state: ProviderSyncStateV1): void {}
-  loadSyncState(_accountId: string): ProviderSyncStateV1 | undefined { return undefined }
+  saveSyncState(_state: ProviderSyncState): void {}
+  loadSyncState(_accountId: string): ProviderSyncState | undefined { return undefined }
 
   deleteAccountState(accountId: string): boolean {
     this.events.push('state:delete')

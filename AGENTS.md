@@ -6,13 +6,25 @@ exists deeper in the tree.
 
 ## Product state
 
+- Latest approved offline checkpoint (2026-09-09): ADR-066 implements durable local
+  quota cooldown (15/30/60 minutes) and separately confirmed manual resume. No automatic
+  retry or live Gmail request. Legacy quota state needs explicit local-only setup first;
+  trusted main validates versioned setup/resume intent against current time/state so stale
+  controls cannot start provider work. Sync-state V2 preserves cooldown across partial
+  commits/restart; strict V1 reads remain. Live-read V4 exposes only fixed availability.
+  Verification passes 95 files / 668 tests. Runtime is not relaunched or visually verified.
+  Next: owner-approved provider-inert runtime upgrade and local cooldown setup; a later
+  single read-only resume requires separate explicit approval. Prior approval/next-step
+  statements below are historical; no receipt reset, reconnect or new read is authorized.
+
 - Latest local diagnosis (2026-09-09): read-only encrypted sync-state inspection
   returned `QUOTA_EXHAUSTED` / `retry-later`. This explains unavailable Retry: public
   retry and its projection accept only `retry-allowed`. Exact HTTP status, quota kind,
   and reset time remain unknown. No Gmail/OAuth credential or message was read; only
   the existing local cache key was unlocked in a temporary trusted Electron process.
   No provider request, account change or policy override occurred. A bounded manual
-  quota-resume/cooldown design now needs owner approval; reconnect is not justified.
+  quota-resume/cooldown design was then proposed and is now implemented offline above;
+  reconnect is not justified.
 
 - Latest approval check (2026-09-09): one additional read was conditionally approved
   only through the policy-permitted Retry control. That control is absent in the running

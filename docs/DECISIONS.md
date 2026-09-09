@@ -1445,3 +1445,30 @@ evidence of the real status; no further read is authorized by this refinement.
   authority or override is exposed through preload or IPC. Timeout/stale state before
   consumption prevents dispatch. Once consumed, exactly one dispatch is possible even if
   its result is uncertain. Any further attempt requires a new owner decision.
+
+## ADR-066: Durable local quota cooldown and explicitly confirmed manual resume
+
+- Status: owner approved offline implementation on 2026-09-09; no live Gmail read.
+- Context: saved `QUOTA_EXHAUSTED` maps to `retry-later`, but only immediate retries
+  were exposed. A rate-limit pause consequently had no resumable UI path.
+- Decision: reuse the existing account-scoped command, encrypted sync state and lifecycle.
+  Persist version-2 sync state only when quota cooldown metadata is introduced; retain
+  strict version-1 reads without silent rewrites. The explicit first action for a legacy
+  quota failure starts a local waiting period and returns the existing not-allowed result
+  without provider work. New quota failures record a cooldown automatically, not a retry.
+  Use a 15-minute minimum, doubling on repeated quota failures to a one-hour cap. This
+  local policy is not Google's reset time. Success clears the streak; intermediate page
+  commits, cancellation and restart preserve it. Reserve another waiting period before
+  an eligible resume dispatch so interruptions cannot create an immediate retry loop.
+- Live-read contract v4 exposes only fixed setup/waiting/ready categories, not internal
+  timestamps, counters or provider reasons. Local reload reevaluates the trusted clock;
+  expiry never starts work. The renderer requires a separate confirmation for one quota
+  resume. Trusted main rechecks connection, current state, time and overlap independently.
+  The existing request gains an optional exact version-1 quota intent: local setup and
+  provider resume are distinct. Missing or stale intent fails closed against trusted
+  availability; an old setup screen or ordinary retry can never initiate quota resume.
+- Keep authentication/review failures blocked, reject invalid time/state and storage
+  failure before provider work, preserve cursors and existing one-use receipts. No new
+  IPC action, scheduler, provider owner, SQL table, dependency or credential capability.
+  Versioned JSON evolution needs no physical database migration; legacy-to-v2 conversion
+  is explicit on approved cooldown preparation or a newly recorded quota failure.

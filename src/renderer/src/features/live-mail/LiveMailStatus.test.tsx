@@ -1,13 +1,13 @@
 import '@testing-library/jest-dom/vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { LiveMailSnapshotV3 } from '@shared/liveMail'
+import type { LiveMailSnapshotV4 } from '@shared/liveMail'
 import { LiveMailStatus } from './LiveMailStatus'
 
 afterEach(cleanup)
 
-const snapshot: LiveMailSnapshotV3 = {
-  version: 3,
+const snapshot: LiveMailSnapshotV4 = {
+  version: 4,
   dataMode: 'live-canonical',
   loadedAt: '2026-09-01T05:00:00.000Z',
   status: 'ready',
@@ -37,6 +37,22 @@ const openOriginalDataSource = {
 }
 
 describe('LiveMailStatus source inspection', () => {
+  it('shows the quota pause with local reload but never starts or offers an early read', () => {
+    const retrySync = vi.fn()
+    const reload = vi.fn()
+    render(<LiveMailStatus snapshot={{ ...snapshot, status: 'attention-required',
+      accounts: [{ ...snapshot.accounts[0]!, status: 'attention-required', syncRetry: 'quota-waiting' }] }}
+      onReload={reload} detailDataSource={{ loadMessageDetail: vi.fn() }} openOriginalDataSource={openOriginalDataSource}
+      googleAccountDataSource={{ prepare: vi.fn(), connect: vi.fn(), cancel: vi.fn(), retrySync,
+        prepareDisconnect: vi.fn(), executeDisconnect: vi.fn() }} />)
+    expect(screen.getByText(/15 minutes/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Resume Gmail sync' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Retry Gmail sync' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Reload local status' }))
+    expect(reload).toHaveBeenCalledOnce()
+    expect(retrySync).not.toHaveBeenCalled()
+  })
+
   it('exposes explicit sync retry only for a connected account needing attention', async () => {
     const retrySync = vi.fn(async () => ({
       ok: true as const,

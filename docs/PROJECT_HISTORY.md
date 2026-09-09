@@ -3034,6 +3034,30 @@ twelfth live request is authorized.
 
 ## Future history-writing guidance
 
+### 2026-09-09 — Approved offline quota cooldown and explicit manual resume
+
+- Started from verified published `39caf1d` on `codex/gmail-quota-cooldown`. Owner
+  approved implementation only, without another Gmail request (ADR-066).
+- Extended existing encrypted sync state and command with local 15/30/60-minute capped
+  cooldown. First legacy setup is local-only; expiry never schedules provider work.
+  Separate default-Cancel UI confirmation and exact quota intent prevent stale setup
+  or ordinary retry requests from dispatching a quota resume. Trusted clock/state,
+  overlap and durable reservation gates remain authoritative.
+- Partial page commits, restart/cancellation and cursors preserve cooldown history;
+  completed success clears it. Real retained mail remains last-observed partial import,
+  not a completed sync. Exact provider quota subtype/reset remains unknown.
+- Added 26 synthetic cases: exact expiry/capped backoff, failed writes, invalid clocks,
+  stale intent, scope and overlap, ciphertext/reopen/no read migration, partial projection,
+  bounded V4 validation, Strict Mode UI, and real encrypted-state/lifecycle/IPC/preload
+  integration with a fake reader. `npm run verify`: 95 files / 668 tests, types,
+  structure/security and production build pass. Initial checks caught an optional-field
+  validator regression and a test label mismatch; both corrected before checkpoint.
+- No dependency, new service, scheduler, SQL table/migration or provider owner. Exact
+  encrypted V1 state compatibility retained; V2 adds metadata. Live V4 replaces V3
+  without fallback; ordinary retry request remains supported with exact optional quota
+  intent. No credentials, private runtime access, app restart, mailbox request or receipt
+  reset. Next is approved local runtime/setup verification; live resume is separate.
+
 
 
 For each material milestone, record:

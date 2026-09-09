@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { ACCOUNT_CONNECTION_RECOVERY_CONSEQUENCES } from '../../shared/contracts'
 import type { AccountAuthorizationAdapter } from './accountAuthorization'
 import { AccountConnectionService } from './accountConnection'
-import type { AccountStateRepository, ProviderAccountRecordV2, ProviderSyncStateV1 } from './accountState'
+import type { AccountStateRepository, ProviderAccountRecordV2, ProviderSyncState } from './accountState'
 import {
   ACCOUNT_CONNECTION_RECOVERY_CONFIRMATION_TEXT,
   AccountConnectionRecoveryConfirmationService,
@@ -66,7 +66,7 @@ class MemoryState implements AccountStateRepository {
   hasProviderAccount(): boolean { return this.provider }
   loadProviderAccount(): ProviderAccountRecordV2 | undefined { return undefined }
   saveSyncState(): void {}
-  loadSyncState(): ProviderSyncStateV1 | undefined { return undefined }
+  loadSyncState(): ProviderSyncState | undefined { return undefined }
   deleteAccountState(): boolean { const changed = this.provider; this.provider = false; return changed }
   deleteAllAccountState(): boolean { return false }
 }

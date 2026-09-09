@@ -15,7 +15,7 @@ import type {
   ProviderMailOriginalSourceLocatorResultV1,
   ProviderMailOriginalSourceLocatorSource
 } from '../../application/providerMailOriginalSource'
-import type { LiveMailSnapshotV3 } from '../../../shared/liveMail'
+import type { LiveMailSnapshotV4 } from '../../../shared/liveMail'
 import {
   isLiveMailMessageDetailRequestV1,
   type LiveMailMessageDetailRequestV1,
@@ -78,7 +78,7 @@ export class WorkerThreadMailSyncProjection implements
     return response.checkpoint
   }
 
-  async loadReadModel(loadedAt: string): Promise<LiveMailSnapshotV3> {
+  async loadReadModel(loadedAt: string): Promise<LiveMailSnapshotV4> {
     if (loadedAt.length > 64 || !Number.isFinite(Date.parse(loadedAt))) throw invalidRequest()
     const response = await this.enqueue({ kind: 'load-read-model', loadedAt })
     if (response.operation !== 'load-read-model' || response.snapshot.loadedAt !== loadedAt) {

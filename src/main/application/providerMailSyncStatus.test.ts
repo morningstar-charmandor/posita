@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { ProviderSyncStateV1, SyncFailureCode } from './accountState'
+import type { ProviderSyncState, SyncFailureCode } from './accountState'
 import {
   ProviderMailSyncStatusService
 } from './providerMailSyncStatus'
@@ -7,7 +7,7 @@ import { providerMailSyncRetryPolicy } from './providerMailSyncRetryPolicy'
 
 const request = { version: 1 as const, accountId: 'work', provider: 'google' as const }
 
-const harness = (initial?: ProviderSyncStateV1) => {
+const harness = (initial?: ProviderSyncState) => {
   let state = initial
   const service = new ProviderMailSyncStatusService({
     loadSyncState: () => state,

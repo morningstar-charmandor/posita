@@ -1,12 +1,12 @@
 import '@testing-library/jest-dom/vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { LiveMailAccountV3, LiveMailMessageSummaryV2 } from '@shared/liveMail'
+import type { LiveMailAccountV4, LiveMailMessageSummaryV2 } from '@shared/liveMail'
 import { LiveMailSummaryList } from './LiveMailSummaryList'
 
 afterEach(cleanup)
 
-const accounts: LiveMailAccountV3[] = [{
+const accounts: LiveMailAccountV4[] = [{
   accountId: 'account-work-1',
   provider: 'google',
   status: 'ready',

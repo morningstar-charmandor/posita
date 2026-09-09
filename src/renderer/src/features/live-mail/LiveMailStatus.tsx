@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { AlertTriangle, CloudOff, Database, RefreshCw } from 'lucide-react'
-import type { LiveMailSnapshotV3 } from '@shared/liveMail'
+import type { LiveMailSnapshotV4 } from '@shared/liveMail'
 import { POSITA_PROTOCOL_VERSION } from '@shared/contracts'
 import type { LiveMailMessageDetailV1 } from '@shared/liveMailDetail'
 import type { LiveMailMessageDetailDataSource } from '../../application/liveMailMessageDetailDataSource'
@@ -11,7 +11,7 @@ import type { GoogleAccountConnectionPreflightDataSource } from '../../applicati
 import { GoogleAccountDisconnectControl } from '../settings/GoogleAccountDisconnectControl'
 import { GoogleAccountSyncRetryControl } from './GoogleAccountSyncRetryControl'
 
-const statusCopy: Record<LiveMailSnapshotV3['status'], {
+const statusCopy: Record<LiveMailSnapshotV4['status'], {
   title: string
   detail: string
 }> = {
@@ -37,7 +37,7 @@ const statusCopy: Record<LiveMailSnapshotV3['status'], {
   }
 }
 
-const accountStatusLabel: Record<LiveMailSnapshotV3['accounts'][number]['status'], string> = {
+const accountStatusLabel: Record<LiveMailSnapshotV4['accounts'][number]['status'], string> = {
   'not-synced': 'Not synced',
   syncing: 'Sync state recorded',
   ready: 'Ready',
@@ -47,7 +47,7 @@ const accountStatusLabel: Record<LiveMailSnapshotV3['accounts'][number]['status'
 }
 
 export interface LiveMailStatusProps {
-  snapshot: LiveMailSnapshotV3
+  snapshot: LiveMailSnapshotV4
   onReload: () => void
   detailDataSource: LiveMailMessageDetailDataSource
   openOriginalDataSource: OpenLiveMailOriginalDataSource
@@ -147,13 +147,20 @@ export function LiveMailStatus({
               <div className="live-mail-account-actions">
                 <strong>{accountStatusLabel[account.status]}</strong>
                 {googleAccountDataSource &&
-                  account.syncRetry === 'available' && (
+                  (account.syncRetry === 'available' || account.syncRetry === 'quota-setup' ||
+                    account.syncRetry === 'quota-ready') && (
                     <GoogleAccountSyncRetryControl
                       accountId={account.accountId}
+                      availability={account.syncRetry}
                       dataSource={googleAccountDataSource}
-                      onSynced={onReload}
+                      onStatusChanged={onReload}
                     />
                   )}
+                {account.syncRetry === 'quota-waiting' && <p role="status">
+                  Gmail is paused after a usage limit. A local cooldown is active (15 minutes initially,
+                  up to one hour after repeated limits). Reload local status later to check for Resume.
+                  This is not Google’s reset time. No automatic Gmail request will run.
+                </p>}
                 {googleAccountDataSource && <GoogleAccountDisconnectControl
                   accountId={account.accountId}
                   accountLabel={account.displayIdentity.status === 'available'

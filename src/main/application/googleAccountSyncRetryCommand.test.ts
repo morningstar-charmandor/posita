@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { AccountConnectionConsistencyInspector } from './accountConnection'
-import type { ProviderSyncStateV1, SyncFailureCode } from './accountState'
+import type { ProviderSyncState, SyncFailureCode } from './accountState'
 import { GoogleAccountSyncRetryCommandService } from './googleAccountSyncRetryCommand'
 import type { ProviderMailLifecycleAccountOutcomeV1 } from './providerMailLifecycleOwner'
 import type { ProviderMailSyncStageEventV1 } from './providerMailSyncDiagnostics'
@@ -11,7 +11,7 @@ const request = {
   accountId: 'account-work-1'
 }
 
-const syncState = (lastErrorCode: SyncFailureCode = 'PROVIDER_UNAVAILABLE'): ProviderSyncStateV1 => ({
+const syncState = (lastErrorCode: SyncFailureCode = 'PROVIDER_UNAVAILABLE'): ProviderSyncState => ({
   version: 1,
   accountId: request.accountId,
   provider: 'google',
@@ -174,7 +174,7 @@ describe('GoogleAccountSyncRetryCommandService', () => {
     const syncAccounts = vi.fn(async () => [synced()])
     for (const state of [
       undefined,
-      { ...syncState(), status: 'idle', lastErrorCode: undefined } as ProviderSyncStateV1,
+      { ...syncState(), status: 'idle', lastErrorCode: undefined } as ProviderSyncState,
       syncState('QUOTA_EXHAUSTED'),
       syncState('AUTHENTICATION_EXPIRED'),
       syncState('INVALID_CURSOR')

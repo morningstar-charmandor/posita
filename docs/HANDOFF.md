@@ -8,6 +8,46 @@ next move. Technical details remain in their linked source documents.
 
 ## Current state
 
+**Latest offline milestone (2026-09-09):** owner approved ADR-066's bounded local quota
+cooldown and explicit manual resume. Implemented using the existing sync command,
+encrypted account state, clock, projection worker and lifecycle owner. New quota failures
+persist a 15-minute pause, repeated failures extend it to 30 minutes then a one-hour cap.
+This is a conservative local waiting rule, not Google's reset time. Full sync success
+clears its history; partial page commits, cancellation and interrupted-state recovery
+preserve it. A fresh pause is durably reserved before each permitted manual dispatch.
+
+Legacy quota state remains unchanged on read. Its first explicit **Start Gmail cooldown**
+action only saves the waiting period; no provider work. **Reload local status** reevaluates
+readiness without Gmail access. After expiry, **Resume Gmail sync** requires a separate
+confirmation with Cancel focused. Versioned quota intent distinguishes setup from resume
+inside the existing request; trusted main rejects missing/stale intent, early calls,
+overlap, invalid state/time and storage failure. No automatic retry was introduced.
+Authentication/review restrictions and the consumed ADR-065 receipt remain unchanged.
+
+Verification: 95 test files / 668 tests, strict types, renderer security/structure and
+production build pass. Tests use only synthetic data: actual temporary database reopen,
+ciphertext/non-migration checks, retained partial projection, exact expiry, capped backoff,
+stale intent, failure paths, Strict Mode confirmation, and encrypted state through the
+real lifecycle/IPC/preload chain with a fake reader. No credentials, private runtime data,
+Gmail requests or app restarts were used. Runtime display and live quota resume remain
+unverified; the last real observation is still partial retained mail plus quota failure.
+
+**Exact next step:** with owner approval, load this verified build provider-inertly and
+use only **Start Gmail cooldown**, then verify the local waiting presentation. Do not
+assume the existing running app contains these changes. After the wait and local reload,
+request separate explicit approval for exactly one confirmed read-only resume. That
+attempt would test continuation from the encrypted cursor and exercise fixed HTTP
+status/reason diagnostics if rejected. No new live read is authorized by this offline
+approval. Never reset the consumed reviewed receipt, reconnect or infer a quota reset.
+
+Change report: no dependency, new service, scheduler or SQL migration. Strict sync-state
+V1 remains for ordinary/legacy records; V2 adds encrypted cooldown metadata on explicit
+setup/new quota failure. Live-read V4 replaces V3 (no fallback); only fixed availability
+categories cross IPC. The existing retry request retains ordinary behavior and adds an
+exact optional versioned quota intent; no new channel or credential capability.
+
+### Prior local diagnosis (superseded next-step instructions)
+
 **Verified local diagnosis (2026-09-09):** encrypted saved sync state returned only
 `QUOTA_EXHAUSTED` and its fixed disposition `retry-later`. The inspection used a temporary
 trusted Electron main process, read-only SQLite plus `query_only`, the existing OS cache-key
@@ -26,10 +66,10 @@ or authentication failure. The exact HTTP status, limit subtype and reset time w
 stored and remain unknown. Do not claim the limit has expired or that increasing quota,
 reconnecting, or changing concurrency is the confirmed fix.
 
-**Next owner decision:** approve an offline, bounded, user-initiated quota-resume/cooldown
+**Then-pending owner decision (now approved above):** approve an offline, bounded, user-initiated quota-resume/cooldown
 flow using the existing sync owner, with safe visible paused status and no automatic retries.
-This changes the previously deferred `retry-later` recovery boundary and is not implemented
-or authorized yet. Existing conditional read approval cannot bypass that boundary; no
+This was the previously deferred `retry-later` recovery boundary. Existing conditional
+read approval could not bypass that boundary; no
 thirteenth provider attempt has run. A later live read still requires its exact scope to be
 confirmed after the policy is reviewed and the verified runtime is loaded.
 Change report: documentation/evidence only; no production code, dependency, abstraction,
