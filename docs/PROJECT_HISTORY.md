@@ -3034,6 +3034,17 @@ twelfth live request is authorized.
 
 ## Future history-writing guidance
 
+### 2026-09-09 — Owner reports cooldown ended and approves one resume
+
+- Owner reported the exact local waiting and later ended copy. This is owner-observed
+  UI evidence, not a direct storage audit or provider reset confirmation.
+- Owner approved exactly one confirmed read-only resume. The agent's existing Posita
+  process exposes no accessible window, so the agent invoked no control/provider request.
+  Owner handoff is the existing Resume → Read once flow. Confirm whether it ran before
+  any follow-up to avoid duplicates; any dispatched attempt consumes this approval.
+- No code, dependency, schema, credential or remote mailbox change. Full verification
+  remains 95 files / 668 tests. Provider outcome remains pending, not successful.
+
 ### 2026-09-09 — Verified app launched; local cooldown setup awaits unlock
 
 - Owner approved loading `ea49db8` and local-only setup, not Gmail resume. No old

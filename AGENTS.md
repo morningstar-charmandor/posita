@@ -6,6 +6,13 @@ exists deeper in the tree.
 
 ## Product state
 
+- Latest owner report/approval (2026-09-09): owner observed local cooldown active,
+  then ended, and approved exactly one confirmed read-only quota resume. Agent UI
+  access still exposes no window; no resume was invoked by the agent. Ask the owner
+  to use Resume Gmail sync → Read Gmail once, and establish whether it already ran
+  before any further action. No duplicate/automatic attempt, receipt reset or mailbox
+  mutation. Owner-reported cooldown expiry is not evidence of Google's quota reset.
+
 - Latest runtime check (2026-09-09): owner approved loading verified `ea49db8` and
   local-only cooldown setup. No old Posita process was running; the verified preview
   build launched. The Mac then reported locked and its window was inaccessible.

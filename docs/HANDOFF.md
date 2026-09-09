@@ -8,6 +8,24 @@ next move. Technical details remain in their linked source documents.
 
 ## Current state
 
+**Latest owner-reported state and approval (2026-09-09):** owner reported the exact
+quota-waiting copy after local setup, then the exact cooldown-ended copy after waiting.
+These are owner-observed UI results, not an independently inspected database or proof
+that Google's quota reset. The owner then approved exactly one controlled read-only
+resume through **Resume Gmail sync → Read Gmail once**. No automatic repeat, mailbox
+mutation, reconnect or reviewed-receipt reset is authorized.
+
+The existing Electron process remains present but exposes no accessible window to the
+agent. The agent has not clicked either resume control or dispatched a provider request.
+**Next:** ask the owner to perform that one confirmed action in Posita and report its
+result. Before any subsequent agent action, establish whether the owner has already
+started it; never duplicate an uncertain attempt. Once dispatched, this approval is
+spent even if the result is failure or unknown. Do not request a second attempt without
+new approval. Startup and diagnostics remain on verified production source `ea49db8`.
+This documentation-only checkpoint retains 95 files / 668 tests and changes no code,
+dependency, architecture, schema or credentials. Earlier next-step statements below
+are superseded by this pending one-read approval.
+
 **Latest runtime check (2026-09-09):** owner approved loading `ea49db8` and starting
 only the local cooldown. Process inspection found no running Posita, so nothing was
 stopped. `npm run preview` rebuilt the unchanged verified source and launched the app

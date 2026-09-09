@@ -795,3 +795,8 @@ The approved runtime follow-up launched the verified build but stopped when the 
 locked and app controls became inaccessible. No setup or Gmail read was attempted.
 This is deliberately recorded as a launch with an unverified interaction, not a successful
 cooldown demonstration. The next step remains owner unlock and local-only setup.
+
+The owner subsequently reported seeing both the active-wait and cooldown-ended messages.
+This adds owner-observed runtime evidence for the local flow, not proof of Google's
+quota reset or a successful sync. A single confirmed read-only resume was approved;
+its provider outcome remains pending. Agent window access remains unavailable.
