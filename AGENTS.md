@@ -6,6 +6,13 @@ exists deeper in the tree.
 
 ## Product state
 
+- Latest runtime check (2026-09-09): owner approved loading verified `ea49db8` and
+  local-only cooldown setup. No old Posita process was running; the verified preview
+  build launched. The Mac then reported locked and its window was inaccessible.
+  No cooldown or provider control was invoked; no Gmail request occurred. Leave the
+  app running. After the owner unlocks, inspect safe labels and invoke only **Start
+  Gmail cooldown** if present. Never substitute Resume; live-read approval is separate.
+
 - Latest approved offline checkpoint (2026-09-09): ADR-066 implements durable local
   quota cooldown (15/30/60 minutes) and separately confirmed manual resume. No automatic
   retry or live Gmail request. Legacy quota state needs explicit local-only setup first;

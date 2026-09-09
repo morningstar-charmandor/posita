@@ -3034,6 +3034,18 @@ twelfth live request is authorized.
 
 ## Future history-writing guidance
 
+### 2026-09-09 — Verified app launched; local cooldown setup awaits unlock
+
+- Owner approved loading `ea49db8` and local-only setup, not Gmail resume. No old
+  Posita process was running. Preview rebuilt unchanged source and launched normally.
+- Privacy-filtered accessibility could not inspect controls once the OS reported
+  the Mac locked. No cooldown, provider or account control was invoked. No Gmail
+  request or refresh-token read; normal trusted startup kept private cache/client
+  configuration values local. No private mailbox content was recorded.
+- Left the app running for owner unlock. Next is only the existing local setup button,
+  not a restart, receipt reset or provider resume. Documentation-only evidence;
+  full verification remains 95 files / 668 tests. No code/dependency/schema change.
+
 ### 2026-09-09 — Approved offline quota cooldown and explicit manual resume
 
 - Started from verified published `39caf1d` on `codex/gmail-quota-cooldown`. Owner

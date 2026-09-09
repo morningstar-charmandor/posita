@@ -8,6 +8,23 @@ next move. Technical details remain in their linked source documents.
 
 ## Current state
 
+**Latest runtime check (2026-09-09):** owner approved loading `ea49db8` and starting
+only the local cooldown. Process inspection found no running Posita, so nothing was
+stopped. `npm run preview` rebuilt the unchanged verified source and launched the app
+(terminal session `39281`). A Posita window was initially detected, then accessibility
+reported no window; the OS lock-state flag confirmed the Mac is locked. No cooldown,
+resume, reload, reviewed-menu or account control was invoked. No Gmail request or
+refresh-token read ran. Normal startup uses private client configuration/cache inside
+trusted main; no private values or mail content were emitted in inspection output.
+
+**Immediate next step:** ask the owner to unlock the Mac, then inspect only safe status
+labels in the already-running app. Invoke **Start Gmail cooldown** only if present and
+verify the local waiting state. Do not restart again unnecessarily or substitute Resume.
+If the state is different, report it before another action. This runtime/setup approval
+does not authorize a Gmail read. Cooldown setup/presentation and live resume remain
+unverified. Documentation-only follow-up; source and tests remain `ea49db8`, with full
+verification passing 95 files / 668 tests. No new dependencies, abstractions or migrations.
+
 **Latest offline milestone (2026-09-09):** owner approved ADR-066's bounded local quota
 cooldown and explicit manual resume. Implemented using the existing sync command,
 encrypted account state, clock, projection worker and lifecycle owner. New quota failures

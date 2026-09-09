@@ -790,3 +790,8 @@ Strict Mode settlement and the real local messaging path with a fake reader. All
 and the full verification gate pass. No new Gmail request or private runtime inspection
 occurred. Real runtime presentation and successful live resume are explicitly unverified;
 the portfolio outcome is a tested recovery path, not a claim that sync is now complete.
+
+The approved runtime follow-up launched the verified build but stopped when the Mac
+locked and app controls became inaccessible. No setup or Gmail read was attempted.
+This is deliberately recorded as a launch with an unverified interaction, not a successful
+cooldown demonstration. The next step remains owner unlock and local-only setup.
