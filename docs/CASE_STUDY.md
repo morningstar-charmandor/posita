@@ -800,3 +800,11 @@ The owner subsequently reported seeing both the active-wait and cooldown-ended m
 This adds owner-observed runtime evidence for the local flow, not proof of Google's
 quota reset or a successful sync. A single confirmed read-only resume was approved;
 its provider outcome remains pending. Agent window access remains unavailable.
+
+The single owner-confirmed resume then produced decisive runtime evidence: message
+retrieval, normalization and encrypted commit succeeded before a later request returned
+the fixed `rateLimitExceeded` category. The app settled and showed its waiting state.
+This validates controlled continuation and retained progress, not complete sync or the
+chosen wait as a throughput fix. The next investigation concerns request pacing and
+effective limits. The read permission is consumed, and no automatic repeat was made.
+No private mailbox content, counts or timing were retained as case-study evidence.

@@ -13,6 +13,25 @@ sync completion. The exact remaining HTTP reason is not yet known. See the hando
 
 ## Verified starting point
 
+### Controlled quota resume — confirmed rate-limit rejection, 2026-09-09
+
+One owner-confirmed resume on `ea49db8` completed token validation, Gmail list, retrieval,
+normalization and encrypted projection commit. A later batch emitted fixed forbidden
+and rate-limit reason categories. `googleMailHttp.ts` maps those exactly to HTTP 403 and
+`rateLimitExceeded`. Command and IPC completed; owner reported the active cooldown copy.
+This is new live evidence, not a retrospective identification of the earlier HTTP error.
+The local pre-dispatch reservation alone would not prove rejection; these HTTP markers do.
+
+Google's [current error guidance](https://developers.google.com/workspace/gmail/api/guides/handle-errors#ratelimitexceeded)
+identifies this as a maximum request-rate error and recommends backoff. It does not tell
+us this installation's effective limiting dimension. Next: inspect offline request pacing
+and, with scoped approval, configured quota/usage evidence before proposing a fix. Do not
+equate in-memory concurrent reads with multipart batch size or automatically raise quota.
+No new provider read, credential access or code change occurred while reading the existing
+diagnostics. The approved resume is consumed; no fourteenth request is authorized.
+No mailbox content/counts/IDs or precise timing were recorded. Verification: 95 files /
+668 tests and full gate pass; full live sync remains incomplete.
+
 ### Approved offline quota recovery — 2026-09-09
 
 ADR-066 now implements the formerly missing delayed-resume path. Legacy quota errors

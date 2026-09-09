@@ -8,6 +8,29 @@ next move. Technical details remain in their linked source documents.
 
 ## Current state
 
+**Latest confirmed live outcome (2026-09-09):** the owner used the approved one-time
+quota resume on production source `ea49db8`. Existing fixed diagnostic output confirms
+eligibility, lifecycle dispatch, token validation, Gmail listing, message retrieval,
+normalization and encrypted projection commit completed. A later retrieval emitted
+`gmail-message-http-forbidden` and `gmail-message-http-reason-rate-limit`: source mapping
+identifies HTTP 403 with `rateLimitExceeded`. The bounded command and trusted IPC response
+completed normally. The owner reported the returned cooldown-active copy. Full sync is
+still incomplete; no message counts, IDs, addresses, content or precise timing are recorded.
+
+This confirms a rate-limit rejection in this attempt, not the exact original HTTP response
+or which configured limit/request pace caused it. The completed encrypted commit survives
+the later failure. No second provider dispatch is recorded; the one-read approval is now
+consumed. No fourteenth attempt, automatic retry, reconnect or receipt reset is authorized.
+
+**Next:** investigate request pacing and applicable configured quota limits before another
+read. Google's current error guide documents `rateLimitExceeded` as a maximum request-rate
+failure. Do not assume it proves a project-wide, daily or concurrency limit, or that a longer
+wait alone fixes throughput. Offline code/fixture analysis is safe; any authenticated Cloud
+inspection, quota change or new Gmail read needs separately scoped approval. No production
+change is made by this evidence checkpoint. Full verification: 95 files / 668 tests.
+No new dependency, abstraction, schema or compatibility path. Earlier pending-approval and
+unknown-status statements below are historical and superseded for this latest attempt.
+
 **Latest owner-reported state and approval (2026-09-09):** owner reported the exact
 quota-waiting copy after local setup, then the exact cooldown-ended copy after waiting.
 These are owner-observed UI results, not an independently inspected database or proof

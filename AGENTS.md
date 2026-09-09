@@ -6,6 +6,14 @@ exists deeper in the tree.
 
 ## Product state
 
+- Latest confirmed live outcome (2026-09-09): the approved quota resume completed
+  retrieval, normalization and encrypted commit, then a later request emitted fixed
+  forbidden/rate-limit diagnostics (HTTP 403 / `rateLimitExceeded`). Command and IPC
+  settled normally; owner reported active cooldown. Full sync is incomplete. The
+  single-read approval is consumed; no fourteenth read is authorized. Next is offline
+  request-pacing/quota analysis, not repeated waits, reconnect or receipt reset. Exact
+  configured limiting dimension remains unverified. See the handoff for current evidence.
+
 - Latest owner report/approval (2026-09-09): owner observed local cooldown active,
   then ended, and approved exactly one confirmed read-only quota resume. Agent UI
   access still exposes no window; no resume was invoked by the agent. Ask the owner

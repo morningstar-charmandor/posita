@@ -3034,6 +3034,20 @@ twelfth live request is authorized.
 
 ## Future history-writing guidance
 
+### 2026-09-09 — Manual quota resume imports a batch, then exposes the exact rate-limit category
+
+- Owner reported confirmation followed by active cooldown. Existing runtime diagnostics
+  establish one provider dispatch, successful retrieval/normalization/encrypted commit,
+  then a later forbidden response with fixed rate-limit reason. Source mapping identifies
+  HTTP 403 / `rateLimitExceeded`; trusted command and IPC settled normally.
+- No retry was issued by the agent while inspecting output. Approval is consumed;
+  no next live attempt is authorized. Full sync remains incomplete and exact quota
+  dimension/reset remains unverified. Earlier committed cache is preserved.
+- Next is offline pacing analysis and separately approved quota/usage inspection, not
+  reconnect or assumed quota increases. No code, dependency, schema, compatibility or
+  credential change. Public primary documentation was checked. Full gate: 95 files /
+  668 tests. No mailbox content, counts, IDs or precise provider timing recorded.
+
 ### 2026-09-09 — Owner reports cooldown ended and approves one resume
 
 - Owner reported the exact local waiting and later ended copy. This is owner-observed
