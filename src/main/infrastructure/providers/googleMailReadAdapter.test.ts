@@ -60,6 +60,98 @@ const queuedFetch = (...responses: Response[]): GoogleMailFetch & { calls: [stri
 }
 
 describe('GoogleMailReadAdapter', () => {
+  // Characterization of the missing pacing boundary, not a desired throughput contract.
+  // Update these expectations when request pacing is implemented. All rates/data are synthetic.
+  it.each([
+    { external: false, latencyMs: 100, rejectAtBudget: false },
+    { external: false, latencyMs: 100, rejectAtBudget: true },
+    { external: true, latencyMs: 100, rejectAtBudget: true },
+    { external: false, latencyMs: 2_000, rejectAtBudget: true }
+  ])('characterizes unpaced quota use with four bounded reads: %j', async ({ external, latencyMs, rejectAtBudget }) => {
+    vi.useFakeTimers()
+    const start = Date.parse('2026-09-09T12:00:00.000Z')
+    vi.setSystemTime(start)
+    // Google quota reference retrieved 2026-09-09: 6000 units/user/project/minute;
+    // profile=1, messages.list=5, messages.get=20, attachments.get=20.
+    // This fake is not a measurement of the owner's effective quota or provider timing.
+    const budget = 6_000
+    const starts: Array<{ time: number; units: number }> = []
+    let active = 0
+    let peakActive = 0
+    let rejected = false
+    const events: ProviderMailSyncStageEventV1[] = []
+    const fetchRequest: GoogleMailFetch = async (url, init) => {
+      const parsed = new URL(url)
+      const profile = parsed.pathname.endsWith('/profile')
+      const list = parsed.pathname.endsWith('/messages')
+      const attachment = parsed.pathname.includes('/attachments/')
+      const units = profile ? 1 : list ? 5 : 20
+      const time = Date.now()
+      const recent = starts.filter((entry) => entry.time > time - 60_000)
+        .reduce((total, entry) => total + entry.units, 0)
+      starts.push({ time, units })
+      active += 1
+      peakActive = Math.max(peakActive, active)
+      try {
+        await new Promise<void>((resolve) => setTimeout(resolve, latencyMs))
+        if (init.signal.aborted) throw new DOMException('Aborted', 'AbortError')
+        if (rejectAtBudget && recent + units > budget) {
+          rejected = true
+          return new Response(JSON.stringify({ error: { errors: [{ reason: 'rateLimitExceeded' }] } }), { status: 403 })
+        }
+        if (profile) return body({ historyId: '100' })
+        if (list) {
+          const page = Number(parsed.searchParams.get('pageToken') ?? 0)
+          return body({ messages: Array.from({ length: SYNC_BATCH_SIZE }, (_, i) => ({ id: `synthetic-${page}-${i}` })),
+            ...(page < 3 ? { nextPageToken: String(page + 1) } : {}) })
+        }
+        if (attachment) return body({ data: Buffer.from('Synthetic external text').toString('base64url') })
+        const id = parsed.pathname.split('/').at(-1)!
+        const payload = message(id, `thread-${id}`)
+        return body(external ? { ...payload, payload: { ...payload.payload,
+          body: { attachmentId: 'synthetic-text', size: 23 } } } : payload)
+      } finally { active -= 1 }
+    }
+    const projection = new DeterministicFakeMailSyncProjection()
+    const reporter = { report: (event: ProviderMailSyncStageEventV1) => events.push(event) }
+    const coordinator = new MailSyncCoordinator(
+      new GoogleMailReadAdapter(tokenSource(), fetchRequest, 20_000, reporter),
+      projection, { now: () => new Date() }, 2, reporter
+    )
+    try {
+      // Settle errors immediately so fake-clock advancement never creates an unhandled rejection.
+      const outcome = coordinator.syncAccount({ version: 1, accountId: 'account-work-1', provider: 'google' })
+        .then((value) => ({ value, error: undefined }), (error: unknown) => ({ value: undefined, error }))
+      await vi.runAllTimersAsync()
+      const result = await outcome
+      expect(peakActive).toBe(4)
+      expect(active).toBe(0)
+      if (rejectAtBudget && latencyMs === 100) {
+        expect(result.error).toMatchObject({ code: 'QUOTA_EXHAUSTED' })
+        expect(rejected).toBe(true)
+        expect(projection.commits).toHaveLength(external ? 1 : 2)
+        expect(projection.snapshot('account-work-1').checkpoint?.cursor).toBeDefined()
+        expect(events.some(({ stage }) => stage === 'gmail-message-http-reason-rate-limit')).toBe(true)
+      } else {
+        expect(result.error).toBeUndefined()
+        expect(result.value).toMatchObject({ batchesCommitted: 4 })
+        expect(rejected).toBe(false)
+      }
+      if (!rejectAtBudget) {
+        expect(starts.at(-1)!.time - start).toBeLessThan(60_000)
+        expect(starts.reduce((total, entry) => total + entry.units, 0)).toBe(8_021)
+        expect(starts.reduce((total, entry) => total + entry.units, 0)).toBeGreaterThan(budget)
+      }
+      const settledRequests = starts.length
+      await vi.advanceTimersByTimeAsync(60_000)
+      expect(starts).toHaveLength(settledRequests) // No automatic retry after either outcome.
+      expect(JSON.stringify(events)).not.toMatch(/synthetic-|sender@|Message body/)
+    } finally {
+      await coordinator.shutdown()
+      vi.useRealTimers()
+    }
+  })
+
   it('preserves a committed page and resumes it only on an explicit call after a later HTTP failure', async () => {
     const events: ProviderMailSyncStageEventV1[] = []
     const fetchRequest = queuedFetch(

@@ -452,7 +452,9 @@ ownership and must not be overwritten as if they were provider fields.
 
 Each account sync is single-flight and transactionally commits a bounded batch
 with its next cursor. Work is cancellable on shutdown, account disconnect, or
-supersession. Cross-account concurrency is bounded and quota-aware.
+supersession. Cross-account concurrency is bounded. The 2026-09-09 pacing audit
+found that neither this bound nor manual cooldown enforces a requests-per-interval
+budget; request pacing remains unimplemented. See `GMAIL_READ_DIAGNOSIS.md`.
 
 ## Deduplication, threading, and recovery
 

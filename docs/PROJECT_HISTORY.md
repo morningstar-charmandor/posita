@@ -3034,6 +3034,21 @@ twelfth live request is authorized.
 
 ## Future history-writing guidance
 
+### 2026-09-09 — Reproduce missing request pacing without another Gmail read
+
+- Audited the real adapter, HTTP boundary, coordinator and production composition from
+  `5c5b3bf`; no request-rate limiter exists. Concurrency and durable cooldown regulate
+  different things. Corrected documentation that overstated concurrency as quota-aware.
+- Checked Google's current primary quota reference; see diagnosis for current defaults
+  and grandfathering caveat. Actual project limits were not accessed.
+- Added four synthetic fake-clock/HTTP characterization cases: fast transport over budget
+  despite four concurrent reads, fake quota rejection retaining earlier commits, additional
+  external-text cost, and successful slower transport. Tests are evidence of a gap, not
+  desired behavior to preserve after the fix or measurements of the user's mailbox.
+- Full verification: 95 files / 672 tests. No production code, dependency, new abstraction,
+  schema, compatibility path, private data, credential, app restart or Gmail request.
+  Next: owner-approved offline pacing implementation; no fourteenth read is authorized.
+
 ### 2026-09-09 — Manual quota resume imports a batch, then exposes the exact rate-limit category
 
 - Owner reported confirmation followed by active cooldown. Existing runtime diagnostics

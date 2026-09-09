@@ -430,7 +430,9 @@ authority or persisted. Production has one protected account credential, and no 
 or error detail crosses IPC.
 
 Sync operations remain idempotent, transactional at a batch boundary, resumable,
-quota-aware, and isolated per account.
+isolated per account. Request-rate pacing is not yet implemented; bounded concurrency
+and the separate manual cooldown are not per-interval quota admission control. See the
+2026-09-09 audit in `GMAIL_READ_DIAGNOSIS.md`.
 
 ADR-059 adds one best-effort trusted-main diagnostic reporter to this existing path. Production may
 emit only an opaque Posita account ID, one fixed stage, and a fixed started/completed/failed phase for

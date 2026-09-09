@@ -6,6 +6,14 @@ exists deeper in the tree.
 
 ## Product state
 
+- Latest offline audit (2026-09-09): four synthetic tests prove current bounded
+  concurrency does not bound request rate; fast fixture reads exceed Google's updated
+  documented per-minute budget. Pacing is absent, the leading explanation for repeated
+  rate-limit failure; actual configured quota remains uninspected. No production fix or
+  provider read in this audit. Verification: 95 files / 672 tests. Next decision is a
+  narrow offline quota-weighted pacing change, preserving the existing lifecycle and
+  deadline. No fourteenth Gmail read is authorized; see the handoff and diagnosis.
+
 - Latest confirmed live outcome (2026-09-09): the approved quota resume completed
   retrieval, normalization and encrypted commit, then a later request emitted fixed
   forbidden/rate-limit diagnostics (HTTP 403 / `rateLimitExceeded`). Command and IPC

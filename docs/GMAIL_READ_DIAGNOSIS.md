@@ -13,6 +13,48 @@ sync completion. The exact remaining HTTP reason is not yet known. See the hando
 
 ## Verified starting point
 
+### Offline request-pacing audit — 2026-09-09
+
+Production has no request-rate admission control: `GoogleMailReadAdapter` launches
+groups of up to four reads, immediately launches the next group when settled, and may
+fetch external text bodies inside each read. `MailSyncCoordinator` immediately advances
+pages after commits. Its account concurrency gate limits simultaneous work, not requests
+per interval. ADR-066's durable cooldown is post-failure/manual-resume policy, not pacing
+inside a running sync. No automatic retry exists in either path.
+
+Google's [quota reference](https://developers.google.com/workspace/gmail/api/reference/quota),
+checked 2026-09-09, reports updated limits from May 1, 2026 for new projects: 6,000
+units/user/project/minute and 1,200,000/project/minute. `messages.get` and external
+`messages.attachments.get` each cost 20 units; list costs 5 and profile 1. Older projects
+may retain prior quotas. The recorded Posita project creation is later, making these
+defaults relevant, but no authenticated quota/configuration inspection has occurred.
+
+Four new characterization tests exercise the real adapter/coordinator with a fake token,
+HTTP responses and clock. With synthetic fast responses, four full fixture pages issue
+8,021 units in less than a simulated minute despite peak concurrency four. A fake rolling
+6,000-unit budget rejects the later page and preserves earlier commits; external text
+reads reach that threshold sooner. Slow synthetic responses complete under the same
+budget and concurrency. Every case settles without an automatic repeat. These counts
+and timings describe generated fixtures only, never the real mailbox or its timing.
+
+Conclusion: missing pacing is a reproduced implementation gap and the leading explanation
+for the observed live rate-limit rejection, not proof of the actual configured threshold
+or provider accounting window. Waiting longer and then sending the same burst does not
+correct this gap. Do not infer a daily, project-wide, concurrent-request or billing limit.
+
+Proposed next implementation (not yet made): quota-weighted cancellable request admission
+inside the existing adapter, shared across list/message/external-body calls and retained
+across pages. Keep the same sync owner, cursor/commit semantics, four-read maximum, whole
+attempt deadline and manual-only recovery; no automatic retries, new dependency or quota
+increase. Select a conservative budget below documented defaults, state the configured-limit
+uncertainty, and test fast/slow responses, cancellation, page continuity and account isolation.
+Large imports may still require bounded manual continuation; do not widen the deadline.
+Cloud quota inspection, if needed, is a separately approved read-only action; no Gmail
+read is authorized. Characterization expectations must evolve with the eventual fix.
+
+This checkpoint changes tests and evidence only. Full verification: 95 files / 672 tests.
+No credentials, private runtime data, app restart or provider request was used.
+
 ### Controlled quota resume — confirmed rate-limit rejection, 2026-09-09
 
 One owner-confirmed resume on `ea49db8` completed token validation, Gmail list, retrieval,

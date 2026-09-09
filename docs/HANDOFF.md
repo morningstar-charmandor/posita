@@ -8,6 +8,29 @@ next move. Technical details remain in their linked source documents.
 
 ## Current state
 
+**Latest offline audit (2026-09-09):** verified published baseline `5c5b3bf`; production
+source remains `ea49db8`. Request pacing is absent: four-at-a-time message reads and
+bounded account concurrency do not limit requests per minute, and page commits introduce
+no deliberate spacing. External text reads add more calls. ADR-066's cooldown only gates
+manual resume after failures. See [Gmail diagnosis](GMAIL_READ_DIAGNOSIS.md) for Google's
+updated quota reference and exact synthetic evidence; configured project limits remain
+uninspected, not assumed.
+
+Four new fake-clock/HTTP tests reproduce a documented-budget overrun despite bounded
+concurrency, a later rate-limit rejection with retained commits, earlier exhaustion with
+external text, and successful slow transport under the same budget. This supports missing
+pacing as the leading explanation, not proof of real mailbox volume/timing or the exact
+effective quota. No production change, new dependency, abstraction, schema or compatibility
+path. Full `npm run verify`: 95 files / 672 tests. No credentials, private runtime state,
+Gmail request or runtime restart in this audit. The previous one-read approval stays consumed.
+
+**Next decision:** approve a narrow offline quota-weighted, cancellable pacing change
+inside the existing adapter. Preserve one sync owner, account isolation, bounded concurrency,
+ten-minute attempt deadline, encrypted cursor/progress and explicit manual-only recovery.
+Do not raise quota, add an SDK, widen deadlines or issue another Gmail request. Test pacing
+across pages and external text reads, plus cancellation/failure paths. A read-only Cloud
+quota inspection would require separately scoped approval. No fourteenth read is authorized.
+
 **Latest confirmed live outcome (2026-09-09):** the owner used the approved one-time
 quota resume on production source `ea49db8`. Existing fixed diagnostic output confirms
 eligibility, lifecycle dispatch, token validation, Gmail listing, message retrieval,

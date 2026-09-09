@@ -808,3 +808,13 @@ This validates controlled continuation and retained progress, not complete sync 
 chosen wait as a throughput fix. The next investigation concerns request pacing and
 effective limits. The read permission is consumed, and no automatic repeat was made.
 No private mailbox content, counts or timing were retained as case-study evidence.
+
+Offline investigation then separated two controls that had been conflated: limiting
+simultaneous work versus limiting its rate. Posita bounded concurrency but sent successive
+groups immediately. Fake-clock tests with the real reader/coordinator reproduced a
+quota-budget overrun, retained progress on rejection, and the added cost of external text.
+Slower synthetic transport passed with the same concurrency. This makes missing pacing
+the leading explanation without pretending to measure the owner's mailbox or configured
+quota. Four new cases pass with the full 672-test gate. Production pacing is still proposed,
+not implemented; no extra live request was made. The post-failure cooldown remains useful
+but is not presented as a fix for excessive request throughput.
