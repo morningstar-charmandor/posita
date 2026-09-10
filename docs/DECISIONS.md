@@ -1472,3 +1472,25 @@ evidence of the real status; no further read is authorized by this refinement.
   IPC action, scheduler, provider owner, SQL table, dependency or credential capability.
   Versioned JSON evolution needs no physical database migration; legacy-to-v2 conversion
   is explicit on approved cooldown preparation or a newly recorded quota failure.
+
+## ADR-067: Conservative quota-weighted Gmail request admission
+
+- Status: owner approved offline implementation on 2026-09-09; no live request.
+- The existing Gmail reader admits every profile/list/history/message/external-text
+  GET through one adapter-local FIFO. Charge documented method costs at 50 units/second,
+  half the currently documented new-project per-user rate, with no saved burst credit.
+  The shared budget conservatively covers all active accounts rather than adding a
+  per-account quota registry; mail data, cursors and credentials remain account-isolated.
+  Multi-account imports share throughput. This is not a claim about configured quota,
+  other traffic, or guaranteed Google acceptance.
+- Keep at most 64 pending admissions (existing maximum eight accounts with four message
+  reads each fits), one referenced timer, and monotonic injected time. Cancellation
+  removes pending work promptly; admitted cost is not refunded. No payload, account ID,
+  credential, count or timing is reported. No quota polling, automatic retry, durable
+  scheduler, new sync owner, dependency, schema, IPC or UI change.
+- Pace across page boundaries on the same adapter. Start the HTTP timeout only after
+  admission; preserve the complete ten-minute attempt deadline and existing cancellation,
+  cooldown, consent and encrypted page commits. Large imports can still require later
+  explicitly confirmed continuation. Restart carries no burst credit or automatic work.
+- Verify with synthetic rolling-budget and cancellation/failure tests before publishing.
+  Live efficacy and the owner's effective quota remain unverified and need separate approval.

@@ -818,3 +818,15 @@ the leading explanation without pretending to measure the owner's mailbox or con
 quota. Four new cases pass with the full 672-test gate. Production pacing is still proposed,
 not implemented; no extra live request was made. The post-failure cooldown remains useful
 but is not presented as a fix for excessive request throughput.
+
+The approved follow-up implemented cost-weighted spacing inside the existing Gmail reader.
+The same synthetic workloads now complete under their rolling budget, including extra
+text-body reads, without changing consent, adding a retry loop or losing source-account
+identity. A small shared admission queue avoids a second sync service or quota registry;
+the tradeoff is deliberately shared throughput across accounts. Cancellation, timer
+liveness, delayed wakeup and timeout placement are tested as behavior, not assumed.
+Fifteen additional cases bring the full gate to 687 passing tests across 96 files. This
+is verified offline prevention of the reproduced burst pattern, not a claimed live Gmail
+resolution. The existing app was not restarted, no mailbox was accessed, and configured
+provider quota remains unknown. A separately approved runtime upgrade and controlled read
+are the remaining evidence steps.

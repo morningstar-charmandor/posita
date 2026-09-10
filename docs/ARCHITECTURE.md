@@ -430,9 +430,14 @@ authority or persisted. Production has one protected account credential, and no 
 or error detail crosses IPC.
 
 Sync operations remain idempotent, transactional at a batch boundary, resumable,
-isolated per account. Request-rate pacing is not yet implemented; bounded concurrency
-and the separate manual cooldown are not per-interval quota admission control. See the
-2026-09-09 audit in `GMAIL_READ_DIAGNOSIS.md`.
+isolated per account. ADR-067 adds quota-weighted admission to the Gmail adapter's single
+GET boundary: 50 units/second shared across accounts and pages, without burst credit.
+The bounded FIFO holds no account IDs, credentials or payloads. One monotonic-clock,
+referenced timer wakes queued work; cancellation removes it, and shutdown uses the existing
+coordinator's signals. HTTP deadlines start after admission; the whole attempt deadline
+still includes waiting. This is neither a second sync owner nor an automatic retry policy.
+Multi-account imports share throughput conservatively; effective Google quota and live
+efficacy are still unverified. See `GMAIL_READ_DIAGNOSIS.md`.
 
 ADR-059 adds one best-effort trusted-main diagnostic reporter to this existing path. Production may
 emit only an opaque Posita account ID, one fixed stage, and a fixed started/completed/failed phase for

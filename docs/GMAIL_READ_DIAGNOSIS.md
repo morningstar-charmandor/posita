@@ -1,6 +1,6 @@
 # Gmail read failure — evidence and offline correction
 
-Reviewed 2026-09-09. This is the current focused investigation; older attempt narratives
+Reviewed 2026-09-10. This is the current focused investigation; older attempt narratives
 remain historical evidence, not permission to make another request.
 
 Live update after verified implementation `d8e1ef3`: the one approved reviewed sync
@@ -12,6 +12,38 @@ works with real mail, not which original encoding caused the sixth observation, 
 sync completion. The exact remaining HTTP reason is not yet known. See the handoff.
 
 ## Verified starting point
+
+### Approved quota-weighted pacing implementation — completed 2026-09-10
+
+The owner approved the offline fix after `e0746db`. ADR-067 adds a small adapter-local
+admission helper, not another sync service: every profile, list, history, message and
+external-text GET is charged at its documented method weight. The helper receives only
+a method category and cancellation signal, never tokens, URLs, provider data or account IDs.
+One shared 50-unit/second budget conservatively covers active accounts and later pages;
+account records remain isolated, with no per-account quota registry. At most 64 pending
+admissions and one referenced timer; no accumulated credit or late-wakeup burst. The
+monotonic clock and timer are injectable. Invalid time/scheduling fails with a fixed safe
+error, and cancellation removes pending work without refunding admitted cost.
+
+The HTTP deadline starts after admission. The existing whole-attempt deadline still
+bounds the entire sync, including deliberate waiting. No automatic retry, new dependency,
+deadline extension, persistent schema, confirmation change or receipt reset. This may
+slow a large import enough to require later explicit continuation from retained commits.
+
+Updated the four audit tests into pacing regression tests; their real adapter/coordinator
+now completes all four generated pages, including external-text cases, below the fake
+rolling budget. Synthetic request starts respect prior method cost across page boundaries.
+Fifteen additional cases cover exact weights, FIFO/caps, idle and late-wakeup behavior,
+clock/scheduling failure, referenced timer cleanup, cancellation before HTTP, HTTP timeout
+placement, and two accounts with identical synthetic source IDs retaining separate records.
+Full `npm run verify`: 96 files / 687 tests, types, structure/security and production build.
+
+No provider request, credential read, private runtime access or app restart occurred.
+The running app was last launched from `ea49db8`, not this fix. A provider-inert upgrade
+requires owner approval, then one explicitly approved read could test whether paced
+continuation avoids the observed rejection and advances encrypted progress. No fourteenth
+read is authorized now. Actual configured quota, other traffic and live efficacy remain
+unverified. The historical missing-pacing audit below describes the pre-fix code.
 
 ### Offline request-pacing audit — 2026-09-09
 

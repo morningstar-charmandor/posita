@@ -3034,6 +3034,25 @@ twelfth live request is authorized.
 
 ## Future history-writing guidance
 
+### 2026-09-10 — Complete quota-weighted Gmail pacing offline
+
+- Owner approved a narrow offline correction from published `e0746db`; implemented on
+  `codex/gmail-request-pacing` under ADR-067. Existing adapter now admits all five GET
+  categories at a shared conservative 50 units/second, across pages and active accounts.
+  One bounded FIFO/timer with injected monotonic time, no saved burst credit or retries.
+- Preserved account-scoped records, cancellation, transport and whole-attempt deadlines,
+  explicit cooldown/resume policy and encrypted page commits. No dependency, schema,
+  provider owner, IPC, credential capability or compatibility path was added. Shared
+  throughput is deliberately conservative; actual provider quota remains uninspected.
+- Evolved four characterization scenarios into paced-budget regressions and added 15
+  cases for method costs, queue limits, cancellation/cleanup, referenced timer, invalid
+  time/scheduling, delayed wakeup, HTTP deadline placement and cross-account/history
+  integration. `npm run verify`: 96 files / 687 tests; types, structure and build pass.
+- No Gmail read, private runtime inspection or restart. Existing runtime remains
+  last-launched `ea49db8`; live effectiveness is not verified. Next is separately approved
+  local runtime upgrade, then a separately approved single controlled resume. No fourteenth
+  attempt is authorized; no consumed receipt or saved cooldown was altered.
+
 ### 2026-09-09 — Reproduce missing request pacing without another Gmail read
 
 - Audited the real adapter, HTTP boundary, coordinator and production composition from

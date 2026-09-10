@@ -60,14 +60,88 @@ const queuedFetch = (...responses: Response[]): GoogleMailFetch & { calls: [stri
 }
 
 describe('GoogleMailReadAdapter', () => {
-  // Characterization of the missing pacing boundary, not a desired throughput contract.
-  // Update these expectations when request pacing is implemented. All rates/data are synthetic.
+  it('cancels during admission without starting the queued HTTP request or retaining a timer', async () => {
+    vi.useFakeTimers()
+    const fetchRequest = queuedFetch(body({ historyId: '100' }))
+    const controller = new AbortController()
+    const adapter = new GoogleMailReadAdapter(tokenSource(), fetchRequest)
+    try {
+      const outcome = adapter.fetchBatch(request(), controller.signal)
+      const rejected = expect(outcome).rejects.toMatchObject({ name: 'AbortError' })
+      await vi.advanceTimersByTimeAsync(0)
+      expect(fetchRequest.calls).toHaveLength(1)
+      controller.abort()
+      await rejected
+      expect(vi.getTimerCount()).toBe(0)
+      await vi.advanceTimersByTimeAsync(60_000)
+      expect(fetchRequest.calls).toHaveLength(1)
+    } finally { vi.useRealTimers() }
+  })
+
+  it('starts each transport timeout after admission, not while waiting for a quota slot', async () => {
+    vi.useFakeTimers()
+    const starts: number[] = []
+    const fetchRequest: GoogleMailFetch = async (url) => {
+      if (url.endsWith('/profile')) return body({ historyId: '100' })
+      if (url.includes('maxResults=')) return body({ messages: [0, 1, 2, 3].map((i) => ({ id: `synthetic-${i}` })) })
+      starts.push(performance.now())
+      await new Promise<void>((resolve) => setTimeout(resolve, 950))
+      return body(message(new URL(url).pathname.split('/').at(-1)))
+    }
+    try {
+      const adapter = new GoogleMailReadAdapter(tokenSource(), fetchRequest, 1_000)
+      const outcome = adapter.fetchBatch(request(), new AbortController().signal)
+      const completed = expect(outcome).resolves.toMatchObject({ complete: true })
+      await vi.runAllTimersAsync()
+      await completed
+      expect(starts).toEqual([120, 520, 920, 1320])
+      expect(vi.getTimerCount()).toBe(0)
+    } finally { vi.useRealTimers() }
+  })
+
+  it('shares admission across accounts and history reads without mixing source records', async () => {
+    vi.useFakeTimers()
+    const calls: Array<{ time: number; units: number }> = []
+    const fetchRequest: GoogleMailFetch = async (url) => {
+      const path = new URL(url).pathname
+      const units = path.endsWith('/profile') ? 1 : path.endsWith('/messages') ? 5
+        : path.endsWith('/history') ? 2 : 20
+      calls.push({ time: performance.now(), units })
+      if (units === 1) return body({ historyId: '100' })
+      if (units === 5) return body({ messages: [{ id: 'shared-synthetic-id' }] })
+      if (units === 2) return body({ historyId: '102', history: [] })
+      return body(message('shared-synthetic-id'))
+    }
+    const projection = new DeterministicFakeMailSyncProjection()
+    const coordinator = new MailSyncCoordinator(new GoogleMailReadAdapter(tokenSource(), fetchRequest),
+      projection, { now: () => new Date('2026-09-09T12:00:00Z') })
+    const accounts = ['account-work-1', 'account-personal-1']
+    try {
+      const initial = Promise.all(accounts.map((accountId) => coordinator.syncAccount({ version: 1, accountId, provider: 'google' })))
+      await vi.runAllTimersAsync()
+      await initial
+      const updates = Promise.all(accounts.map((accountId) => coordinator.syncAccount({ version: 1, accountId, provider: 'google' })))
+      await vi.runAllTimersAsync()
+      await updates
+      for (const accountId of accounts) {
+        expect(projection.snapshot(accountId).messages).toHaveLength(1)
+        expect(projection.snapshot(accountId).messages[0]?.source.accountId).toBe(accountId)
+      }
+      expect(calls.filter(({ units }) => units === 2)).toHaveLength(2)
+      for (let i = 1; i < calls.length; i += 1) {
+        expect(calls[i]!.time - calls[i - 1]!.time).toBeGreaterThanOrEqual(calls[i - 1]!.units * 20)
+      }
+      expect(vi.getTimerCount()).toBe(0)
+    } finally { await coordinator.shutdown(); vi.useRealTimers() }
+  })
+
+  // Regression for the previously reproduced unpaced overrun. All rates/data are synthetic.
   it.each([
     { external: false, latencyMs: 100, rejectAtBudget: false },
     { external: false, latencyMs: 100, rejectAtBudget: true },
     { external: true, latencyMs: 100, rejectAtBudget: true },
     { external: false, latencyMs: 2_000, rejectAtBudget: true }
-  ])('characterizes unpaced quota use with four bounded reads: %j', async ({ external, latencyMs, rejectAtBudget }) => {
+  ])('paces all pages and external text within a rolling quota budget: %j', async ({ external, latencyMs, rejectAtBudget }) => {
     vi.useFakeTimers()
     const start = Date.parse('2026-09-09T12:00:00.000Z')
     vi.setSystemTime(start)
@@ -124,21 +198,23 @@ describe('GoogleMailReadAdapter', () => {
         .then((value) => ({ value, error: undefined }), (error: unknown) => ({ value: undefined, error }))
       await vi.runAllTimersAsync()
       const result = await outcome
-      expect(peakActive).toBe(4)
+      expect(peakActive).toBeLessThanOrEqual(4)
+      if (latencyMs === 2_000) expect(peakActive).toBe(4)
       expect(active).toBe(0)
-      if (rejectAtBudget && latencyMs === 100) {
-        expect(result.error).toMatchObject({ code: 'QUOTA_EXHAUSTED' })
-        expect(rejected).toBe(true)
-        expect(projection.commits).toHaveLength(external ? 1 : 2)
-        expect(projection.snapshot('account-work-1').checkpoint?.cursor).toBeDefined()
-        expect(events.some(({ stage }) => stage === 'gmail-message-http-reason-rate-limit')).toBe(true)
-      } else {
-        expect(result.error).toBeUndefined()
-        expect(result.value).toMatchObject({ batchesCommitted: 4 })
-        expect(rejected).toBe(false)
+      expect(result.error).toBeUndefined()
+      expect(result.value).toMatchObject({ batchesCommitted: 4 })
+      expect(projection.commits).toHaveLength(4)
+      expect(rejected).toBe(false)
+      for (const entry of starts) {
+        const rollingUnits = starts.filter(({ time }) => time <= entry.time && time > entry.time - 60_000)
+          .reduce((total, { units }) => total + units, 0)
+        expect(rollingUnits).toBeLessThanOrEqual(3_020)
+      }
+      for (let i = 1; i < starts.length; i += 1) {
+        expect(starts[i]!.time - starts[i - 1]!.time).toBeGreaterThanOrEqual(starts[i - 1]!.units * 20)
       }
       if (!rejectAtBudget) {
-        expect(starts.at(-1)!.time - start).toBeLessThan(60_000)
+        expect(starts.at(-1)!.time - start).toBeGreaterThan(60_000)
         expect(starts.reduce((total, entry) => total + entry.units, 0)).toBe(8_021)
         expect(starts.reduce((total, entry) => total + entry.units, 0)).toBeGreaterThan(budget)
       }
@@ -197,7 +273,11 @@ describe('GoogleMailReadAdapter', () => {
         (_, index) => ({ id: `synthetic-${index}` })) })
       messageRequests += 1
       signals.push(init.signal)
-      if (url.includes('/synthetic-0?')) return new Response('private-detail', { status: 503 })
+      if (url.includes('/synthetic-0?')) {
+        // Let all four paced siblings enter transport before the first one fails.
+        await new Promise<void>((resolve) => setTimeout(resolve, 1_350))
+        return new Response('private-detail', { status: 503 })
+      }
       return new Response(new ReadableStream({ cancel }))
     }
     const adapter = new GoogleMailReadAdapter(tokenSource(), fetchRequest, 20_000,

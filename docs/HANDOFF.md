@@ -1,12 +1,43 @@
 # Posita Continuity Handoff
 
-Last reviewed: 2026-09-09
+Last reviewed: 2026-09-10
 
 This is the first document to read when Posita work continues in a new AI model,
 thread, chat, or development session. It records current state and the safest
 next move. Technical details remain in their linked source documents.
 
 ## Current state
+
+**Latest approved offline implementation (completed 2026-09-10):** started from clean published
+`e0746db` on `codex/gmail-request-pacing`. ADR-067 implements the approved narrow fix:
+all Gmail GETs pass through quota-weighted admission in the existing reader. One FIFO
+shares a conservative 50-unit/second budget across accounts and pages, with no accumulated
+burst credit, a 64-waiter cap, and one referenced cancellable timer. No account registry,
+provider owner, retry loop, dependency, IPC or persistent schema was added. Account data
+is still isolated. Deliberate waiting is outside each HTTP timeout but inside the unchanged
+ten-minute attempt deadline. Existing cooldown, confirmation, receipts and encrypted page
+commits remain intact; larger imports can require later manual continuation.
+
+The four prior characterization scenarios now complete their synthetic
+imports below the fake rolling limit, including external text and slow transport. Added
+15 cases for exact method costs, cross-page/account/history admission, source isolation,
+queued cancellation, HTTP timeout placement, timer cleanup/liveness, queue bounds, invalid
+clock, delayed wakeup and fixed scheduling failure. Full `npm run verify`: **96 files /
+687 tests**, structure/security, types and production build. No live efficacy is claimed.
+Configured quota/other traffic remain unknown; missing pacing is the leading explanation
+supported by the prior audit, not proof of the effective Google limit.
+
+**Exact next step:** request owner approval to load this verified build without a Gmail
+read. The app was last launched from `ea49db8`; it was not restarted or privately inspected
+here, so do not ask the owner to test pacing on that older runtime. A subsequent single
+read-only attempt needs separate explicit approval and must use the existing policy-eligible
+confirmed quota resume; never bypass a cooldown or reset the consumed review receipt.
+That attempt would test whether paced retrieval can advance the retained encrypted cursor
+without the observed rate-limit rejection, or capture only the existing fixed failure
+categories. Successful batches may extend the encrypted local cache; Gmail is never modified.
+No credentials, private client configuration, mailbox content, provider call or runtime
+interaction occurred in this milestone. **No fourteenth Gmail read is authorized.**
+Earlier pending-fix and next-step statements below are historical, superseded by this summary.
 
 **Latest offline audit (2026-09-09):** verified published baseline `5c5b3bf`; production
 source remains `ea49db8`. Request pacing is absent: four-at-a-time message reads and

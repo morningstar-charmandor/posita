@@ -452,9 +452,12 @@ ownership and must not be overwritten as if they were provider fields.
 
 Each account sync is single-flight and transactionally commits a bounded batch
 with its next cursor. Work is cancellable on shutdown, account disconnect, or
-supersession. Cross-account concurrency is bounded. The 2026-09-09 pacing audit
-found that neither this bound nor manual cooldown enforces a requests-per-interval
-budget; request pacing remains unimplemented. See `GMAIL_READ_DIAGNOSIS.md`.
+supersession. Cross-account concurrency is bounded. ADR-067 now also spaces each Gmail
+GET by its documented quota cost, using a conservative shared 50-unit/second budget
+without burst credit. Profile/list/history/message/external-text reads all participate,
+including subsequent pages. The existing manual cooldown remains separate; no automatic
+retry is added. Synthetic rolling-budget, account-isolation and cancellation tests pass;
+live efficacy and configured quota remain unverified. See `GMAIL_READ_DIAGNOSIS.md`.
 
 ## Deduplication, threading, and recovery
 

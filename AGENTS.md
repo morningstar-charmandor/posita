@@ -6,6 +6,18 @@ exists deeper in the tree.
 
 ## Product state
 
+- Latest approved offline implementation (completed 2026-09-10): ADR-067 adds quota-weighted
+  request admission inside the existing Gmail adapter. One shared FIFO, 50 units/second,
+  no burst credit, at most 64 waiters and one referenced cancellable timer. Profile,
+  list, history, message and external-text GETs all use it, including across pages.
+  Account data stays isolated; active accounts conservatively share throughput. No
+  automatic retry, deadline widening, credentials, runtime restart or Gmail read.
+  Verification: 96 files / 687 tests. Live effectiveness remains unverified; runtime
+  was last launched from `ea49db8`. Next: separately approved provider-inert runtime
+  upgrade, then a separately approved single read through the existing eligible
+  confirmed resume control. No fourteenth read is authorized. Older next-step proposals
+  below are historical; current handoff wins.
+
 - Latest offline audit (2026-09-09): four synthetic tests prove current bounded
   concurrency does not bound request rate; fast fixture reads exceed Google's updated
   documented per-minute budget. Pacing is absent, the leading explanation for repeated

@@ -30,6 +30,11 @@ import {
   type NotFoundMeaning
 } from './googleMailHttp'
 import { GoogleMessageBatchStageTracker } from './googleMessageBatchDiagnostics'
+import {
+  GoogleMailRequestPacer,
+  type GoogleMailReadMethod,
+  type GoogleMailPacingRuntime
+} from './googleMailRequestPacer'
 export type { GoogleMailFetch } from './googleMailHttp'
 
 const MAX_LIST_RESPONSE_BYTES = 512 * 1024
@@ -102,15 +107,19 @@ const decodeCursor = (value: string): GoogleCursor | undefined => {
 }
 
 export class GoogleMailReadAdapter implements ProviderMailAdapter {
+  private readonly pacing: GoogleMailRequestPacer
+
   constructor(
     private readonly tokens: GoogleAccessTokenSource,
     private readonly fetchRequest: GoogleMailFetch = (url, init) => fetch(url, init),
     private readonly timeoutMs = DEFAULT_TIMEOUT_MS,
-    private readonly syncStages: ProviderMailSyncStageReporter = silentProviderMailSyncStageReporter
+    private readonly syncStages: ProviderMailSyncStageReporter = silentProviderMailSyncStageReporter,
+    pacingRuntime?: GoogleMailPacingRuntime
   ) {
     if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1_000 || timeoutMs > 60_000) {
       throw failure('MALFORMED_PAYLOAD', false)
     }
+    this.pacing = new GoogleMailRequestPacer(pacingRuntime)
   }
 
   async fetchBatch(request: ProviderMailBatchRequestV1, signal: AbortSignal): Promise<unknown> {
@@ -155,7 +164,7 @@ export class GoogleMailReadAdapter implements ProviderMailAdapter {
         this.syncStages,
         request.accountId,
         'gmail-profile',
-        () => this.getJson('/gmail/v1/users/me/profile', token, signal, MAX_LIST_RESPONSE_BYTES)
+        () => this.getJson('profile', '/gmail/v1/users/me/profile', token, signal, MAX_LIST_RESPONSE_BYTES)
       )
       historyId = isRecord(profile) && safeString(profile.historyId) && /^\d+$/.test(profile.historyId)
         ? profile.historyId
@@ -173,6 +182,7 @@ export class GoogleMailReadAdapter implements ProviderMailAdapter {
       request.accountId,
       'gmail-list',
       () => this.getJson(
+        'list',
         `/gmail/v1/users/me/messages?${query}`,
         token,
         signal,
@@ -223,6 +233,7 @@ export class GoogleMailReadAdapter implements ProviderMailAdapter {
       request.accountId,
       'gmail-list',
       () => this.getJson(
+        'history',
         `/gmail/v1/users/me/history?${query}`,
         token,
         signal,
@@ -385,6 +396,7 @@ export class GoogleMailReadAdapter implements ProviderMailAdapter {
   ): Promise<GoogleMessageRead | undefined> {
     try {
       const payload = await this.getJson(
+        'message',
         `/gmail/v1/users/me/messages/${encodeURIComponent(id)}?format=full`,
         token,
         signal,
@@ -402,6 +414,7 @@ export class GoogleMailReadAdapter implements ProviderMailAdapter {
         let attachment: unknown
         try {
           attachment = await this.getJson(
+            'externalText',
             `/gmail/v1/users/me/messages/${encodeURIComponent(id)}/attachments/${
               encodeURIComponent(attachmentId)}`,
             token,
@@ -429,6 +442,7 @@ export class GoogleMailReadAdapter implements ProviderMailAdapter {
   }
 
   private async getJson(
+    method: GoogleMailReadMethod,
     path: string,
     token: string,
     signal: AbortSignal,
@@ -436,6 +450,9 @@ export class GoogleMailReadAdapter implements ProviderMailAdapter {
     notFoundMeaning: NotFoundMeaning = 'provider-failure',
     stages?: GoogleMessageBatchStageTracker
   ): Promise<unknown> {
+    await this.pacing.acquire(method, signal)
+    if (signal.aborted) throw new DOMException('Aborted', 'AbortError')
+    // Deliberate pacing is inside the attempt deadline but outside the HTTP deadline.
     return getGoogleMailJson(this.fetchRequest, path, token, signal, maximumBytes,
       this.timeoutMs, notFoundMeaning, (stage) => stages?.failure(stage))
   }
