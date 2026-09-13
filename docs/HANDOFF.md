@@ -1,12 +1,39 @@
 # Posita Continuity Handoff
 
-Last reviewed: 2026-09-10
+Last reviewed: 2026-09-13
 
 This is the first document to read when Posita work continues in a new AI model,
 thread, chat, or development session. It records current state and the safest
 next move. Technical details remain in their linked source documents.
 
 ## Current state
+
+**Latest local runtime verification (2026-09-10):** owner approved restart only, not a
+Gmail read. Verified source `1a6f1d8` was clean and published. Exact-process inspection
+identified the old Posita runtime; normal application quit completed and process absence
+was checked before `npm run preview` rebuilt and launched the new version. Runtime at that check:
+terminal session `81000`, main PID `23010` (revalidate before acting; PIDs are not durable).
+Privacy-filtered accessibility returned only fixed booleans: Resume Gmail sync and Reload
+local status visible; Syncing Gmail and Start Gmail cooldown absent. No button was clicked.
+The app was left running. The pacing implementation was loaded, but not live-exercised.
+The documentation checkpoint was finalized on 2026-09-13; runtime status was not re-inspected.
+Revalidate the process and controls before any subsequently approved live action.
+
+Normal startup handled its protected cache and private client configuration only in trusted
+main. No refresh credential was read and no provider request was initiated; the inspection
+emitted no mailbox content or private values. No reconnect, receipt reset, cooldown change,
+or mailbox mutation. Documentation-only follow-up; `npm run verify` passes 96 files /
+687 tests plus types, security/structure and production build. No new code, dependency,
+abstraction, schema or compatibility change.
+
+**Exact next step:** request explicit approval for exactly one read-only sync through
+Resume Gmail sync → Read Gmail once on this build, rechecking availability before acting.
+This tests paced continuation from the encrypted checkpoint and the existing fixed failure
+diagnostics if rejected. Successful pages update only the encrypted local cache; Gmail is
+not modified. Stop after settlement or cancellation; no repeat after an uncertain result.
+**No fourteenth read is authorized yet.** The earlier runtime-upgrade next step is complete;
+older pending-runtime statements below are historical. Configured quota and live pacing
+effectiveness remain unverified.
 
 **Latest approved offline implementation (completed 2026-09-10):** started from clean published
 `e0746db` on `codex/gmail-request-pacing`. ADR-067 implements the approved narrow fix:

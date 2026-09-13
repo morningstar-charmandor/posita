@@ -830,3 +830,10 @@ is verified offline prevention of the reproduced burst pattern, not a claimed li
 resolution. The existing app was not restarted, no mailbox was accessed, and configured
 provider quota remains unknown. A separately approved runtime upgrade and controlled read
 are the remaining evidence steps.
+
+The separately approved runtime upgrade subsequently passed: Posita closed normally,
+loaded the verified pacing build, and exposed its local Resume control without starting
+a sync. Inspection emitted only fixed control-presence booleans, not mail content.
+This establishes that the new build is ready for a controlled test, not that Google's
+rate limit is resolved. No provider request was made; a live test still needs explicit
+approval. The full 687-test verification gate remains green.

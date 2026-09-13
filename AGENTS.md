@@ -6,6 +6,15 @@ exists deeper in the tree.
 
 ## Product state
 
+- Latest provider-inert runtime check (2026-09-10): owner approved loading verified
+  `1a6f1d8`. The old Posita process quit normally; the new preview build launched.
+  Privacy-filtered accessibility confirms Resume Gmail sync and Reload local status
+  are visible, with no Syncing Gmail control. No provider control was invoked, no
+  refresh credential was read and no Gmail request ran. Startup's private cache/client
+  configuration stayed inside trusted main. Next: request explicit approval for exactly
+  one confirmed read-only resume on this build; no fourteenth read is authorized yet.
+  Live pacing effectiveness remains unverified. See current handoff for runtime details.
+
 - Latest approved offline implementation (completed 2026-09-10): ADR-067 adds quota-weighted
   request admission inside the existing Gmail adapter. One shared FIFO, 50 units/second,
   no burst credit, at most 64 waiters and one referenced cancellable timer. Profile,

@@ -3034,6 +3034,20 @@ twelfth live request is authorized.
 
 ## Future history-writing guidance
 
+### 2026-09-10 — Load verified pacing build without a provider request
+
+- Owner approved local-only runtime upgrade to published `1a6f1d8`. Identified the old
+  Posita executable, quit normally, verified process exit and launched the verified
+  preview build. No force termination, reconnect, receipt reset or Gmail action.
+- Privacy-filtered accessibility confirmed only fixed controls: Resume Gmail sync and
+  Reload local status present, Syncing Gmail and Start Gmail cooldown absent. No control
+  was invoked; the app remains open. Normal protected-cache/client-configuration startup
+  stayed inside trusted main, without a refresh-token read or exposed private values.
+- Pacing is now loaded but live effectiveness remains unverified. Next requires explicit
+  approval for one confirmed read-only continuation; none is authorized by this restart.
+- Documentation-only checkpoint. Full `npm run verify`: 96 files / 687 tests, types,
+  security/structure and production build. No dependency, abstraction or schema change.
+
 ### 2026-09-10 — Complete quota-weighted Gmail pacing offline
 
 - Owner approved a narrow offline correction from published `e0746db`; implemented on
