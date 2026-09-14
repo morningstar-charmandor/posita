@@ -8,6 +8,37 @@ next move. Technical details remain in their linked source documents.
 
 ## Current state
 
+**Continuation check (2026-09-14):** native app inventory reports Electron/Posita is no
+longer running. No Gmail action occurred after the accessibility-limited preparation below.
+The one approved read remains pending and unconsumed. Do not repeatedly relaunch or bypass
+the confirmed UI path. Ask the owner to open Posita normally and report whether they see
+Resume Gmail sync, a loading/error screen or an OS prompt; do not request mailbox content.
+After the exact status is known, revalidate before one dispatch and prevent duplicates.
+
+**Latest approved read preparation (2026-09-13):** owner explicitly approved exactly
+one controlled read-only sync after `710b130`. No existing Posita process or old terminal
+session remained; `npm run preview` launched the unchanged verified production code
+`1a6f1d8` from documentation checkpoint `710b130`. Runtime at inspection: terminal
+`68748`, PID `76999`; revalidate these ephemeral identifiers before acting.
+
+Privacy-filtered accessibility found a window but did not expose any allow-listed local
+status controls, including Resume, Reload or Syncing. Bringing the app forward and checking
+both button name and description still yielded no recognized labels. This does not prove
+quota-policy rejection, cache failure or a locked Mac; the lock-flag check was inconclusive.
+No button was clicked, no refresh credential read and no Gmail request initiated. Normal
+private client/cache startup remained inside trusted main. No reconnect, receipt reset,
+cooldown change or mailbox mutation. No new implementation or dependency.
+
+**Next:** ask the owner whether Posita shows Resume Gmail sync, a loading/error screen or
+an OS prompt; do not ask them to share mailbox content.
+The fourteenth single-read approval remains pending and unconsumed; first establish whether
+the owner has already invoked a read before any later dispatch. Do not bypass a missing
+control or substitute a reviewed-menu action. Once a confirmed resume is dispatched,
+the approval is spent even if the result is uncertain; no fifteenth read is authorized.
+Documentation-only verification: `npm run verify`, 96 files / 687 tests, types, structure
+and build pass. Older statements below that a fourteenth read is unapproved are superseded;
+there is still no live evidence for pacing effectiveness.
+
 **Latest local runtime verification (2026-09-10):** owner approved restart only, not a
 Gmail read. Verified source `1a6f1d8` was clean and published. Exact-process inspection
 identified the old Posita runtime; normal application quit completed and process absence

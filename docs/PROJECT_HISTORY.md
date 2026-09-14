@@ -3034,6 +3034,25 @@ twelfth live request is authorized.
 
 ## Future history-writing guidance
 
+### 2026-09-14 — Preserve approved read after app exit
+
+- Native app inventory confirmed the prior Electron runtime is no longer running.
+  No provider action followed the inaccessible-control check; the one approved read
+  remains unconsumed. Requested owner-visible status before any later dispatch.
+- Full offline verification passes 96 files / 687 tests. No code, Gmail request,
+  credential access, relaunch, dependency, schema or mailbox mutation.
+
+### 2026-09-13 — Prepare approved paced read; stop before uncertain dispatch
+
+- Owner approved exactly one controlled read. Revalidated clean published `710b130`;
+  the old runtime had exited. Launched the unchanged verified pacing code with preview.
+- Accessibility found a window but no recognized status labels, even after bringing the
+  app forward. No policy/provider diagnosis follows from this inspection limitation.
+  No button, refresh-token read or Gmail request ran. Single-read approval remains pending.
+- Left the app in place and requested owner-visible status before proceeding. No repeated
+  restart, override, reconnect, receipt reset or duplicate attempt. Documentation only;
+  full verification passes 96 files / 687 tests with types, structure and build.
+
 ### 2026-09-10 — Load verified pacing build without a provider request
 
 - Owner approved local-only runtime upgrade to published `1a6f1d8`. Identified the old

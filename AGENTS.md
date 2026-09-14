@@ -6,6 +6,20 @@ exists deeper in the tree.
 
 ## Product state
 
+- Latest continuation check (2026-09-14): app inventory confirms Electron/Posita is no
+  longer running. The earlier accessibility-limited launch did not dispatch Gmail.
+  The one approved read remains pending and unconsumed. Do not relaunch repeatedly or
+  bypass the missing control; ask the owner what Posita shows after they open it normally.
+
+- Latest approved observation preparation (2026-09-13): owner approved exactly one
+  read-only paced sync. No previous Posita process remained, so verified `710b130`
+  (production code `1a6f1d8`) was launched. Accessibility exposed a window but none of
+  the fixed status controls, including after activation. No button was clicked, refresh
+  credential read or Gmail request made. This is an inspection blocker, not proof of
+  provider rejection or unavailable policy. The single approval is pending, not consumed.
+  Ask the owner what Posita shows; do not repeat launches, bypass controls or dispatch an
+  uncertain duplicate. See the current handoff before any action.
+
 - Latest provider-inert runtime check (2026-09-10): owner approved loading verified
   `1a6f1d8`. The old Posita process quit normally; the new preview build launched.
   Privacy-filtered accessibility confirms Resume Gmail sync and Reload local status

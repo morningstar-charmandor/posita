@@ -837,3 +837,10 @@ a sync. Inspection emitted only fixed control-presence booleans, not mail conten
 This establishes that the new build is ready for a controlled test, not that Google's
 rate limit is resolved. No provider request was made; a live test still needs explicit
 approval. The full 687-test verification gate remains green.
+
+The next single read was approved, but preparation stopped before dispatch: after a fresh
+launch, native accessibility could not expose the app's known status controls. This was
+recorded as an inspection limitation, not a provider failure or a successful test. No read
+ran; owner-visible confirmation was requested instead of bypassing the existing controls.
+On the next continuation, the app was no longer running. The single approval was preserved
+rather than converted into repeated launches or an unverified dispatch.
