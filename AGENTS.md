@@ -6,10 +6,23 @@ exists deeper in the tree.
 
 ## Product state
 
-- Latest continuation check (2026-09-14): app inventory confirms Electron/Posita is no
-  longer running. The earlier accessibility-limited launch did not dispatch Gmail.
-  The one approved read remains pending and unconsumed. Do not relaunch repeatedly or
-  bypass the missing control; ask the owner what Posita shows after they open it normally.
+- Latest controlled read outcome (2026-09-14): owner opened the verified pacing build and
+  its accessible UI exposed `Resume Gmail sync`. The previously approved fourteenth read
+  was confirmed exactly once; the confirmation disappeared and no second resume remained.
+  A query-only trusted local inspection then decrypted only the cache data key and sync-state
+  record and returned `AUTHENTICATION_EXPIRED`, with the encrypted cursor retained and no
+  completed full-sync timestamp. It did not read the Gmail refresh credential, provider mail,
+  or message content. Gmail was not modified. Exact fixed runtime stages were unavailable,
+  so token-endpoint rejection versus a later Gmail 401 is not directly distinguished.
+  External Testing, the 2026-09-04 grant, Gmail read-only scope, and Google's documented
+  seven-day testing refresh-token lifetime make grant expiry the leading explanation.
+  Request-pacing effectiveness remains unverified. The approval is consumed; no fifteenth
+  read is authorized. Next is an owner decision on the durable OAuth publishing/audience
+  strategy before any reconnect or new grant. Do not retry the expired connection.
+
+- Earlier continuation check (2026-09-14, superseded above): app inventory then found
+  Electron/Posita not running. The later owner-opened session exposed the exact Resume
+  control and consumed the approved read once; do not follow this historical next step.
 
 - Latest approved observation preparation (2026-09-13): owner approved exactly one
   read-only paced sync. No previous Posita process remained, so verified `710b130`

@@ -2,14 +2,14 @@
 
 **Your inboxes, understood as one.**
 
-Current focused checkpoint (2026-09-09): [Gmail read diagnosis](docs/GMAIL_READ_DIAGNOSIS.md).
-The owner-approved reviewed read has now stored real Gmail mail encrypted locally, and
-the retained-mail UI is verified. Full sync remains incomplete after a later HTTP failure.
-The one-use permission is consumed; no further Gmail read is authorized.
-Local inspection identified a saved usage-limit failure. A durable 15/30/60-minute
-cooldown and separately confirmed manual resume are now implemented and tested offline.
-The delay is Posita's waiting rule, not Google's reset time. No automatic retry, new
-Gmail read or live verification of this flow has occurred; see [handoff](docs/HANDOFF.md).
+Current focused checkpoint (2026-09-14): the confirmed fourteenth read settled with the
+safe saved state `AUTHENTICATION_EXPIRED`; retained real mail and its encrypted cursor remain
+local, but full sync is incomplete. The External/Testing grant was created ten days earlier,
+so Google's documented seven-day testing refresh-token lifetime is the leading explanation.
+The exact token-endpoint-versus-Gmail unauthorized boundary was not captured, and live request
+pacing remains unverified. The one-read approval is consumed; no fifteenth Gmail read is
+authorized. The next step is an owner decision on a durable OAuth publishing/audience strategy
+before reconnecting. See [handoff](docs/HANDOFF.md) and [Gmail read diagnosis](docs/GMAIL_READ_DIAGNOSIS.md).
 
 Posita is a desktop-first personal mail hub organized around people, topics,
 context, and actions rather than separate inboxes.
@@ -19,13 +19,14 @@ Public repository: [github.com/morningstar-charmandor/posita](https://github.com
 ## Current status
 
 Gate 2D's credential-free lifecycle foundation and approved Google adapter set are
-complete and have now connected one owner-approved test account. A strict trusted-main source validates a
+complete and have connected one owner-approved test account. A strict trusted-main source validates a
 desktop client credential pair from one private application-data file. The real client ID
 and rotated secret are locally present, validated, absent from Git, and consumed only by a
 trusted-main composition. The refresh credential is OS-protected and the account/sync
-state is encrypted. Initial read-only sync failed safely before storing provider mail,
-leaving this installation live-empty. A narrow explicit retry control now reuses the
-single trusted sync owner only for connected accounts with an approved retry state. Posita includes
+state is encrypted. Controlled read-only syncs retained real Gmail mail locally, but the
+full import remains incomplete and the current authorization state requires reconnection.
+A narrow explicit retry control reuses the single trusted sync owner only for connected
+accounts with an approved retry state. Posita includes
 a Daily Brief,
 topic timeline with source citations, original-message inspection, a unified
 classic mail view, and an editable draft flow. Realistic fixture data is seeded
@@ -58,9 +59,10 @@ through separate prepare and execute IPC methods. Execution requires a five-minu
 typed confirmation bound to one operation, and pending journal state has a bounded
 safe-status projection. One validated read-only application-state query now
 renders pending, retry-required, recovery-required, and completed local-deletion
-outcomes. No other lifecycle command is exposed. Gmail is connected for one
-owner-approved test account, but initial read-only sync stored no provider mail and
-needs review. No AI provider is connected, and sending is deliberately disabled.
+outcomes. No other lifecycle command is exposed. Gmail remains represented by one
+owner-approved local account pair with partial encrypted mail retained, but its test
+authorization has expired and needs a deliberate OAuth lifecycle decision before
+reconnection. No AI provider is connected, and sending is deliberately disabled.
 
 Settings now includes a validated `google-gmail-readonly-identity-v2` connection-
 consent preview. It exactly discloses OpenID identity, verified email, and planned

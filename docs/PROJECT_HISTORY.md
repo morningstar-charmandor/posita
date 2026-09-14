@@ -3162,6 +3162,29 @@ twelfth live request is authorized.
   intent. No credentials, private runtime access, app restart, mailbox request or receipt
   reset. Next is approved local runtime/setup verification; live resume is separate.
 
+### 2026-09-14 — Fourteenth read settles with an expired authorization state
+
+- Owner opened the unchanged verified pacing build and showed its exact local state: retained
+  encrypted mail, ended local cooldown, and the confirmed Resume control. The previously approved
+  read-only action was dispatched exactly once. The confirmation closed and no duplicate action
+  was invoked. Gmail was not modified; the one-read approval is consumed.
+- The settled UI stayed attention-required. A temporary query-only trusted inspector decrypted
+  only the cache data key and authenticated sync-state record, emitted fixed aggregate status, then
+  erased its key buffer and closed. It did not read refresh credentials, client configuration,
+  provider mail, message content, counts, IDs, addresses, or precise provider timing.
+- Saved result: `AUTHENTICATION_EXPIRED`, encrypted cursor retained, quota history retained, and no
+  completed full-sync timestamp. Existing retained mail remains available; full sync is incomplete.
+  Fixed console stages were not recoverable, so token refresh versus a later Gmail 401 is not claimed.
+- Google's current primary documentation says External/Testing refresh tokens expire after seven
+  days when scopes extend beyond basic identity. Posita's Gmail-read-only grant was created on
+  2026-09-04 and tested on 2026-09-14, making test-grant expiry the leading explanation, not a proven
+  raw-response fact. Pacing's live efficacy therefore remains unverified.
+- No production code, dependency, architecture, schema, credential, remote mailbox, or retained
+  cache changed beyond the normal failed-sync status written by the authorized command. Next is an
+  owner decision on a durable OAuth publishing/audience strategy before any reconnect. No fifteenth
+  Gmail read is authorized.
+- `npm run verify` passes 96 files / 687 tests, strict types, renderer structure/security, and the
+  production build. A sandbox-only IPv4 loopback bind denial disappeared in the canonical run.
 
 
 For each material milestone, record:

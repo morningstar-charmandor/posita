@@ -1,6 +1,6 @@
 # Posita Continuity Handoff
 
-Last reviewed: 2026-09-13
+Last reviewed: 2026-09-14
 
 This is the first document to read when Posita work continues in a new AI model,
 thread, chat, or development session. It records current state and the safest
@@ -8,12 +8,52 @@ next move. Technical details remain in their linked source documents.
 
 ## Current state
 
-**Continuation check (2026-09-14):** native app inventory reports Electron/Posita is no
-longer running. No Gmail action occurred after the accessibility-limited preparation below.
-The one approved read remains pending and unconsumed. Do not repeatedly relaunch or bypass
-the confirmed UI path. Ask the owner to open Posita normally and report whether they see
-Resume Gmail sync, a loading/error screen or an OS prompt; do not request mailbox content.
-After the exact status is known, revalidate before one dispatch and prevent duplicates.
+**Latest controlled read outcome (2026-09-14):** the owner opened the unchanged verified
+pacing build (`1a6f1d8`, documentation baseline `f6bc174`). Accessibility exposed retained
+encrypted mail, `Resume Gmail sync`, and the ended local-cooldown copy. The previously approved
+fourteenth read was confirmed exactly once through **Resume Gmail sync → Read Gmail once**.
+The confirmation disappeared, the command settled, and no second Resume action remained.
+The approval is consumed; **no fifteenth Gmail read is authorized**. Gmail was not modified.
+
+The settled UI remained attention-required and did not expose its private failure category.
+A temporary query-only trusted Electron inspector opened the existing database, decrypted only
+`CACHE_DATA_KEY_NAME` and the authenticated sync-state record, emitted fixed aggregate fields,
+erased the key buffer, closed the database, and was removed. It did not load the Gmail refresh
+credential, client secret, provider messages, IDs, addresses, subjects, bodies, attachments,
+counts, or precise provider timing. The saved state is version 2, `error`, with
+`AUTHENTICATION_EXPIRED`; its encrypted cursor and quota history are retained, while no completed
+full-sync timestamp exists. The exact console stages were unavailable, so the evidence does not
+distinguish an expired refresh grant at Google's token endpoint from a later Gmail HTTP 401.
+
+The leading explanation is now OAuth test-grant expiry, not request pacing or message parsing.
+The grant was created on 2026-09-04, the Cloud project remains External/Testing, and Posita asks
+for Gmail read-only in addition to basic identity scopes. Google documents that External/Testing
+refresh tokens expire after seven days unless only basic identity scopes are requested:
+<https://developers.google.com/identity/protocols/oauth2#expiration>. This matches the timing and
+saved failure category but remains an evidence-backed inference because the raw provider response
+was intentionally not retained. The paced Gmail GET path was therefore not meaningfully exercised,
+and its live effectiveness remains unverified. Existing retained encrypted mail remains available;
+full sync is incomplete.
+
+Checkpoint verification: `npm run verify` passes 96 files / 687 tests, strict types,
+renderer structure/security, and the production build. The first sandboxed run could not bind
+the test-only IPv4 loopback listener (`EPERM`); the canonical unrestricted run passed all seven
+loopback cases. No production code, dependency, abstraction, schema, compatibility path, or
+mailbox capability changed in this evidence checkpoint.
+
+**Exact next decision:** choose a durable OAuth lifecycle before reconnecting. Preferred for this
+personal prototype: review moving the existing External OAuth app from Testing to Production under
+Google's applicable unverified/user-cap rules, then obtain a fresh explicit grant once. Keeping
+Testing would require recurring reauthorization and is not a durable product path. An Internal or
+administrator-trusted configuration is relevant only if the owner intentionally restricts Posita
+to an eligible Workspace organization. Changing Cloud publishing/audience state, disconnecting,
+or reconnecting are external/account actions and need the owner's explicit approval. Do not repeat
+the failed read, reset receipts, discard the retained cache, or claim pacing has passed live.
+
+**Earlier continuation check (2026-09-14, superseded above):** native app inventory then
+reported Electron/Posita not running. The owner later opened the verified app, exposed the
+exact Resume control, and consumed the approved read once. Do not follow the historical
+instruction to dispatch it.
 
 **Latest approved read preparation (2026-09-13):** owner explicitly approved exactly
 one controlled read-only sync after `710b130`. No existing Posita process or old terminal

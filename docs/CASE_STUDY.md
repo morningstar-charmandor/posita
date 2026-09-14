@@ -1,7 +1,7 @@
 # Posita Portfolio Case Study
 
 Status: evolving working draft  
-Last reviewed: 2026-09-05
+Last reviewed: 2026-09-14
 
 This document turns verified project history into a portfolio-ready narrative.
 It should remain honest about what is implemented, simulated, measured, and
@@ -59,6 +59,18 @@ remained busy beyond ten minutes and stored zero provider mail. Posita was stopp
 control and recovered locally on a provider-inert restart. The result narrows the next engineering
 question to whether the desktop deadline callback fails to fire or its completed response fails to
 return. It is documented as a failed live check, not Gmail ingestion progress.
+
+Later controlled work resolved the renderer settlement defect, imported and retained real mail in
+the encrypted cache, identified a genuine Gmail rate-limit response after partial commits, and added
+quota-weighted pacing without adding an SDK or automatic retry. The first owner-approved live check
+of that pacing build did not reach a meaningful pacing verdict: ten days after the original grant,
+the saved result became `AUTHENTICATION_EXPIRED`. A query-only local inspection confirmed that the
+encrypted cursor and retained mail survived. Google documents a seven-day refresh-token lifetime
+for External/Testing apps that request more than basic identity scopes, making test-grant expiry the
+leading explanation for Posita's Gmail-read-only grant. The exact token-versus-Gmail unauthorized
+boundary was not captured, so the case study records the inference honestly. The product lesson is
+that provider test-environment lifecycles are part of reliability: throughput controls can be sound
+while a short-lived development grant prevents the intended live validation.
 
 **Source:** [github.com/morningstar-charmandor/posita](https://github.com/morningstar-charmandor/posita)
 

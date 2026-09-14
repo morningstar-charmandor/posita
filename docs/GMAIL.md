@@ -2,6 +2,19 @@
 
 ## Current status
 
+2026-09-14 live update: the owner-approved fourteenth confirmed read settled once with
+saved `AUTHENTICATION_EXPIRED`. A query-only trusted local inspection read only the
+cache data key and authenticated sync-state record; it confirmed the encrypted cursor,
+quota history, and retained mail remain while full sync is incomplete. Console stages
+were unavailable, so token-endpoint rejection versus a later Gmail 401 is not claimed.
+The Cloud app is still External/Testing and the Gmail-read-only grant was created on
+2026-09-04. Google's [OAuth expiration guidance](https://developers.google.com/identity/protocols/oauth2#expiration)
+documents a seven-day refresh-token lifetime for External/Testing grants unless only
+basic identity scopes are requested. That is the leading explanation for this latest
+failure, not raw-response proof. The paced Gmail GET path was not meaningfully tested.
+No fifteenth read is authorized. Choose the durable OAuth publishing/audience strategy
+before any disconnect, reconnect, or fresh grant.
+
 2026-09-09 offline update (ADR-066): local saved `QUOTA_EXHAUSTED` established a
 rate/usage-limit category, not its exact HTTP subtype or reset. Durable local cooldown
 is now 15 minutes, then 30 and at most 60 after repeated quota failures. No automatic
