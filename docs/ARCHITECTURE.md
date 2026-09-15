@@ -405,6 +405,17 @@ does not revoke, reconnect, reconstruct, open a browser, or contact a provider.
 
 ## Gmail synchronization
 
+An expired but otherwise complete Google connection uses a separate reauthorization
+application path rather than disconnect/reconnect. Trusted policy projects the fixed
+`reauthorization-required` capability in live-mail V5. After an explicit two-step renderer
+action, trusted main reuses the existing bounded browser/loopback authorization adapter and
+accepts the result only when its stable provider subject and verified mailbox match the
+encrypted account. It replaces only the protected refresh credential, invalidates the
+memory-only access-token cache, and delegates one bounded read-only continuation to the
+existing lifecycle owner. The encrypted provider account, cursor, sync history, and retained
+mail are unchanged. The separate exact IPC surface exposes no URL, subject, credential,
+provider payload, or raw error and cannot be activated by a generic attention state.
+
 The provider-inert `GoogleMailReadAdapter` implements the approved initial 90-day
 import followed by incremental history synchronization. It receives short-lived
 access tokens through an injected trusted-main boundary, uses only fixed Google

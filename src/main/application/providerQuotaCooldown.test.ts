@@ -89,7 +89,10 @@ describe('durable quota cooldown', () => {
       const state = withProviderQuotaCooldown({ ...legacy(), lastErrorCode: code }, now, false)
       const h = harness(state)
       h.setTime(now + 60 * 60_000)
-      expect(providerMailSyncRetryAvailability(h.state(), h.clock.now().getTime())).toBe('unavailable')
+      expect(providerMailSyncRetryAvailability(h.state(), h.clock.now().getTime()))
+        .toBe(code === 'AUTHENTICATION_EXPIRED' || code === 'PERMISSION_REVOKED'
+          ? 'reauthorization-required'
+          : 'unavailable')
       await h.command.execute(request)
       expect(h.syncAccounts).not.toHaveBeenCalled()
       expect(h.store.saveSyncState).not.toHaveBeenCalled()

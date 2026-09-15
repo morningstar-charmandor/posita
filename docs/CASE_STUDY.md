@@ -1,7 +1,7 @@
 # Posita Portfolio Case Study
 
 Status: evolving working draft  
-Last reviewed: 2026-09-14
+Last reviewed: 2026-09-15
 
 This document turns verified project history into a portfolio-ready narrative.
 It should remain honest about what is implemented, simulated, measured, and
@@ -16,8 +16,12 @@ and actions.
 **Product promise:** Your inboxes, understood as one.
 
 **Current stage:** Gate 2D's secure local lifecycle and read-only Google foundation
-now include an explicit connection/cancellation command paired with a confirmed
-disconnect boundary. Posita has an encrypted SQLite
+now include explicit connection, same-account reauthorization, cancellation, and confirmed
+disconnect boundaries. The reauthorization path followed evidence that the External/Testing
+grant had expired: it replaces only a protected refresh credential after exact Google subject
+and mailbox matching, preserves the encrypted cursor and retained mail, and then uses the
+existing lifecycle owner for one bounded read-only continuation. It is implemented and
+synthetically verified but has not contacted Google. Posita has an encrypted SQLite
 cache, OS-protected key hierarchy, strict account-scoped contracts, crash-resumable
 disconnect and full local deletion, deterministic retention, and bounded local mail
 views. Its exact OpenID/email/Gmail-read-only consent, desktop PKCE protocol,
@@ -27,11 +31,10 @@ production ownership graph. Startup supplies that graph with zero accounts, so i
 starts retention and owns safe teardown without opening a browser or contacting
 Google. The real desktop client ID and rotated secret are read only from an owner-readable
 application-data file and are absent from Git, preload, IPC, renderer, and logs. One
-owner-approved account is connected with its refresh credential OS-protected and identity/
-sync state encrypted. The installation is live-empty: initial sync stored no provider mail
-and recorded a safe attention state. A policy-gated manual retry now preserves the valid
-connection and reuses the single lifecycle owner without exposing provider details. AI remains
-unconnected, and no fixture is presented as live Gmail.
+owner-approved account is connected with its expired refresh credential OS-protected and identity/
+sync state encrypted. The installation contains a partial encrypted import and an incomplete
+sync. Retry and reauthorization are independently projected trusted capabilities rather than UI
+guesses. AI remains unconnected, and no fixture is presented as live Gmail.
 
 The first explicit retry exposed a whole-operation resilience gap: although each provider HTTP
 request was timed, the user-visible lifecycle attempt itself could remain busy without a final
@@ -856,3 +859,15 @@ recorded as an inspection limitation, not a provider failure or a successful tes
 ran; owner-visible confirmation was requested instead of bypassing the existing controls.
 On the next continuation, the app was no longer running. The single approval was preserved
 rather than converted into repeated launches or an unverified dispatch.
+
+The later controlled read settled with `AUTHENTICATION_EXPIRED` while preserving the
+encrypted cursor and partial import. Instead of forcing the destructive disconnect path,
+Posita now has a separate same-account renewal transaction: it demands agreement on both
+Google's stable subject and verified mailbox, changes only the protected refresh credential,
+and leaves encrypted mail and progress intact. Trusted policy, not the renderer, decides when
+the two-step control exists. Provider-inert failure tests cover identity mismatch, state
+changes, cancellation, untrusted or malformed messages, lifecycle failure, deadline and late
+settlement. The full gate passes 704 tests across 100 files plus types, security structure,
+and production builds. This is verified recovery design, not a claim that the grant has been
+renewed: Google Cloud is still External/Testing, no live reauthorization ran, and publishing
+plus the subsequent controlled read remain separate owner decisions.

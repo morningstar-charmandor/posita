@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { RefreshCw } from 'lucide-react'
 import { POSITA_PROTOCOL_VERSION } from '@shared/contracts'
-import type { LiveMailSyncRetryAvailabilityV1 } from '@shared/liveMail'
+import type { LiveMailSyncRetryAvailabilityV2 } from '@shared/liveMail'
 import type { GoogleAccountConnectionPreflightDataSource } from '../../application/googleAccountConnectionPreflightDataSource'
 
 type State =
@@ -14,7 +14,7 @@ export interface GoogleAccountSyncRetryControlProps {
   accountId: string
   dataSource: Pick<GoogleAccountConnectionPreflightDataSource, 'retrySync'>
   onStatusChanged: () => void
-  availability?: LiveMailSyncRetryAvailabilityV1
+  availability?: LiveMailSyncRetryAvailabilityV2
 }
 
 export function GoogleAccountSyncRetryControl({

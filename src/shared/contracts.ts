@@ -1,5 +1,5 @@
 import type { MailDataset } from './domain'
-import type { LiveMailSnapshotV4 } from './liveMail'
+import type { LiveMailSnapshotV5 } from './liveMail'
 import type {
   LiveMailMessageDetailRequestV1,
   LiveMailMessageDetailResultV1
@@ -91,6 +91,8 @@ export const IPC_CHANNELS = Object.freeze({
   prepareGoogleAccountConnection: 'posita:google-account:prepare-connection:v1',
   connectGoogleAccount: 'posita:google-account:connect:v1',
   cancelGoogleAccountConnection: 'posita:google-account:cancel-connection:v1',
+  reauthorizeGoogleAccount: 'posita:google-account:reauthorize:v1',
+  cancelGoogleAccountReauthorization: 'posita:google-account:cancel-reauthorization:v1',
   retryGoogleAccountSync: 'posita:google-account:retry-sync:v1',
   prepareGoogleAccountDisconnect: 'posita:google-account:prepare-disconnect:v1',
   executeGoogleAccountDisconnect: 'posita:google-account:execute-disconnect:v1'
@@ -112,7 +114,7 @@ export interface AppSnapshotV1 {
   dataset: MailDataset
 }
 
-export type ApplicationMailSnapshotV1 = AppSnapshotV1 | LiveMailSnapshotV4
+export type ApplicationMailSnapshotV1 = AppSnapshotV1 | LiveMailSnapshotV5
 
 export type AppErrorCodeV1 =
   | 'INVALID_REQUEST'
@@ -472,6 +474,18 @@ export type CancelGoogleAccountConnectionResponseV1 =
   | { ok: true; value: CancelGoogleAccountConnectionResultV1 }
   | { ok: false; error: GoogleAccountConnectionErrorV1 }
 
+export interface ReauthorizeGoogleAccountRequestV1 {
+  version: typeof POSITA_PROTOCOL_VERSION
+  action: 'reauthorize-google-account'
+  accountId: string
+  consentVersion: typeof GOOGLE_CONNECT_CONSENT.consentVersion
+}
+
+export interface CancelGoogleAccountReauthorizationRequestV1 {
+  version: typeof POSITA_PROTOCOL_VERSION
+  action: 'cancel-google-account-reauthorization'
+}
+
 export interface RetryGoogleAccountSyncRequestV1 {
   version: typeof POSITA_PROTOCOL_VERSION
   action: 'retry-google-account-sync'
@@ -598,6 +612,10 @@ export interface PositaDesktopApi {
   prepareGoogleAccountConnection(): Promise<PrepareGoogleAccountConnectionResponseV1>
   connectGoogleAccount(): Promise<ConnectGoogleAccountResponseV1>
   cancelGoogleAccountConnection(): Promise<CancelGoogleAccountConnectionResponseV1>
+  reauthorizeGoogleAccount(
+    request: ReauthorizeGoogleAccountRequestV1
+  ): Promise<ConnectGoogleAccountResponseV1>
+  cancelGoogleAccountReauthorization(): Promise<CancelGoogleAccountConnectionResponseV1>
   retryGoogleAccountSync(
     request: RetryGoogleAccountSyncRequestV1
   ): Promise<RetryGoogleAccountSyncResponseV1>

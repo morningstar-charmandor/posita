@@ -22,6 +22,10 @@ import {
   createPrepareGoogleAccountDisconnectClient
 } from './googleAccountDisconnectClient'
 import { createRetryGoogleAccountSyncClient } from './googleAccountSyncRetryClient'
+import {
+  createCancelGoogleAccountReauthorizationClient,
+  createReauthorizeGoogleAccountClient
+} from './googleAccountReauthorizationClient'
 
 const loadApplicationState = createLoadApplicationStateClient((request) =>
   ipcRenderer.invoke(IPC_CHANNELS.loadApplicationState, request))
@@ -67,6 +71,16 @@ const executeGoogleAccountDisconnect = createExecuteGoogleAccountDisconnectClien
   ipcRenderer.invoke(IPC_CHANNELS.executeGoogleAccountDisconnect, request))
 const retryGoogleAccountSync = createRetryGoogleAccountSyncClient((request) =>
   ipcRenderer.invoke(IPC_CHANNELS.retryGoogleAccountSync, request))
+const reauthorizeGoogleAccountClient = createReauthorizeGoogleAccountClient((request) =>
+  ipcRenderer.invoke(IPC_CHANNELS.reauthorizeGoogleAccount, request))
+const reauthorizeGoogleAccount = (request: Parameters<typeof reauthorizeGoogleAccountClient>[0]) =>
+  reauthorizeGoogleAccountClient(request)
+const cancelGoogleAccountReauthorizationClient = createCancelGoogleAccountReauthorizationClient((request) =>
+  ipcRenderer.invoke(IPC_CHANNELS.cancelGoogleAccountReauthorization, request))
+const cancelGoogleAccountReauthorization = () => cancelGoogleAccountReauthorizationClient({
+  version: 1,
+  action: 'cancel-google-account-reauthorization'
+})
 
 const api: PositaDesktopApi = Object.freeze({
   platform: process.platform,
@@ -83,6 +97,8 @@ const api: PositaDesktopApi = Object.freeze({
   connectGoogleAccount,
   cancelGoogleAccountConnection,
   retryGoogleAccountSync,
+  reauthorizeGoogleAccount,
+  cancelGoogleAccountReauthorization,
   prepareGoogleAccountDisconnect,
   executeGoogleAccountDisconnect
 })

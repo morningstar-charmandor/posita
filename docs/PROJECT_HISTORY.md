@@ -3187,6 +3187,28 @@ twelfth live request is authorized.
   production build. A sandbox-only IPv4 loopback bind denial disappeared in the canonical run.
 
 
+### 2026-09-15 — Same-account reauthorization preserves the encrypted cache
+
+- Started from the verified, published fourteenth-read checkpoint on
+  `codex/google-account-reauthorization`. The approved scope was entirely provider-inert.
+- Added a separate trusted reauthorization transaction for complete accounts in the exact
+  reconnect-required state. It reuses the bounded desktop OAuth protocol, requires exact
+  provider-subject and verified-mailbox identity agreement, rechecks state before commit,
+  replaces only the protected refresh credential, invalidates the memory token cache, and
+  delegates one bounded read-only continuation to the existing lifecycle owner.
+- Live-mail V5 projects a fixed `reauthorization-required` capability. Exact trusted-window
+  IPC/preload methods and a two-step, cancellable, Strict-Mode-safe renderer control keep it
+  separate from Retry and Disconnect and expose no private provider data.
+- Synthetic tests cover successful preservation, identity mismatch, ineligible/stale state,
+  cancellation, malformed/leaking responses, untrusted senders, lifecycle failure, deadline,
+  duplicate blocking, late settlement, and renderer replay safety. `npm run verify` passes
+  **100 files / 704 tests**, strict types, structure/security, and production builds.
+- No Google Cloud setting, browser, OAuth/Gmail request, credential, private cache, dependency,
+  schema, consent scope, retention behavior, or mailbox capability changed. External/Testing
+  remains active and no fifteenth read is authorized. Next is a separate owner decision on
+  External/In production publishing, followed—only if separately approved—by one controlled
+  same-account reauthorization and disclosed read-only continuation.
+
 For each material milestone, record:
 
 - date and Git checkpoint,

@@ -2,6 +2,18 @@
 
 ## Current status
 
+2026-09-15 provider-inert update (ADR-068): Posita now has a separate same-account
+reauthorization path for the existing `reconnect-required` state. It reuses the bounded desktop
+OAuth adapter but accepts the completed grant only when the stable Google subject and verified
+mailbox match the encrypted account. Only the protected refresh credential is replaced; the
+encrypted account, cursor, sync history, and retained mail remain intact. A successful renewal
+delegates one bounded read-only continuation to the existing lifecycle owner. Live-mail V5
+projects only a fixed `reauthorization-required` capability, and the two-step renderer control
+cannot start from a generic attention state. No Google request, credential read, Cloud setting,
+scope, dependency, schema, or mailbox capability changed in this checkpoint. The app remains
+External/Testing, no fifteenth read is authorized, and publishing plus later live
+reauthorization each require explicit owner approval.
+
 2026-09-14 live update: the owner-approved fourteenth confirmed read settled once with
 saved `AUTHENTICATION_EXPIRED`. A query-only trusted local inspection read only the
 cache data key and authenticated sync-state record; it confirmed the encrypted cursor,

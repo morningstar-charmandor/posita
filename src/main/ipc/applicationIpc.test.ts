@@ -27,6 +27,8 @@ import {
   createPrepareGoogleAccountConnectionHandler,
   createConnectGoogleAccountHandler,
   createCancelGoogleAccountConnectionHandler,
+  createReauthorizeGoogleAccountHandler,
+  createCancelGoogleAccountReauthorizationHandler,
   createRetryGoogleAccountSyncHandler,
   createPrepareGoogleAccountDisconnectHandler,
   createExecuteGoogleAccountDisconnectHandler,
@@ -43,6 +45,50 @@ const repository: MailRepository = {
 }
 const service = new MailApplicationService(repository, {
   now: () => new Date('2026-08-24T05:30:00.000Z')
+})
+
+describe('Google account reauthorization IPC handlers', () => {
+  const request = {
+    version: 1 as const,
+    action: 'reauthorize-google-account' as const,
+    accountId: 'account-1',
+    consentVersion: GOOGLE_CONNECT_CONSENT.consentVersion
+  }
+  const connected = {
+    version: 1 as const,
+    accountId: 'account-1',
+    provider: 'google' as const,
+    mailboxAddress: 'owner@example.test',
+    connectedAt: '2026-09-04T12:00:00.000Z',
+    status: 'connected-and-synced' as const
+  }
+
+  it('rejects an untrusted sender before renewal starts', async () => {
+    let called = false
+    const handler = createReauthorizeGoogleAccountHandler({
+      reauthorize: async () => { called = true; return { ok: true, value: connected } }
+    }, () => false)
+    await expect(handler(event, request)).resolves.toMatchObject({
+      ok: false, error: { code: 'UNTRUSTED_SENDER' }
+    })
+    expect(called).toBe(false)
+  })
+
+  it('validates the renewal and cancellation responses', async () => {
+    const renew = createReauthorizeGoogleAccountHandler({
+      reauthorize: async () => ({ ok: true, value: connected })
+    }, () => true)
+    await expect(renew(event, request)).resolves.toEqual({ ok: true, value: connected })
+
+    const cancel = createCancelGoogleAccountReauthorizationHandler({
+      cancel: () => ({
+        ok: true,
+        value: { version: 1, status: 'cancellation-requested' }
+      })
+    }, () => true)
+    expect(cancel(event, { version: 1, action: 'cancel-google-account-reauthorization' }))
+      .toMatchObject({ ok: true })
+  })
 })
 
 describe('Gmail connection preparation IPC handler', () => {

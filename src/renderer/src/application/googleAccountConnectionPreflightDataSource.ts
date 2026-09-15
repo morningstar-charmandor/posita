@@ -8,7 +8,8 @@ import {
   type ExecuteGoogleAccountDisconnectRequestV1,
   type ExecuteGoogleAccountDisconnectResponseV1,
   type RetryGoogleAccountSyncRequestV1,
-  type RetryGoogleAccountSyncResponseV1
+  type RetryGoogleAccountSyncResponseV1,
+  type ReauthorizeGoogleAccountRequestV1
 } from '@shared/contracts'
 
 export interface GoogleAccountConnectionPreflightDataSource {
@@ -18,6 +19,10 @@ export interface GoogleAccountConnectionPreflightDataSource {
   retrySync(
     request: RetryGoogleAccountSyncRequestV1
   ): Promise<RetryGoogleAccountSyncResponseV1>
+  reauthorize(
+    request: ReauthorizeGoogleAccountRequestV1
+  ): Promise<ConnectGoogleAccountResponseV1>
+  cancelReauthorization(): Promise<CancelGoogleAccountConnectionResponseV1>
   prepareDisconnect(
     request: PrepareGoogleAccountDisconnectRequestV1
   ): Promise<PrepareGoogleAccountDisconnectResponseV1>
@@ -84,6 +89,10 @@ export const desktopGoogleAccountConnectionPreflightDataSource: GoogleAccountCon
     Promise.resolve(cancellationUnavailable()),
   retrySync: (request) => window.posita?.retryGoogleAccountSync?.(request) ??
     Promise.resolve(syncUnavailable()),
+  reauthorize: (request) => window.posita?.reauthorizeGoogleAccount?.(request) ??
+    Promise.resolve(connectionUnavailable()),
+  cancelReauthorization: () => window.posita?.cancelGoogleAccountReauthorization?.() ??
+    Promise.resolve(cancellationUnavailable()),
   prepareDisconnect: (request) => window.posita?.prepareGoogleAccountDisconnect?.(request) ??
     Promise.resolve(disconnectUnavailable()),
   executeDisconnect: (request) => window.posita?.executeGoogleAccountDisconnect?.(request) ??

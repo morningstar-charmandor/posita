@@ -1,12 +1,43 @@
 # Posita Continuity Handoff
 
-Last reviewed: 2026-09-14
+Last reviewed: 2026-09-15
 
 This is the first document to read when Posita work continues in a new AI model,
 thread, chat, or development session. It records current state and the safest
 next move. Technical details remain in their linked source documents.
 
 ## Current state
+
+**Latest approved offline checkpoint (2026-09-15):** same-account Google
+reauthorization is now implemented end to end without contacting Google or reading any
+credential. When trusted sync policy projects `reauthorization-required`, Posita offers a
+separate two-step **Reconnect Google** flow. Trusted main permits it only for a complete
+account in `reconnect-required` state, completes the existing bounded desktop OAuth flow,
+and accepts the result only when both the stable Google subject and verified mailbox match
+the encrypted account already on disk. It then replaces only that account's protected
+refresh credential, invalidates its memory-only access-token cache, and runs one bounded
+read-only sync through the existing lifecycle owner. The encrypted account record, cursor,
+sync history, and retained canonical mail are not deleted or recreated. Mismatched identity,
+changed state, cancellation, malformed IPC, timeout, and late settlement fail closed.
+
+Live-mail contract V5 exposes only the fixed `reauthorization-required` availability; the
+renderer cannot infer permission from a broad attention state. New reauthorization and
+cancellation IPC methods are exact, trusted-window-only, and never return tokens, provider
+identifiers, URLs, mailbox content, or raw errors. The reconnect control is separate from
+Retry and Disconnect, default-safe, cancellable, Strict-Mode-safe, and explicitly says that
+Gmail will not be modified. `npm run verify` passes **100 files / 704 tests**, strict types,
+structure/security checks, and all production builds. No dependency, database migration,
+scope, retention rule, mailbox capability, Google Cloud setting, credential, or private
+cache changed. No browser was opened and no OAuth or Gmail request ran.
+
+**Exact next decision:** approve or reject changing the existing Google OAuth app from
+External/Testing to External/In production. That Google Cloud action is not part of this
+checkpoint. If approved and verified, a later separately approved use of **Reconnect
+Google** would obtain a fresh grant for the same account and perform exactly one disclosed
+read-only continuation from the retained encrypted cursor. Do not disconnect, discard the
+cache, invoke reauthorization, or issue a fifteenth read before those explicit approvals.
+Publication removes the routine seven-day Testing-token expiry; it does not imply Google
+verification, public launch readiness, or proven live request pacing.
 
 **Latest controlled read outcome (2026-09-14):** the owner opened the unchanged verified
 pacing build (`1a6f1d8`, documentation baseline `f6bc174`). Accessibility exposed retained

@@ -1494,3 +1494,28 @@ evidence of the real status; no further read is authorized by this refinement.
   explicitly confirmed continuation. Restart carries no burst credit or automatic work.
 - Verify with synthetic rolling-budget and cancellation/failure tests before publishing.
   Live efficacy and the owner's effective quota remain unverified and need separate approval.
+
+## ADR-068: Preserve encrypted mail during exact same-account reauthorization
+
+- Status: owner approved offline implementation on 2026-09-15; no Google Cloud change,
+  OAuth request, credential access, or Gmail read.
+- Context: the External/Testing refresh grant expired while Posita retained a useful partial
+  encrypted import and resumable cursor. The existing disconnect/reconnect path correctly
+  deletes account-scoped local data, so using it for routine grant renewal would needlessly
+  discard recoverable state.
+- Decision: add a separate reauthorization service for complete accounts whose trusted sync
+  policy is exactly `reconnect-required`. Reuse the existing bounded desktop OAuth adapter,
+  but accept the result only when both stable provider subject and verified mailbox match the
+  encrypted account. Recheck unchanged account and sync state immediately before replacing
+  only the account-scoped refresh credential. Invalidate its memory-only access-token cache,
+  then delegate one bounded read-only continuation to the existing lifecycle owner.
+- Public boundary: live-mail V5 projects only `reauthorization-required`. A separate exact,
+  trusted-window IPC/preload command and two-step cancellable renderer control expose no OAuth
+  URL, credential, provider identity, payload, or raw error. Retry and reauthorization remain
+  distinct; broad attention state never grants either capability.
+- Consequence: encrypted account identity, cursor, sync history, retained messages, and
+  provider threads survive renewal. Identity mismatch, stale state, cancellation, malformed
+  response, timeout, and late settlement fail closed. No dependency, database migration,
+  scope, retention rule, parallel provider owner, automatic retry, or mailbox mutation is
+  introduced. External/In production publishing and a later live reauthorization/read remain
+  separately approved external actions.

@@ -4,12 +4,12 @@ import {
   type LoadSnapshotResponseV1
 } from '../../shared/contracts'
 import { isLiveMailSnapshot } from '../../shared/validation'
-import type { LiveMailSnapshotV4 } from '../../shared/liveMail'
+import type { LiveMailSnapshotV5 } from '../../shared/liveMail'
 import type { Clock } from './mailApplicationService'
 import type { MailDataModeRepository } from './mailDataMode'
 
 export interface ProviderMailReadModelSource {
-  loadReadModel(loadedAt: string): Promise<LiveMailSnapshotV4>
+  loadReadModel(loadedAt: string): Promise<LiveMailSnapshotV5>
 }
 
 const unavailable = (): AppErrorV1 => ({

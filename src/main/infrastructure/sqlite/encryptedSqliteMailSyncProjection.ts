@@ -38,7 +38,7 @@ import {
 import {
   LIVE_MAIL_READ_LIMIT,
   type LiveMailAccountStatusV1,
-  type LiveMailSnapshotV4
+  type LiveMailSnapshotV5
 } from '../../../shared/liveMail.ts'
 import {
   LIVE_MAIL_DETAIL_BODY_LIMIT,
@@ -132,7 +132,7 @@ export class EncryptedSqliteMailSyncProjection implements
     }
   }
 
-  async loadReadModel(loadedAt: string): Promise<LiveMailSnapshotV4> {
+  async loadReadModel(loadedAt: string): Promise<LiveMailSnapshotV5> {
     if (!Number.isFinite(Date.parse(loadedAt))) {
       throw malformed('The live-mail read timestamp is invalid.')
     }
@@ -146,8 +146,8 @@ export class EncryptedSqliteMailSyncProjection implements
       `).all() as unknown as { account_scope: string }[]
       if (rows.length > 32) throw malformed('The live-mail account result is too large.')
 
-      const accounts: LiveMailSnapshotV4['accounts'] = []
-      const allMessages: LiveMailSnapshotV4['messages'] = []
+      const accounts: LiveMailSnapshotV5['accounts'] = []
+      const allMessages: LiveMailSnapshotV5['messages'] = []
       for (const { account_scope: accountId } of rows) {
         if (!isAccountId(accountId)) throw malformed('The stored account scope is invalid.')
         const providerAccount = this.accountState.loadProviderAccount(accountId)
@@ -186,7 +186,7 @@ export class EncryptedSqliteMailSyncProjection implements
         left.id.localeCompare(right.id))
       const messages = allMessages.slice(0, LIVE_MAIL_READ_LIMIT)
       return {
-        version: 4,
+        version: 5,
         dataMode: 'live-canonical',
         loadedAt,
         status: this.snapshotStatus(accounts, messages.length),
@@ -627,7 +627,7 @@ export class EncryptedSqliteMailSyncProjection implements
     hasProviderAccount: boolean,
     syncState: ProviderSyncState | undefined,
     nowMs: number
-  ): LiveMailSnapshotV4['accounts'][number]['syncRetry'] {
+  ): LiveMailSnapshotV5['accounts'][number]['syncRetry'] {
     if (!hasProviderAccount || syncState?.status !== 'error' ||
         syncState.lastErrorCode === undefined) return 'unavailable'
     return providerMailSyncRetryAvailability(syncState, nowMs)
@@ -636,7 +636,7 @@ export class EncryptedSqliteMailSyncProjection implements
   private snapshotStatus(
     accounts: readonly { status: LiveMailAccountStatusV1 }[],
     messageCount: number
-  ): LiveMailSnapshotV4['status'] {
+  ): LiveMailSnapshotV5['status'] {
     if (accounts.some((account) => account.status === 'attention-required')) {
       return 'attention-required'
     }

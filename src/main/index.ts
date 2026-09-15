@@ -20,6 +20,7 @@ import { GmailExternalUrlOpener } from './infrastructure/external/gmailExternalU
 import { loadGoogleOAuthClientConfiguration } from './infrastructure/providers/googleOAuthClientConfiguration'
 import { GoogleAccountConnectionPreflightService } from './application/googleAccountConnectionPreflight'
 import { GoogleAccountConnectionCommandService } from './application/googleAccountConnectionCommand'
+import { GoogleAccountReauthorizationCommandService } from './application/googleAccountReauthorizationCommand'
 import { GoogleAccountDisconnectCommandService } from './application/googleAccountDisconnectCommand'
 import { GoogleAccountSyncRetryCommandService } from './application/googleAccountSyncRetryCommand'
 import { inspectAccountConnectionConsistency } from './application/accountConnection'
@@ -120,6 +121,7 @@ app.whenReady().then(async () => {
   let openProviderMailOriginal = new OpenProviderMailOriginalService()
   let googleAccountConnectionPreflight = new GoogleAccountConnectionPreflightService()
   let googleAccountConnectionCommand = new GoogleAccountConnectionCommandService()
+  let googleAccountReauthorizationCommand = new GoogleAccountReauthorizationCommandService()
   let googleAccountSyncRetryCommand = new GoogleAccountSyncRetryCommandService()
   let googleAccountDisconnectCommand = new GoogleAccountDisconnectCommandService()
   let providerMailSyncStages: ProviderMailSyncStageReporter = silentProviderMailSyncStageReporter
@@ -171,6 +173,10 @@ app.whenReady().then(async () => {
           composition.connectionActivation,
           composition.lifecycle,
           randomUUID
+        )
+        googleAccountReauthorizationCommand = new GoogleAccountReauthorizationCommandService(
+          composition.reauthorizationActivation,
+          composition.lifecycle
         )
         const connectionConsistency = {
           inspect: (accountId: string) => inspectAccountConnectionConsistency(
@@ -240,6 +246,7 @@ app.whenReady().then(async () => {
     accountConnectionRecovery,
     googleAccountConnectionPreflight,
     googleAccountConnectionCommand,
+    googleAccountReauthorizationCommand,
     googleAccountSyncRetryCommand,
     googleAccountDisconnectCommand,
     providerMailSyncStages

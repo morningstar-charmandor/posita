@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { AlertTriangle, CloudOff, Database, RefreshCw } from 'lucide-react'
-import type { LiveMailSnapshotV4 } from '@shared/liveMail'
+import type { LiveMailSnapshotV5 } from '@shared/liveMail'
 import { POSITA_PROTOCOL_VERSION } from '@shared/contracts'
 import type { LiveMailMessageDetailV1 } from '@shared/liveMailDetail'
 import type { LiveMailMessageDetailDataSource } from '../../application/liveMailMessageDetailDataSource'
@@ -10,8 +10,9 @@ import { LiveMailSummaryList } from './LiveMailSummaryList'
 import type { GoogleAccountConnectionPreflightDataSource } from '../../application/googleAccountConnectionPreflightDataSource'
 import { GoogleAccountDisconnectControl } from '../settings/GoogleAccountDisconnectControl'
 import { GoogleAccountSyncRetryControl } from './GoogleAccountSyncRetryControl'
+import { GoogleAccountReauthorizationControl } from './GoogleAccountReauthorizationControl'
 
-const statusCopy: Record<LiveMailSnapshotV4['status'], {
+const statusCopy: Record<LiveMailSnapshotV5['status'], {
   title: string
   detail: string
 }> = {
@@ -37,7 +38,7 @@ const statusCopy: Record<LiveMailSnapshotV4['status'], {
   }
 }
 
-const accountStatusLabel: Record<LiveMailSnapshotV4['accounts'][number]['status'], string> = {
+const accountStatusLabel: Record<LiveMailSnapshotV5['accounts'][number]['status'], string> = {
   'not-synced': 'Not synced',
   syncing: 'Sync state recorded',
   ready: 'Ready',
@@ -47,7 +48,7 @@ const accountStatusLabel: Record<LiveMailSnapshotV4['accounts'][number]['status'
 }
 
 export interface LiveMailStatusProps {
-  snapshot: LiveMailSnapshotV4
+  snapshot: LiveMailSnapshotV5
   onReload: () => void
   detailDataSource: LiveMailMessageDetailDataSource
   openOriginalDataSource: OpenLiveMailOriginalDataSource
@@ -161,6 +162,16 @@ export function LiveMailStatus({
                   up to one hour after repeated limits). Reload local status later to check for Resume.
                   This is not Google’s reset time. No automatic Gmail request will run.
                 </p>}
+                {googleAccountDataSource && account.syncRetry === 'reauthorization-required' && (
+                  <GoogleAccountReauthorizationControl
+                    accountId={account.accountId}
+                    accountLabel={account.displayIdentity.status === 'available'
+                      ? account.displayIdentity.displayLabel ?? account.displayIdentity.mailboxAddress
+                      : 'this Google account'}
+                    dataSource={googleAccountDataSource}
+                    onStatusChanged={onReload}
+                  />
+                )}
                 {googleAccountDataSource && <GoogleAccountDisconnectControl
                   accountId={account.accountId}
                   accountLabel={account.displayIdentity.status === 'available'

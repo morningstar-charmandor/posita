@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { isLiveMailSnapshotV4, type LiveMailSnapshotV4 } from './liveMail'
+import { isLiveMailSnapshotV5, type LiveMailSnapshotV5 } from './liveMail'
 
-const snapshot = (): LiveMailSnapshotV4 => ({
-  version: 4,
+const snapshot = (): LiveMailSnapshotV5 => ({
+  version: 5,
   dataMode: 'live-canonical',
   loadedAt: '2026-09-01T05:00:00.000Z',
   status: 'ready',
@@ -34,25 +34,26 @@ const snapshot = (): LiveMailSnapshotV4 => ({
 
 describe('live-mail presentation contract', () => {
   it('accepts one exact bounded canonical summary without private provider fields', () => {
-    expect(isLiveMailSnapshotV4(snapshot())).toBe(true)
+    expect(isLiveMailSnapshotV5(snapshot())).toBe(true)
     expect(JSON.stringify(snapshot())).not.toContain('providerMessageId')
     expect(JSON.stringify(snapshot())).not.toContain('recipients')
     expect(JSON.stringify(snapshot())).not.toContain('body')
   })
 
   it('rejects unknown fields, orphaned account provenance, and incoherent status', () => {
-    expect(isLiveMailSnapshotV4({ ...snapshot(), version: 2 })).toBe(false)
-    expect(isLiveMailSnapshotV4({ ...snapshot(), version: 3 })).toBe(false)
-    expect(isLiveMailSnapshotV4({ ...snapshot(), cursor: 'private-cursor' })).toBe(false)
-    expect(isLiveMailSnapshotV4({
+    expect(isLiveMailSnapshotV5({ ...snapshot(), version: 2 })).toBe(false)
+    expect(isLiveMailSnapshotV5({ ...snapshot(), version: 3 })).toBe(false)
+    expect(isLiveMailSnapshotV5({ ...snapshot(), version: 4 })).toBe(false)
+    expect(isLiveMailSnapshotV5({ ...snapshot(), cursor: 'private-cursor' })).toBe(false)
+    expect(isLiveMailSnapshotV5({
       ...snapshot(),
       accounts: []
     })).toBe(false)
-    expect(isLiveMailSnapshotV4({
+    expect(isLiveMailSnapshotV5({
       ...snapshot(),
       status: 'offline'
     })).toBe(false)
-    expect(isLiveMailSnapshotV4({
+    expect(isLiveMailSnapshotV5({
       ...snapshot(),
       accounts: [{
         accountId: 'account-work-1',
@@ -60,7 +61,7 @@ describe('live-mail presentation contract', () => {
         status: 'ready'
       }]
     })).toBe(false)
-    expect(isLiveMailSnapshotV4({
+    expect(isLiveMailSnapshotV5({
       ...snapshot(),
       accounts: [{
         ...snapshot().accounts[0],
@@ -74,23 +75,23 @@ describe('live-mail presentation contract', () => {
   })
 
   it('requires one bounded safe retry-availability projection', () => {
-    expect(isLiveMailSnapshotV4({
+    expect(isLiveMailSnapshotV5({
       ...snapshot(),
       accounts: [{ ...snapshot().accounts[0]!, syncRetry: 'available' }]
     })).toBe(true)
     const { syncRetry: _syncRetry, ...accountWithoutRetry } = snapshot().accounts[0]!
-    expect(isLiveMailSnapshotV4({
+    expect(isLiveMailSnapshotV5({
       ...snapshot(),
       accounts: [accountWithoutRetry]
     })).toBe(false)
-    expect(isLiveMailSnapshotV4({
+    expect(isLiveMailSnapshotV5({
       ...snapshot(),
       accounts: [{ ...snapshot().accounts[0]!, syncRetry: 'provider-error-code' }]
     })).toBe(false)
   })
 
   it('allows a bounded unavailable identity only as an explicit safe state', () => {
-    expect(isLiveMailSnapshotV4({
+    expect(isLiveMailSnapshotV5({
       ...snapshot(),
       status: 'attention-required',
       accounts: [{
@@ -104,9 +105,27 @@ describe('live-mail presentation contract', () => {
   it.each(['quota-setup', 'quota-waiting', 'quota-ready'])('bounds %s to paused accounts without private metadata', (syncRetry) => {
     const value = { ...snapshot(), status: 'attention-required',
       accounts: [{ ...snapshot().accounts[0]!, status: 'attention-required', syncRetry }] }
-    expect(isLiveMailSnapshotV4(value)).toBe(true)
-    expect(isLiveMailSnapshotV4({ ...value, accounts: [{ ...value.accounts[0], status: 'ready' }] })).toBe(false)
-    expect(isLiveMailSnapshotV4({ ...value, accounts: [{ ...value.accounts[0], notBefore: 'private-timestamp' }] })).toBe(false)
+    expect(isLiveMailSnapshotV5(value)).toBe(true)
+    expect(isLiveMailSnapshotV5({ ...value, accounts: [{ ...value.accounts[0], status: 'ready' }] })).toBe(false)
+    expect(isLiveMailSnapshotV5({ ...value, accounts: [{ ...value.accounts[0], notBefore: 'private-timestamp' }] })).toBe(false)
+  })
+
+  it('projects reauthorization without exposing the provider failure code', () => {
+    const value = {
+      ...snapshot(),
+      status: 'attention-required' as const,
+      accounts: [{
+        ...snapshot().accounts[0]!,
+        status: 'attention-required' as const,
+        syncRetry: 'reauthorization-required' as const
+      }]
+    }
+    expect(isLiveMailSnapshotV5(value)).toBe(true)
+    expect(isLiveMailSnapshotV5({
+      ...value,
+      accounts: [{ ...value.accounts[0], status: 'ready' }]
+    })).toBe(false)
+    expect(JSON.stringify(value)).not.toContain('AUTHENTICATION_EXPIRED')
   })
 
   it('requires newest-first summaries and enforces the fixed output limit', () => {
@@ -115,11 +134,11 @@ describe('live-mail presentation contract', () => {
       id: 'message-older',
       receivedAt: '2026-08-31T04:00:00.000Z'
     }
-    expect(isLiveMailSnapshotV4({
+    expect(isLiveMailSnapshotV5({
       ...snapshot(),
       messages: [older, snapshot().messages[0]!]
     })).toBe(false)
-    expect(isLiveMailSnapshotV4({
+    expect(isLiveMailSnapshotV5({
       ...snapshot(),
       messages: Array.from({ length: 51 }, (_, index) => ({
         ...snapshot().messages[0]!,

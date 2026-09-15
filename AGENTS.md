@@ -6,6 +6,20 @@ exists deeper in the tree.
 
 ## Product state
 
+- Latest approved offline checkpoint (2026-09-15): same-account Google
+  reauthorization is implemented without provider or credential access. Only a complete
+  account in `reconnect-required` state may start it. Exact stable Google subject and
+  case-insensitive verified-mailbox matching are required before trusted main replaces
+  only the protected refresh credential, invalidates the memory-only token cache, and
+  delegates one bounded read-only continuation to the existing lifecycle owner. Encrypted
+  account state, cursor, sync history, and retained mail are preserved. Live-mail V5
+  exposes a fixed `reauthorization-required` capability through a separate two-step,
+  cancellable UI. Verification: 100 files / 704 tests plus types, structure/security,
+  and production builds. No Google Cloud setting, browser, OAuth request, Gmail read,
+  credential, private cache, dependency, schema, scope or mailbox capability changed.
+  Next is an explicit owner decision on External/In production publishing; any later live
+  reauthorization/read requires separate approval. No fifteenth read is authorized.
+
 - Latest controlled read outcome (2026-09-14): owner opened the verified pacing build and
   its accessible UI exposed `Resume Gmail sync`. The previously approved fourteenth read
   was confirmed exactly once; the confirmation disappeared and no second resume remained.

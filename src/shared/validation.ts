@@ -41,6 +41,8 @@ import type {
   ConnectGoogleAccountResponseV1,
   CancelGoogleAccountConnectionRequestV1,
   CancelGoogleAccountConnectionResponseV1,
+  ReauthorizeGoogleAccountRequestV1,
+  CancelGoogleAccountReauthorizationRequestV1,
   RetryGoogleAccountSyncRequestV1,
   RetryGoogleAccountSyncResponseV1,
   GoogleAccountSyncRetryErrorCodeV1,
@@ -64,7 +66,7 @@ import {
   POSITA_PROTOCOL_VERSION,
   RETENTION_MAINTENANCE_FAILURE_MESSAGE
 } from './contracts'
-import { isLiveMailSnapshotV4, type LiveMailSnapshotV4 } from './liveMail'
+import { isLiveMailSnapshotV5, type LiveMailSnapshotV5 } from './liveMail'
 import type {
   Account,
   BriefItem,
@@ -249,11 +251,11 @@ const isFixtureAppSnapshot = (value: unknown): value is AppSnapshotV1 =>
   Number.isFinite(Date.parse(value.loadedAt)) &&
   isMailDataset(value.dataset)
 
-export const isLiveMailSnapshot = isLiveMailSnapshotV4
+export const isLiveMailSnapshot = isLiveMailSnapshotV5
 
 export const isAppSnapshot = (
   value: unknown
-): value is AppSnapshotV1 | LiveMailSnapshotV4 =>
+): value is AppSnapshotV1 | LiveMailSnapshotV5 =>
   isFixtureAppSnapshot(value) || isLiveMailSnapshot(value)
 
 export const isLoadSnapshotResponse = (value: unknown): value is LoadSnapshotResponseV1 => {
@@ -685,6 +687,21 @@ export const isCancelGoogleAccountConnectionRequest = (
   isRecord(value) && hasOnlyKeys(value, ['version', 'action']) &&
   value.version === POSITA_PROTOCOL_VERSION &&
   value.action === 'cancel-google-account-connection'
+
+export const isReauthorizeGoogleAccountRequest = (
+  value: unknown
+): value is ReauthorizeGoogleAccountRequestV1 =>
+  isRecord(value) && hasOnlyKeys(value, ['version', 'action', 'accountId', 'consentVersion']) &&
+  value.version === POSITA_PROTOCOL_VERSION && value.action === 'reauthorize-google-account' &&
+  isOperationId(value.accountId) &&
+  value.consentVersion === GOOGLE_CONNECT_CONSENT.consentVersion
+
+export const isCancelGoogleAccountReauthorizationRequest = (
+  value: unknown
+): value is CancelGoogleAccountReauthorizationRequestV1 =>
+  isRecord(value) && hasOnlyKeys(value, ['version', 'action']) &&
+  value.version === POSITA_PROTOCOL_VERSION &&
+  value.action === 'cancel-google-account-reauthorization'
 
 export const isRetryGoogleAccountSyncRequest = (
   value: unknown

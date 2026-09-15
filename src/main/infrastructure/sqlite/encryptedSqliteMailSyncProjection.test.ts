@@ -12,7 +12,7 @@ import { applyMigrations } from './migrations'
 import { EncryptedSqliteAccountStateRepository } from './encryptedSqliteAccountStateRepository'
 import { LIVE_MAIL_DETAIL_BODY_LIMIT } from '../../../shared/liveMailDetail'
 import { withProviderQuotaCooldown } from '../../application/providerMailSyncRetryPolicy'
-import { isLiveMailSnapshotV4 } from '../../../shared/liveMail'
+import { isLiveMailSnapshotV5 } from '../../../shared/liveMail'
 
 const testKey = Uint8Array.from({ length: 32 }, (_, index) => index * 7 + 3)
 const openDatabases: DatabaseSync[] = []
@@ -125,7 +125,7 @@ describe('EncryptedSqliteMailSyncProjection', () => {
     accountState.saveSyncState({ ...quota, cursor: 'cursor-1' })
     for (const [time, availability] of [['12:14:59.999', 'quota-waiting'], ['12:15:00.000', 'quota-ready']] as const) {
       const result = await projection.loadReadModel(`2026-09-09T${time}Z`)
-      expect(isLiveMailSnapshotV4(result)).toBe(true)
+      expect(isLiveMailSnapshotV5(result)).toBe(true)
       expect(result.accounts[0]).toMatchObject({ status: 'attention-required', syncRetry: availability })
       expect(result.messages).toHaveLength(1)
       for (const privateField of ['quotaCooldown', 'notBefore', 'failureStreak', 'cursor-1', 'QUOTA_EXHAUSTED']) {
@@ -135,7 +135,7 @@ describe('EncryptedSqliteMailSyncProjection', () => {
     accountState.saveSyncState({ ...quota, cursor: 'cursor-1', lastErrorCode: 'OFFLINE' })
     const offline = await projection.loadReadModel('2026-09-09T12:01:00.000Z')
     expect(offline.accounts[0]).toMatchObject({ status: 'offline', syncRetry: 'quota-waiting' })
-    expect(isLiveMailSnapshotV4(offline)).toBe(true)
+    expect(isLiveMailSnapshotV5(offline)).toBe(true)
   })
 
   it('projects a bounded newest-first live read model without bodies or provider IDs', async () => {

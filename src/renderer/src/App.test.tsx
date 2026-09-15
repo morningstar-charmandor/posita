@@ -156,7 +156,7 @@ describe('Posita vertical slice', () => {
         value: {
           ...successResponse.value,
           snapshot: {
-            version: 4,
+            version: 5,
             dataMode: 'live-canonical',
             loadedAt: '2026-09-01T05:00:00.000Z',
             status: 'empty',
@@ -182,7 +182,7 @@ describe('Posita vertical slice', () => {
       value: {
         ...successResponse.value,
         snapshot: {
-          version: 4 as const,
+          version: 5 as const,
           dataMode: 'live-canonical' as const,
           loadedAt: '2026-09-01T05:00:00.000Z',
           status: 'offline' as const,
@@ -222,7 +222,7 @@ describe('Posita vertical slice', () => {
         value: {
           ...successResponse.value,
           snapshot: {
-            version: 4,
+            version: 5,
             dataMode: 'live-canonical',
             loadedAt: '2026-09-01T05:00:00.000Z',
             status: 'ready',
@@ -587,6 +587,8 @@ describe('Posita vertical slice', () => {
         connect: vi.fn(),
         cancel: vi.fn(),
         retrySync: vi.fn(),
+        reauthorize: vi.fn(),
+        cancelReauthorization: vi.fn(),
         prepareDisconnect: vi.fn(),
         executeDisconnect: vi.fn()
       }}
@@ -632,6 +634,8 @@ describe('Posita vertical slice', () => {
         connect: vi.fn(),
         cancel: vi.fn(),
         retrySync: vi.fn(),
+        reauthorize: vi.fn(),
+        cancelReauthorization: vi.fn(),
         prepareDisconnect: vi.fn(),
         executeDisconnect: vi.fn()
       }}
@@ -676,6 +680,8 @@ describe('Posita vertical slice', () => {
         connect,
         cancel,
         retrySync: vi.fn(),
+        reauthorize: vi.fn(),
+        cancelReauthorization: vi.fn(),
         prepareDisconnect: vi.fn(),
         executeDisconnect: vi.fn()
       }}

@@ -1,13 +1,13 @@
 import '@testing-library/jest-dom/vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { LiveMailSnapshotV4 } from '@shared/liveMail'
+import type { LiveMailSnapshotV5 } from '@shared/liveMail'
 import { LiveMailStatus } from './LiveMailStatus'
 
 afterEach(cleanup)
 
-const snapshot: LiveMailSnapshotV4 = {
-  version: 4,
+const snapshot: LiveMailSnapshotV5 = {
+  version: 5,
   dataMode: 'live-canonical',
   loadedAt: '2026-09-01T05:00:00.000Z',
   status: 'ready',
@@ -44,6 +44,7 @@ describe('LiveMailStatus source inspection', () => {
       accounts: [{ ...snapshot.accounts[0]!, status: 'attention-required', syncRetry: 'quota-waiting' }] }}
       onReload={reload} detailDataSource={{ loadMessageDetail: vi.fn() }} openOriginalDataSource={openOriginalDataSource}
       googleAccountDataSource={{ prepare: vi.fn(), connect: vi.fn(), cancel: vi.fn(), retrySync,
+        reauthorize: vi.fn(), cancelReauthorization: vi.fn(),
         prepareDisconnect: vi.fn(), executeDisconnect: vi.fn() }} />)
     expect(screen.getByText(/15 minutes/)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Resume Gmail sync' })).not.toBeInTheDocument()
@@ -83,6 +84,7 @@ describe('LiveMailStatus source inspection', () => {
       openOriginalDataSource={openOriginalDataSource}
       googleAccountDataSource={{
         prepare: vi.fn(), connect: vi.fn(), cancel: vi.fn(), retrySync,
+        reauthorize: vi.fn(), cancelReauthorization: vi.fn(),
         prepareDisconnect: vi.fn(), executeDisconnect: vi.fn()
       }}
     />)
@@ -112,6 +114,7 @@ describe('LiveMailStatus source inspection', () => {
       openOriginalDataSource={openOriginalDataSource}
       googleAccountDataSource={{
         prepare: vi.fn(), connect: vi.fn(), cancel: vi.fn(), retrySync,
+        reauthorize: vi.fn(), cancelReauthorization: vi.fn(),
         prepareDisconnect: vi.fn(), executeDisconnect: vi.fn()
       }}
     />)
@@ -119,6 +122,33 @@ describe('LiveMailStatus source inspection', () => {
     expect(screen.queryByRole('button', { name: 'Retry Gmail sync' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Reload local status' })).toBeInTheDocument()
     expect(retrySync).not.toHaveBeenCalled()
+  })
+
+  it('offers same-account reauthorization only for the explicit trusted projection', () => {
+    const reauthorize = vi.fn()
+    render(<LiveMailStatus
+      snapshot={{
+        ...snapshot,
+        status: 'attention-required',
+        accounts: [{
+          ...snapshot.accounts[0]!,
+          status: 'attention-required',
+          syncRetry: 'reauthorization-required'
+        }],
+        messages: []
+      }}
+      onReload={vi.fn()}
+      detailDataSource={{ loadMessageDetail: vi.fn() }}
+      openOriginalDataSource={openOriginalDataSource}
+      googleAccountDataSource={{
+        prepare: vi.fn(), connect: vi.fn(), cancel: vi.fn(), retrySync: vi.fn(),
+        reauthorize, cancelReauthorization: vi.fn(),
+        prepareDisconnect: vi.fn(), executeDisconnect: vi.fn()
+      }}
+    />)
+    expect(screen.getByRole('button', { name: 'Reconnect Google' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Retry Gmail sync' })).not.toBeInTheDocument()
+    expect(reauthorize).not.toHaveBeenCalled()
   })
 
   it('shows a bounded summary and loads its plain-text source on request', async () => {

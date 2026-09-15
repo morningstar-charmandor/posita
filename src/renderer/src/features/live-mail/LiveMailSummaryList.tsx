@@ -1,18 +1,18 @@
 import { Paperclip } from 'lucide-react'
 import type {
-  LiveMailAccountV4,
+  LiveMailAccountV5,
   LiveMailMessageSummaryV2
 } from '@shared/liveMail'
 
 export interface LiveMailSummaryListProps {
-  accounts: LiveMailAccountV4[]
+  accounts: LiveMailAccountV5[]
   messages: LiveMailMessageSummaryV2[]
   hasMore: boolean
   selected?: { accountId: string; messageId: string }
   onSelect: (accountId: string, messageId: string) => void
 }
 
-const accountLabel = (account: LiveMailAccountV4 | undefined): {
+const accountLabel = (account: LiveMailAccountV5 | undefined): {
   primary: string
   secondary?: string
 } => {

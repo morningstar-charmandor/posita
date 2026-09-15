@@ -1,6 +1,7 @@
 import type { AccountStateRepository } from './application/accountState'
 import { AccountConnectionService } from './application/accountConnection'
 import { AccountConnectionActivationService } from './application/accountConnectionActivation'
+import { AccountReauthorizationService } from './application/accountReauthorization'
 import type { AccountLifecycleRepository } from './application/accountLifecycle'
 import type { AccountDataRemovalService } from './application/accountDataRemoval'
 import { DisconnectAccountService } from './application/disconnectAccount'
@@ -49,6 +50,7 @@ export interface GoogleProviderLifecycleCompositionDependencies {
 
 export interface GoogleProviderLifecycleComposition {
   connectionActivation: AccountConnectionActivationService
+  reauthorizationActivation: AccountConnectionActivationService
   lifecycle: ProviderMailLifecycleOwner
 }
 
@@ -89,6 +91,20 @@ export const composeGoogleProviderLifecycle = (
     undefined,
     syncStages
   )
+  const reauthorization = new AccountReauthorizationService(
+    authorization,
+    dependencies.secretVault,
+    dependencies.accountState,
+    tokens
+  )
+  const reauthorizationActivation = new AccountConnectionActivationService(
+    reauthorization,
+    loopback,
+    new GoogleOAuthSystemBrowserLauncher(
+      dependencies.configuration.clientId,
+      dependencies.openExternal
+    )
+  )
   const coordinator = new MailSyncCoordinator(
     new GoogleMailReadAdapter(tokens, undefined, undefined, syncStages),
     dependencies.projection,
@@ -127,6 +143,7 @@ export const composeGoogleProviderLifecycle = (
 
   return {
     connectionActivation,
+    reauthorizationActivation,
     lifecycle: new ProviderMailLifecycleOwner(
       sync,
       dependencies.mailDataMode,

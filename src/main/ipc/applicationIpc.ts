@@ -25,6 +25,8 @@ import {
   type ConnectGoogleAccountResponseV1,
   type CancelGoogleAccountConnectionRequestV1,
   type CancelGoogleAccountConnectionResponseV1,
+  type ReauthorizeGoogleAccountRequestV1,
+  type CancelGoogleAccountReauthorizationRequestV1,
   type GoogleAccountConnectionErrorV1,
   type RetryGoogleAccountSyncRequestV1,
   type RetryGoogleAccountSyncResponseV1,
@@ -52,6 +54,8 @@ import {
   isPrepareGoogleAccountConnectionResponse,
   isConnectGoogleAccountResponse,
   isCancelGoogleAccountConnectionResponse,
+  isReauthorizeGoogleAccountRequest,
+  isCancelGoogleAccountReauthorizationRequest,
   isRetryGoogleAccountSyncRequest,
   isRetryGoogleAccountSyncResponse,
   isPrepareGoogleAccountDisconnectResponse,
@@ -67,6 +71,7 @@ import type { LiveMailMessageDetailService } from '../application/liveMailMessag
 import type { OpenProviderMailOriginalService } from '../application/openProviderMailOriginal'
 import type { GoogleAccountConnectionPreflightService } from '../application/googleAccountConnectionPreflight'
 import type { GoogleAccountConnectionCommandService } from '../application/googleAccountConnectionCommand'
+import type { GoogleAccountReauthorizationCommandService } from '../application/googleAccountReauthorizationCommand'
 import type { GoogleAccountDisconnectCommandService } from '../application/googleAccountDisconnectCommand'
 import type { GoogleAccountSyncRetryCommandService } from '../application/googleAccountSyncRetryCommand'
 import {
@@ -441,6 +446,52 @@ export const createCancelGoogleAccountConnectionHandler = (
   return isCancelGoogleAccountConnectionResponse(response) ? response : connectionProtocolError()
 }
 
+export const createReauthorizeGoogleAccountHandler = (
+  service: Pick<GoogleAccountReauthorizationCommandService, 'reauthorize'>,
+  isTrusted: TrustPredicate
+) => async (
+  event: IpcMainInvokeEvent,
+  request: unknown
+): Promise<ConnectGoogleAccountResponseV1> => {
+  if (!isTrusted(event)) {
+    return {
+      ok: false,
+      error: {
+        version: POSITA_PROTOCOL_VERSION,
+        code: 'UNTRUSTED_SENDER',
+        message: 'This window is not allowed to reauthorize a Google account.',
+        retryable: false
+      }
+    }
+  }
+  if (!isReauthorizeGoogleAccountRequest(request)) return connectionProtocolError()
+  const response = await service.reauthorize(request)
+  return isConnectGoogleAccountResponse(response) ? response : connectionProtocolError()
+}
+
+export const createCancelGoogleAccountReauthorizationHandler = (
+  service: Pick<GoogleAccountReauthorizationCommandService, 'cancel'>,
+  isTrusted: TrustPredicate
+) => (
+  event: IpcMainInvokeEvent,
+  request: unknown
+): CancelGoogleAccountConnectionResponseV1 => {
+  if (!isTrusted(event)) {
+    return {
+      ok: false,
+      error: {
+        version: POSITA_PROTOCOL_VERSION,
+        code: 'UNTRUSTED_SENDER',
+        message: 'This window is not allowed to cancel Google account reauthorization.',
+        retryable: false
+      }
+    }
+  }
+  if (!isCancelGoogleAccountReauthorizationRequest(request)) return connectionProtocolError()
+  const response = service.cancel(request)
+  return isCancelGoogleAccountConnectionResponse(response) ? response : connectionProtocolError()
+}
+
 export const createRetryGoogleAccountSyncHandler = (
   service: Pick<GoogleAccountSyncRetryCommandService, 'execute'>,
   isTrusted: TrustPredicate,
@@ -587,6 +638,7 @@ export interface ApplicationIpcServices {
   accountConnectionRecovery: AccountConnectionRecoveryCommandService
   googleAccountConnectionPreflight: GoogleAccountConnectionPreflightService
   googleAccountConnectionCommand: GoogleAccountConnectionCommandService
+  googleAccountReauthorizationCommand: GoogleAccountReauthorizationCommandService
   googleAccountSyncRetryCommand: GoogleAccountSyncRetryCommandService
   providerMailSyncStages?: ProviderMailSyncStageReporter
   googleAccountDisconnectCommand: GoogleAccountDisconnectCommandService
@@ -639,6 +691,14 @@ export const registerApplicationIpc = (services: ApplicationIpcServices): Applic
   )
   const cancelGoogleAccountConnection = createCancelGoogleAccountConnectionHandler(
     services.googleAccountConnectionCommand,
+    isTrusted
+  )
+  const reauthorizeGoogleAccount = createReauthorizeGoogleAccountHandler(
+    services.googleAccountReauthorizationCommand,
+    isTrusted
+  )
+  const cancelGoogleAccountReauthorization = createCancelGoogleAccountReauthorizationHandler(
+    services.googleAccountReauthorizationCommand,
     isTrusted
   )
   const retryGoogleAccountSync = createRetryGoogleAccountSyncHandler(
@@ -702,6 +762,16 @@ export const registerApplicationIpc = (services: ApplicationIpcServices): Applic
       cancelGoogleAccountConnection(event, request)
   )
   ipcMain.handle(
+    IPC_CHANNELS.reauthorizeGoogleAccount,
+    (event, request: ReauthorizeGoogleAccountRequestV1) =>
+      reauthorizeGoogleAccount(event, request)
+  )
+  ipcMain.handle(
+    IPC_CHANNELS.cancelGoogleAccountReauthorization,
+    (event, request: CancelGoogleAccountReauthorizationRequestV1) =>
+      cancelGoogleAccountReauthorization(event, request)
+  )
+  ipcMain.handle(
     IPC_CHANNELS.retryGoogleAccountSync,
     (event, request: RetryGoogleAccountSyncRequestV1) => retryGoogleAccountSync(event, request)
   )
@@ -749,6 +819,8 @@ export const registerApplicationIpc = (services: ApplicationIpcServices): Applic
       ipcMain.removeHandler(IPC_CHANNELS.prepareGoogleAccountConnection)
       ipcMain.removeHandler(IPC_CHANNELS.connectGoogleAccount)
       ipcMain.removeHandler(IPC_CHANNELS.cancelGoogleAccountConnection)
+      ipcMain.removeHandler(IPC_CHANNELS.reauthorizeGoogleAccount)
+      ipcMain.removeHandler(IPC_CHANNELS.cancelGoogleAccountReauthorization)
       ipcMain.removeHandler(IPC_CHANNELS.retryGoogleAccountSync)
       ipcMain.removeHandler(IPC_CHANNELS.prepareGoogleAccountDisconnect)
       ipcMain.removeHandler(IPC_CHANNELS.executeGoogleAccountDisconnect)

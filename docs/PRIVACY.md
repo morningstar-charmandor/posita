@@ -326,6 +326,15 @@ confirmation, operation, account, and timestamp values enter the existing audit 
 It revokes Posita's authorization and deletes Posita's protected local projection,
 but never deletes or changes Gmail messages.
 
+Expired authorization does not require deleting Posita's retained encrypted projection.
+The separate same-account reauthorization command is available only when trusted policy
+reports `reconnect-required`. It verifies the new Google subject and mailbox against the
+existing encrypted account before replacing only its OS-protected refresh credential.
+Provider account state, cursor, sync history, and retained mail remain in place; mismatched
+identity leaves the old credential and local projection untouched. The renderer receives
+only a fixed availability and bounded outcome. Reauthorization is explicit and cancellable,
+and its disclosed follow-up sync is read-only; neither step modifies Gmail.
+
 The credential-free account-connection coordinator now proves the only accepted
 cross-store write order: vault credential first, encrypted provider-account state
 second. It preflights both stores, refuses partially existing state, and performs

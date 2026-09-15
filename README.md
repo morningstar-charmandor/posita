@@ -2,14 +2,16 @@
 
 **Your inboxes, understood as one.**
 
-Current focused checkpoint (2026-09-14): the confirmed fourteenth read settled with the
-safe saved state `AUTHENTICATION_EXPIRED`; retained real mail and its encrypted cursor remain
-local, but full sync is incomplete. The External/Testing grant was created ten days earlier,
-so Google's documented seven-day testing refresh-token lifetime is the leading explanation.
-The exact token-endpoint-versus-Gmail unauthorized boundary was not captured, and live request
-pacing remains unverified. The one-read approval is consumed; no fifteenth Gmail read is
-authorized. The next step is an owner decision on a durable OAuth publishing/audience strategy
-before reconnecting. See [handoff](docs/HANDOFF.md) and [Gmail read diagnosis](docs/GMAIL_READ_DIAGNOSIS.md).
+Current focused checkpoint (2026-09-15): Posita now has a verified provider-inert,
+same-account Google reauthorization path. It replaces only an expired protected refresh
+credential after exact subject and mailbox matching, preserving the encrypted account,
+cursor, sync history, and retained mail. The UI exposes this only through a distinct
+two-step control when trusted policy says reauthorization is required. No Google request
+or credential access occurred while implementing it. The External/Testing grant remains
+expired, full sync is incomplete, and no fifteenth Gmail read is authorized. Next is an
+explicit owner decision on changing the OAuth app to External/In production; using the new
+reconnect flow and its one read-only continuation requires a later separate approval. See
+[handoff](docs/HANDOFF.md) and [Gmail read diagnosis](docs/GMAIL_READ_DIAGNOSIS.md).
 
 Posita is a desktop-first personal mail hub organized around people, topics,
 context, and actions rather than separate inboxes.

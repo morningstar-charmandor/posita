@@ -2,7 +2,7 @@ import {
   isProviderSyncState, providerQuotaCooldownDurationMs, PROVIDER_QUOTA_MAX_STREAK,
   type ProviderSyncState, type ProviderSyncStateV2, type SyncFailureCode
 } from './accountState.ts'
-import type { LiveMailSyncRetryAvailabilityV1 } from '../../shared/liveMail.ts'
+import type { LiveMailSyncRetryAvailabilityV2 } from '../../shared/liveMail.ts'
 
 export type ProviderMailSyncRetryDispositionV1 =
   | 'retry-allowed'
@@ -48,10 +48,11 @@ export const providerMailSyncRetryPolicy = (
 /** No timer or provider action: trusted command and projection share this clock-based decision. */
 export const providerMailSyncRetryAvailability = (
   state: ProviderSyncState | undefined, nowMs: number
-): LiveMailSyncRetryAvailabilityV1 => {
+): LiveMailSyncRetryAvailabilityV2 => {
   if (!Number.isFinite(nowMs) || !isProviderSyncState(state) || state.status !== 'error' ||
       state.lastErrorCode === undefined) return 'unavailable'
   const disposition = providerMailSyncRetryPolicy(state.lastErrorCode).disposition
+  if (disposition === 'reconnect-required') return 'reauthorization-required'
   if (disposition !== 'retry-allowed' && disposition !== 'retry-later') return 'unavailable'
   if (state.version === 2) {
     return nowMs < Date.parse(state.quotaCooldown.notBefore) ? 'quota-waiting' : 'quota-ready'

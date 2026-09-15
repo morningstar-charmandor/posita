@@ -16,17 +16,18 @@ export type LiveMailAccountDisplayIdentityV1 =
     }
   | { status: 'unavailable' }
 
-export interface LiveMailAccountV4 {
+export interface LiveMailAccountV5 {
   accountId: string
   provider: 'google'
   displayIdentity: LiveMailAccountDisplayIdentityV1
   status: LiveMailAccountStatusV1
-  syncRetry: LiveMailSyncRetryAvailabilityV1
+  syncRetry: LiveMailSyncRetryAvailabilityV2
   lastSuccessAt?: string
 }
 
-export type LiveMailSyncRetryAvailabilityV1 =
-  | 'available' | 'unavailable' | 'quota-setup' | 'quota-waiting' | 'quota-ready'
+export type LiveMailSyncRetryAvailabilityV2 =
+  | 'available' | 'unavailable' | 'reauthorization-required'
+  | 'quota-setup' | 'quota-waiting' | 'quota-ready'
 
 export interface LiveMailMessageSummaryV2 {
   id: string
@@ -55,12 +56,12 @@ export type LiveMailSnapshotStatusV1 =
  * Bounded presentation projection for canonical provider mail. It deliberately
  * omits message bodies, recipients, provider IDs, account subjects, and sync cursors.
  */
-export interface LiveMailSnapshotV4 {
-  version: 4
+export interface LiveMailSnapshotV5 {
+  version: 5
   dataMode: 'live-canonical'
   loadedAt: string
   status: LiveMailSnapshotStatusV1
-  accounts: LiveMailAccountV4[]
+  accounts: LiveMailAccountV5[]
   messages: LiveMailMessageSummaryV2[]
   hasMore: boolean
 }
@@ -100,7 +101,7 @@ export const isLiveMailAccountDisplayIdentityV1 = (
         value.displayLabel.length <= 80 && value.displayLabel.trim() === value.displayLabel))
 }
 
-const isAccount = (value: unknown): value is LiveMailAccountV4 => {
+const isAccount = (value: unknown): value is LiveMailAccountV5 => {
   if (!isRecord(value)) return false
   const success = value.lastSuccessAt === undefined ? [] : ['lastSuccessAt']
   return hasOnlyKeys(value, [
@@ -110,6 +111,8 @@ const isAccount = (value: unknown): value is LiveMailAccountV4 => {
     value.provider === 'google' && typeof value.status === 'string' &&
     statuses.includes(value.status as LiveMailAccountStatusV1) &&
     (value.syncRetry === 'available' || value.syncRetry === 'unavailable' ||
+      (value.syncRetry === 'reauthorization-required' &&
+        value.status === 'attention-required') ||
       ((value.syncRetry === 'quota-setup' || value.syncRetry === 'quota-waiting' ||
         value.syncRetry === 'quota-ready') &&
         (value.status === 'attention-required' || value.status === 'offline'))) &&
@@ -140,7 +143,7 @@ const isMessage = (value: unknown): value is LiveMailMessageSummaryV2 => {
 }
 
 const expectedStatus = (
-  accounts: readonly LiveMailAccountV4[],
+  accounts: readonly LiveMailAccountV5[],
   messageCount: number
 ): LiveMailSnapshotStatusV1 => {
   if (accounts.some((account) => account.status === 'attention-required')) {
@@ -151,16 +154,16 @@ const expectedStatus = (
   return messageCount > 0 ? 'ready' : 'empty'
 }
 
-export const isLiveMailSnapshotV4 = (value: unknown): value is LiveMailSnapshotV4 => {
+export const isLiveMailSnapshotV5 = (value: unknown): value is LiveMailSnapshotV5 => {
   if (!isRecord(value) || !hasOnlyKeys(value, [
     'version', 'dataMode', 'loadedAt', 'status', 'accounts', 'messages', 'hasMore'
-  ]) || value.version !== 4 || value.dataMode !== 'live-canonical' ||
+  ]) || value.version !== 5 || value.dataMode !== 'live-canonical' ||
       !isTimestamp(value.loadedAt) || !Array.isArray(value.accounts) ||
       value.accounts.length > 32 || !value.accounts.every(isAccount) ||
       !Array.isArray(value.messages) || value.messages.length > LIVE_MAIL_READ_LIMIT ||
       !value.messages.every(isMessage) || typeof value.hasMore !== 'boolean') return false
 
-  const accounts = value.accounts as LiveMailAccountV4[]
+  const accounts = value.accounts as LiveMailAccountV5[]
   const messages = value.messages as LiveMailMessageSummaryV2[]
   const accountIds = accounts.map((account) => account.accountId)
   const messageIds = messages.map((message) => `${message.accountId}\u0000${message.id}`)

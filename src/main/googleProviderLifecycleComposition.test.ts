@@ -58,6 +58,7 @@ describe('composeGoogleProviderLifecycle', () => {
     })
 
     expect(composition.connectionActivation).toBeDefined()
+    expect(composition.reauthorizationActivation).toBeDefined()
     await expect(composition.lifecycle.start([])).resolves.toEqual({
       version: 1,
       mode: 'sample',
